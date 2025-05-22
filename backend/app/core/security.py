@@ -1,102 +1,117 @@
+"""
+Security utilities for token validation and HIPAA compliance.
+"""
+from typing import Optional, Dict
 from datetime import datetime, timedelta
-from typing import Optional
+import jwt
+from fastapi import HTTPException, status, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import os
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
+security = HTTPBearer()
 
-from app.core.config import settings
-from app.core.database import get_db
-from app.models.user import User
-from app.services.cognito import CognitoService
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-cognito = CognitoService()
-
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """Create JWT access token"""
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-    
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM
-    )
-    return encoded_jwt
-
-
-async def authenticate_user(
-    db: AsyncSession,
-    username: str,
-    password: str
-) -> Optional[User]:
-    """Authenticate user with Cognito and database"""
-    try:
-        # Authenticate with Cognito
-        cognito_response = await cognito.sign_in(username, password)
+class SecurityService:
+    def __init__(self):
+        self.jwt_secret = os.getenv('JWT_SECRET_KEY')
+        self.algorithm = 'HS256'
+        self.access_token_expire = 3600  # 1 hour
+        self.refresh_token_expire = 604800  # 7 days
+        self.phi_session_timeout = 1800  # 30 minutes
+        self.device_trust_expire = 2592000  # 30 days
         
-        # Get user from database
-        user = await get_user_by_email(db, username)
-        if user and cognito_response:
-            return user
+        if not self.jwt_secret:
+            raise ValueError("JWT_SECRET_KEY environment variable is required")
+
+    def decode_token(self, token: str) -> Dict:
+        """Decode and validate JWT token."""
+        try:
+            payload = jwt.decode(
+                token,
+                self.jwt_secret,
+                algorithms=[self.algorithm]
+            )
             
-    except Exception:
-        return None
+            if self._is_token_expired(payload):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has expired"
+                )
+                
+            return payload
+        except jwt.InvalidTokenError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token"
+            )
 
-    return None
+    def create_access_token(self, data: Dict) -> str:
+        """Create a new access token."""
+        to_encode = data.copy()
+        expire = datetime.utcnow() + timedelta(seconds=self.access_token_expire)
+        to_encode.update({"exp": expire})
+        
+        return jwt.encode(
+            to_encode,
+            self.jwt_secret,
+            algorithm=self.algorithm
+        )
 
+    def create_refresh_token(self, data: Dict) -> str:
+        """Create a new refresh token."""
+        to_encode = data.copy()
+        expire = datetime.utcnow() + timedelta(seconds=self.refresh_token_expire)
+        to_encode.update({"exp": expire})
+        
+        return jwt.encode(
+            to_encode,
+            self.jwt_secret,
+            algorithm=self.algorithm
+        )
+
+    def verify_phi_access(self, token_data: Dict) -> bool:
+        """Verify if the token has PHI access and session is within timeout."""
+        if not token_data.get('phi_access'):
+            return False
+            
+        last_activity = token_data.get('last_activity')
+        if not last_activity:
+            return False
+            
+        last_active = datetime.fromtimestamp(last_activity)
+        timeout = datetime.utcnow() - timedelta(seconds=self.phi_session_timeout)
+        
+        return last_active > timeout
+
+    def verify_device_trust(self, token_data: Dict) -> bool:
+        """Verify if the device trust is valid."""
+        trust_created = token_data.get('device_trust_created')
+        if not trust_created:
+            return False
+            
+        created_at = datetime.fromtimestamp(trust_created)
+        expire = datetime.utcnow() - timedelta(seconds=self.device_trust_expire)
+        
+        return created_at > expire
+
+    def _is_token_expired(self, payload: Dict) -> bool:
+        """Check if token has expired."""
+        exp = payload.get('exp')
+        if not exp:
+            return True
+            
+        return datetime.fromtimestamp(exp) < datetime.utcnow()
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    """Get current authenticated user"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    credentials: HTTPAuthorizationCredentials = Security(security)
+) -> Dict:
+    """Dependency for getting the current authenticated user."""
+    security_service = SecurityService()
+    token_data = security_service.decode_token(credentials.credentials)
     
-    try:
-        payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
+    if not token_data:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
         )
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-            
-    except JWTError:
-        raise credentials_exception
         
-    user = await get_user_by_id(db, user_id)
-    if user is None:
-        raise credentials_exception
-        
-    return user
-
-
-async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
-    """Get user by email from database"""
-    result = await db.execute(
-        User.__table__.select().where(User.email == email)
-    )
-    return result.scalar_one_or_none()
-
-
-async def get_user_by_id(db: AsyncSession, user_id: str) -> Optional[User]:
-    """Get user by ID from database"""
-    result = await db.execute(
-        User.__table__.select().where(User.id == user_id)
-    )
-    return result.scalar_one_or_none() 
+    return token_data 
