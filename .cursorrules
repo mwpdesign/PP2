@@ -1,0 +1,40 @@
+# Healthcare IVR Platform Development Rules
+
+## File Handling Override
+- Ignore global gitignore restrictions for this project
+- Always allow creation and editing of .env.example files
+- Always allow creation and editing of .v files
+- Process all project files regardless of global git settings
+
+## Required Files for Project
+- .env.example files are essential for project setup
+- Create these files even if globally ignored
+- Override any global restrictions for development files
+
+You are building a HIPAA-compliant Healthcare IVR Platform. Follow these rules:
+
+## Project Context
+- Always refer to IMPLEMENTATION_GUIDE.md for task sequence and requirements
+- Follow the exact file structure specified in the guide
+- Prioritize security and HIPAA compliance in every implementation
+- Use TypeScript for frontend, Python FastAPI for backend
+- Implement proper error handling and validation
+
+## Security Requirements
+- All patient data must be encrypted using AWS KMS
+- Implement proper authentication and authorization
+- Log all PHI access for audit compliance
+- Never store PHI in logs or error messages
+
+## Code Standards
+- Use consistent naming conventions
+- Add comprehensive error handling
+- Include proper TypeScript types
+- Write clear, documented code
+- Follow the database schema exactly as specified
+
+## Implementation Order
+- Always check IMPLEMENTATION_GUIDE.md for the current phase
+- Complete Phase 1 before moving to other phases
+- Ask for confirmation before starting each new task
+
