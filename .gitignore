@@ -47,9 +47,12 @@ terraform.rc
 # Docker
 .docker/
 
-# V L.env
+# Environment files
 .env.local
 .env.production
 .env.development
 # But allow .env.example files
-!.env.exampleanguage Fi
+!.env.example
+
+# Project specific
+fix_formatting.py
