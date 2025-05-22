@@ -1,0 +1,267 @@
+from typing import List, Dict, Any, Optional
+from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_
+from datetime import datetime, timedelta
+
+from app.api.ivr.models import (
+    IVRRequest,
+    IVRStatus,
+    IVRStatusHistory,
+    IVRApproval,
+    IVREscalation,
+    IVRReview,
+    IVRDocument,
+    IVRPriority,
+)
+from app.api.ivr.schemas import (
+    IVRRequestCreate,
+    IVRApprovalCreate,
+    IVREscalationCreate,
+    IVRReviewCreate,
+    IVRDocumentCreate,
+    IVRQueueParams,
+    IVRBatchAction,
+)
+from app.core.security import verify_territory_access
+from app.services.notification_service import NotificationService
+from app.core.exceptions import (
+    NotFoundException,
+    ValidationError,
+    UnauthorizedError,
+)
+
+class IVRWorkflowService:
+    def __init__(self, db: Session, current_user: Dict[str, Any]):
+        self.db = db
+        self.current_user = current_user
+        self.notification_service = NotificationService()
+
+    def create_ivr_request(self, request_data: IVRRequestCreate) -> IVRRequest:
+        """Create a new IVR request with initial validation."""
+        # Verify territory access
+        if not verify_territory_access(self.current_user, request_data.territory_id):
+            raise UnauthorizedError("No access to specified territory")
+
+        # Create IVR request
+        ivr_request = IVRRequest(**request_data.dict())
+        self.db.add(ivr_request)
+
+        # Create initial status history
+        status_history = IVRStatusHistory(
+            ivr_request=ivr_request,
+            to_status=IVRStatus.SUBMITTED,
+            changed_by_id=self.current_user["id"],
+        )
+        self.db.add(status_history)
+
+        self.db.commit()
+        self.db.refresh(ivr_request)
+
+        # Send notifications
+        self._notify_submission(ivr_request)
+        return ivr_request
+
+    def update_ivr_status(
+        self, request_id: str, new_status: IVRStatus, reason: Optional[str] = None
+    ) -> IVRRequest:
+        """Update IVR request status with history tracking."""
+        ivr_request = self._get_ivr_request(request_id)
+        
+        # Create status history
+        status_history = IVRStatusHistory(
+            ivr_request=ivr_request,
+            from_status=ivr_request.status,
+            to_status=new_status,
+            changed_by_id=self.current_user["id"],
+            reason=reason,
+        )
+        self.db.add(status_history)
+
+        # Update request status
+        ivr_request.status = new_status
+        ivr_request.updated_at = datetime.utcnow()
+
+        self.db.commit()
+        self.db.refresh(ivr_request)
+
+        # Send notifications
+        self._notify_status_change(ivr_request, status_history)
+        return ivr_request
+
+    def assign_reviewer(self, request_id: str, reviewer_id: str) -> IVRRequest:
+        """Assign a reviewer to an IVR request."""
+        ivr_request = self._get_ivr_request(request_id)
+
+        # Create review assignment
+        review = IVRReview(
+            ivr_request=ivr_request,
+            reviewer_id=reviewer_id,
+            status="assigned",
+        )
+        self.db.add(review)
+
+        # Update request status and reviewer
+        ivr_request.current_reviewer_id = reviewer_id
+        ivr_request.status = IVRStatus.IN_REVIEW
+        ivr_request.updated_at = datetime.utcnow()
+
+        self.db.commit()
+        self.db.refresh(ivr_request)
+
+        # Send notifications
+        self._notify_reviewer_assignment(ivr_request, reviewer_id)
+        return ivr_request
+
+    def approve_request(
+        self, request_id: str, approval_data: IVRApprovalCreate
+    ) -> IVRRequest:
+        """Approve an IVR request with optional multi-level approval."""
+        ivr_request = self._get_ivr_request(request_id)
+
+        # Create approval record
+        approval = IVRApproval(
+            ivr_request=ivr_request,
+            approver_id=self.current_user["id"],
+            **approval_data.dict(),
+        )
+        self.db.add(approval)
+
+        # Update request status based on approval level
+        if approval_data.approval_level == 1:
+            ivr_request.status = IVRStatus.APPROVED
+            ivr_request.updated_at = datetime.utcnow()
+
+        self.db.commit()
+        self.db.refresh(ivr_request)
+
+        # Send notifications
+        self._notify_approval(ivr_request, approval)
+        return ivr_request
+
+    def escalate_request(
+        self, request_id: str, escalation_data: IVREscalationCreate
+    ) -> IVRRequest:
+        """Escalate an IVR request to a higher authority."""
+        ivr_request = self._get_ivr_request(request_id)
+
+        # Create escalation record
+        escalation = IVREscalation(
+            ivr_request=ivr_request,
+            escalated_by_id=self.current_user["id"],
+            **escalation_data.dict(),
+        )
+        self.db.add(escalation)
+
+        # Update request status
+        ivr_request.status = IVRStatus.ESCALATED
+        ivr_request.updated_at = datetime.utcnow()
+
+        self.db.commit()
+        self.db.refresh(ivr_request)
+
+        # Send notifications
+        self._notify_escalation(ivr_request, escalation)
+        return ivr_request
+
+    def get_review_queue(
+        self, queue_params: IVRQueueParams, page: int = 1, size: int = 20
+    ) -> Dict:
+        """Get IVR requests queue with filtering and pagination."""
+        query = self.db.query(IVRRequest)
+
+        # Apply filters
+        if queue_params.territory_id:
+            if not verify_territory_access(self.current_user, queue_params.territory_id):
+                raise UnauthorizedError("No access to specified territory")
+            query = query.filter(IVRRequest.territory_id == queue_params.territory_id)
+
+        if queue_params.facility_id:
+            query = query.filter(IVRRequest.facility_id == queue_params.facility_id)
+
+        if queue_params.status:
+            query = query.filter(IVRRequest.status == queue_params.status)
+
+        if queue_params.priority:
+            query = query.filter(IVRRequest.priority == queue_params.priority)
+
+        if queue_params.reviewer_id:
+            query = query.filter(IVRRequest.current_reviewer_id == queue_params.reviewer_id)
+
+        # Apply pagination
+        total = query.count()
+        items = query.offset((page - 1) * size).limit(size).all()
+
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "size": size,
+        }
+
+    def process_batch_action(self, batch_action: IVRBatchAction) -> Dict:
+        """Process batch actions on multiple IVR requests."""
+        success = []
+        failed = {}
+
+        for request_id in batch_action.request_ids:
+            try:
+                if batch_action.action == "assign":
+                    self.assign_reviewer(request_id, batch_action.reviewer_id)
+                elif batch_action.action == "approve":
+                    self.approve_request(
+                        request_id,
+                        IVRApprovalCreate(
+                            decision="approved",
+                            reason=batch_action.notes,
+                        ),
+                    )
+                elif batch_action.action == "reject":
+                    self.approve_request(
+                        request_id,
+                        IVRApprovalCreate(
+                            decision="rejected",
+                            reason=batch_action.notes,
+                        ),
+                    )
+                success.append(request_id)
+            except Exception as e:
+                failed[request_id] = str(e)
+
+        return {
+            "success": success,
+            "failed": failed,
+            "total_processed": len(batch_action.request_ids),
+        }
+
+    def _get_ivr_request(self, request_id: str) -> IVRRequest:
+        """Get IVR request with territory access verification."""
+        ivr_request = self.db.query(IVRRequest).filter_by(id=request_id).first()
+        if not ivr_request:
+            raise NotFoundException("IVR request not found")
+
+        if not verify_territory_access(self.current_user, ivr_request.territory_id):
+            raise UnauthorizedError("No access to this IVR request's territory")
+
+        return ivr_request
+
+    def _notify_submission(self, ivr_request: IVRRequest):
+        """Send notifications for new IVR submission."""
+        self.notification_service.notify_new_ivr(ivr_request)
+
+    def _notify_status_change(
+        self, ivr_request: IVRRequest, status_history: IVRStatusHistory
+    ):
+        """Send notifications for IVR status changes."""
+        self.notification_service.notify_status_change(ivr_request, status_history)
+
+    def _notify_reviewer_assignment(self, ivr_request: IVRRequest, reviewer_id: str):
+        """Send notifications for reviewer assignment."""
+        self.notification_service.notify_reviewer_assignment(ivr_request, reviewer_id)
+
+    def _notify_approval(self, ivr_request: IVRRequest, approval: IVRApproval):
+        """Send notifications for IVR approval/rejection."""
+        self.notification_service.notify_approval(ivr_request, approval)
+
+    def _notify_escalation(self, ivr_request: IVRRequest, escalation: IVREscalation):
+        """Send notifications for IVR escalation."""
+        self.notification_service.notify_escalation(ivr_request, escalation) 

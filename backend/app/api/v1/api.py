@@ -1,12 +1,16 @@
+"""
+API router configuration.
+"""
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     auth,
     users,
+    orders,
     patients,
     providers,
-    orders,
-    verification,
+    ivr,
+    shipping
 )
 
 api_router = APIRouter()
@@ -23,6 +27,11 @@ api_router.include_router(
     tags=["Users"]
 )
 api_router.include_router(
+    orders.router,
+    prefix="/orders",
+    tags=["Orders"]
+)
+api_router.include_router(
     patients.router,
     prefix="/patients",
     tags=["Patients"]
@@ -33,12 +42,12 @@ api_router.include_router(
     tags=["Healthcare Providers"]
 )
 api_router.include_router(
-    orders.router,
-    prefix="/orders",
-    tags=["Orders"]
+    ivr.router,
+    prefix="/ivr",
+    tags=["Insurance Verification"]
 )
 api_router.include_router(
-    verification.router,
-    prefix="/verification",
-    tags=["Insurance Verification"]
+    shipping.router,
+    prefix="/shipping",
+    tags=["Shipping"]
 ) 
