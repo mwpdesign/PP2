@@ -2,6 +2,15 @@
 
 A HIPAA-compliant platform for healthcare insurance verification requests (IVR) built with React, FastAPI, and AWS.
 
+## Current Development Status
+
+🔄 **Phase 5: Order Management System**
+- ✅ Completed Product Catalog System
+- 🔄 Implementing Order Processing Workflow
+  - Order validation rules with HIPAA compliance (In Progress)
+  - Insurance verification integration (Next)
+  - Order status tracking and notifications (Planned)
+
 ## Features
 
 - 🔐 HIPAA-compliant data handling
@@ -9,6 +18,10 @@ A HIPAA-compliant platform for healthcare insurance verification requests (IVR) 
 - 🏥 Provider network management
 - 📋 Insurance verification workflow
 - 📦 Order management and logistics
+  - ✅ Product catalog management
+  - ✅ Territory-based pricing
+  - 🔄 Order validation rules
+  - 📋 Insurance verification (Planned)
 - 📱 Real-time notifications
 - 📊 Comprehensive analytics
 
