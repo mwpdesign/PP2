@@ -2,7 +2,7 @@
 
 -- Create permissions table
 CREATE TABLE IF NOT EXISTS permissions (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) UNIQUE NOT NULL,
     description VARCHAR(255),
     resource VARCHAR(50) NOT NULL,
@@ -19,7 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_permissions_resource_action ON permissions(resour
 
 -- Create roles table
 CREATE TABLE IF NOT EXISTS roles (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) UNIQUE NOT NULL,
     description VARCHAR(255),
     is_system_role BOOLEAN DEFAULT FALSE,
@@ -33,10 +33,10 @@ CREATE INDEX IF NOT EXISTS idx_roles_name ON roles(name);
 
 -- Create territories table
 CREATE TABLE IF NOT EXISTS territories (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) UNIQUE NOT NULL,
     description VARCHAR(255),
-    parent_id INTEGER REFERENCES territories(id) ON DELETE CASCADE,
+    parent_id UUID REFERENCES territories(id) ON DELETE CASCADE,
     boundary JSONB,
     metadata JSONB,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
@@ -48,8 +48,8 @@ CREATE INDEX IF NOT EXISTS idx_territories_parent_id ON territories(parent_id);
 
 -- Create users table if not exists (might have been created in previous migration)
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    cognito_id VARCHAR(36) UNIQUE NOT NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    cognito_id VARCHAR(36) UNIQUE,
     email VARCHAR(255) UNIQUE NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     is_superuser BOOLEAN DEFAULT FALSE,
@@ -65,21 +65,21 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- Create association tables
 CREATE TABLE IF NOT EXISTS role_permissions (
-    role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
-    permission_id INTEGER REFERENCES permissions(id) ON DELETE CASCADE,
+    role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+    permission_id UUID REFERENCES permissions(id) ON DELETE CASCADE,
     PRIMARY KEY (role_id, permission_id)
 );
 
 CREATE TABLE IF NOT EXISTS user_roles (
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
-    territory_id INTEGER REFERENCES territories(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+    territory_id UUID REFERENCES territories(id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, role_id, territory_id)
 );
 
 CREATE TABLE IF NOT EXISTS role_hierarchies (
-    parent_role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
-    child_role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
+    parent_role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
+    child_role_id UUID REFERENCES roles(id) ON DELETE CASCADE,
     PRIMARY KEY (parent_role_id, child_role_id),
     CHECK (parent_role_id != child_role_id)
 );
@@ -163,7 +163,7 @@ BEGIN
             WHEN TG_OP = 'DELETE' THEN NULL
             ELSE row_to_json(NEW)
         END,
-        current_setting('app.current_user_id', true)::integer,
+        current_user_id(),
         current_setting('app.current_ip', true)
     );
     RETURN NULL;

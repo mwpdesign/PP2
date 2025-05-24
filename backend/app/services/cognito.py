@@ -1,3 +1,4 @@
+"""AWS Cognito service for user authentication."""
 import boto3
 from botocore.exceptions import ClientError
 from typing import Dict, Optional
@@ -6,32 +7,38 @@ from app.core.config import settings
 
 
 class CognitoService:
+    """AWS Cognito service for user authentication."""
+
     def __init__(self):
+        """Initialize Cognito client."""
         self.client = boto3.client(
             'cognito-idp',
+            region_name=settings.AWS_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_DEFAULT_REGION
+            endpoint_url=settings.AWS_ENDPOINT_URL
         )
         self.user_pool_id = settings.AWS_COGNITO_USER_POOL_ID
         self.client_id = settings.AWS_COGNITO_CLIENT_ID
 
-    async def sign_up(
+    def sign_up(
         self,
         email: str,
         password: str,
         user_attributes: Optional[Dict] = None
     ) -> Dict:
-        """Register a new user in Cognito"""
+        """Sign up a new user."""
         try:
             attributes = [
                 {'Name': 'email', 'Value': email},
-                {'Name': 'email_verified', 'Value': 'true'},
+                {'Name': 'email_verified', 'Value': 'true'}
             ]
-
             if user_attributes:
                 for key, value in user_attributes.items():
-                    attributes.append({'Name': key, 'Value': str(value)})
+                    attributes.append({
+                        'Name': key,
+                        'Value': str(value)
+                    })
 
             response = self.client.sign_up(
                 ClientId=self.client_id,
@@ -48,25 +55,45 @@ class CognitoService:
                 )
 
             return response
-
         except ClientError as e:
             raise Exception(f"Failed to register user: {str(e)}")
 
-    async def sign_in(self, username: str, password: str) -> Dict:
-        """Authenticate a user with Cognito"""
+    def confirm_sign_up(self, email: str, code: str) -> Dict:
+        """Confirm user sign up with verification code."""
+        try:
+            response = self.client.confirm_sign_up(
+                ClientId=self.client_id,
+                Username=email,
+                ConfirmationCode=code
+            )
+            return response
+        except ClientError as e:
+            raise Exception(f"Failed to confirm sign up: {str(e)}")
+
+    def initiate_auth(self, email: str, password: str) -> Dict:
+        """Initiate authentication flow."""
         try:
             response = self.client.initiate_auth(
                 ClientId=self.client_id,
                 AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters={
-                    'USERNAME': username,
+                    'USERNAME': email,
                     'PASSWORD': password
                 }
             )
             return response
-
         except ClientError as e:
             raise Exception(f"Failed to authenticate user: {str(e)}")
+
+    def get_user(self, access_token: str) -> Dict:
+        """Get user information using access token."""
+        try:
+            response = self.client.get_user(
+                AccessToken=access_token
+            )
+            return response
+        except ClientError as e:
+            raise Exception(f"Failed to get user information: {str(e)}")
 
     async def sign_out(self, access_token: str) -> Dict:
         """Sign out a user from Cognito"""

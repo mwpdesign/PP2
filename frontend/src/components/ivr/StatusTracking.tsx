@@ -7,7 +7,7 @@ import {
   IVRStatus,
   IVRStatusHistory,
 } from '../../types/ivr';
-import websocketService from '../../services/websocket';
+import { websocketService, MessageType } from '../../services/websocket';
 
 interface StatusTrackingProps {
   ivrId: string;
@@ -36,19 +36,21 @@ const StatusTracking: React.FC<StatusTrackingProps> = ({
   useEffect(() => {
     // Subscribe to WebSocket updates
     const unsubscribeStatus = websocketService.subscribe(
-      `ivr_status_${ivrId}`,
-      (data: { status: IVRStatus; statusHistory: IVRStatusHistory[] }) => {
-        setCurrentStatus(data.status);
-        setStatusHistory(data.statusHistory);
+      MessageType.IVR_STATUS,
+      (data: { status: IVRStatus; statusHistory: IVRStatusHistory[]; ivrId: string }) => {
+        if (data.ivrId === ivrId) {
+          setCurrentStatus(data.status);
+          setStatusHistory(data.statusHistory);
+        }
       }
     );
 
     // Subscribe to connection status
-    const unsubscribeConnection = websocketService.subscribe('connected', () => {
+    const unsubscribeConnection = websocketService.subscribe(MessageType.CONNECTED, () => {
       setIsConnected(true);
     });
 
-    const unsubscribeDisconnection = websocketService.subscribe('disconnected', () => {
+    const unsubscribeDisconnection = websocketService.subscribe(MessageType.DISCONNECTED, () => {
       setIsConnected(false);
       toast.warning('Lost connection to status updates');
     });

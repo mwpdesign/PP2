@@ -1,15 +1,20 @@
 # type: ignore
-"""Database initialization and session management."""
-
-from typing import AsyncGenerator
+"""Database configuration with optional connection."""
 import os
+import logging
+from typing import AsyncGenerator, Optional
 from sqlalchemy.ext.asyncio import (
-    AsyncSession,
+    AsyncSession, 
     create_async_engine,
     async_sessionmaker
 )
 from sqlalchemy.orm import DeclarativeBase
 from dotenv import load_dotenv
+from sqlalchemy.exc import OperationalError
+from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
+
+logger = logging.getLogger(__name__)
 
 
 # Load environment variables
@@ -28,55 +33,111 @@ DATABASE_URL = (
     f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
-# Create async database engine
-engine = create_async_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-    pool_recycle=3600,
-    echo=True,
-)
+class DatabaseSettings(BaseSettings):
+    """Database configuration settings."""
+    model_config = ConfigDict(extra='ignore')  # Allow extra environment variables
+    
+    # Make all fields optional with defaults
+    database_required: bool = False
+    database_url: Optional[str] = None
+    db_echo: bool = False
+    sqlite_url: str = "sqlite+aiosqlite:///./test.db"
 
+# Global settings instance
+db_settings = DatabaseSettings()
+
+# Global engine and session factory
+engine = None
+async_session_factory: Optional[async_sessionmaker] = None
 
 # Create base class for models
 class Base(DeclarativeBase):
     pass
 
-
-# Create async session factory
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=False,
-)
-
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def init_db() -> bool:
+    """Initialize database connection if required.
+    
+    Returns:
+        bool: True if database connection successful or not required
     """
-    Get async database session.
+    global engine, async_session_factory
+    
+    # Early return if database not required
+    if not db_settings.database_required:
+        logger.info("Database connection disabled - running in no-database mode")
+        return True
+    
+    try:
+        # Use SQLite as fallback if no DATABASE_URL provided
+        db_url = db_settings.database_url or db_settings.sqlite_url
+        
+        engine = create_async_engine(
+            db_url,
+            echo=db_settings.db_echo,
+            future=True
+        )
+        
+        async_session_factory = async_sessionmaker(
+            engine,
+            class_=AsyncSession,
+            expire_on_commit=False
+        )
+        
+        # Test connection
+        async with engine.connect() as conn:
+            await conn.execute("SELECT 1")
+            await conn.commit()
+        
+        # Initialize tables only if database is required and engine exists
+        if engine is not None:
+            # Import models here to avoid circular imports
+            from app.models.organization import Organization  # noqa
+            from app.models.user import User  # noqa
+            from app.models.rbac import Role, Permission  # noqa
+            from app.models.territory import Territory  # noqa
+            from app.models.sensitive_data import SensitiveUserData  # noqa
+            from app.models.patient import Patient  # noqa
+            
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            
+            logger.info("Database tables initialized successfully")
+        
+        logger.info(f"Database connection successful using {db_url}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Database connection failed: {str(e)}")
+        if db_settings.database_required:
+            return False
+        logger.warning("Continuing without database connection")
+        return True
+
+async def get_db() -> AsyncGenerator[Optional[AsyncSession], None]:
+    """Get database session if available.
     
     Yields:
-        AsyncSession that will be automatically closed.
+        Optional[AsyncSession]: Database session or None if not configured
     """
-    async with AsyncSessionLocal() as session:
+    if not db_settings.database_required or not async_session_factory:
+        yield None
+        return
+        
+    async with async_session_factory() as session:
         try:
             yield session
         finally:
             await session.close()
 
+# Utility function to check database availability
+def is_database_available() -> bool:
+    """Check if database is available and configured."""
+    return bool(db_settings.database_required and async_session_factory)
 
-async def init_db() -> None:
-    """Initialize database with required tables."""
-    # Import all models here to ensure they are registered
-    from app.models.organization import Organization  # noqa
-    from app.models.user import User  # noqa
-    from app.models.rbac import Role, Permission  # noqa
-    from app.models.territory import Territory  # noqa
-    from app.models.sensitive_data import SensitiveUserData  # noqa
-    from app.models.patient import Patient  # noqa
-
-    # Create all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+# Create async session factory only if database is required
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autoflush=False,
+) if engine else None

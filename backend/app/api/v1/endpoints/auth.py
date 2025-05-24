@@ -8,14 +8,47 @@ from app.core.security import (
     create_access_token,
     get_current_user,
 )
-from app.schemas.auth import Token, UserCreate, UserResponse
+from app.models.user import User
+from app.schemas.auth import Token, UserCreate, UserResponse, LogoutResponse
 from app.services.cognito import CognitoService
+from app.services.users import create_user
 
 router = APIRouter()
 cognito = CognitoService()
 
+# Development only - create test user
+@router.post("/test-user", response_model=UserResponse)
+async def create_test_user(db: AsyncSession = Depends(get_db)):
+    """Create a test user for development"""
+    if not any(env in ["development", "local"] for env in ["local"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Test users can only be created in development"
+        )
+    
+    test_user = UserCreate(
+        email="test@healthcare.dev",
+        password="Test123!",
+        first_name="Test",
+        last_name="User"
+    )
+    
+    try:
+        # Create test user in database
+        db_user = await create_user(db, test_user, "test_user_id")
+        return db_user
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED
+)
 async def register(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db),
@@ -62,12 +95,14 @@ async def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/logout")
-async def logout(current_user = Depends(get_current_user)):
+@router.post("/logout", response_model=LogoutResponse)
+async def logout(
+    current_user: User = Depends(get_current_user),
+) -> LogoutResponse:
     """Logout current user"""
     try:
         await cognito.sign_out(current_user.cognito_id)
-        return {"message": "Successfully logged out"}
+        return LogoutResponse(message="Successfully logged out")
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

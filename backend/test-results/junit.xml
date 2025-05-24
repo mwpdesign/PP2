@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="0.907" timestamp="2025-05-23T23:58:12.292473" hostname="M1-Max-64.local"><testcase classname="tests.integration.test_phase1_completion" name="test_facility_patient_relationship" time="0.002"><failure message="AttributeError: 'async_generator' object has no attribute 'begin'">tests/integration/test_phase1_completion.py:27: in test_facility_patient_relationship
+    org = await test_organization
+tests/integration/conftest.py:106: in test_organization
+    async with async_session.begin():
+E   AttributeError: 'async_generator' object has no attribute 'begin'</failure></testcase><testcase classname="tests.integration.test_phase1_completion" name="test_patient_registration_api" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'begin'">tests/integration/test_phase1_completion.py:107: in test_patient_registration_api
+    org = await test_organization
+tests/integration/conftest.py:106: in test_organization
+    async with async_session.begin():
+E   AttributeError: 'async_generator' object has no attribute 'begin'</failure></testcase><testcase classname="tests.integration.test_phase1_completion" name="test_patient_document_upload" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'begin'">tests/integration/test_phase1_completion.py:146: in test_patient_document_upload
+    patient = await test_patient
+tests/integration/conftest.py:201: in test_patient
+    async with async_session.begin():
+E   AttributeError: 'async_generator' object has no attribute 'begin'</failure></testcase><testcase classname="tests.integration.test_phase1_completion" name="test_patient_facility_query" time="0.001"><failure message="AttributeError: 'async_generator' object has no attribute 'begin'">tests/integration/test_phase1_completion.py:177: in test_patient_facility_query
+    patient = await test_patient
+tests/integration/conftest.py:201: in test_patient
+    async with async_session.begin():
+E   AttributeError: 'async_generator' object has no attribute 'begin'</failure></testcase></testsuite></testsuites>

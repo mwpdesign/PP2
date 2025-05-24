@@ -7,6 +7,8 @@ import {
   TableState,
   Row,
   HeaderGroup,
+  Cell,
+  CellProps as ReactTableCellProps,
 } from 'react-table';
 import { toast } from 'react-toastify';
 
@@ -17,7 +19,7 @@ import {
   IVRQueueParams,
 } from '../../types/ivr';
 import ivrService from '../../services/ivrService';
-import websocketService from '../../services/websocket';
+import { useWebSocket, MessageType } from '../../services/websocket';
 
 interface IVRReviewProps {
   territoryId?: string;
@@ -28,11 +30,12 @@ interface TableStateWithSelection extends TableState<IVRRequest> {
 }
 
 interface RowWithToggle extends Row<IVRRequest> {
-  getToggleRowSelectedProps: () => any;
+  getToggleRowSelectedProps: () => { checked: boolean; onChange: () => void };
+  original: IVRRequest;
 }
 
 interface HeaderGroupWithSort extends HeaderGroup<IVRRequest> {
-  getSortByToggleProps: () => any;
+  getSortByToggleProps: () => { onClick: () => void; title: string };
   isSorted: boolean;
   isSortedDesc: boolean;
 }
@@ -48,6 +51,7 @@ const IVRReview: React.FC<IVRReviewProps> = ({ territoryId }) => {
     size: 20,
   });
   const [totalItems, setTotalItems] = useState(0);
+  const { subscribe } = useWebSocket();
 
   // Load queue data
   const loadQueue = useCallback(async () => {
@@ -121,7 +125,7 @@ const IVRReview: React.FC<IVRReviewProps> = ({ territoryId }) => {
       {
         Header: 'Priority',
         accessor: 'priority',
-        Cell: ({ value }: { value: IVRPriority }) => (
+        Cell: ({ value }: ReactTableCellProps<IVRRequest, IVRPriority>) => (
           <span className={`priority-${value.toLowerCase()}`}>
             {value.charAt(0).toUpperCase() + value.slice(1)}
           </span>
@@ -130,7 +134,7 @@ const IVRReview: React.FC<IVRReviewProps> = ({ territoryId }) => {
       {
         Header: 'Status',
         accessor: 'status',
-        Cell: ({ value }: { value: IVRStatus }) => (
+        Cell: ({ value }: ReactTableCellProps<IVRRequest, IVRStatus>) => (
           <span className={`status-${value.toLowerCase()}`}>
             {value.replace('_', ' ').charAt(0).toUpperCase() + value.slice(1)}
           </span>
@@ -139,7 +143,7 @@ const IVRReview: React.FC<IVRReviewProps> = ({ territoryId }) => {
       {
         Header: 'Actions',
         accessor: 'id',
-        Cell: ({ row }: { row: any }) => (
+        Cell: ({ row }: ReactTableCellProps<IVRRequest>) => (
           <div className="flex space-x-2">
             <button
               onClick={() => handleViewDetails(row.original.id)}
@@ -185,12 +189,14 @@ const IVRReview: React.FC<IVRReviewProps> = ({ territoryId }) => {
       hooks.visibleColumns.push((columns) => [
         {
           id: 'selection',
-          Header: ({ getToggleAllRowsSelectedProps }: any) => (
-            <input type="checkbox" {...getToggleAllRowsSelectedProps()} />
-          ),
-          Cell: ({ row }: { row: RowWithToggle }) => (
-            <input type="checkbox" {...row.getToggleRowSelectedProps()} />
-          ),
+          Header: ({ getToggleAllRowsSelectedProps }: any) => {
+            const props = getToggleAllRowsSelectedProps();
+            return <input type="checkbox" {...props} />;
+          },
+          Cell: ({ row }: ReactTableCellProps<IVRRequest>) => {
+            const typedRow = row as unknown as RowWithToggle;
+            return <input type="checkbox" {...typedRow.getToggleRowSelectedProps()} />;
+          },
         },
         ...columns,
       ]);
@@ -214,7 +220,7 @@ const IVRReview: React.FC<IVRReviewProps> = ({ territoryId }) => {
 
   // WebSocket subscription
   useEffect(() => {
-    const unsubscribe = websocketService.subscribe('status_update', (data) => {
+    const unsubscribe = subscribe(MessageType.STATUS_UPDATE, (data: IVRRequest) => {
       setRequests((prev) =>
         prev.map((request) =>
           request.id === data.id ? { ...request, ...data } : request
@@ -223,7 +229,7 @@ const IVRReview: React.FC<IVRReviewProps> = ({ territoryId }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [subscribe]);
 
   // Batch action handler
   const handleBatchAction = async (action: 'approve' | 'reject') => {
@@ -337,13 +343,15 @@ const IVRReview: React.FC<IVRReviewProps> = ({ territoryId }) => {
         <table {...getTableProps()} className="min-w-full">
           <thead>
             {headerGroups.map((headerGroup) => {
-              const typedHeaderGroup = headerGroup as HeaderGroupWithSort;
+              const typedHeaderGroup = headerGroup as unknown as HeaderGroupWithSort;
               return (
                 <tr {...headerGroup.getHeaderGroupProps()}>
                   {headerGroup.headers.map((column) => (
                     <th
-                      {...column.getHeaderProps(typedHeaderGroup.getSortByToggleProps())}
+                      {...column.getHeaderProps()}
                       className="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider"
+                      onClick={typedHeaderGroup.getSortByToggleProps().onClick}
+                      title={typedHeaderGroup.getSortByToggleProps().title}
                     >
                       {column.render('Header')}
                       <span>

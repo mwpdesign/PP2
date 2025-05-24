@@ -1,7 +1,7 @@
 """
 Shipping API endpoints.
 """
-from typing import Dict, List, Optional
+from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -13,9 +13,8 @@ from app.services.multi_carrier_shipping import (
     MultiCarrierShippingService,
     CarrierType
 )
-from app.services.shipping_service import (
-    Address, Package, ShippingRate, ShippingLabel,
-    TrackingInfo, ShippingServiceType
+from app.services.shipping_types import (
+    Address, Package, ShippingRate, TrackingInfo, ShippingServiceType
 )
 from app.schemas.shipping import (
     ShippingAddressCreate, ShippingAddressUpdate,

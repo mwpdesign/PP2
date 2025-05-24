@@ -28,6 +28,7 @@ class UserResponse(UserBase):
     cognito_id: str
     created_at: datetime
     updated_at: datetime
+    mfa_enabled: bool = False
 
     class Config:
         from_attributes = True
@@ -41,4 +42,9 @@ class Token(BaseModel):
 
 class TokenPayload(BaseModel):
     """Schema for token payload"""
-    sub: Optional[UUID4] = None 
+    sub: Optional[UUID4] = None
+
+
+class LogoutResponse(BaseModel):
+    """Logout response schema"""
+    message: str 

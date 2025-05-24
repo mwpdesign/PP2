@@ -9,7 +9,7 @@ import {
   IVRQueueParams,
 } from '../../types/ivr';
 import ivrService from '../../services/ivrService';
-import websocketService from '../../services/websocket';
+import { websocketService, MessageType } from '../../services/websocket';
 
 interface DashboardStats {
   total: number;
@@ -64,7 +64,7 @@ const IVRDashboard: React.FC = () => {
 
   // WebSocket subscription for real-time updates
   useEffect(() => {
-    const unsubscribe = websocketService.subscribe('dashboard_update', (data: any) => {
+    const unsubscribe = websocketService.subscribe(MessageType.DASHBOARD_UPDATE, (data: any) => {
       setStats((prev) => ({ ...prev, ...data }));
     });
 

@@ -1,149 +1,171 @@
 # Healthcare IVR Platform
 
-A HIPAA-compliant platform for healthcare insurance verification requests (IVR) built with React, FastAPI, and AWS.
-
-## Current Development Status
-
-🔄 **Phase 5: Order Management System**
-- ✅ Completed Product Catalog System
-- 🔄 Implementing Order Processing Workflow
-  - Order validation rules with HIPAA compliance (In Progress)
-  - Insurance verification integration (Next)
-  - Order status tracking and notifications (Planned)
+A HIPAA-compliant Interactive Voice Response (IVR) platform for healthcare providers.
 
 ## Features
 
-- 🔐 HIPAA-compliant data handling
-- 👥 Multi-role authentication system
-- 🏥 Provider network management
-- 📋 Insurance verification workflow
-- 📦 Order management and logistics
-  - ✅ Product catalog management
-  - ✅ Territory-based pricing
-  - 🔄 Order validation rules
-  - 📋 Insurance verification (Planned)
-- 📱 Real-time notifications
-- 📊 Comprehensive analytics
-
-## Tech Stack
-
-- **Frontend**: React + TypeScript + Tailwind CSS
-- **Backend**: Python FastAPI + SQLAlchemy
-- **Database**: PostgreSQL with encryption
-- **Cache**: Redis
-- **Cloud**: AWS (Cognito, RDS, S3, KMS, Lambda)
-- **Infrastructure**: Terraform
-- **Deployment**: Docker + ECS Fargate
+- Secure patient data handling with PHI encryption
+- Real-time IVR flow management
+- Provider scheduling and availability management
+- Patient appointment scheduling and reminders
+- Audit logging and compliance tracking
+- Territory-based access control
+- Real-time analytics and reporting
 
 ## Prerequisites
 
-- Docker and Docker Compose
-- Node.js 18+
-- Python 3.11+
-- AWS CLI configured
-- Terraform 1.0+
+- Docker & Docker Compose
+- Python 3.9+
+- Node.js 16+
+- AWS Account (or LocalStack for development)
 
-## Getting Started
+## Quick Start
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-org/healthcare-ivr-platform.git
-   cd healthcare-ivr-platform
-   ```
+1. Clone the repository:
+```bash
+git clone https://github.com/your-org/healthcare-ivr-platform.git
+cd healthcare-ivr-platform
+```
 
-2. **Set up environment variables**
-   ```bash
-   # Backend
-   cp backend/.env.example backend/.env
-   # Frontend
-   cp frontend/.env.example frontend/.env
-   ```
-   Update the environment variables with your AWS credentials and other configurations.
+2. Set up environment variables:
+```bash
+# For local development with LocalStack
+export AWS_ACCESS_KEY_ID=dummy_key
+export AWS_SECRET_ACCESS_KEY=dummy_secret
+```
 
-3. **Start the development environment**
-   ```bash
-   docker-compose up -d
-   ```
+3. Run the development environment setup script:
+```bash
+chmod +x scripts/setup-dev-environment.sh
+./scripts/setup-dev-environment.sh
+```
 
-   This will start:
-   - PostgreSQL database
-   - Redis cache
-   - Backend FastAPI service
-   - Frontend React application
+4. Start the application:
+```bash
+docker-compose up --build
+```
 
-4. **Access the applications**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
+5. Bootstrap the system (first time only):
+```bash
+docker-compose exec backend python scripts/system_bootstrap.py
+```
 
-## Development Setup
+## Access Points
 
-### Backend Development
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000/api/v1
+- API Documentation: http://localhost:8000/docs
+- Database Admin: http://localhost:8080
+- Grafana Dashboard: http://localhost:3001
+- Prometheus Metrics: http://localhost:9090
 
-1. **Create Python virtual environment**
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+## Default Credentials
 
-2. **Run migrations**
-   ```bash
-   alembic upgrade head
-   ```
+**Admin User:**
+- Email: admin@healthcare-ivr.com
+- Password: admin123 (change on first login)
 
-3. **Start backend server**
-   ```bash
-   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
+**Adminer:**
+- System: PostgreSQL
+- Server: db
+- Username: postgres
+- Password: password
+- Database: healthcare_ivr
 
-### Frontend Development
+**Grafana:**
+- Username: admin
+- Password: admin
 
-1. **Install dependencies**
-   ```bash
-   cd frontend
-   npm install
-   ```
+## Development
 
-2. **Start development server**
-   ```bash
-   npm run dev
-   ```
+### Directory Structure
 
-## Infrastructure Deployment
+```
+healthcare-ivr-platform/
+├── backend/                 # Python FastAPI backend
+│   ├── app/                # Application code
+│   ├── tests/              # Test suites
+│   └── scripts/            # Utility scripts
+├── frontend/               # React.js frontend
+│   ├── src/               # Source code
+│   └── public/            # Static assets
+├── infrastructure/         # Infrastructure configuration
+│   ├── prometheus/        # Prometheus configuration
+│   ├── grafana/           # Grafana dashboards
+│   └── localstack/        # LocalStack resources
+└── scripts/               # Development scripts
+```
 
-1. **Initialize Terraform**
-   ```bash
-   cd infrastructure
-   terraform init
-   ```
+### Running Tests
 
-2. **Plan deployment**
-   ```bash
-   terraform plan -out=tfplan
-   ```
+```bash
+# Backend tests
+docker-compose exec backend pytest
 
-3. **Apply changes**
-   ```bash
-   terraform apply tfplan
-   ```
+# Frontend tests
+docker-compose exec frontend npm test
+```
+
+### Code Style
+
+The project uses:
+- Backend: Black, isort, flake8, mypy
+- Frontend: ESLint, Prettier
+
+Format code before committing:
+```bash
+# Backend
+docker-compose exec backend black .
+docker-compose exec backend isort .
+
+# Frontend
+docker-compose exec frontend npm run format
+```
+
+## Monitoring & Debugging
+
+### Logs
+
+View container logs:
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f backend
+```
+
+### Metrics
+
+- Application metrics: http://localhost:9090
+- System monitoring: http://localhost:3001
 
 ## Security Notes
 
-- All PHI (Protected Health Information) is encrypted at rest using AWS KMS
-- Access to PHI is logged for audit compliance
-- Multi-factor authentication (MFA) is enabled by default
-- Role-based access control (RBAC) with territory management
-- Regular security audits and compliance checks
+1. Change default passwords immediately in production
+2. Enable MFA for all admin accounts
+3. Regularly rotate access keys
+4. Monitor audit logs for suspicious activity
+5. Keep all dependencies updated
+
+## Compliance
+
+The platform is designed for HIPAA compliance:
+- PHI encryption at rest and in transit
+- Comprehensive audit logging
+- Role-based access control
+- Secure communication channels
+- Data backup and recovery
+- Regular security assessments
 
 ## Contributing
 
-1. Create a feature branch
-2. Commit your changes
-3. Push to the branch
-4. Create a Pull Request
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests
+5. Submit a pull request
 
 ## License
 
-[Your License] - See LICENSE file for details 
+[Your License Here] 

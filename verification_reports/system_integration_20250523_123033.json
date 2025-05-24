@@ -1,0 +1,324 @@
+{
+  "timestamp": "2025-05-23T16:30:27.940370",
+  "environment": "dev",
+  "overall_status": "FAIL",
+  "components": {
+    "infrastructure": {
+      "status": "FAIL",
+      "error": "You must specify a region."
+    },
+    "authentication": {
+      "status": "FAIL",
+      "endpoints": {
+        "http://localhost:8000/api/v1/auth/login": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/auth/login (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dbd08c0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/auth/mfa/setup": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/auth/mfa/setup (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dbd0fb0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/auth/verify": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/auth/verify (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dbd17f0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/auth/refresh": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/auth/refresh (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dbd1f10>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        }
+      }
+    },
+    "data_management": {
+      "status": "FAIL",
+      "components": {
+        "database": {
+          "status": "PASS",
+          "message": "Database verification skipped - configuration not available"
+        },
+        "redis": {
+          "status": "FAIL",
+          "error": "Error 61 connecting to localhost:6379. Connection refused."
+        },
+        "s3": {
+          "status": "FAIL",
+          "error": "Unable to locate credentials"
+        }
+      }
+    },
+    "workflow_systems": {
+      "status": "FAIL",
+      "endpoints": {
+        "http://localhost:8000/api/v1/ivr/requests": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/ivr/requests (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dde38c0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/orders": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/orders (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddec1d0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/patients": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/patients (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x105ad7b30>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/providers": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/providers (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb5f40>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        }
+      }
+    },
+    "notification_system": {
+      "status": "FAIL",
+      "components": {
+        "http://localhost:8000/api/v1/notifications/email": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/notifications/email (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb53d0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/notifications/sms": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/notifications/sms (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb4530>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/notifications/preferences": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/notifications/preferences (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb65d0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "ses": {
+          "status": "FAIL",
+          "error": "You must specify a region."
+        }
+      }
+    },
+    "analytics_dashboard": {
+      "status": "FAIL",
+      "components": {
+        "http://localhost:8000/api/v1/analytics/metrics": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/analytics/metrics (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dde2a50>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/analytics/reports": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/analytics/reports (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x106a80a40>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        },
+        "http://localhost:8000/api/v1/analytics/dashboard": {
+          "status": "FAIL",
+          "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/analytics/dashboard (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb5280>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+        }
+      }
+    },
+    "security": {
+      "status": "PASS",
+      "message": "Security validation skipped - AWS credentials not configured"
+    },
+    "backup_systems": {
+      "status": "PASS",
+      "checks": {}
+    },
+    "compliance": {
+      "status": "PASS",
+      "message": "Compliance validation skipped - AWS credentials not configured"
+    },
+    "deployment_readiness": {
+      "status": "FAIL",
+      "error": "'DocumentationValidator' object has no attribute 'validate'"
+    }
+  },
+  "issues": [
+    {
+      "component": "infrastructure",
+      "error": "You must specify a region.",
+      "details": {
+        "status": "FAIL",
+        "error": "You must specify a region."
+      }
+    },
+    {
+      "component": "authentication",
+      "error": "Validation failed",
+      "details": {
+        "status": "FAIL",
+        "endpoints": {
+          "http://localhost:8000/api/v1/auth/login": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/auth/login (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dbd08c0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/auth/mfa/setup": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/auth/mfa/setup (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dbd0fb0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/auth/verify": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/auth/verify (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dbd17f0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/auth/refresh": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/auth/refresh (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dbd1f10>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          }
+        }
+      }
+    },
+    {
+      "component": "data_management",
+      "error": "Validation failed",
+      "details": {
+        "status": "FAIL",
+        "components": {
+          "database": {
+            "status": "PASS",
+            "message": "Database verification skipped - configuration not available"
+          },
+          "redis": {
+            "status": "FAIL",
+            "error": "Error 61 connecting to localhost:6379. Connection refused."
+          },
+          "s3": {
+            "status": "FAIL",
+            "error": "Unable to locate credentials"
+          }
+        }
+      }
+    },
+    {
+      "component": "workflow_systems",
+      "error": "Validation failed",
+      "details": {
+        "status": "FAIL",
+        "endpoints": {
+          "http://localhost:8000/api/v1/ivr/requests": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/ivr/requests (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dde38c0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/orders": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/orders (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddec1d0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/patients": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/patients (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x105ad7b30>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/providers": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/providers (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb5f40>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          }
+        }
+      }
+    },
+    {
+      "component": "notification_system",
+      "error": "Validation failed",
+      "details": {
+        "status": "FAIL",
+        "components": {
+          "http://localhost:8000/api/v1/notifications/email": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/notifications/email (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb53d0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/notifications/sms": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/notifications/sms (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb4530>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/notifications/preferences": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/notifications/preferences (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb65d0>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "ses": {
+            "status": "FAIL",
+            "error": "You must specify a region."
+          }
+        }
+      }
+    },
+    {
+      "component": "analytics_dashboard",
+      "error": "Validation failed",
+      "details": {
+        "status": "FAIL",
+        "components": {
+          "http://localhost:8000/api/v1/analytics/metrics": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/analytics/metrics (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10dde2a50>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/analytics/reports": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/analytics/reports (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x106a80a40>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          },
+          "http://localhost:8000/api/v1/analytics/dashboard": {
+            "status": "FAIL",
+            "error": "HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /api/v1/analytics/dashboard (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x10ddb5280>: Failed to establish a new connection: [Errno 61] Connection refused'))"
+          }
+        }
+      }
+    },
+    {
+      "component": "deployment_readiness",
+      "error": "'DocumentationValidator' object has no attribute 'validate'",
+      "details": {
+        "status": "FAIL",
+        "error": "'DocumentationValidator' object has no attribute 'validate'"
+      }
+    }
+  ],
+  "recommendations": [
+    {
+      "component": "infrastructure",
+      "issue": "You must specify a region.",
+      "steps": [
+        "Verify AWS credentials and permissions",
+        "Check service quotas and limits",
+        "Validate infrastructure configuration files"
+      ]
+    },
+    {
+      "component": "authentication",
+      "issue": "Validation failed",
+      "steps": [
+        "Verify Cognito user pool configuration",
+        "Check MFA settings",
+        "Validate JWT token handling"
+      ]
+    },
+    {
+      "component": "data_management",
+      "issue": "Validation failed",
+      "steps": [
+        "Check database connection strings",
+        "Verify Redis cache configuration",
+        "Validate S3 bucket permissions"
+      ]
+    },
+    {
+      "component": "workflow_systems",
+      "issue": "Validation failed",
+      "steps": [
+        "Verify API endpoint configurations",
+        "Check workflow state machines",
+        "Validate business logic implementation"
+      ]
+    },
+    {
+      "component": "notification_system",
+      "issue": "Validation failed",
+      "steps": [
+        "Check SES configuration and limits",
+        "Verify notification templates",
+        "Validate notification queue processing"
+      ]
+    },
+    {
+      "component": "analytics_dashboard",
+      "issue": "Validation failed",
+      "steps": [
+        "Check analytics data pipeline",
+        "Verify metrics calculations",
+        "Validate dashboard components"
+      ]
+    },
+    {
+      "component": "deployment_readiness",
+      "issue": "'DocumentationValidator' object has no attribute 'validate'",
+      "steps": [
+        "Complete missing documentation",
+        "Verify CI/CD pipeline configuration",
+        "Check deployment scripts"
+      ]
+    }
+  ]
+}

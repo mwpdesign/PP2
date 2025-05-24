@@ -1,16 +1,70 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: healthcare_ivr
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     ports:
-      - "5432:5432"
+      - "3000:3000"
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:8000
+      - REACT_APP_WS_URL=ws://localhost:8000/ws
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=healthcare_ivr
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - REDIS_URL=redis://redis:6379/0
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-dummy_access_key}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-dummy_secret_key}
+      - AWS_REGION=us-east-1
+      - AWS_S3_BUCKET=healthcare-ivr-local
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_KMS_KEY_ID=19c444c8-b145-41ba-b081-e0ba3cb5b6b2
+      - SECRET_KEY=${SECRET_KEY:-dummy_secret_key}
+      - PHI_ENCRYPTION_KEY=${PHI_ENCRYPTION_KEY:-dummy_encryption_key}
+      - ENABLE_MFA=true
+      - ENABLE_AUDIT_LOGGING=true
+      - ENABLE_PHI_ENCRYPTION=false
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+
+  db:
+    image: postgres:13-alpine
+    environment:
+      - POSTGRES_DB=healthcare_ivr
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -18,7 +72,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: redis:6.2-alpine
     ports:
       - "6379:6379"
     volumes:
@@ -29,42 +83,70 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
-    build:
-      context: ./backend
-      target: development
-    volumes:
-      - ./backend:/app
-      - backend_venv:/app/venv
+  localstack:
+    image: localstack/localstack:latest
     ports:
-      - "8000:8000"
+      - "4566:4566"
+      - "4510-4559:4510-4559"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/healthcare_ivr
-      - REDIS_URL=redis://redis:6379/0
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - SERVICES=s3,cognito,ses,dynamodb,kms
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOSTNAME_EXTERNAL=localstack
+      - LEGACY_DIRECTORIES=1
+      - DATA_DIR=/var/lib/localstack
+      - TMPDIR=/var/lib/localstack/tmp
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  frontend:
-    build:
-      context: ./frontend
-      target: development
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+  prometheus:
+    image: prom/prometheus:latest
     ports:
-      - "3000:3000"
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
     depends_on:
-      - backend
+      - prometheus
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=db
+      - ADMINER_DESIGN=nette
+    depends_on:
+      - db
 
 volumes:
   postgres_data:
   redis_data:
-  backend_venv: 
+  prometheus_data:
+  grafana_data:
+  localstack_data: 

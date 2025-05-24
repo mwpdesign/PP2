@@ -6,7 +6,7 @@ from enum import Enum
 
 from app.core.config import get_settings
 from app.core.exceptions import ShippingException
-from app.services.shipping_service import (
+from app.services.shipping_types import (
     ShippingProvider, Address, Package, ShippingRate,
     ShippingLabel, TrackingInfo, ShippingServiceType
 )

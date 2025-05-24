@@ -1,0 +1,36 @@
+services:
+  local_services:
+    backend_api:
+      url: http://localhost:8000/health
+      enabled: true
+      timeout: 5
+      max_retries: 3
+    redis:
+      host: localhost
+      port: 6379
+      enabled: true
+      timeout: 2
+      max_retries: 2
+  
+  aws_services:
+    cognito:
+      enabled: true
+      required_pools: 1
+    s3:
+      enabled: true
+      required_buckets: 1
+    ses:
+      enabled: true
+      verify_sending: true
+
+aws:
+  region: us-east-1
+  max_retries: 3
+  timeout: 5
+
+validation:
+  parallel: true
+  fail_fast: false
+  detailed_logging: true
+  save_reports: true
+  report_dir: verification_reports 

@@ -273,6 +273,38 @@ class IVRService {
       this.handleError(error);
     }
   }
+
+  async getDocumentAnnotations(documentId: string): Promise<DocumentAnnotation[]> {
+    try {
+      const response = await axios.get<DocumentAnnotation[]>(
+        `${IVR_ENDPOINT}/documents/${documentId}/annotations`
+      );
+      // Add default values for type and color if not present
+      return response.data.map(annotation => ({
+        ...annotation,
+        type: annotation.type || 'highlight',
+        color: annotation.color || '#ffff00'
+      }));
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+}
+
+// Add DocumentAnnotation interface
+export interface DocumentAnnotation {
+  id: string;
+  documentId: string;
+  text: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  type: 'highlight' | 'text' | 'drawing';
+  color: string;
+  points?: number[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export default IVRService.getInstance(); 

@@ -1,0 +1,83 @@
+name: Documentation Checks
+
+on:
+  push:
+    paths:
+      - 'memory-bank/**'
+      - 'docs/**'
+      - '**.md'
+  pull_request:
+    paths:
+      - 'memory-bank/**'
+      - 'docs/**'
+      - '**.md'
+  schedule:
+    - cron: '0 0 * * 1' # Weekly on Monday
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install markdown-link-check
+          pip install mdformat
+          pip install pymarkdown
+
+      - name: Check Markdown links
+        run: |
+          find . -name "*.md" -exec markdown-link-check {} \;
+
+      - name: Check Markdown formatting
+        run: |
+          mdformat --check .
+
+      - name: Validate Memory Bank structure
+        run: |
+          python .github/scripts/validate_memory_bank.py
+
+      - name: Check for sensitive data
+        run: |
+          python .github/scripts/check_sensitive_data.py
+
+      - name: Generate documentation report
+        if: always()
+        run: |
+          python .github/scripts/generate_docs_report.py
+
+      - name: Create issue for documentation updates
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('docs-report.json', 'utf8');
+            const { issues } = JSON.parse(report);
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              title: 'Documentation Update Required',
+              body: `Documentation check failed:\n\n${issues.join('\n')}`
+            });
+
+  notify-team:
+    needs: check-docs
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send notification
+        if: needs.check-docs.result == 'failure'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const message = `Documentation check failed in ${context.repo.owner}/${context.repo.name}`;
+            // Add your notification logic here (e.g., Slack, email) 

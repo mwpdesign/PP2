@@ -3,7 +3,9 @@
 from datetime import datetime
 from typing import Dict, Optional
 from enum import Enum
-from pydantic import BaseModel, Field
+from uuid import UUID
+
+from pydantic import BaseModel
 
 
 class NotificationStatus(str, Enum):
@@ -17,27 +19,29 @@ class NotificationStatus(str, Enum):
 
 class NotificationBase(BaseModel):
     """Base notification schema."""
-    content: str = Field(..., description="Notification content")
-    metadata: Optional[Dict] = Field(None, description="Additional metadata")
+    type: str
+    title: str
+    message: str
+    data: Optional[Dict] = None
+    is_read: bool = False
 
 
 class NotificationCreate(NotificationBase):
     """Schema for creating a notification."""
+    user_id: UUID
+
+
+class NotificationUpdate(NotificationBase):
+    """Schema for updating a notification."""
     pass
 
 
 class NotificationResponse(NotificationBase):
     """Schema for notification response."""
-    id: str
-    recipient_id: str
-    channel: str
-    priority: str
-    status: NotificationStatus
-    retry_count: int
+    id: UUID
+    user_id: UUID
     created_at: datetime
-    delivered_at: Optional[datetime]
     updated_at: datetime
 
     class Config:
-        """Pydantic config."""
-        orm_mode = True 
+        from_attributes = True 

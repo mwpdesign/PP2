@@ -6,9 +6,8 @@ from typing import Dict, List, Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, EmailStr
 
-from app.services.shipping_service import (
+from app.services.shipping_types import (
     ShippingServiceType,
-    PackageType,
     TrackingStatus
 )
 
@@ -28,7 +27,7 @@ class ShippingAddressBase(BaseModel):
 
 class ShippingAddressCreate(ShippingAddressBase):
     """Schema for creating a shipping address."""
-    address_type: str = Field(..., regex='^(from|to)$')
+    address_type: str = Field(..., pattern='^(from|to)$')
 
 
 class ShippingAddressUpdate(ShippingAddressBase):
@@ -49,12 +48,11 @@ class ShippingAddressResponse(ShippingAddressBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ShipmentPackageBase(BaseModel):
     """Base schema for shipment package."""
-    package_type: PackageType
     weight: float = Field(..., gt=0)
     length: Optional[float] = Field(None, gt=0)
     width: Optional[float] = Field(None, gt=0)
@@ -73,7 +71,6 @@ class ShipmentPackageCreate(ShipmentPackageBase):
 
 class ShipmentPackageUpdate(BaseModel):
     """Schema for updating a shipment package."""
-    package_type: Optional[PackageType] = None
     weight: Optional[float] = Field(None, gt=0)
     length: Optional[float] = Field(None, gt=0)
     width: Optional[float] = Field(None, gt=0)
@@ -93,7 +90,7 @@ class ShipmentPackageResponse(ShipmentPackageBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ShipmentTrackingBase(BaseModel):
@@ -117,7 +114,7 @@ class ShipmentTrackingResponse(ShipmentTrackingBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ShipmentBase(BaseModel):
@@ -149,8 +146,8 @@ class ShipmentUpdate(BaseModel):
     actual_delivery: Optional[datetime] = None
     status: Optional[str] = Field(
         None,
-        regex='^(pending|label_created|picked_up|'
-              'in_transit|delivered|exception)$'
+        pattern='^(pending|label_created|picked_up|'
+                'in_transit|delivered|exception)$'
     )
 
 
@@ -165,4 +162,4 @@ class ShipmentResponse(ShipmentBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 

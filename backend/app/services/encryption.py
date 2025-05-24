@@ -1,39 +1,113 @@
+"""HIPAA-compliant encryption service using AWS KMS."""
 import boto3
 import json
 from botocore.exceptions import ClientError
 from typing import Any, Dict
+import base64
+from datetime import datetime
+from uuid import UUID
 
 from app.core.config import settings
+from app.core.encryption import encrypt_field, decrypt_field
 
 
 class KMSEncryption:
+    """AWS KMS encryption service."""
+
     def __init__(self):
+        """Initialize KMS client."""
         self.client = boto3.client(
             'kms',
+            region_name=settings.AWS_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_DEFAULT_REGION
+            endpoint_url=settings.AWS_ENDPOINT_URL
         )
         self.key_id = settings.AWS_KMS_KEY_ID
 
-    def encrypt(self, data: str) -> str:
-        """Encrypt data using AWS KMS"""
+    def _serialize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert datetime and UUID objects to strings."""
+        serialized = {}
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                serialized[key] = value.strftime('%Y-%m-%d')
+            elif isinstance(value, UUID):
+                serialized[key] = str(value)
+            elif isinstance(value, dict):
+                serialized[key] = self._serialize_data(value)
+            elif isinstance(value, list):
+                serialized[key] = [
+                    self._serialize_data(item) if isinstance(item, dict)
+                    else item.strftime('%Y-%m-%d') if isinstance(item, datetime)
+                    else str(item) if isinstance(item, UUID)
+                    else item
+                    for item in value
+                ]
+            else:
+                serialized[key] = value
+        return serialized
+
+    def encrypt(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Encrypt data using KMS."""
+        # If encryption is disabled, return data as is
+        if not settings.ENABLE_PHI_ENCRYPTION:
+            return self._serialize_data(data)
+
         try:
+            # Serialize data
+            serialized_data = self._serialize_data(data)
+            
+            # Convert data to JSON string
+            data_str = json.dumps(serialized_data)
+            
+            # Encrypt data
             response = self.client.encrypt(
                 KeyId=self.key_id,
-                Plaintext=data.encode()
+                Plaintext=data_str.encode('utf-8')
             )
-            return response['CiphertextBlob'].hex()
+            
+            # Base64 encode the encrypted data
+            encrypted = base64.b64encode(
+                response['CiphertextBlob']
+            ).decode('utf-8')
+            
+            # Return encrypted data
+            return {
+                key: encrypted if key in [
+                    'first_name', 'last_name', 'email',
+                    'date_of_birth', 'insurance_provider', 'insurance_id'
+                ] else value
+                for key, value in serialized_data.items()
+            }
         except ClientError as e:
             raise Exception(f"Failed to encrypt data: {str(e)}")
 
-    def decrypt(self, encrypted_data: str) -> str:
-        """Decrypt data using AWS KMS"""
+    def decrypt(self, encrypted_data: str) -> Dict[str, Any]:
+        """Decrypt data using KMS."""
         try:
+            # Base64 decode the encrypted data
+            ciphertext = base64.b64decode(encrypted_data)
+            
+            # Decrypt data
             response = self.client.decrypt(
-                CiphertextBlob=bytes.fromhex(encrypted_data)
+                CiphertextBlob=ciphertext,
+                KeyId=self.key_id
             )
-            return response['Plaintext'].decode()
+            
+            # Parse decrypted JSON string
+            decrypted = json.loads(response['Plaintext'].decode())
+            
+            # Handle date_of_birth field specially
+            if 'date_of_birth' in decrypted:
+                try:
+                    decrypted['date_of_birth'] = datetime.strptime(
+                        decrypted['date_of_birth'],
+                        '%Y-%m-%d'
+                    )
+                except (ValueError, TypeError):
+                    pass
+            
+            return decrypted
         except ClientError as e:
             raise Exception(f"Failed to decrypt data: {str(e)}")
 
@@ -42,34 +116,30 @@ class KMSEncryption:
 kms = KMSEncryption()
 
 
-def encrypt_patient_data(patient_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Encrypt patient PHI fields"""
-    encrypted_data = patient_data.copy()
+def encrypt_patient_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Encrypt patient data."""
+    # Convert UUIDs to strings and handle date_of_birth
+    data_copy = data.copy()
+    for key, value in data_copy.items():
+        if isinstance(value, UUID):
+            data_copy[key] = str(value)
+        elif key == 'date_of_birth' and value:
+            if isinstance(value, str):
+                try:
+                    dt = datetime.fromisoformat(
+                        value.replace('Z', '+00:00')
+                    )
+                    data_copy[key] = dt.strftime('%Y-%m-%d')
+                except ValueError:
+                    pass
+            elif isinstance(value, datetime):
+                data_copy[key] = value.strftime('%Y-%m-%d')
     
-    # Fields to encrypt
-    phi_fields = [
-        'first_name', 'last_name', 'date_of_birth', 'ssn',
-        'email', 'phone', 'address_line1', 'address_line2',
-        'city', 'state', 'zip_code', 'insurance_provider',
-        'insurance_id', 'insurance_group', 'insurance_phone',
-        'medical_history', 'allergies', 'medications'
-    ]
-    
-    for field in phi_fields:
-        if field in encrypted_data and encrypted_data[field]:
-            # Convert date objects to ISO format string
-            if field == 'date_of_birth':
-                value = encrypted_data[field].isoformat()
-            else:
-                value = str(encrypted_data[field])
-                
-            encrypted_data[field] = kms.encrypt(value)
-    
-    return encrypted_data
+    return kms.encrypt(data_copy)
 
 
-def decrypt_patient_data(patient: Any) -> Any:
-    """Decrypt patient PHI fields"""
+def decrypt_patient_data(patient: Any) -> Dict[str, Any]:
+    """Decrypt patient data."""
     # Convert SQLAlchemy model to dict if needed
     if hasattr(patient, '__dict__'):
         patient_data = {
@@ -77,29 +147,33 @@ def decrypt_patient_data(patient: Any) -> Any:
             for c in patient.__table__.columns
         }
     else:
-        patient_data = patient.copy()
+        patient_data = patient
     
     # Fields to decrypt
-    phi_fields = [
-        'first_name', 'last_name', 'date_of_birth', 'ssn',
-        'email', 'phone', 'address_line1', 'address_line2',
-        'city', 'state', 'zip_code', 'insurance_provider',
-        'insurance_id', 'insurance_group', 'insurance_phone',
-        'medical_history', 'allergies', 'medications'
+    sensitive_fields = [
+        'first_name', 'last_name', 'email',
+        'date_of_birth', 'insurance_provider', 'insurance_id'
     ]
     
-    for field in phi_fields:
-        if field in patient_data and patient_data[field]:
-            decrypted_value = kms.decrypt(patient_data[field])
-            
-            # Convert date strings back to date objects
-            if field == 'date_of_birth':
-                from datetime import date
-                patient_data[field] = date.fromisoformat(decrypted_value)
-            else:
-                patient_data[field] = decrypted_value
+    decrypted_data = {}
+    for field, value in patient_data.items():
+        if field in sensitive_fields and value:
+            try:
+                decrypted = kms.decrypt(value)
+                if field == 'date_of_birth':
+                    try:
+                        dt = datetime.strptime(decrypted, '%Y-%m-%d')
+                        decrypted_data[field] = dt
+                    except ValueError:
+                        decrypted_data[field] = decrypted
+                else:
+                    decrypted_data[field] = decrypted
+            except Exception:
+                decrypted_data[field] = value
+        else:
+            decrypted_data[field] = value
     
-    return patient_data
+    return decrypted_data
 
 
 def encrypt_provider_data(provider_data: Dict[str, Any]) -> Dict[str, Any]:

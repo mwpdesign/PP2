@@ -1,7 +1,8 @@
 from datetime import datetime
 from sqlalchemy import String, DateTime, Boolean, ForeignKey, Text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from uuid import UUID, uuid4
+from uuid import UUID as PyUUID, uuid4
 
 from app.core.database import Base
 
@@ -10,7 +11,8 @@ class Provider(Base):
     """Healthcare Provider model"""
     __tablename__ = "providers"
 
-    id: Mapped[UUID] = mapped_column(
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
         primary_key=True,
         default=uuid4,
         unique=True,
@@ -105,7 +107,7 @@ class Provider(Base):
         onupdate=datetime.utcnow,
         nullable=False
     )
-    created_by_id: Mapped[UUID] = mapped_column(
+    created_by_id: Mapped[PyUUID] = mapped_column(
         ForeignKey("users.id"),
         nullable=False
     )
@@ -113,4 +115,4 @@ class Provider(Base):
     # Relationships
     created_by = relationship("User", back_populates="providers")
     patients = relationship("Patient", back_populates="provider")
-    staff = relationship("ProviderStaff", back_populates="provider") 
+    orders = relationship("Order", back_populates="provider") 

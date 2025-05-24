@@ -11,7 +11,7 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 from app.core.security import encrypt_field, decrypt_field
-from app.services.shipping_service import ShippingServiceType, PackageType
+from app.services.shipping_types import ShippingServiceType, TrackingStatus
 
 
 class ShippingAddress(Base):
@@ -122,10 +122,6 @@ class ShipmentPackage(Base):
 
     id = Column(UUID, primary_key=True, default=uuid4)
     shipment_id = Column(UUID, ForeignKey('shipments.id'), nullable=False)
-    package_type = Column(
-        Enum(PackageType),
-        nullable=False
-    )
     weight = Column(String(500), nullable=False)  # Encrypted
     length = Column(String(500))  # Encrypted
     width = Column(String(500))  # Encrypted
@@ -199,11 +195,11 @@ class Shipment(Base):
     @property
     def rate(self) -> float:
         """Get decrypted rate."""
-        return float(decrypt_field(self._rate)) if self._rate else 0.0
+        return float(decrypt_field(self._rate)) if self._rate else None
 
     @rate.setter
     def rate(self, value: float):
-        self._rate = encrypt_field(str(value))
+        self._rate = encrypt_field(str(value)) if value is not None else None
 
 
 class ShipmentTracking(Base):
@@ -214,15 +210,7 @@ class ShipmentTracking(Base):
     shipment_id = Column(UUID, ForeignKey('shipments.id'), nullable=False)
     timestamp = Column(DateTime, nullable=False)
     status = Column(
-        Enum(
-            'pending',
-            'in_transit',
-            'out_for_delivery',
-            'delivered',
-            'exception',
-            'returned',
-            name='tracking_status_enum'
-        ),
+        Enum(TrackingStatus),
         nullable=False
     )
     _location = Column(String(500))  # Encrypted
@@ -245,8 +233,8 @@ class ShipmentTracking(Base):
     @property
     def description(self) -> str:
         """Get decrypted description."""
-        return decrypt_field(self._description) if self._description else None
+        return decrypt_field(self._description)
 
     @description.setter
     def description(self, value: str):
-        self._description = encrypt_field(value) if value else None 
+        self._description = encrypt_field(value) 

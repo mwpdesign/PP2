@@ -1,0 +1,16 @@
+{
+  "name": "healthcare-ivr-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && uvicorn app.main:app --reload\"",
+    "install:all": "concurrently \"cd frontend && npm install\" \"cd backend && pip install -r requirements.txt\"",
+    "build": "cd frontend && npm run build",
+    "test": "concurrently \"cd frontend && npm test\" \"cd backend && python -m pytest\"",
+    "lint": "cd frontend && npm run lint",
+    "format": "cd frontend && npm run format"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+} 

@@ -1,28 +1,28 @@
-name: Deploy
+name: Deploy to Production
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+    tags: [ 'v*' ]
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: healthcare-ivr
+  ECR_REPOSITORY_BACKEND: healthcare-ivr-backend
+  ECR_REPOSITORY_FRONTEND: healthcare-ivr-frontend
   ECS_CLUSTER: healthcare-ivr-cluster
-  ECS_SERVICE: healthcare-ivr-service
-  TERRAFORM_VERSION: 1.0.0
+  ECS_SERVICE_BACKEND: healthcare-ivr-backend-service
+  ECS_SERVICE_FRONTEND: healthcare-ivr-frontend-service
+  ECS_TASK_DEFINITION_BACKEND: healthcare-ivr-backend-task
+  ECS_TASK_DEFINITION_FRONTEND: healthcare-ivr-frontend-task
 
 jobs:
-  deploy:
+  canary-deployment:
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://healthcare-ivr.example.com
-
+    environment: production
+    
     steps:
     - uses: actions/checkout@v3
 
-    # AWS authentication
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -30,7 +30,6 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # Build and push Docker images
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
@@ -38,71 +37,148 @@ jobs:
     - name: Build and push backend image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: ${{ github.sha }}-canary
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        cd backend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG
+        echo "::set-output name=backend_image::$ECR_REGISTRY/$ECR_REPOSITORY_BACKEND:$IMAGE_TAG"
 
-    # Infrastructure deployment
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
+    - name: Build and push frontend image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}-canary
+      run: |
+        cd frontend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG
+        echo "::set-output name=frontend_image::$ECR_REGISTRY/$ECR_REPOSITORY_FRONTEND:$IMAGE_TAG"
+
+    - name: Deploy Canary
+      run: |
+        # Calculate 10% of current desired count for canary
+        CURRENT_COUNT=$(aws ecs describe-services --cluster $ECS_CLUSTER --services $ECS_SERVICE_BACKEND --query 'services[0].desiredCount' --output text)
+        CANARY_COUNT=$(( $CURRENT_COUNT / 10 ))
+        if [ $CANARY_COUNT -lt 1 ]; then CANARY_COUNT=1; fi
+
+        # Update backend service with canary
+        aws ecs update-service \
+          --cluster $ECS_CLUSTER \
+          --service $ECS_SERVICE_BACKEND \
+          --task-definition $ECS_TASK_DEFINITION_BACKEND \
+          --desired-count $CANARY_COUNT \
+          --force-new-deployment
+
+        # Wait for canary health check
+        sleep 60
+        
+        # Check canary health
+        CANARY_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.BACKEND_URL }}/health)
+        if [ $CANARY_HEALTH -ne 200 ]; then
+          echo "Canary health check failed"
+          exit 1
+        fi
+
+  deploy:
+    needs: canary-deployment
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
       with:
-        terraform_version: ${{ env.TERRAFORM_VERSION }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
 
-    - name: Terraform Init
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Deploy to Production
       run: |
-        cd infrastructure
-        terraform init
+        # Store current task definition as previous for potential rollback
+        aws ecs describe-task-definition \
+          --task-definition $ECS_TASK_DEFINITION_BACKEND \
+          --query 'taskDefinition' > previous-task-def.json
 
-    - name: Terraform Plan
-      run: |
-        cd infrastructure
-        terraform plan -out=tfplan
+        # Update services to full capacity with canary image
+        aws ecs update-service \
+          --cluster $ECS_CLUSTER \
+          --service $ECS_SERVICE_BACKEND \
+          --task-definition $ECS_TASK_DEFINITION_BACKEND \
+          --desired-count 100% \
+          --force-new-deployment
 
-    - name: Terraform Apply
-      run: |
-        cd infrastructure
-        terraform apply -auto-approve tfplan
+        aws ecs update-service \
+          --cluster $ECS_CLUSTER \
+          --service $ECS_SERVICE_FRONTEND \
+          --task-definition $ECS_TASK_DEFINITION_FRONTEND \
+          --force-new-deployment
 
-    # Blue-Green Deployment
-    - name: Deploy to ECS
-      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      with:
-        task-definition: task-definition.json
-        service: ${{ env.ECS_SERVICE }}
-        cluster: ${{ env.ECS_CLUSTER }}
-        wait-for-service-stability: true
-        codedeploy-appspec: appspec.yaml
-        codedeploy-application: healthcare-ivr
-        codedeploy-deployment-group: healthcare-ivr-blue-green
-
-    # Health check
     - name: Health check
       run: |
-        curl --fail https://healthcare-ivr.example.com/health || exit 1
+        # Wait for services to be fully available
+        sleep 60
+        
+        # Check backend health
+        BACKEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.BACKEND_URL }}/health)
+        if [ $BACKEND_HEALTH -ne 200 ]; then
+          echo "Backend health check failed"
+          exit 1
+        fi
+        
+        # Check frontend health
+        FRONTEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" ${{ secrets.FRONTEND_URL }})
+        if [ $FRONTEND_HEALTH -ne 200 ]; then
+          echo "Frontend health check failed"
+          exit 1
+        fi
 
-    # Backup
-    - name: Backup database
+  rollback:
+    needs: deploy
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Rollback Deployment
       run: |
-        aws rds create-db-snapshot \
-          --db-instance-identifier healthcare-ivr \
-          --db-snapshot-identifier backup-${{ github.sha }}
+        # Retrieve the previous task definition
+        PREVIOUS_TASK_DEF=$(aws ecs describe-services \
+          --cluster $ECS_CLUSTER \
+          --services $ECS_SERVICE_BACKEND \
+          --query 'services[0].deployments[1].taskDefinition' \
+          --output text)
+        
+        # Rollback backend service
+        aws ecs update-service \
+          --cluster $ECS_CLUSTER \
+          --service $ECS_SERVICE_BACKEND \
+          --task-definition $PREVIOUS_TASK_DEF \
+          --force-new-deployment
 
-    # Notifications
-    - name: Notify deployment success
-      if: success()
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_COLOR: '#36a64f'
-        SLACK_MESSAGE: 'Deployment successful!'
-        SLACK_TITLE: Deployment Status
+        # Rollback frontend service
+        aws ecs update-service \
+          --cluster $ECS_CLUSTER \
+          --service $ECS_SERVICE_FRONTEND \
+          --task-definition $PREVIOUS_TASK_DEF \
+          --force-new-deployment
 
-    - name: Notify deployment failure
-      if: failure()
-      uses: rtCamp/action-slack-notify@v2
+    - name: Notify rollback status
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+        text: "Deployment rollback executed due to failure"
       env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_COLOR: '#FF0000'
-        SLACK_MESSAGE: 'Deployment failed!'
-        SLACK_TITLE: Deployment Status 
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 

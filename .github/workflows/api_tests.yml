@@ -1,0 +1,230 @@
+name: API Tests & Compliance Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/api_tests.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/api_tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install dependencies
+      working-directory: ./backend
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-env pytest-xdist bandit safety locust
+
+    - name: Run unit & integration tests
+      working-directory: ./backend
+      env:
+        ENVIRONMENT: test
+        TESTING: "true"
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+        SECRET_KEY: test_secret_key
+        ACCESS_TOKEN_EXPIRE_MINUTES: 15
+        REFRESH_TOKEN_EXPIRE_DAYS: 7
+        BACKEND_CORS_ORIGINS: '["http://localhost:3000"]'
+        AWS_ACCESS_KEY_ID: test
+        AWS_SECRET_ACCESS_KEY: test
+        AWS_DEFAULT_REGION: us-east-1
+        AWS_S3_BUCKET: test-bucket
+        AUDIT_ENABLE_OBJECT_LOGGING: "true"
+      run: |
+        pytest tests/ -v --cov=app --cov-report=xml --junitxml=test-results/junit.xml
+
+    - name: Run HIPAA compliance tests
+      working-directory: ./backend
+      env:
+        COMPLIANCE_CONFIG: tests/compliance/compliance_config.json
+      run: |
+        # Run compliance validator tests
+        pytest tests/compliance/test_hipaa_compliance.py -v --junitxml=test-results/compliance.xml
+        
+        # Verify encryption requirements
+        python - <<EOF
+        import json
+        import sys
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        from cryptography.hazmat.primitives.asymmetric import rsa, padding
+        from cryptography.hazmat.primitives import hashes
+        
+        def verify_encryption_strength():
+            # Verify AES-GCM implementation
+            key = AESGCM.generate_key(bit_length=256)
+            aesgcm = AESGCM(key)
+            
+            # Verify RSA implementation
+            private_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=4096
+            )
+            
+            return True
+        
+        if not verify_encryption_strength():
+            print("Encryption implementation does not meet HIPAA requirements")
+            sys.exit(1)
+        EOF
+        
+        # Check for sensitive data exposure
+        python tests/security/vulnerability_scanner.py . --check-secrets
+        
+        # Verify audit logging implementation
+        python - <<EOF
+        import sys
+        from datetime import datetime, timedelta
+        from app.models.audit import AuditLog
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        
+        def verify_audit_logging():
+            engine = create_engine("postgresql://postgres:postgres@localhost:5432/testdb")
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            
+            # Check audit log retention
+            oldest_allowed = datetime.now() - timedelta(days=2190)  # 6 years
+            old_logs = session.query(AuditLog).filter(
+                AuditLog.timestamp < oldest_allowed
+            ).count()
+            
+            if old_logs > 0:
+                return False
+            
+            return True
+        
+        if not verify_audit_logging():
+            print("Audit logging does not meet HIPAA requirements")
+            sys.exit(1)
+        EOF
+
+    - name: Run performance tests
+      working-directory: ./backend
+      env:
+        LOCUST_HOST: http://localhost:8000
+        LOCUST_USERS: 10
+        LOCUST_SPAWN_RATE: 1
+        LOCUST_RUN_TIME: 1m
+      run: |
+        # Start API server in background
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+        sleep 5  # Wait for server to start
+        
+        # Run Locust tests
+        locust -f tests/performance/test_performance.py --headless -u $LOCUST_USERS -r $LOCUST_SPAWN_RATE -t $LOCUST_RUN_TIME --host $LOCUST_HOST --only-summary
+        
+        # Check performance thresholds
+        python - <<EOF
+        import json
+        with open('locust_stats.json') as f:
+            stats = json.load(f)
+            for endpoint in stats['stats']:
+                assert endpoint['avg_response_time'] < 1000, f"Average response time too high for {endpoint['name']}"
+                assert endpoint['fail_ratio'] < 0.01, f"Failure rate too high for {endpoint['name']}"
+        EOF
+
+    - name: Run security scans
+      working-directory: ./backend
+      run: |
+        # Run Bandit security scan
+        bandit -r app/ -f json -o security-report.json
+        
+        # Check for known vulnerabilities in dependencies
+        safety check -r requirements.txt --json > safety-report.json
+        
+        # Run custom security scanner
+        python tests/security/vulnerability_scanner.py .
+        
+        # Check security scan results
+        python - <<EOF
+        import json
+        import sys
+        
+        # Check Bandit results
+        with open('security-report.json') as f:
+            bandit_results = json.load(f)
+            high_severity = len([i for i in bandit_results['results'] if i['issue_severity'] == 'HIGH'])
+            if high_severity > 0:
+                print(f"Found {high_severity} high severity security issues")
+                sys.exit(1)
+        
+        # Check Safety results
+        with open('safety-report.json') as f:
+            safety_results = json.load(f)
+            if len(safety_results) > 0:
+                print(f"Found {len(safety_results)} known vulnerabilities in dependencies")
+                sys.exit(1)
+        EOF
+
+    - name: Generate API documentation
+      working-directory: ./backend
+      run: |
+        python api_documentation_generator.py
+        
+        # Verify documentation was generated
+        test -f api_docs/openapi.json
+        test -f api_docs/api_documentation.md
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage.xml
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: true
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          backend/test-results/
+          backend/security-report.json
+          backend/safety-report.json
+          backend/security_reports/
+          backend/api_docs/
+        retention-days: 30
+
+    - name: Check test coverage
+      working-directory: ./backend
+      run: |
+        coverage_threshold=80
+        coverage_result=$(coverage report | grep TOTAL | awk '{print $4}' | sed 's/%//')
+        if (( $(echo "$coverage_result < $coverage_threshold" | bc -l) )); then
+          echo "Test coverage ($coverage_result%) is below threshold ($coverage_threshold%)"
+          exit 1
+        fi 

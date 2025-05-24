@@ -13,7 +13,6 @@ export interface AuthResponse {
 }
 
 export interface MFAResponse {
-  status: 'MFA_REQUIRED';
   session: string;
   challengeName: string;
 }
@@ -66,16 +65,22 @@ class CognitoService {
     }
   }
 
-  async login(
-    email: string,
-    password: string
-  ): Promise<AuthResponse | MFAResponse> {
+  async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await axios.post(
+      const response = await axios.post<AuthResponse>(
         `${this.API_URL}/auth/login`,
         { email, password }
       );
       return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await Auth.signOut();
+      await axios.post(`${this.API_URL}/auth/logout`);
     } catch (error) {
       throw this.handleError(error);
     }
@@ -202,7 +207,7 @@ class CognitoService {
     }
   }
 
-  private async getAccessToken(): Promise<string> {
+  async getAccessToken(): Promise<string> {
     try {
       const session = await Auth.currentSession();
       return session.getAccessToken().getJwtToken();

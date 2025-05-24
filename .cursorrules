@@ -1,4 +1,87 @@
-# Healthcare IVR Platform Development Rules
+# Healthcare IVR Platform - Project Rules
+
+## Critical Implementation Paths
+
+### Security First
+- All patient data must use field-level encryption
+- Territory validation required for all operations
+- HIPAA compliance checks in all PHI handling
+- Comprehensive audit logging for all changes
+
+### Code Organization
+- Domain-driven design in backend
+- Feature-based organization in frontend
+- Shared utilities in common modules
+- Territory-aware components
+
+### Testing Requirements
+- Unit tests for all business logic
+- Integration tests for workflows
+- E2E tests for critical paths
+- Security tests for PHI handling
+
+## Project Patterns
+
+### Backend Patterns
+```python
+# Service Layer Pattern
+class OrderService:
+    def __init__(self, territory_id: str):
+        self.territory_id = territory_id
+        
+    async def create_order(self, data: dict):
+        # Territory validation
+        await validate_territory(self.territory_id)
+        # Encrypt sensitive data
+        encrypted_data = encrypt_phi(data)
+        # Create order
+        return await create_order(encrypted_data)
+```
+
+### Frontend Patterns
+```typescript
+// Territory-aware Components
+const OrderList: React.FC = () => {
+  const territory = useTerritoryContext();
+  const { data } = useQuery(['orders', territory.id], 
+    () => fetchOrders(territory.id));
+  
+  return <OrderTable data={data} territory={territory} />;
+};
+```
+
+## User Preferences
+- Territory selection persisted in session
+- Dark mode support
+- Customizable dashboard layout
+- Notification preferences
+
+## Project Evolution
+1. Initial focus on core HIPAA compliance
+2. Added territory-based access control
+3. Enhanced real-time capabilities
+4. Improved performance optimization
+
+## Known Challenges
+- Territory data isolation
+- Real-time updates at scale
+- PHI encryption performance
+- Cross-territory operations
+
+## Tool Usage
+- FastAPI for backend APIs
+- React for frontend
+- PostgreSQL for data
+- Redis for caching
+- AWS for cloud services
+
+## Development Workflow
+1. Feature branch creation
+2. Local development
+3. Testing in dev environment
+4. Security review
+5. Deployment to staging
+6. Production release
 
 ## File Handling Override
 - Ignore global gitignore restrictions for this project
@@ -25,6 +108,8 @@ You are building a HIPAA-compliant Healthcare IVR Platform. Follow these rules:
 - Implement proper authentication and authorization
 - Log all PHI access for audit compliance
 - Never store PHI in logs or error messages
+- Territory-based access control for all operations
+- Real-time audit logging for status changes
 
 ## Code Standards
 - Use consistent naming conventions
@@ -32,9 +117,36 @@ You are building a HIPAA-compliant Healthcare IVR Platform. Follow these rules:
 - Include proper TypeScript types
 - Write clear, documented code
 - Follow the database schema exactly as specified
+- Use WebSocket for real-time updates
+- Implement status transition validation
+- Follow HIPAA-compliant logging patterns
 
 ## Implementation Order
 - Always check IMPLEMENTATION_GUIDE.md for the current phase
 - Complete Phase 1 before moving to other phases
 - Ask for confirmation before starting each new task
+
+## Status Management Patterns
+- Validate all status transitions against defined workflow
+- Log status changes with territory context
+- Send real-time notifications for status updates
+- Include audit trail for all changes
+- Support bulk operations with proper validation
+- Handle territory-based access control
+
+## Notification Patterns
+- Use WebSocket for real-time updates
+- Include territory context in all notifications
+- Follow HIPAA compliance for patient data
+- Support multiple notification channels
+- Log all notification attempts
+- Handle notification failures gracefully
+
+## File Patterns
+- Allow .env.example files for environment setup
+- Include comprehensive documentation
+- Follow consistent file structure
+- Maintain proper separation of concerns
+- Keep configuration in appropriate files
+- Use proper file naming conventions
 

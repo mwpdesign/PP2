@@ -1,96 +1,69 @@
 """Main FastAPI application."""
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
-from app.core.config import settings
-from app.api.v1.api import api_router
-from app.core.database import init_db, AsyncSessionLocal
-import structlog
-from sqlalchemy import text
+# from app.core.config import settings
+# from app.api.v1.api import api_router
+# from app.core.database import init_db
 
+# Import only the test endpoint
+from .core.database import init_db, db_settings
 
-logger = structlog.get_logger()
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
+app = FastAPI(title="Healthcare IVR Platform")
 
-def create_application() -> FastAPI:
-    """Create and configure FastAPI application."""
-    app = FastAPI(
-        title=settings.PROJECT_NAME,
-        version=settings.VERSION,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json"
-    )
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    # Set CORS middleware with explicit origins
-    origins = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ]
-    
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["*"]
-    )
-
-    # Add trusted host middleware
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["*"]  # Configure based on environment
-    )
-
-    # Include API router
-    app.include_router(api_router, prefix=settings.API_V1_STR)
-
-    return app
-
-
-app = create_application()
-
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint with database connectivity check"""
-    try:
-        # Test database connection
-        async with AsyncSessionLocal() as db:
-            try:
-                # Execute a simple query
-                result = await db.execute(text("SELECT 1"))
-                await result.scalar()
-                db_status = "connected"
-            except Exception as e:
-                logger.error("Database health check failed", error=str(e))
-                db_status = "error"
-    except Exception as e:
-        logger.error("Database session creation failed", error=str(e))
-        db_status = "error"
-
-    return JSONResponse(
-        content={
-            "status": "healthy" if db_status == "connected" else "unhealthy",
-            "database": db_status,
-            "environment": settings.ENVIRONMENT,
-            "version": settings.VERSION
-        },
-        status_code=200 if db_status == "connected" else 503,
-    )
-
+@app.get("/test")
+async def test_endpoint():
+    """Test endpoint to verify API is working."""
+    return {"status": "success", "message": "API is working"}
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize application on startup."""
-    await init_db()
-    logger.info(
-        "Starting Healthcare IVR Platform API",
-        environment=settings.ENVIRONMENT
-    )
+    logger.info("Starting Healthcare IVR Platform API")
+    
+    # Initialize database if required
+    db_success = await init_db()
+    
+    if db_settings.database_required and not db_success:
+        logger.error("Failed to initialize required database connection")
+    else:
+        status = "available" if db_success else "disabled"
+        logger.info(f"Application started successfully. Database {status}")
+    
+    # Import routers after database initialization
+    try:
+        from app.test_endpoint import router as test_router
+        app.include_router(test_router)
+        logger.info("Test router loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load test router: {str(e)}")
+    
+    try:
+        from .api.auth.routes import router as auth_router
+        app.include_router(auth_router)
+        logger.info("Auth router loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load auth router: {str(e)}")
+        logger.info("Continuing without authentication routes")
 
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    logger.info("Shutting down Healthcare IVR Platform API") 
+# Comment out all startup events for now
+# @app.on_event("startup")
+# async def startup_event():
+#     """Initialize application on startup."""
+#     await init_db() 
