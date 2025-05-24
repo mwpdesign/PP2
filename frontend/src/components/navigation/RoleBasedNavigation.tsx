@@ -30,115 +30,95 @@ interface RoleBasedNavigationProps {
   userRole: UserRole;
 }
 
-const navigationConfig: NavigationItem[] = [
-  // Admin Navigation
-  {
-    id: 'users',
-    title: 'User Management',
-    path: '/users',
-    icon: 'people',
-    roles: ['admin'],
-  },
-  {
-    id: 'analytics',
-    title: 'Analytics',
-    path: '/analytics',
-    icon: 'assessment',
-    roles: ['admin'],
-  },
-  {
-    id: 'settings',
-    title: 'System Settings',
-    path: '/settings',
-    icon: 'settings',
-    roles: ['admin'],
-  },
-
-  // Doctor Navigation
-  {
-    id: 'patients',
-    title: 'Patients',
-    path: '/patients',
-    icon: 'person',
-    roles: ['doctor'],
-    children: [
-      {
-        id: 'patient-list',
-        title: 'Patient List',
-        path: '/patients',
-        icon: 'list',
-        roles: ['doctor'],
-      },
-      {
-        id: 'new-patient',
-        title: 'New Patient',
-        path: '/patients/new',
-        icon: 'add',
-        roles: ['doctor'],
-      },
-      {
-        id: 'quick-add',
-        title: 'Quick Add Patient',
-        path: '/patients/quick-add',
-        icon: 'add',
-        roles: ['doctor'],
-      }
-    ],
-  },
-  {
-    id: 'ivr-submissions',
-    title: 'IVR Submissions',
-    path: '/ivr-submissions',
-    icon: 'assignment',
-    roles: ['doctor'],
-  },
-  {
-    id: 'doctor-orders',
-    title: 'Orders',
-    path: '/orders',
-    icon: 'inventory',
-    roles: ['doctor'],
-  },
-
-  // IVR Company Navigation
-  {
-    id: 'review-queue',
-    title: 'Review Queue',
-    path: '/review-queue',
-    icon: 'queue',
-    roles: ['ivr_company'],
-  },
-  {
-    id: 'communications',
-    title: 'Communications',
-    path: '/communications',
-    icon: 'message',
-    roles: ['ivr_company'],
-  },
-
-  // Logistics Navigation
-  {
-    id: 'logistics-orders',
-    title: 'Orders',
-    path: '/logistics/orders',
-    icon: 'inventory',
-    roles: ['logistics'],
-  },
-  {
-    id: 'shipping',
-    title: 'Shipping',
-    path: '/shipping',
-    icon: 'local_shipping',
-    roles: ['logistics'],
-  },
-  {
-    id: 'inventory',
-    title: 'Inventory',
-    path: '/inventory',
-    icon: 'inventory',
-    roles: ['logistics'],
-  },
-];
+const navigationConfig: Record<UserRole, NavigationItem[]> = {
+  'admin': [
+    {
+      id: 'users',
+      title: 'User Management',
+      path: '/users',
+      icon: 'people',
+      roles: ['admin'],
+    },
+    {
+      id: 'analytics',
+      title: 'Analytics',
+      path: '/analytics',
+      icon: 'assessment',
+      roles: ['admin'],
+    },
+    {
+      id: 'settings',
+      title: 'System Settings',
+      path: '/settings',
+      icon: 'settings',
+      roles: ['admin'],
+    },
+  ],
+  'doctor': [
+    {
+      id: 'patients',
+      title: 'Patients',
+      path: '/patients',
+      icon: 'person',
+      roles: ['doctor'],
+      children: [
+        {
+          id: 'patient-list',
+          title: 'Patient List',
+          path: '/patients',
+          icon: 'list',
+          roles: ['doctor'],
+        },
+        {
+          id: 'new-patient',
+          title: 'New Patient',
+          path: '/patients/new',
+          icon: 'add',
+          roles: ['doctor'],
+        },
+      ],
+    },
+    {
+      id: 'ivr-submissions',
+      title: 'IVR Submissions',
+      path: '/ivr-submissions',
+      icon: 'assignment',
+      roles: ['doctor'],
+    },
+  ],
+  'ivr_company': [
+    {
+      id: 'review-queue',
+      title: 'Review Queue',
+      path: '/review-queue',
+      icon: 'queue',
+      roles: ['ivr_company'],
+    },
+    {
+      id: 'communications',
+      title: 'Communications',
+      path: '/communications',
+      icon: 'message',
+      roles: ['ivr_company'],
+    },
+  ],
+  'logistics': [
+    {
+      id: 'logistics-orders',
+      title: 'Orders',
+      path: '/logistics/orders',
+      icon: 'inventory',
+      roles: ['logistics'],
+    },
+    {
+      id: 'shipping',
+      title: 'Shipping',
+      path: '/shipping',
+      icon: 'local_shipping',
+      roles: ['logistics'],
+    },
+  ],
+};
 
 const getIcon = (iconName: string) => {
   switch (iconName) {
@@ -202,21 +182,36 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({ userRo
             borderRadius: 1,
             mb: 0.5,
             '&.Mui-selected': {
-              bgcolor: 'rgba(46, 134, 171, 0.08)',
+              bgcolor: '#375788',
               '&:hover': {
-                bgcolor: 'rgba(46, 134, 171, 0.12)',
+                bgcolor: '#375788',
               },
+            },
+            '&:hover': {
+              bgcolor: 'rgba(55, 87, 136, 0.2)', // #375788 with 20% opacity
+            },
+            '& .MuiListItemIcon-root': {
+              color: 'inherit',
+              minWidth: 40,
+            },
+            '&.Mui-selected .MuiListItemIcon-root': {
+              color: '#ffffff',
+            },
+            '&.Mui-selected .MuiListItemText-primary': {
+              color: '#ffffff',
+              fontWeight: 600,
+            },
+            '& .MuiListItemText-primary': {
+              color: '#ffffff',
+              fontWeight: 400,
             },
           }}
         >
-          <ListItemIcon sx={{ color: isSelected ? 'primary.main' : 'inherit' }}>
-            {getIcon(item.icon)}
-          </ListItemIcon>
+          <ListItemIcon>{getIcon(item.icon)}</ListItemIcon>
           <ListItemText
             primary={item.title}
             primaryTypographyProps={{
               variant: 'body2',
-              fontWeight: isSelected ? 600 : 400,
             }}
           />
           {item.children && (isOpen ? <ExpandLess /> : <ExpandMore />)}
@@ -236,8 +231,12 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({ userRo
     <Box>
       <Typography
         variant="overline"
-        color="text.secondary"
-        sx={{ px: 3, py: 1, display: 'block' }}
+        sx={{
+          px: 3,
+          py: 1,
+          display: 'block',
+          color: 'rgba(255, 255, 255, 0.7)',
+        }}
       >
         Main Navigation
       </Typography>
@@ -250,10 +249,21 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({ userRo
             borderRadius: 1,
             mb: 1,
             '&.Mui-selected': {
-              bgcolor: 'rgba(46, 134, 171, 0.08)',
+              bgcolor: 'rgba(255, 255, 255, 0.08)',
               '&:hover': {
-                bgcolor: 'rgba(46, 134, 171, 0.12)',
+                bgcolor: 'rgba(255, 255, 255, 0.12)',
               },
+            },
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.04)',
+            },
+            '& .MuiListItemIcon-root': {
+              color: 'inherit',
+              minWidth: 40,
+            },
+            '& .MuiListItemText-primary': {
+              color: 'inherit',
+              fontWeight: location.pathname === '/dashboard' ? 600 : 400,
             },
           }}
         >
@@ -264,12 +274,11 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({ userRo
             primary="Dashboard"
             primaryTypographyProps={{
               variant: 'body2',
-              fontWeight: location.pathname === '/dashboard' ? 600 : 400,
             }}
           />
         </ListItemButton>
 
-        {navigationConfig.map(item => renderNavigationItem(item))}
+        {navigationConfig[userRole].map(item => renderNavigationItem(item))}
       </List>
     </Box>
   );

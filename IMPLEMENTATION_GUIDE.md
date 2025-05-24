@@ -884,4 +884,32 @@ ops/monitoring-configs/
 - **Performance Risks**: Load testing throughout development
 - **Timeline Risks**: Parallel development where possible
 
+## Dashboard Implementation
+
+### Component Structure
+The dashboard uses a Material-UI based implementation with the following key files:
+
+```
+frontend/src/
+├── components/
+│   ├── navigation/           # ✅ Primary dashboard components
+│   │   ├── Sidebar.tsx      # Main sidebar container (MUI)
+│   │   └── RoleBasedNavigation.tsx  # Navigation items logic
+│   └── shared/              # ❌ Legacy components (do not use)
+│       └── layout/
+│           └── Sidebar.tsx  # Deprecated Tailwind implementation
+```
+
+### Design System
+- Primary Blue: `#375788`
+- Dark Background: `#2C3E50`
+- Logo Height: 128px (h-32)
+- Sidebar Width: 280px
+
+### Styling Guidelines
+1. Use Material-UI's `sx` prop for styling
+2. Follow the established color scheme
+3. Maintain consistent hover/active states
+4. Keep text contrast WCAG compliant
+
 This implementation guide provides a structured approach to building the Healthcare IVR Platform with clear tasks, dependencies, and deliverables for each phase of development.

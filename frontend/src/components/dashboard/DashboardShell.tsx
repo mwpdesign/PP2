@@ -11,7 +11,7 @@ import {
   IconButton,
   Drawer,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Divider,
@@ -29,8 +29,7 @@ import {
 } from '@mui/icons-material';
 
 interface StyledListItemProps {
-  isActive?: boolean;
-  onClick?: () => void;
+  $active?: boolean;
 }
 
 // Custom styled components
@@ -59,23 +58,33 @@ const LogoContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const StyledListItem = styled(ListItem)<StyledListItemProps>(({ theme, isActive }) => ({
+const StyledListItemButton = styled(ListItemButton)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius,
   marginBottom: theme.spacing(0.5),
-  borderRadius: theme.spacing(1),
-  cursor: 'pointer',
-  padding: theme.spacing(1.5, 2),
-  backgroundColor: isActive ? '#375788' : 'transparent',
+  padding: theme.spacing(1, 2),
+  transition: 'all 0.2s ease-in-out',
+  '&.Mui-selected': {
+    backgroundColor: '#375788',
+    '&:hover': {
+      backgroundColor: '#375788',
+    },
+  },
   '&:hover': {
-    backgroundColor: isActive ? '#375788' : 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   '& .MuiListItemIcon-root': {
-    color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
-    minWidth: '40px',
+    minWidth: 40,
   },
-  '& .MuiListItemText-primary': {
-    fontSize: '0.95rem',
-    fontWeight: isActive ? 600 : 400,
-    color: isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.9)',
+  '&.Mui-selected .MuiListItemIcon-root': {
+    color: '#ffffff',
+  },
+  '&.Mui-selected .MuiListItemText-root .MuiTypography-root': {
+    fontWeight: 600,
+    color: '#ffffff',
+  },
+  '& .MuiListItemText-root .MuiTypography-root': {
+    fontWeight: 400,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
 }));
 
@@ -146,16 +155,16 @@ const DashboardShell: React.FC = () => {
         
         <List sx={{ mt: 3, px: 2 }}>
           {menuItems.map((item) => (
-            <StyledListItem
+            <StyledListItemButton
               key={item.text}
+              selected={location.pathname === item.path}
               onClick={() => navigate(item.path)}
-              isActive={location.pathname === item.path}
             >
               <ListItemIcon>
                 {item.icon}
               </ListItemIcon>
               <ListItemText primary={item.text} />
-            </StyledListItem>
+            </StyledListItemButton>
           ))}
         </List>
         
@@ -166,12 +175,12 @@ const DashboardShell: React.FC = () => {
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             my: 2 
           }} />
-          <StyledListItem>
+          <StyledListItemButton>
             <ListItemIcon>
               <LogoutIcon />
             </ListItemIcon>
             <ListItemText primary="Logout" />
-          </StyledListItem>
+          </StyledListItemButton>
         </List>
       </StyledDrawer>
 
