@@ -6,10 +6,9 @@ import { LoginForm } from '../components/auth/LoginForm';
 const LoginPage = () => {
   return (
     <AuthLayout 
-      title="Healthcare IVR Platform" 
-      subtitle="Secure access to patient care management"
+      title="Wound Care Portal" 
+      subtitle="Streamlined access to wound care management"
     >
-      <TrustIndicators />
       <LoginForm />
     </AuthLayout>
   );

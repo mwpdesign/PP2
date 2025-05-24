@@ -12,7 +12,6 @@ import {
   IconButton,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { HIPAAIndicator } from '../ui/HIPAAIndicator';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const LoginForm: React.FC = () => {
@@ -35,20 +34,48 @@ export const LoginForm: React.FC = () => {
       const destination = location.state?.from?.pathname || '/dashboard';
       navigate(destination, { replace: true });
     } catch (err) {
-      // Error will be handled by AuthContext
       console.error('Login error:', err);
+    }
+  };
+
+  const inputStyles = {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: '#fff',
+      transition: 'all 0.15s ease-in-out',
+      '& fieldset': {
+        borderColor: 'rgb(209 213 219)',
+        borderWidth: '1px',
+      },
+      '&:hover fieldset': {
+        borderColor: 'rgb(156 163 175)',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#375788',
+        borderWidth: '1px',
+        boxShadow: '0 0 0 4px rgb(55 87 136 / 0.1)',
+      }
+    },
+    '& .MuiInputLabel-root': {
+      color: 'rgb(107 114 128)',
+      fontSize: '0.875rem',
+      '&.Mui-focused': {
+        color: '#375788'
+      }
+    },
+    '& .MuiInputBase-input': {
+      fontSize: '0.875rem',
+      '&::placeholder': {
+        color: 'rgb(156 163 175)',
+        opacity: 1
+      }
     }
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
-      <Typography variant="h5" component="h2" gutterBottom align="center">
+      <Typography variant="h6" component="h2" gutterBottom align="center" sx={{ mb: 3 }}>
         Sign in to your account
       </Typography>
-      
-      <Box sx={{ mb: 3 }}>
-        <HIPAAIndicator type="form" message="This login form is secured and monitored in compliance with HIPAA regulations." />
-      </Box>
 
       {(error || authError) && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -67,7 +94,11 @@ export const LoginForm: React.FC = () => {
         autoFocus
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        sx={{ mb: 2 }}
+        size="small"
+        sx={{ 
+          mb: 2,
+          ...inputStyles
+        }}
       />
 
       <TextField
@@ -81,6 +112,8 @@ export const LoginForm: React.FC = () => {
         autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        size="small"
+        sx={inputStyles}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -88,6 +121,13 @@ export const LoginForm: React.FC = () => {
                 aria-label="toggle password visibility"
                 onClick={() => setShowPassword(!showPassword)}
                 edge="end"
+                size="small"
+                sx={{ 
+                  color: 'rgb(107 114 128)',
+                  '&:hover': {
+                    backgroundColor: 'rgb(243 244 246)'
+                  }
+                }}
               >
                 {showPassword ? <VisibilityOff /> : <Visibility />}
               </IconButton>
@@ -96,16 +136,26 @@ export const LoginForm: React.FC = () => {
         }}
       />
 
-      <Box sx={{ mt: 2 }}>
+      <Box sx={{ mt: 1 }}>
         <FormControlLabel
           control={
             <Checkbox
               checked={rememberDevice}
               onChange={(e) => setRememberDevice(e.target.checked)}
-              color="primary"
+              size="small"
+              sx={{
+                color: 'rgb(156 163 175)',
+                padding: '2px',
+                '&.Mui-checked': {
+                  color: '#375788'
+                },
+                '&:hover': {
+                  backgroundColor: 'rgb(243 244 246)'
+                }
+              }}
             />
           }
-          label="Remember this device"
+          label={<Typography variant="body2" sx={{ color: 'rgb(75 85 99)', fontSize: '0.875rem' }}>Remember this device</Typography>}
         />
       </Box>
 
@@ -113,25 +163,23 @@ export const LoginForm: React.FC = () => {
         type="submit"
         fullWidth
         variant="contained"
-        sx={{ mt: 3, mb: 2 }}
+        sx={{ 
+          mt: 3,
+          textTransform: 'none',
+          backgroundColor: '#375788',
+          fontSize: '0.875rem',
+          fontWeight: 500,
+          boxShadow: 'none',
+          '&:hover': {
+            backgroundColor: '#2c466d',
+            boxShadow: 'none'
+          }
+        }}
         disabled={isLoading}
+        size="large"
       >
         {isLoading ? 'Signing in...' : 'Sign in'}
       </Button>
-
-      <Box sx={{ textAlign: 'center', mt: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          Forgot your password?{' '}
-          <Button
-            color="primary"
-            size="small"
-            onClick={() => navigate('/reset-password')}
-            sx={{ textTransform: 'none', fontWeight: 500 }}
-          >
-            Reset it here
-          </Button>
-        </Typography>
-      </Box>
     </Box>
   );
 }; 

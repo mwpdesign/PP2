@@ -42,20 +42,9 @@ const mockUsers: Record<string, User> = {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-  }, [user]);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
@@ -71,6 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       setUser(mockUser);
+      localStorage.setItem('user', JSON.stringify(mockUser));
     } catch (err) {
       setError('Invalid email or password. Try doctor@example.com / password');
       throw err;

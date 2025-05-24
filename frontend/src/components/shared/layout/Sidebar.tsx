@@ -72,7 +72,7 @@ const Sidebar: React.FC = () => {
     <div className="fixed top-0 left-0 h-screen w-[280px] bg-[#2C3E50] flex flex-col">
       <div className="p-6">
         <div className="flex items-start justify-start mb-8">
-          <img src="/logo2.png" alt="Healthcare IVR" className="h-52 w-auto" />
+          <img src="/logo2.png" alt="Healthcare IVR" className="h-64 w-auto" />
         </div>
         
         <nav className="space-y-1">
