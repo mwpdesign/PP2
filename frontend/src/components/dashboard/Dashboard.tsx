@@ -20,9 +20,28 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronUp,
-  Filter
+  Filter,
+  LocalShipping,
+  AlertCircle
 } from 'lucide-react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar
+} from 'recharts';
 import { NewPatientForm } from '../patients/NewPatientForm';
+
+interface NewPatientFormProps {
+  onClose: () => void;
+  onSave: (patientData: any) => void;
+}
 
 interface DashboardProps {
   email: string;
@@ -106,17 +125,35 @@ const samplePatients: Patient[] = [
 ];
 
 const stats: StatCard[] = [
-  { title: 'Total Patients', value: 1247, trend: 12, icon: <Users className="w-6 h-6" />, color: 'bg-blue-500' },
-  { title: 'Active IVR Calls', value: 28, trend: -5, icon: <Activity className="w-6 h-6" />, color: 'bg-green-500' },
-  { title: 'Pending Orders', value: 34, trend: 8, icon: <Package className="w-6 h-6" />, color: 'bg-purple-500' },
-  { title: 'Today\'s Appointments', value: 12, trend: 0, icon: <Calendar className="w-6 h-6" />, color: 'bg-orange-500' },
+  { title: 'IVR Requests Today', value: 47, trend: 12, icon: <Clipboard className="w-6 h-6" />, color: 'bg-blue-500' },
+  { title: 'Pending Approvals', value: 28, trend: -5, icon: <Activity className="w-6 h-6" />, color: 'bg-green-500' },
+  { title: 'Active Orders', value: 34, trend: 8, icon: <Package className="w-6 h-6" />, color: 'bg-purple-500' },
+  { title: 'Temperature-Controlled Shipments', value: 12, trend: 0, icon: <LocalShipping className="w-6 h-6" />, color: 'bg-orange-500' },
 ];
 
 const quickActions = [
-  { name: 'New Patient', icon: <Users className="w-5 h-5" />, color: 'bg-blue-500' },
-  { name: 'Start IVR Call', icon: <Activity className="w-5 h-5" />, color: 'bg-green-500' },
-  { name: 'Create Order', icon: <Package className="w-5 h-5" />, color: 'bg-purple-500' },
-  { name: 'Schedule Appointment', icon: <Calendar className="w-5 h-5" />, color: 'bg-orange-500' },
+  { name: 'New Patient Intake', icon: <Users className="w-5 h-5" />, color: 'bg-blue-500', description: 'Wound assessment with photos' },
+  { name: 'Submit IVR Request', icon: <Clipboard className="w-5 h-5" />, color: 'bg-green-500', description: 'Insurance verification for wound products' },
+  { name: 'Track Orders', icon: <Package className="w-5 h-5" />, color: 'bg-purple-500', description: 'Shipping and logistics status' },
+  { name: 'Review IVR Queue', icon: <BarChart3 className="w-5 h-5" />, color: 'bg-orange-500', description: 'Pending approvals for review' },
+];
+
+const ivrTrendData = [
+  { day: 'Mon', submissions: 42, approvals: 38 },
+  { day: 'Tue', submissions: 48, approvals: 45 },
+  { day: 'Wed', submissions: 52, approvals: 48 },
+  { day: 'Thu', submissions: 45, approvals: 42 },
+  { day: 'Fri', submissions: 50, approvals: 47 },
+  { day: 'Sat', submissions: 35, approvals: 32 },
+  { day: 'Sun', submissions: 30, approvals: 28 },
+];
+
+const productApprovalData = [
+  { name: 'Skin Grafts', approvalRate: 92 },
+  { name: 'Wound Matrices', approvalRate: 88 },
+  { name: 'Negative Pressure', approvalRate: 95 },
+  { name: 'Collagen Dressings', approvalRate: 90 },
+  { name: 'Compression', approvalRate: 94 },
 ];
 
 const PatientManagement: React.FC = () => {
@@ -424,36 +461,192 @@ export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
                         setTimeout(() => setShowNewPatientForm(true), 100);
                       }
                     }}
-                    className="flex items-center p-4 rounded-lg border-2 border-gray-100 hover:border-[#4A6FA5] hover:bg-gray-50 transition-colors"
+                    className="flex flex-col p-4 rounded-lg border-2 border-gray-100 hover:border-[#4A6FA5] hover:bg-gray-50 transition-colors"
                   >
-                    <div className={`p-2 rounded-lg ${action.color} bg-opacity-10`}>
-                      {React.cloneElement(action.icon as React.ReactElement, {
-                        className: `w-5 h-5 ${action.color.replace('bg-', 'text-')}`
-                      })}
+                    <div className="flex items-center">
+                      <div className={`p-2 rounded-lg ${action.color} bg-opacity-10`}>
+                        {React.cloneElement(action.icon as React.ReactElement, {
+                          className: `w-5 h-5 ${action.color.replace('bg-', 'text-')}`
+                        })}
+                      </div>
+                      <span className="ml-3 font-medium text-gray-900">{action.name}</span>
                     </div>
-                    <span className="ml-3 font-medium text-gray-900">{action.name}</span>
+                    <p className="mt-2 text-sm text-gray-500 text-left pl-11">{action.description}</p>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Recent Activity */}
+            {/* Chart Data Section */}
             <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">IVR Processing Trends</h2>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={ivrTrendData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="day" 
+                      label={{ value: 'Days of Week', position: 'insideBottom', offset: -5 }}
+                    />
+                    <YAxis 
+                      domain={[0, 60]}
+                      label={{ value: 'Number of IVRs', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip />
+                    <Legend verticalAlign="top" height={36} />
+                    <Line
+                      type="monotone"
+                      dataKey="submissions"
+                      stroke="#4A6FA5"
+                      name="Daily IVR Submissions"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="approvals"
+                      stroke="#10B981"
+                      name="Daily IVR Approvals"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Recent Activity Card */}
+            <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
               <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center p-4 rounded-lg bg-gray-50">
-                    <div className="p-2 rounded-lg bg-blue-500 bg-opacity-10">
-                      <Activity className="w-5 h-5 text-blue-500" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-900">
-                        New patient registration completed
-                      </p>
-                      <p className="text-sm text-gray-500">2 minutes ago</p>
-                    </div>
+                <div className="flex items-center p-4 rounded-lg bg-gray-50">
+                  <div className="p-2 rounded-lg bg-blue-500 bg-opacity-10">
+                    <Activity className="w-5 h-5 text-blue-500" />
                   </div>
-                ))}
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-900">
+                      IVR Submitted: Diabetic foot ulcer skin graft case #2847
+                    </p>
+                    <p className="text-sm text-gray-500">5 minutes ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center p-4 rounded-lg bg-gray-50">
+                  <div className="p-2 rounded-lg bg-green-500 bg-opacity-10">
+                    <Activity className="w-5 h-5 text-green-500" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-900">
+                      Order Approved: Collagen matrix for burn patient #1923
+                    </p>
+                    <p className="text-sm text-gray-500">12 minutes ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center p-4 rounded-lg bg-gray-50">
+                  <div className="p-2 rounded-lg bg-purple-500 bg-opacity-10">
+                    <Activity className="w-5 h-5 text-purple-500" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-900">
+                      Shipment Dispatched: Negative pressure therapy unit
+                    </p>
+                    <p className="text-sm text-gray-500">18 minutes ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center p-4 rounded-lg bg-gray-50">
+                  <div className="p-2 rounded-lg bg-yellow-500 bg-opacity-10">
+                    <Activity className="w-5 h-5 text-yellow-500" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-900">
+                      IVR Under Review: Complex wound assessment case #4821
+                    </p>
+                    <p className="text-sm text-gray-500">25 minutes ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Urgent Items */}
+            <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Urgent Items</h2>
+              <div className="space-y-4">
+                <div className="flex items-center p-4 rounded-lg bg-red-50">
+                  <div className="p-2 rounded-lg bg-red-500 bg-opacity-10">
+                    <AlertCircle className="w-5 h-5 text-red-500" />
+                  </div>
+                  <div className="ml-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-red-900">
+                        Skin Graft IVR Missing Clinical Photos
+                      </p>
+                      <span className="text-xs text-red-500">10 mins ago</span>
+                    </div>
+                    <p className="text-sm text-red-500">Critical Priority</p>
+                  </div>
+                </div>
+                <div className="flex items-center p-4 rounded-lg bg-orange-50">
+                  <div className="p-2 rounded-lg bg-orange-500 bg-opacity-10">
+                    <AlertCircle className="w-5 h-5 text-orange-500" />
+                  </div>
+                  <div className="ml-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-orange-900">
+                        Advanced Wound Matrix Pre-Auth Denied
+                      </p>
+                      <span className="text-xs text-orange-500">25 mins ago</span>
+                    </div>
+                    <p className="text-sm text-orange-500">High Priority</p>
+                  </div>
+                </div>
+                <div className="flex items-center p-4 rounded-lg bg-yellow-50">
+                  <div className="p-2 rounded-lg bg-yellow-500 bg-opacity-10">
+                    <AlertCircle className="w-5 h-5 text-yellow-500" />
+                  </div>
+                  <div className="ml-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-yellow-900">
+                        Temperature-Controlled Shipment Delayed
+                      </p>
+                      <span className="text-xs text-yellow-500">1 hour ago</span>
+                    </div>
+                    <p className="text-sm text-yellow-500">Medium Priority</p>
+                  </div>
+                </div>
+                <div className="flex items-center p-4 rounded-lg bg-yellow-50">
+                  <div className="p-2 rounded-lg bg-yellow-500 bg-opacity-10">
+                    <AlertCircle className="w-5 h-5 text-yellow-500" />
+                  </div>
+                  <div className="ml-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-yellow-900">
+                        Negative Pressure Therapy Documentation Required
+                      </p>
+                      <span className="text-xs text-yellow-500">2 hours ago</span>
+                    </div>
+                    <p className="text-sm text-yellow-500">Medium Priority</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Product Approval Rates */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Product Approval Rates</h2>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={productApprovalData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey="approvalRate"
+                      fill="#4A6FA5"
+                      name="Approval Rate (%)"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>

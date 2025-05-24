@@ -318,7 +318,7 @@ const UploadArea: React.FC<UploadAreaProps> = ({
   );
 };
 
-export const NewPatientForm: React.FC = () => {
+export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave }) => {
   const navigate = useNavigate();
   const [currentSection, setCurrentSection] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
@@ -505,7 +505,14 @@ export const NewPatientForm: React.FC = () => {
       // Show success message
       alert('Patient registered successfully');
       navigate('/patients');
+
+      // Call the onSave prop with the form data
+      onSave(formData);
+      
+      // Close the form
+      onClose();
     } catch (error) {
+      console.error('Error submitting form:', error);
       setErrors(prev => ({
         ...prev,
         submit: error instanceof Error ? error.message : 'Failed to register patient'
@@ -629,9 +636,7 @@ export const NewPatientForm: React.FC = () => {
   };
 
   const handleClose = () => {
-    if (window.confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      navigate('/patients');
-    }
+    onClose();
   };
 
   return (

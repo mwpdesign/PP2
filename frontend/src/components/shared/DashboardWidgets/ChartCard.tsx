@@ -24,16 +24,24 @@ interface ChartData {
   [key: string]: any;
 }
 
+interface LegendItem {
+  key: string;
+  label: string;
+  color: string;
+}
+
 interface ChartCardProps {
   title: string;
-  type: 'line';
+  type: ChartType;
   data: any[];
   dataKey: string;
   secondaryDataKey?: string;
   color: string;
   secondaryColor?: string;
   height: number;
-  legend?: string[];
+  legend?: LegendItem[];
+  xAxisDataKey?: string;
+  isPercentage?: boolean;
 }
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
@@ -48,6 +56,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   secondaryColor,
   height,
   legend,
+  xAxisDataKey,
+  isPercentage = false,
 }) => {
   const formatValue = (value: number) => {
     return isPercentage ? formatPercentage(value) : formatNumber(value);
@@ -64,7 +74,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         return (
           <LineChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-            <XAxis dataKey="label" stroke="#6B7280" />
+            <XAxis dataKey={xAxisDataKey || "label"} stroke="#6B7280" />
             <YAxis stroke="#6B7280" />
             <Tooltip
               contentStyle={{
@@ -81,7 +91,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               strokeWidth={2}
               dot={{ r: 4, fill: color }}
               activeDot={{ r: 6 }}
-              name={legend ? legend[0] : undefined}
+              name={legend ? legend[0].label : undefined}
             />
             {secondaryDataKey && secondaryColor && (
               <Line
@@ -91,7 +101,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 strokeWidth={2}
                 dot={{ r: 4, fill: secondaryColor }}
                 activeDot={{ r: 6 }}
-                name={legend ? legend[1] : undefined}
+                name={legend ? legend[1].label : undefined}
               />
             )}
           </LineChart>
