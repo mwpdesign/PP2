@@ -14,8 +14,8 @@ const MainLayout = lazy(() =>
   import('./components/layout/MainLayout').then(module => ({ default: module.MainLayout }))
 );
 
-const DashboardShell = lazy(() => 
-  import('./components/dashboard/DashboardShell').then(module => ({ default: module.default }))
+const WoundCareDashboard = lazy(() => 
+  import('./pages/dashboard/WoundCareDashboard').then(module => ({ default: module.default }))
 );
 
 const NewPatientForm = lazy(() => 
@@ -72,7 +72,7 @@ const App = () => {
               }
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardShell />} />
+              <Route path="dashboard" element={<WoundCareDashboard />} />
               
               {/* Patient Routes */}
               <Route path="patients">

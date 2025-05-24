@@ -5,16 +5,14 @@ import Header from './Header';
 
 const Layout: React.FC = () => {
   return (
-    <div className="min-h-screen bg-neutral-50">
-      <Header />
+    <div className="relative min-h-screen bg-neutral-50">
       <Sidebar />
-      
-      {/* Main Content */}
-      <main className="ml-64 pt-16">
-        <div className="max-w-7xl mx-auto">
+      <div className="pl-64">
+        <Header />
+        <main>
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

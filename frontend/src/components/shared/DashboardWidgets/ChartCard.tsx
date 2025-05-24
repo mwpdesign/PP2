@@ -26,13 +26,14 @@ interface ChartData {
 
 interface ChartCardProps {
   title: string;
-  type: ChartType;
-  data: ChartData[];
+  type: 'line';
+  data: any[];
   dataKey: string;
-  color?: string;
-  isPercentage?: boolean;
-  height?: number;
-  className?: string;
+  secondaryDataKey?: string;
+  color: string;
+  secondaryColor?: string;
+  height: number;
+  legend?: string[];
 }
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
@@ -42,10 +43,11 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   type,
   data,
   dataKey,
-  color = '#3B82F6',
-  isPercentage = false,
-  height = 300,
-  className = '',
+  secondaryDataKey,
+  color,
+  secondaryColor,
+  height,
+  legend,
 }) => {
   const formatValue = (value: number) => {
     return isPercentage ? formatPercentage(value) : formatNumber(value);
@@ -54,27 +56,44 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   const renderChart = () => {
     const commonProps = {
       data,
-      margin: { top: 10, right: 30, left: 0, bottom: 0 },
+      margin: { top: 5, right: 30, left: 20, bottom: 5 },
     };
 
     switch (type) {
       case 'line':
         return (
           <LineChart {...commonProps}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="label" />
-            <YAxis tickFormatter={formatValue} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+            <XAxis dataKey="label" stroke="#6B7280" />
+            <YAxis stroke="#6B7280" />
             <Tooltip
-              formatter={(value: number) => [formatValue(value), dataKey]}
+              contentStyle={{
+                backgroundColor: 'white',
+                border: '1px solid #E5E7EB',
+                borderRadius: '0.5rem',
+              }}
             />
-            <Legend />
+            {legend && <Legend />}
             <Line
               type="monotone"
               dataKey={dataKey}
               stroke={color}
               strokeWidth={2}
-              dot={false}
+              dot={{ r: 4, fill: color }}
+              activeDot={{ r: 6 }}
+              name={legend ? legend[0] : undefined}
             />
+            {secondaryDataKey && secondaryColor && (
+              <Line
+                type="monotone"
+                dataKey={secondaryDataKey}
+                stroke={secondaryColor}
+                strokeWidth={2}
+                dot={{ r: 4, fill: secondaryColor }}
+                activeDot={{ r: 6 }}
+                name={legend ? legend[1] : undefined}
+              />
+            )}
           </LineChart>
         );
 
@@ -126,12 +145,9 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   };
 
   return (
-    <div
-      className={`bg-white rounded-lg shadow-md p-6 ${className}`}
-      style={{ height }}
-    >
-      <h3 className="text-gray-500 text-sm font-medium mb-4">{title}</h3>
-      <div className="h-full w-full">
+    <div className="w-full h-full">
+      {title && <h3 className="text-lg font-semibold mb-4">{title}</h3>}
+      <div style={{ height: height || 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           {renderChart()}
         </ResponsiveContainer>

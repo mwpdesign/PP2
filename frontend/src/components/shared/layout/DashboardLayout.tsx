@@ -5,14 +5,11 @@ import Sidebar from './Sidebar';
 
 const DashboardLayout: React.FC = () => {
   return (
-    <div className="min-h-screen flex">
+    <div className="flex h-screen bg-gray-50">
       <Sidebar />
-      <div className="flex-1 ml-64">
-        <Header />
-        <main className="mt-16 p-6">
-          <Outlet />
-        </main>
-      </div>
+      <main className="flex-1">
+        <Outlet />
+      </main>
     </div>
   );
 };
