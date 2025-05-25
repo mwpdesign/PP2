@@ -9,7 +9,7 @@ import {
   TrashIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
-import { Document } from '../../mock_data/patients';
+import { Document } from '../../types/ivr';
 
 interface DocumentCardProps {
   document: Document;
@@ -17,6 +17,19 @@ interface DocumentCardProps {
   onDelete?: (documentId: string) => void;
   onDownload?: (documentId: string) => void;
 }
+
+const formatDate = (dateValue: string | null | undefined): string => {
+  if (!dateValue) return 'N/A';
+  
+  try {
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return 'N/A';
+    return format(date, 'MMM d, yyyy');
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'N/A';
+  }
+};
 
 const DocumentCard: React.FC<DocumentCardProps> = ({
   document,
@@ -39,7 +52,9 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
     }
   };
 
-  const formatFileSize = (bytes: number) => {
+  const formatFileSize = (file: File | undefined) => {
+    if (!file) return 'N/A';
+    const bytes = file.size;
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -52,9 +67,9 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
         {/* Document Preview */}
         <div className="aspect-[3/4] relative bg-gray-50 flex items-center justify-center">
-          {document.thumbnailUrl ? (
+          {document.url ? (
             <img
-              src={document.thumbnailUrl}
+              src={document.url}
               alt={document.name}
               className="object-cover w-full h-full"
             />
@@ -93,8 +108,8 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
             {document.name}
           </h4>
           <div className="mt-1 text-xs text-gray-500 space-y-0.5">
-            <p>{formatFileSize(document.size)}</p>
-            <p>{format(new Date(document.uploadDate), 'MMM d, yyyy')}</p>
+            <p>{formatFileSize(document.file)}</p>
+            <p>{formatDate(document.uploadedAt)}</p>
           </div>
         </div>
       </div>

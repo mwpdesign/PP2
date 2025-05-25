@@ -3,7 +3,7 @@ from app.models.organization import Organization
 from app.models.user import User
 from app.models.rbac import Role, Permission
 from app.models.territory import Territory
-from app.models.sensitive_data import SensitiveUserData
+from app.models.sensitive_data import SensitiveData
 from app.models.facility import Facility
 from app.models.patient import Patient
 from app.models.provider import Provider
@@ -15,7 +15,7 @@ __all__ = [
     'Role',
     'Permission',
     'Territory',
-    'SensitiveUserData',
+    'SensitiveData',
     'Facility',
     'Patient',
     'Provider',

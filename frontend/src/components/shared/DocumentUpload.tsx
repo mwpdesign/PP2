@@ -1,161 +1,245 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { CloudArrowUpIcon, CameraIcon, DocumentIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import React, { useCallback, useState, useRef } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { DocumentIcon, CameraIcon, XMarkIcon, CheckCircleIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-toastify';
 
-interface DocumentUploadProps {
+export interface DocumentUploadProps {
   label: string;
+  description?: string;
   required?: boolean;
-  onFileSelect: (file: File) => void;
-  onFileRemove: () => void;
-  acceptedFileTypes?: string;
-  selectedFile?: File | null;
-  previewUrl?: string;
+  value?: File | null;
+  onChange: (file: File | null) => void;
+  onUploadProgress?: (progress: number) => void;
+  status?: 'pending' | 'uploading' | 'success' | 'error';
+  acceptedFileTypes?: string[];
+  maxSizeMB?: number;
+  showCamera?: boolean;
 }
 
 const DocumentUpload: React.FC<DocumentUploadProps> = ({
   label,
+  description,
   required = false,
-  onFileSelect,
-  onFileRemove,
-  acceptedFileTypes = "image/*,.pdf",
-  selectedFile,
-  previewUrl
+  value,
+  onChange,
+  onUploadProgress,
+  status = 'pending',
+  acceptedFileTypes = ['.pdf', '.jpg', '.jpeg', '.png'],
+  maxSizeMB = 10,
+  showCamera = true
 }) => {
   const [isDragging, setIsDragging] = useState(false);
-  const [hasCameraSupport, setHasCameraSupport] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dropZoneRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
 
-  useEffect(() => {
-    // Check for camera support
-    const checkCameraSupport = async () => {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const hasCamera = devices.some(device => device.kind === 'videoinput');
-        setHasCameraSupport(hasCamera);
-      } catch (error) {
-        console.error('Error checking camera support:', error);
-        setHasCameraSupport(false);
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      const file = acceptedFiles[0];
+      if (file.size > maxSizeMB * 1024 * 1024) {
+        toast.error(`File size must be less than ${maxSizeMB}MB`);
+        return;
       }
-    };
-
-    checkCameraSupport();
-  }, []);
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      onFileSelect(files[0]);
+      
+      // Create preview URL for images
+      if (file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      } else {
+        setPreviewUrl(null);
+      }
+      
+      onChange(file);
     }
-  };
+  }, [maxSizeMB, onChange]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      onFileSelect(files[0]);
-    }
-  };
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: acceptedFileTypes.reduce((acc, type) => ({
+      ...acc,
+      [type.startsWith('.') ? `image/${type.slice(1)}` : type]: []
+    }), {}),
+    maxFiles: 1,
+    multiple: false,
+    onDragEnter: () => setIsDragging(true),
+    onDragLeave: () => setIsDragging(false),
+    onDropAccepted: () => setIsDragging(false)
+  });
 
-  const handleCameraCapture = async () => {
+  const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      // Here you would typically open a modal with camera preview
-      // For now, we'll just use the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.click();
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        mediaStreamRef.current = stream;
+        setIsCameraActive(true);
       }
-      stream.getTracks().forEach(track => track.stop());
-    } catch (error) {
-      console.error('Error accessing camera:', error);
+    } catch (err) {
+      toast.error('Unable to access camera');
+      console.error('Camera access error:', err);
     }
+  };
+
+  const stopCamera = () => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  const capturePhoto = async () => {
+    if (!videoRef.current) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(videoRef.current, 0, 0);
+    
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      
+      const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      const previewUrl = URL.createObjectURL(file);
+      setPreviewUrl(previewUrl);
+      onChange(file);
+      stopCamera();
+    }, 'image/jpeg', 0.8);
+  };
+
+  const handleRemove = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    onChange(null);
   };
 
   return (
-    <div className="space-y-1">
-      <label className="block text-sm font-medium text-gray-700">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      
-      <div
-        ref={dropZoneRef}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`
-          relative border-2 border-dashed rounded-lg p-4
-          ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
-          ${selectedFile ? 'bg-gray-50' : 'hover:bg-gray-50'}
-          transition-colors duration-150 ease-in-out
-        `}
-      >
-        {selectedFile ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 min-w-0">
-              <DocumentIcon className="h-5 w-5 flex-shrink-0 text-gray-400" />
-              <span className="text-sm text-gray-600 truncate">{selectedFile.name}</span>
-              {previewUrl && selectedFile.type.startsWith('image/') && (
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="h-8 w-8 object-cover rounded"
-                />
-              )}
-            </div>
+    <div className="relative bg-white rounded-lg border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-sm">
+      <div className="p-3">
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-sm font-medium text-gray-900">
+            {label} {required && <span className="text-red-500">*</span>}
+          </label>
+          {value && (
             <button
               type="button"
-              onClick={onFileRemove}
-              className="ml-2 flex-shrink-0 text-gray-400 hover:text-gray-500"
+              onClick={handleRemove}
+              className="text-sm text-red-600 hover:text-red-800"
             >
-              <XMarkIcon className="h-5 w-5" />
+              Remove
+            </button>
+          )}
+        </div>
+
+        {description && (
+          <p className="text-xs text-gray-500 mb-2">{description}</p>
+        )}
+      </div>
+
+      {isCameraActive ? (
+        <div className="relative bg-black">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full h-48 object-cover"
+          />
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-2">
+            <button
+              type="button"
+              onClick={capturePhoto}
+              className="px-3 py-1.5 bg-white rounded-full shadow-lg text-sm text-gray-900 hover:bg-gray-100"
+            >
+              Capture Photo
+            </button>
+            <button
+              type="button"
+              onClick={stopCamera}
+              className="px-3 py-1.5 bg-red-600 rounded-full shadow-lg text-sm text-white hover:bg-red-700"
+            >
+              Cancel
             </button>
           </div>
-        ) : (
-          <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              Choose file
-            </button>
-            {hasCameraSupport && (
+        </div>
+      ) : value ? (
+        <div className="p-3 bg-gray-50">
+          <div className="flex items-center space-x-3">
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="Document preview"
+                className="h-16 w-16 object-cover rounded"
+              />
+            ) : (
+              <DocumentIcon className="h-6 w-6 text-gray-400" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {value.name}
+              </p>
+              <p className="text-xs text-gray-500">
+                {(value.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            </div>
+            {status === 'success' && (
+              <CheckCircleIcon className="h-5 w-5 text-green-500" />
+            )}
+          </div>
+          {status === 'uploading' && onUploadProgress && (
+            <div className="mt-2">
+              <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#2C3E50] transition-all duration-300"
+                  style={{ width: `${onUploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div
+          {...getRootProps()}
+          className={`
+            p-4 transition-all cursor-pointer
+            ${isDragging ? 'bg-[#2C3E50]/5' : 'hover:bg-gray-50'}
+          `}
+        >
+          <input {...getInputProps()} ref={fileInputRef} />
+          <div className="flex items-center justify-center space-x-2">
+            <ArrowUpTrayIcon className="h-5 w-5 text-gray-400" />
+            <span className="text-sm text-[#2C3E50]">
+              Drop file or click to upload
+            </span>
+            {showCamera && (
               <>
-                <span>or</span>
+                <span className="text-gray-400">|</span>
                 <button
                   type="button"
-                  onClick={handleCameraCapture}
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startCamera();
+                  }}
+                  className="inline-flex items-center text-sm text-[#2C3E50] hover:text-[#375788]"
                 >
-                  <CameraIcon className="h-5 w-5 inline-block mr-1" />
-                  Take photo
+                  <CameraIcon className="h-4 w-4 mr-1" />
+                  Take Photo
                 </button>
               </>
             )}
-            <span className="text-xs text-gray-500">or drag and drop</span>
           </div>
-        )}
-        
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={acceptedFileTypes}
-          onChange={handleFileSelect}
-          className="hidden"
-          capture={hasCameraSupport ? "environment" : undefined}
-        />
-      </div>
+          <p className="mt-1 text-center text-xs text-gray-500">
+            {acceptedFileTypes.join(', ')} up to {maxSizeMB}MB
+          </p>
+        </div>
+      )}
     </div>
   );
 };

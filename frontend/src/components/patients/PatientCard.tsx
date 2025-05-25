@@ -18,7 +18,6 @@ const PatientCard: React.FC<PatientCardProps> = ({
   const navigate = useNavigate();
 
   const handleSubmitIVR = (e: React.MouseEvent) => {
-    console.log('Submit IVR clicked for patient:', patient.id);
     e.preventDefault();
     e.stopPropagation();
     navigate(`/ivr/submit/${patient.id}`);
@@ -135,35 +134,6 @@ const PatientCard: React.FC<PatientCardProps> = ({
             >
               Submit IVR
             </button>
-            {/* Debug Buttons */}
-            <div className="pt-2 border-t">
-              <p className="text-xs text-gray-500 mb-2">Debug Navigation:</p>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Test route navigation:', `/ivr/submit/test/${patient.id}`);
-                  navigate(`/ivr/submit/test/${patient.id}`);
-                }}
-                className="inline-flex items-center justify-center px-3 py-1.5 mb-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 w-full"
-              >
-                Test Route
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const path = `/ivr/submit/${patient.id}`;
-                  console.log('Direct navigation to:', path);
-                  window.location.href = path;
-                }}
-                className="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 w-full"
-              >
-                Direct Navigate
-              </button>
-            </div>
           </div>
         )}
       </div>

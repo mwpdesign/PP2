@@ -2,12 +2,9 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-# from app.core.config import settings
-# from app.api.v1.api import api_router
-# from app.core.database import init_db
+from app.api.v1.api import api_router
+from app.core.database import init_db, db_settings
 
-# Import only the test endpoint
-from .core.database import init_db, db_settings
 
 # Configure logging
 logging.basicConfig(
@@ -16,7 +13,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 app = FastAPI(title="Healthcare IVR Platform")
+
 
 # Configure CORS
 app.add_middleware(
@@ -27,10 +26,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/test")
 async def test_endpoint():
     """Test endpoint to verify API is working."""
     return {"status": "success", "message": "API is working"}
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -61,6 +62,15 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to load auth router: {str(e)}")
         logger.info("Continuing without authentication routes")
+    
+    try:
+        # Include all v1 API routes
+        app.include_router(api_router, prefix="/api/v1")
+        logger.info("API v1 routers loaded successfully")
+    except Exception as e:
+        logger.error(f"Failed to load API v1 routers: {str(e)}")
+        logger.info("Continuing without API v1 routes")
+
 
 # Comment out all startup events for now
 # @app.on_event("startup")

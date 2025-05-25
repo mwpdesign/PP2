@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Patient, InsuranceDetails, Document } from '../../types/ivr';
-import { DocumentIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import DocumentUpload from '../shared/DocumentUpload';
+import { toast } from 'react-toastify';
 
 interface InsuranceDetailsStepProps {
   patient: Patient;
@@ -18,6 +20,7 @@ const InsuranceDetailsStep: React.FC<InsuranceDetailsStepProps> = ({
   onDocumentsChange
 }) => {
   const [isVerifying, setIsVerifying] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
   const handleInputChange = (field: keyof InsuranceDetails, value: any) => {
     onInsuranceDetailsChange({
@@ -40,11 +43,23 @@ const InsuranceDetailsStep: React.FC<InsuranceDetailsStepProps> = ({
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, documentType: string) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileChange = async (file: File | null, documentType: string) => {
+    if (!file) {
+      // Remove document
+      const newDocs = documents.filter(d => d.type !== documentType);
+      onDocumentsChange(newDocs);
+      return;
+    }
 
-    // TODO: Implement actual file upload API call
+    // Simulate file upload with progress
+    setUploadProgress(prev => ({ ...prev, [documentType]: 0 }));
+    
+    // TODO: Replace with actual file upload API call
+    for (let progress = 0; progress <= 100; progress += 10) {
+      setUploadProgress(prev => ({ ...prev, [documentType]: progress }));
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
     const mockUpload: Document = {
       id: `DOC-${Math.random().toString(36).substr(2, 9)}`,
       name: file.name,
@@ -54,66 +69,20 @@ const InsuranceDetailsStep: React.FC<InsuranceDetailsStepProps> = ({
       status: 'pending'
     };
 
-    onDocumentsChange([...documents, mockUpload]);
+    const newDocs = documents.filter(d => d.type !== documentType);
+    onDocumentsChange([...newDocs, mockUpload]);
+    
+    // Clear progress after upload
+    setUploadProgress(prev => {
+      const { [documentType]: removed, ...rest } = prev;
+      return rest;
+    });
+
+    toast.success(`${file.name} uploaded successfully`);
   };
 
-  const getDocumentStatus = (type: string) => {
-    const doc = documents.find(d => d.type === type);
-    return doc ? doc.status : null;
-  };
-
-  const renderDocumentUpload = (type: string, label: string, required: boolean = true) => {
-    const status = getDocumentStatus(type);
-    const existingDoc = documents.find(d => d.type === type);
-
-    return (
-      <div className="relative border rounded-lg p-4 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <DocumentIcon className="h-6 w-6 text-gray-400" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">
-                {label} {required && <span className="text-red-500">*</span>}
-              </p>
-              <p className="text-xs text-gray-500">PDF, JPG, or PNG up to 10MB</p>
-            </div>
-          </div>
-          {status && (
-            <div className="flex items-center">
-              {status === 'verified' ? (
-                <CheckCircleIcon className="h-5 w-5 text-green-500" />
-              ) : status === 'rejected' ? (
-                <XCircleIcon className="h-5 w-5 text-red-500" />
-              ) : (
-                <div className="text-xs text-gray-500">Pending</div>
-              )}
-            </div>
-          )}
-        </div>
-        {existingDoc ? (
-          <div className="mt-2">
-            <p className="text-sm text-gray-600">{existingDoc.name}</p>
-            <button
-              type="button"
-              onClick={() => {
-                const newDocs = documents.filter(d => d.id !== existingDoc.id);
-                onDocumentsChange(newDocs);
-              }}
-              className="mt-1 text-sm text-red-600 hover:text-red-800"
-            >
-              Remove
-            </button>
-          </div>
-        ) : (
-          <input
-            type="file"
-            onChange={(e) => handleFileUpload(e, type)}
-            accept=".pdf,.jpg,.jpeg,.png"
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
-        )}
-      </div>
-    );
+  const getDocumentByType = (type: string) => {
+    return documents.find(d => d.type === type);
   };
 
   return (
@@ -227,11 +196,62 @@ const InsuranceDetailsStep: React.FC<InsuranceDetailsStepProps> = ({
       {/* Required Documents */}
       <div className="border-t border-gray-200 pt-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Required Documents</h3>
-        <div className="grid grid-cols-1 gap-4">
-          {renderDocumentUpload('face_sheet', 'Face Sheet/Demographics', true)}
-          {renderDocumentUpload('patient_id', 'Patient ID', true)}
-          {renderDocumentUpload('insurance_card_front', 'Insurance Card (Front)', true)}
-          {renderDocumentUpload('insurance_card_back', 'Insurance Card (Back)', true)}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div className="space-y-2">
+            <DocumentUpload
+              label="Face Sheet/Demographics"
+              description="Upload patient demographics and face sheet information"
+              required
+              value={getDocumentByType('face_sheet')?.file as File}
+              onChange={(file) => handleFileChange(file, 'face_sheet')}
+              onUploadProgress={(progress) => setUploadProgress(prev => ({ ...prev, face_sheet: progress }))}
+              status={uploadProgress['face_sheet'] ? 'uploading' : getDocumentByType('face_sheet')?.status === 'verified' ? 'success' : 'pending'}
+              acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png']}
+              maxSizeMB={10}
+              showCamera={false}
+            />
+
+            <DocumentUpload
+              label="Insurance Card (Front)"
+              description="Upload the front side of the insurance card"
+              required
+              value={getDocumentByType('insurance_card_front')?.file as File}
+              onChange={(file) => handleFileChange(file, 'insurance_card_front')}
+              onUploadProgress={(progress) => setUploadProgress(prev => ({ ...prev, insurance_card_front: progress }))}
+              status={uploadProgress['insurance_card_front'] ? 'uploading' : getDocumentByType('insurance_card_front')?.status === 'verified' ? 'success' : 'pending'}
+              acceptedFileTypes={['.jpg', '.jpeg', '.png']}
+              maxSizeMB={10}
+              showCamera={true}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <DocumentUpload
+              label="Patient ID"
+              description="Upload a valid government-issued ID"
+              required
+              value={getDocumentByType('patient_id')?.file as File}
+              onChange={(file) => handleFileChange(file, 'patient_id')}
+              onUploadProgress={(progress) => setUploadProgress(prev => ({ ...prev, patient_id: progress }))}
+              status={uploadProgress['patient_id'] ? 'uploading' : getDocumentByType('patient_id')?.status === 'verified' ? 'success' : 'pending'}
+              acceptedFileTypes={['.jpg', '.jpeg', '.png']}
+              maxSizeMB={10}
+              showCamera={true}
+            />
+
+            <DocumentUpload
+              label="Insurance Card (Back)"
+              description="Upload the back side of the insurance card"
+              required
+              value={getDocumentByType('insurance_card_back')?.file as File}
+              onChange={(file) => handleFileChange(file, 'insurance_card_back')}
+              onUploadProgress={(progress) => setUploadProgress(prev => ({ ...prev, insurance_card_back: progress }))}
+              status={uploadProgress['insurance_card_back'] ? 'uploading' : getDocumentByType('insurance_card_back')?.status === 'verified' ? 'success' : 'pending'}
+              acceptedFileTypes={['.jpg', '.jpeg', '.png']}
+              maxSizeMB={10}
+              showCamera={true}
+            />
+          </div>
         </div>
       </div>
     </div>

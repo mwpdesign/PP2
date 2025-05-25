@@ -1,9 +1,9 @@
 """Facility model for the healthcare IVR platform."""
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey
+from uuid import UUID as PyUUID, uuid4
+from sqlalchemy import String, DateTime, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
-import uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -13,35 +13,57 @@ class Facility(Base):
     
     __tablename__ = 'facilities'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)
-    facility_type = Column(String(50), nullable=False)  # hospital, clinic, nursing_home, etc.
-    npi = Column(String(10), unique=True)  # National Provider Identifier
-    address_line1 = Column(String(255), nullable=False)
-    address_line2 = Column(String(255))
-    city = Column(String(100), nullable=False)
-    state = Column(String(2), nullable=False)
-    zip_code = Column(String(10), nullable=False)
-    phone = Column(String(20), nullable=False)
-    fax = Column(String(20))
-    email = Column(String(255))
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    facility_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False
+    )  # hospital, clinic, nursing_home, etc.
+    npi: Mapped[str] = mapped_column(
+        String(10),
+        unique=True
+    )  # National Provider Identifier
+    address_line1: Mapped[str] = mapped_column(String(255), nullable=False)
+    address_line2: Mapped[str] = mapped_column(String(255))
+    city: Mapped[str] = mapped_column(String(100), nullable=False)
+    state: Mapped[str] = mapped_column(String(2), nullable=False)
+    zip_code: Mapped[str] = mapped_column(String(10), nullable=False)
+    phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    fax: Mapped[str] = mapped_column(String(20))
+    email: Mapped[str] = mapped_column(String(255))
     
     # Organization and Territory
-    organization_id = Column(
+    organization_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('organizations.id'),
         nullable=False
     )
-    territory_id = Column(
+    territory_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('territories.id'),
         nullable=False
     )
 
     # Status and metadata
-    is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, onupdate=datetime.utcnow)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        onupdate=datetime.utcnow
+    )
 
     # Relationships
     organization = relationship("Organization", back_populates="facilities")

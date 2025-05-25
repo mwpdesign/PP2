@@ -229,9 +229,8 @@ export interface Document {
   type: string;
   url: string;
   uploadedAt: string;
-  uploadedBy?: string;
-  status?: 'pending' | 'verified' | 'rejected';
-  notes?: string;
+  status: 'pending' | 'verified' | 'rejected';
+  file?: File;
 }
 
 export interface IVRFormData {

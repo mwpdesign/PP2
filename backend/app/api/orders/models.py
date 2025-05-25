@@ -1,8 +1,8 @@
 """Order models."""
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship
 from datetime import datetime
+from sqlalchemy import String, DateTime, ForeignKey, Text, Integer
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.core.database import Base
 
 
@@ -11,21 +11,39 @@ class Product(Base):
 
     __tablename__ = "products"
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255), nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
 
 
 class OrderStatusHistory(Base):
+    """Order status history model."""
+    
     __tablename__ = "order_status_history"
 
-    id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    previous_status = Column(String(50), nullable=False)
-    new_status = Column(String(50), nullable=False)
-    changed_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    notes = Column(Text, nullable=True)
-    territory_id = Column(Integer, ForeignKey("territories.id"), nullable=False)
-    timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    order_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("orders.id"),
+        nullable=False
+    )
+    previous_status: Mapped[str] = mapped_column(String(50), nullable=False)
+    new_status: Mapped[str] = mapped_column(String(50), nullable=False)
+    changed_by: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    territory_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("territories.id"),
+        nullable=False
+    )
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
 
     # Relationships
     order = relationship("Order", back_populates="status_history")

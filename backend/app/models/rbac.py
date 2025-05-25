@@ -1,11 +1,9 @@
 """Role-Based Access Control models for the healthcare IVR platform."""
 from datetime import datetime
-from sqlalchemy import (
-    Column, String, DateTime, ForeignKey, Table, JSON
-)
+from uuid import UUID as PyUUID, uuid4
+from sqlalchemy import String, DateTime, ForeignKey, Table, JSON, Column
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
-import uuid
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
 
@@ -28,7 +26,7 @@ role_permissions = Table(
     ),
     Column(
         'granted_at',
-        DateTime,
+        DateTime(timezone=True),
         nullable=False,
         default=datetime.utcnow
     ),
@@ -45,24 +43,40 @@ class Role(Base):
     
     __tablename__ = 'roles'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(50), nullable=False)
-    description = Column(String(255))
-    organization_id = Column(
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    description: Mapped[str] = mapped_column(String(255))
+    organization_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('organizations.id')
     )
-    parent_role_id = Column(
+    parent_role_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('roles.id')
     )
-    permissions = Column(JSON, nullable=False, server_default='{}')
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, onupdate=datetime.utcnow)
+    permissions: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=False,
+        server_default='{}'
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        onupdate=datetime.utcnow
+    )
 
     # Relationships
     organization = relationship("Organization", back_populates="roles")
     parent_role = relationship("Role", remote_side=[id])
+    users = relationship("User", back_populates="role")
     assigned_permissions = relationship(
         "Permission",
         secondary=role_permissions,
@@ -84,13 +98,25 @@ class Permission(Base):
     
     __tablename__ = 'permissions'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(50), nullable=False, unique=True)
-    description = Column(String(255))
-    resource_type = Column(String(50), nullable=False)
-    action = Column(String(50), nullable=False)
-    conditions = Column(JSON, nullable=False, server_default='{}')
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    description: Mapped[str] = mapped_column(String(255))
+    resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    action: Mapped[str] = mapped_column(String(50), nullable=False)
+    conditions: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=False,
+        server_default='{}'
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
 
     # Relationships
     roles = relationship(

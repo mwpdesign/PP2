@@ -9,8 +9,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import text
 from dotenv import load_dotenv
-from sqlalchemy.exc import OperationalError
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
 
@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
+
 # Get database configuration from environment
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
@@ -27,32 +28,38 @@ DB_NAME = os.getenv("DB_NAME", "healthcare_ivr")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
 
+
 # Create database URL
 DATABASE_URL = (
     f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}"
     f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
+
 class DatabaseSettings(BaseSettings):
     """Database configuration settings."""
-    model_config = ConfigDict(extra='ignore')  # Allow extra environment variables
+    model_config = ConfigDict(extra='ignore')  # Allow extra fields
     
     # Make all fields optional with defaults
-    database_required: bool = False
-    database_url: Optional[str] = None
+    database_required: bool = True  # Enable database by default
+    database_url: Optional[str] = DATABASE_URL
     db_echo: bool = False
     sqlite_url: str = "sqlite+aiosqlite:///./test.db"
 
+
 # Global settings instance
 db_settings = DatabaseSettings()
+
 
 # Global engine and session factory
 engine = None
 async_session_factory: Optional[async_sessionmaker] = None
 
+
 # Create base class for models
 class Base(DeclarativeBase):
     pass
+
 
 async def init_db() -> bool:
     """Initialize database connection if required.
@@ -85,18 +92,24 @@ async def init_db() -> bool:
         
         # Test connection
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(text("SELECT 1"))
             await conn.commit()
         
         # Initialize tables only if database is required and engine exists
         if engine is not None:
             # Import models here to avoid circular imports
-            from app.models.organization import Organization  # noqa
-            from app.models.user import User  # noqa
-            from app.models.rbac import Role, Permission  # noqa
-            from app.models.territory import Territory  # noqa
-            from app.models.sensitive_data import SensitiveUserData  # noqa
-            from app.models.patient import Patient  # noqa
+            from app.models import (  # noqa
+                organization, user, rbac, territory, sensitive_data,
+                patient, facility, order
+            )
+            from app.models.logistics import (  # noqa
+                Carrier, ShippingMethod, ShippingLabel,
+                ShippingStatus, ShippingEvent
+            )
+            from app.analytics.models import (  # noqa
+                DimTime, DimTerritory, DimProvider,
+                DimPatient, DimOrder, FactOrder
+            )
             
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
@@ -112,6 +125,7 @@ async def init_db() -> bool:
             return False
         logger.warning("Continuing without database connection")
         return True
+
 
 async def get_db() -> AsyncGenerator[Optional[AsyncSession], None]:
     """Get database session if available.
@@ -129,10 +143,12 @@ async def get_db() -> AsyncGenerator[Optional[AsyncSession], None]:
         finally:
             await session.close()
 
+
 # Utility function to check database availability
 def is_database_available() -> bool:
     """Check if database is available and configured."""
     return bool(db_settings.database_required and async_session_factory)
+
 
 # Create async session factory only if database is required
 AsyncSessionLocal = async_sessionmaker(

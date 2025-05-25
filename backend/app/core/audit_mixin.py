@@ -1,26 +1,31 @@
 """Audit mixin for tracking model changes."""
 from datetime import datetime
-from sqlalchemy import Column, DateTime, ForeignKey
+from uuid import UUID as PyUUID
+from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, declared_attr
+from sqlalchemy.orm import relationship, declared_attr, Mapped, mapped_column
 
 
 class AuditMixin:
     """Mixin class for adding audit fields to models."""
     
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime,
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
         nullable=False
     )
-    created_by_id = Column(
+    created_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('users.id'),
         nullable=False
     )
-    updated_by_id = Column(
+    updated_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('users.id'),
         nullable=False

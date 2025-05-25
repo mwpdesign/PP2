@@ -3,12 +3,12 @@ import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
-from uuid import UUID
+from uuid import UUID as PyUUID
 
 from app.core.config import settings
-from sqlalchemy import Column, DateTime, ForeignKey
+from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 
 class AuditLogger:
@@ -33,10 +33,10 @@ class AuditLogger:
     def log_action(
         self,
         action: str,
-        user_id: UUID,
-        resource_id: UUID,
+        user_id: PyUUID,
+        resource_id: PyUUID,
         resource_type: str,
-        organization_id: UUID,
+        organization_id: PyUUID,
         details: Optional[Dict[str, Any]] = None,
         status: str = "success",
         severity: str = "info"
@@ -87,11 +87,11 @@ class AuditLogger:
 
     def log_phi_access(
         self,
-        user_id: UUID,
-        patient_id: UUID,
+        user_id: PyUUID,
+        patient_id: PyUUID,
         action: str,
         reason: str,
-        organization_id: UUID,
+        organization_id: PyUUID,
         details: Optional[Dict[str, Any]] = None
     ) -> None:
         """
@@ -129,9 +129,9 @@ class AuditLogger:
     def log_security_event(
         self,
         event_type: str,
-        user_id: Optional[UUID],
+        user_id: Optional[PyUUID],
         status: str,
-        organization_id: UUID,
+        organization_id: PyUUID,
         details: Optional[Dict[str, Any]] = None
     ) -> None:
         """
@@ -154,8 +154,8 @@ class AuditLogger:
 
         self.log_action(
             action="security_event",
-            user_id=user_id or UUID(int=0),
-            resource_id=UUID(int=0),
+            user_id=user_id or PyUUID(int=0),
+            resource_id=PyUUID(int=0),
             resource_type="security",
             organization_id=organization_id,
             details=security_event,
@@ -193,9 +193,9 @@ audit_logger = AuditLogger()
 
 def audit_shipping_operation(
     operation: str,
-    user_id: UUID,
-    order_id: UUID,
-    organization_id: UUID,
+    user_id: PyUUID,
+    order_id: PyUUID,
+    organization_id: PyUUID,
     carrier: str,
     details: Optional[Dict[str, Any]] = None
 ) -> None:
@@ -230,22 +230,28 @@ def audit_shipping_operation(
 
 
 """Audit mixin for tracking model changes."""
+
+
 class AuditMixin:
     """Mixin class for adding audit fields to models."""
     
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(
-        DateTime,
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
         nullable=False
     )
-    created_by_id = Column(
+    created_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('users.id'),
         nullable=False
     )
-    updated_by_id = Column(
+    updated_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('users.id'),
         nullable=False

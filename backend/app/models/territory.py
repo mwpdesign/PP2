@@ -1,11 +1,11 @@
 """Territory management models for the healthcare IVR platform."""
 from datetime import datetime
+from uuid import UUID as PyUUID, uuid4
 from sqlalchemy import (
-    Column, String, DateTime, ForeignKey, Table, Float, JSON
+    String, DateTime, ForeignKey, Table, Float, JSON, Column
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
-import uuid
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
 
@@ -30,17 +30,6 @@ territory_role_access = Table(
         'access_level',
         String(50),
         nullable=False
-    ),
-    Column(
-        'granted_at',
-        DateTime,
-        nullable=False,
-        default=datetime.utcnow
-    ),
-    Column(
-        'granted_by',
-        UUID(as_uuid=True),
-        ForeignKey('users.id')
     )
 )
 
@@ -50,41 +39,88 @@ class Territory(Base):
     
     __tablename__ = 'territories'
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(100), nullable=False)
-    code = Column(String(20), nullable=False)
-    organization_id = Column(
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    description: Mapped[str] = mapped_column(String(500))
+    
+    # Geographic boundaries
+    latitude: Mapped[float] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float] = mapped_column(Float, nullable=True)
+    radius_miles: Mapped[float] = mapped_column(Float, nullable=True)
+    boundaries: Mapped[dict] = mapped_column(JSON, nullable=True)  # GeoJSON
+    
+    # Organization
+    organization_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('organizations.id'),
         nullable=False
     )
-    parent_territory_id = Column(
+    parent_territory_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey('territories.id')
+        ForeignKey('territories.id'),
+        nullable=True
     )
-    type = Column(String(50), nullable=False)
-    territory_metadata = Column(JSON, nullable=False, server_default='{}')
-    security_policy = Column(JSON, nullable=False, server_default='{}')
-    latitude = Column(Float)
-    longitude = Column(Float)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, onupdate=datetime.utcnow)
+    
+    # Settings and metadata
+    settings: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=False,
+        server_default='{}'
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        onupdate=datetime.utcnow
+    )
 
     # Relationships
     organization = relationship("Organization", back_populates="territories")
-    parent_territory = relationship("Territory", remote_side=[id])
+    parent_territory = relationship(
+        "Territory",
+        remote_side=[id],
+        back_populates="child_territories"
+    )
+    child_territories = relationship(
+        "Territory",
+        back_populates="parent_territory"
+    )
+    users = relationship(
+        "User",
+        foreign_keys="User.primary_territory_id",
+        back_populates="primary_territory"
+    )
+    facilities = relationship("Facility", back_populates="territory")
+    orders = relationship("Order", back_populates="territory")
     allowed_roles = relationship(
         "Role",
         secondary=territory_role_access,
         back_populates="accessible_territories"
     )
-    users = relationship(
-        "User",
-        primaryjoin="Territory.id==User.primary_territory_id",
-        back_populates="primary_territory"
+    phi_access_logs = relationship(
+        "PHIAccess",
+        back_populates="territory"
     )
-    facilities = relationship("Facility", back_populates="territory")
-    orders = relationship("Order", back_populates="territory")
+    audit_logs = relationship(
+        "AuditLog",
+        back_populates="territory"
+    )
+    compliance_checks = relationship(
+        "ComplianceCheck",
+        back_populates="territory"
+    )
+    audit_reports = relationship(
+        "AuditReport",
+        back_populates="territory"
+    )
 
     def __repr__(self):
         """String representation of the territory."""

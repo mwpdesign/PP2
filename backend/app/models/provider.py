@@ -115,4 +115,19 @@ class Provider(Base):
     # Relationships
     created_by = relationship("User", back_populates="providers")
     patients = relationship("Patient", back_populates="provider")
-    orders = relationship("Order", back_populates="provider") 
+    orders = relationship("Order", back_populates="provider")
+    
+    # IVR relationships
+    ivr_requests = relationship(
+        "IVRRequest",
+        back_populates="provider",
+        cascade="all, delete-orphan"
+    )
+    ivr_sessions = relationship(
+        "IVRSession",
+        back_populates="provider",
+        cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<Provider(id={self.id}, name={self.name})>" 

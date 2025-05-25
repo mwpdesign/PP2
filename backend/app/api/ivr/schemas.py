@@ -1,3 +1,4 @@
+"""IVR request and session schemas."""
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, constr, Field
@@ -6,18 +7,21 @@ from uuid import UUID
 
 # Base Schemas
 class IVRRequestBase(BaseModel):
-    patient_id: str
-    provider_id: str
-    facility_id: str
-    territory_id: str
-    service_type: str
-    priority: IVRPriority = IVRPriority.MEDIUM
-    notes: Optional[str] = None
-    metadata: Optional[dict] = None
+    """Base schema for IVR requests."""
+    patient_id: UUID
+    provider_id: UUID
+    facility_id: UUID
+    territory_id: UUID
+    service_type: str = Field(..., max_length=100)
+    priority: IVRPriority = Field(default=IVRPriority.MEDIUM)
+    metadata: Optional[Dict] = Field(default_factory=dict)
+    notes: Optional[str] = Field(default=None, max_length=1000)
 
 class IVRDocumentBase(BaseModel):
-    document_type: str
-    verification_notes: Optional[str] = None
+    """Base schema for IVR documents."""
+    ivr_request_id: UUID
+    document_type: str = Field(..., max_length=50)
+    document_key: str = Field(..., max_length=255)
 
 class IVRReviewBase(BaseModel):
     notes: Optional[str] = None
@@ -34,9 +38,11 @@ class IVRApprovalBase(BaseModel):
 
 # Create Request Schemas
 class IVRRequestCreate(IVRRequestBase):
+    """Schema for creating IVR requests."""
     pass
 
 class IVRDocumentCreate(IVRDocumentBase):
+    """Schema for creating IVR documents."""
     pass
 
 class IVRReviewCreate(IVRReviewBase):
@@ -57,11 +63,10 @@ class UserBrief(BaseModel):
         orm_mode = True
 
 class IVRDocumentResponse(IVRDocumentBase):
-    id: str
-    ivr_request_id: str
-    document_key: str
-    status: str
-    uploaded_by: UserBrief
+    id: UUID
+    uploaded_by_id: UUID
+    status: str = Field(default="pending", max_length=20)
+    verification_notes: Optional[str] = Field(default=None, max_length=500)
     created_at: datetime
     updated_at: datetime
 
@@ -113,9 +118,9 @@ class IVRStatusHistoryResponse(BaseModel):
         orm_mode = True
 
 class IVRRequestResponse(IVRRequestBase):
-    id: str
+    id: UUID
     status: IVRStatus
-    current_reviewer: Optional[UserBrief]
+    current_reviewer_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
     documents: List[IVRDocumentResponse] = []
@@ -176,15 +181,16 @@ class IVRSessionItemResponse(IVRSessionItemBase):
         orm_mode = True
 
 class IVRSessionBase(BaseModel):
-    """Base schema for IVR session data."""
+    """Base schema for IVR sessions."""
     patient_id: UUID
     provider_id: UUID
     territory_id: UUID
-    insurance_data: Optional[Dict] = None
-    metadata: Optional[Dict] = None
+    status: str = Field(default="pending", max_length=20)
+    insurance_data: Optional[Dict] = Field(default_factory=dict)
+    metadata: Optional[Dict] = Field(default_factory=dict)
 
 class IVRSessionCreate(IVRSessionBase):
-    """Schema for creating a new IVR session."""
+    """Schema for creating IVR sessions."""
     items: List[IVRSessionItemCreate]
 
 class IVRSessionUpdate(BaseModel):
@@ -197,10 +203,8 @@ class IVRSessionUpdate(BaseModel):
     )
 
 class IVRSessionResponse(IVRSessionBase):
-    """Schema for IVR session response data."""
+    """Schema for IVR session responses."""
     id: UUID
-    status: str
-    items: List[IVRSessionItemResponse]
     created_at: datetime
     updated_at: datetime
 

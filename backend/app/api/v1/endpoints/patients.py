@@ -3,22 +3,19 @@ from fastapi import (
     APIRouter, Depends, HTTPException, Query, status,
     UploadFile, File, Form
 )
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from datetime import datetime
 
 from app.core.database import get_db
 from app.core.security import get_current_user
-from app.models.patient import Patient, SecondaryInsurance, PatientDocument
+from app.models.patient import Patient, PatientDocument
 from app.models.user import User
 from app.schemas.patient import (
     Patient as PatientSchema,
-    PatientCreate,
     PatientUpdate,
     PatientSearchResults,
-    SecondaryInsuranceCreate,
-    SecondaryInsurance as SecondaryInsuranceSchema,
     PatientDocument as PatientDocumentSchema,
     PatientRegistration,
 )
@@ -35,7 +32,10 @@ async def register_patient(
     """Register a new patient."""
     try:
         # Parse date string to datetime
-        date_of_birth = datetime.strptime(patient_data.date_of_birth, '%Y-%m-%d')
+        date_of_birth = datetime.strptime(
+            patient_data.date_of_birth,
+            '%Y-%m-%d'
+        )
         
         # Create patient instance
         db_patient = Patient(
@@ -69,7 +69,7 @@ async def upload_patient_document(
     document_category: str = Form(...),
     display_name: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user=Depends(get_current_user),
     s3_service: S3Service = Depends()
 ):
     """Upload additional patient document."""
@@ -95,7 +95,9 @@ async def upload_patient_document(
             file_name=document.filename,
             file_path=doc_path["file_path"],
             document_category=document_category,
-            metadata={"display_name": display_name} if display_name else {},
+            document_metadata=(
+                {"display_name": display_name} if display_name else {}
+            ),
             created_by=current_user.id,
             territory_id=patient.territory_id
         )
@@ -105,45 +107,6 @@ async def upload_patient_document(
         await db.refresh(db_doc)
         
         return db_doc
-        
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
-
-@router.post("/{patient_id}/secondary-insurance", response_model=SecondaryInsuranceSchema)
-async def create_secondary_insurance(
-    patient_id: UUID,
-    insurance_in: SecondaryInsuranceCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user = Depends(get_current_user)
-):
-    """Create secondary insurance record."""
-    try:
-        # Get patient to verify existence and access
-        patient = await db.get(Patient, patient_id)
-        if not patient:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Patient not found"
-            )
-        
-        # Create secondary insurance
-        db_insurance = SecondaryInsurance(
-            **insurance_in.dict(),
-            patient_id=patient_id,
-            created_by=current_user.id,
-            territory_id=patient.territory_id
-        )
-        
-        db.add(db_insurance)
-        await db.commit()
-        await db.refresh(db_insurance)
-        
-        return db_insurance
         
     except Exception as e:
         await db.rollback()
@@ -189,7 +152,9 @@ async def update_patient(
     
     try:
         # Encrypt updated data
-        encrypted_data = encrypt_patient_data(patient_in.dict(exclude_unset=True))
+        encrypted_data = encrypt_patient_data(
+            patient_in.dict(exclude_unset=True)
+        )
         
         # Update patient
         for field, value in encrypted_data.items():

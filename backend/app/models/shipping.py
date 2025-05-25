@@ -2,41 +2,76 @@
 Database models for shipping-related entities.
 """
 from datetime import datetime
-from uuid import uuid4
+from uuid import UUID as PyUUID, uuid4
 from sqlalchemy import (
-    Column, String, Boolean, DateTime, ForeignKey, JSON, Enum
+    String, Boolean, DateTime, ForeignKey, JSON, Enum
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
 from app.core.security import encrypt_field, decrypt_field
-from app.services.shipping_types import ShippingServiceType, TrackingStatus
+from app.services.shipping_types import (
+    ShippingServiceType,
+    TrackingStatus
+)
 
 
 class ShippingAddress(Base):
     """Model for storing shipping addresses."""
     __tablename__ = 'shipping_addresses'
 
-    id = Column(UUID, primary_key=True, default=uuid4)
-    order_id = Column(UUID, ForeignKey('orders.id'), nullable=False)
-    address_type = Column(
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    order_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('orders.id'),
+        nullable=False
+    )
+    address_type: Mapped[str] = mapped_column(
         Enum('from', 'to', name='address_type_enum'),
         nullable=False
     )
-    _street1 = Column(String(500), nullable=False)  # Encrypted
-    _street2 = Column(String(500))  # Encrypted
-    _city = Column(String(500), nullable=False)  # Encrypted
-    _state = Column(String(500), nullable=False)  # Encrypted
-    _postal_code = Column(String(500), nullable=False)  # Encrypted
-    _country = Column(String(500), nullable=False)  # Encrypted
-    is_residential = Column(Boolean, default=True)
-    _phone = Column(String(500))  # Encrypted
-    _email = Column(String(500))  # Encrypted
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime,
-        default=datetime.utcnow,
+    _street1: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )  # Encrypted
+    _street2: Mapped[str] = mapped_column(
+        String(500)
+    )  # Encrypted
+    _city: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )  # Encrypted
+    _state: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )  # Encrypted
+    _zip_code: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )  # Encrypted
+    _country: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False,
+        default='US'
+    )  # Encrypted
+    _phone: Mapped[str] = mapped_column(
+        String(500)
+    )  # Encrypted
+    _email: Mapped[str] = mapped_column(
+        String(500)
+    )  # Encrypted
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         onupdate=datetime.utcnow
     )
 
@@ -46,95 +81,164 @@ class ShippingAddress(Base):
     @property
     def street1(self) -> str:
         """Get decrypted street1."""
-        return decrypt_field(self._street1)
+        if self._street1:
+            return decrypt_field(self._street1)
+        return None
 
     @street1.setter
     def street1(self, value: str):
-        self._street1 = encrypt_field(value)
+        """Set encrypted street1."""
+        if value is not None:
+            self._street1 = encrypt_field(value)
+        else:
+            self._street1 = None
 
     @property
     def street2(self) -> str:
         """Get decrypted street2."""
-        return decrypt_field(self._street2) if self._street2 else None
+        if self._street2:
+            return decrypt_field(self._street2)
+        return None
 
     @street2.setter
     def street2(self, value: str):
-        self._street2 = encrypt_field(value) if value else None
+        """Set encrypted street2."""
+        if value is not None:
+            self._street2 = encrypt_field(value)
+        else:
+            self._street2 = None
 
     @property
     def city(self) -> str:
         """Get decrypted city."""
-        return decrypt_field(self._city)
+        if self._city:
+            return decrypt_field(self._city)
+        return None
 
     @city.setter
     def city(self, value: str):
-        self._city = encrypt_field(value)
+        """Set encrypted city."""
+        if value is not None:
+            self._city = encrypt_field(value)
+        else:
+            self._city = None
 
     @property
     def state(self) -> str:
         """Get decrypted state."""
-        return decrypt_field(self._state)
+        if self._state:
+            return decrypt_field(self._state)
+        return None
 
     @state.setter
     def state(self, value: str):
-        self._state = encrypt_field(value)
+        """Set encrypted state."""
+        if value is not None:
+            self._state = encrypt_field(value)
+        else:
+            self._state = None
 
     @property
-    def postal_code(self) -> str:
-        """Get decrypted postal code."""
-        return decrypt_field(self._postal_code)
+    def zip_code(self) -> str:
+        """Get decrypted zip_code."""
+        if self._zip_code:
+            return decrypt_field(self._zip_code)
+        return None
 
-    @postal_code.setter
-    def postal_code(self, value: str):
-        self._postal_code = encrypt_field(value)
+    @zip_code.setter
+    def zip_code(self, value: str):
+        """Set encrypted zip_code."""
+        if value is not None:
+            self._zip_code = encrypt_field(value)
+        else:
+            self._zip_code = None
 
     @property
     def country(self) -> str:
         """Get decrypted country."""
-        return decrypt_field(self._country)
+        if self._country:
+            return decrypt_field(self._country)
+        return None
 
     @country.setter
     def country(self, value: str):
-        self._country = encrypt_field(value)
+        """Set encrypted country."""
+        if value is not None:
+            self._country = encrypt_field(value)
+        else:
+            self._country = None
 
     @property
     def phone(self) -> str:
         """Get decrypted phone."""
-        return decrypt_field(self._phone) if self._phone else None
+        if self._phone:
+            return decrypt_field(self._phone)
+        return None
 
     @phone.setter
     def phone(self, value: str):
-        self._phone = encrypt_field(value) if value else None
+        """Set encrypted phone."""
+        if value is not None:
+            self._phone = encrypt_field(value)
+        else:
+            self._phone = None
 
     @property
     def email(self) -> str:
         """Get decrypted email."""
-        return decrypt_field(self._email) if self._email else None
+        if self._email:
+            return decrypt_field(self._email)
+        return None
 
     @email.setter
     def email(self, value: str):
-        self._email = encrypt_field(value) if value else None
+        """Set encrypted email."""
+        if value is not None:
+            self._email = encrypt_field(value)
+        else:
+            self._email = None
 
 
 class ShipmentPackage(Base):
     """Model for storing package information."""
     __tablename__ = 'shipment_packages'
 
-    id = Column(UUID, primary_key=True, default=uuid4)
-    shipment_id = Column(UUID, ForeignKey('shipments.id'), nullable=False)
-    weight = Column(String(500), nullable=False)  # Encrypted
-    length = Column(String(500))  # Encrypted
-    width = Column(String(500))  # Encrypted
-    height = Column(String(500))  # Encrypted
-    value = Column(String(500))  # Encrypted
-    reference = Column(String(100))
-    requires_signature = Column(Boolean, default=True)
-    is_temperature_controlled = Column(Boolean, default=False)
-    temperature_range = Column(JSON)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime,
-        default=datetime.utcnow,
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    shipment_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('shipments.id'),
+        nullable=False
+    )
+    weight: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )  # Encrypted
+    length: Mapped[str] = mapped_column(
+        String(500)
+    )  # Encrypted
+    width: Mapped[str] = mapped_column(
+        String(500)
+    )  # Encrypted
+    height: Mapped[str] = mapped_column(
+        String(500)
+    )  # Encrypted
+    value: Mapped[str] = mapped_column(
+        String(500)
+    )  # Encrypted
+    reference: Mapped[str] = mapped_column(String(100))
+    requires_signature: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_hazardous: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         onupdate=datetime.utcnow
     )
 
@@ -146,36 +250,42 @@ class Shipment(Base):
     """Model for storing shipment information."""
     __tablename__ = 'shipments'
 
-    id = Column(UUID, primary_key=True, default=uuid4)
-    order_id = Column(UUID, ForeignKey('orders.id'), nullable=False)
-    carrier = Column(String(50), nullable=False)
-    service_type = Column(
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    order_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('orders.id'),
+        nullable=False
+    )
+    service_type: Mapped[ShippingServiceType] = mapped_column(
         Enum(ShippingServiceType),
         nullable=False
     )
-    tracking_number = Column(String(100))
-    status = Column(
-        Enum(
-            'pending',
-            'label_created',
-            'picked_up',
-            'in_transit',
-            'delivered',
-            'exception',
-            name='shipment_status_enum'
-        ),
+    carrier_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    tracking_number: Mapped[str] = mapped_column(String(100))
+    status: Mapped[TrackingStatus] = mapped_column(
+        Enum(TrackingStatus),
         nullable=False,
-        default='pending'
+        default=TrackingStatus.PENDING
     )
-    _rate = Column(String(500))  # Encrypted
-    currency = Column(String(3), default='USD')
-    label_url = Column(String(500))
-    estimated_delivery = Column(DateTime)
-    actual_delivery = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime,
-        default=datetime.utcnow,
+    label_url: Mapped[str] = mapped_column(String(500))
+    shipping_cost: Mapped[str] = mapped_column(
+        String(500)
+    )  # Encrypted
+    insurance_cost: Mapped[str] = mapped_column(
+        String(500)
+    )  # Encrypted
+    metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         onupdate=datetime.utcnow
     )
 
@@ -192,49 +302,37 @@ class Shipment(Base):
         cascade="all, delete-orphan"
     )
 
-    @property
-    def rate(self) -> float:
-        """Get decrypted rate."""
-        return float(decrypt_field(self._rate)) if self._rate else None
-
-    @rate.setter
-    def rate(self, value: float):
-        self._rate = encrypt_field(str(value)) if value is not None else None
-
 
 class ShipmentTracking(Base):
     """Model for storing shipment tracking events."""
     __tablename__ = 'shipment_tracking'
 
-    id = Column(UUID, primary_key=True, default=uuid4)
-    shipment_id = Column(UUID, ForeignKey('shipments.id'), nullable=False)
-    timestamp = Column(DateTime, nullable=False)
-    status = Column(
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    shipment_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('shipments.id'),
+        nullable=False
+    )
+    status: Mapped[TrackingStatus] = mapped_column(
         Enum(TrackingStatus),
         nullable=False
     )
-    _location = Column(String(500))  # Encrypted
-    _description = Column(String(1000))  # Encrypted
-    details = Column(JSON)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    location: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(String(500))
+    occurred_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+    metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
 
     # Relationships
-    shipment = relationship("Shipment", back_populates="tracking_events")
-
-    @property
-    def location(self) -> str:
-        """Get decrypted location."""
-        return decrypt_field(self._location) if self._location else None
-
-    @location.setter
-    def location(self, value: str):
-        self._location = encrypt_field(value) if value else None
-
-    @property
-    def description(self) -> str:
-        """Get decrypted description."""
-        return decrypt_field(self._description)
-
-    @description.setter
-    def description(self, value: str):
-        self._description = encrypt_field(value) 
+    shipment = relationship("Shipment", back_populates="tracking_events") 

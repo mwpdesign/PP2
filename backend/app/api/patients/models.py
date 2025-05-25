@@ -3,11 +3,12 @@ Patient data models with field-level encryption for PHI.
 Implements HIPAA-compliant data storage with audit logging.
 """
 from datetime import datetime
+from typing import List, Optional
 from sqlalchemy import (
     Column, Integer, String, DateTime, ForeignKey,
     Boolean, Table, Text, Index, JSON
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.sql import func
 
@@ -35,6 +36,26 @@ patient_facilities = Table(
     Column('created_at', DateTime, default=datetime.utcnow),
     Column('updated_at', DateTime, onupdate=datetime.utcnow)
 )
+
+
+class PatientDoctorAssociation(Base):
+    """Association table for patient-doctor relationships."""
+    __tablename__ = 'patient_doctor_associations'
+
+    patient_id = Column(Integer, ForeignKey('patients.id'), primary_key=True)
+    doctor_id = Column(Integer, ForeignKey('doctors.id'), primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, onupdate=datetime.utcnow)
+
+
+class PatientFacilityAssociation(Base):
+    """Association table for patient-facility relationships."""
+    __tablename__ = 'patient_facility_associations'
+
+    patient_id = Column(Integer, ForeignKey('patients.id'), primary_key=True)
+    facility_id = Column(Integer, ForeignKey('facilities.id'), primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, onupdate=datetime.utcnow)
 
 
 class Patient(Base, TimestampMixin, AuditMixin):
@@ -100,15 +121,15 @@ class Patient(Base, TimestampMixin, AuditMixin):
     # Relationships
     doctors = relationship(
         'Doctor',
-        secondary=patient_doctors,
-        backref='patients'
+        secondary="patient_doctor_associations",
+        back_populates="patients"
     )
     facilities = relationship(
         'Facility',
-        secondary=patient_facilities,
-        backref='patients'
+        secondary="patient_facility_associations",
+        back_populates="patients"
     )
-    documents = relationship('Document', backref='patient')
+    documents = relationship('Document', back_populates='patient')
     ivr_requests = relationship('IVRRequest', backref='patient')
     orders = relationship('Order', backref='patient')
     audit_logs = relationship('AuditLog', backref='patient')
@@ -180,6 +201,9 @@ class Document(Base):
     last_accessed_at = Column(DateTime)
     last_accessed_by = Column(Integer, ForeignKey('users.id'))
 
+    # Relationships
+    patient = relationship("Patient", back_populates="documents")
+
 
 class PatientAuditLog(Base):
     """
@@ -214,6 +238,10 @@ class PatientAuditLog(Base):
     territory_id = Column(Integer, ForeignKey('territories.id'))
     organization_id = Column(Integer, ForeignKey('organizations.id'))
     details = Column(JSONB)  # Additional audit context
+
+    # Relationships
+    patient = relationship("Patient", back_populates="audit_logs")
+    user = relationship("User", back_populates="access_logs")
 
 
 class PatientConsent(Base):
@@ -253,6 +281,10 @@ class PatientConsent(Base):
     revoked_at = Column(DateTime)
     revoked_by = Column(Integer, ForeignKey('users.id'))
     revocation_reason = Column(Text)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="consents")
+    document = relationship("Document")
 
 
 class InsuranceVerification(Base):
@@ -302,6 +334,9 @@ class InsuranceVerification(Base):
     updated_by = Column(Integer, ForeignKey('users.id'))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, onupdate=datetime.utcnow)
+
+    # Relationships
+    patient = relationship("Patient", back_populates="insurance_verifications")
 
 
 class MedicalRecord(Base):

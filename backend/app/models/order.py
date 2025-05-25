@@ -3,10 +3,10 @@ Order model for managing medical supply orders.
 """
 
 from datetime import datetime
-from uuid import uuid4
-from sqlalchemy import Column, String, Enum, DateTime, ForeignKey, Text
+from uuid import UUID as PyUUID, uuid4
+from sqlalchemy import String, Enum, DateTime, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
 from app.core.audit_mixin import AuditMixin
@@ -17,39 +17,43 @@ class Order(Base, AuditMixin):
     """Order model for managing medical supply orders."""
     __tablename__ = 'orders'
 
-    id = Column(
+    id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid4
     )
-    order_number = Column(String(50), unique=True, nullable=False)
-    patient_id = Column(
+    order_number: Mapped[str] = mapped_column(
+        String(50),
+        unique=True,
+        nullable=False
+    )
+    patient_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('patients.id'),
         nullable=False
     )
-    provider_id = Column(
+    provider_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('providers.id'),
         nullable=False
     )
-    territory_id = Column(
+    territory_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('territories.id'),
         nullable=False
     )
-    created_by_id = Column(
+    created_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('users.id'),
         nullable=False
     )
-    updated_by_id = Column(
+    updated_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('users.id'),
         nullable=True
     )
-    ivr_session_id = Column(String(100))
-    status = Column(
+    ivr_session_id: Mapped[str] = mapped_column(String(100))
+    status: Mapped[str] = mapped_column(
         Enum(
             'pending',
             'verified',
@@ -62,7 +66,7 @@ class Order(Base, AuditMixin):
         nullable=False,
         default='pending'
     )
-    order_type = Column(
+    order_type: Mapped[str] = mapped_column(
         Enum(
             'prescription',
             'medical_equipment',
@@ -72,7 +76,7 @@ class Order(Base, AuditMixin):
         ),
         nullable=False
     )
-    priority = Column(
+    priority: Mapped[str] = mapped_column(
         Enum(
             'routine',
             'urgent',
@@ -82,15 +86,18 @@ class Order(Base, AuditMixin):
         nullable=False,
         default='routine'
     )
-    _total_amount = Column(String(500))  # Encrypted
-    _notes = Column(Text)  # Encrypted
-    _insurance_data = Column(String(2000))  # Encrypted JSON
-    _payment_info = Column(String(2000))  # Encrypted JSON
-    _delivery_info = Column(String(2000))  # Encrypted JSON
-    completion_date = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime,
+    _total_amount: Mapped[str] = mapped_column(String(500))  # Encrypted
+    _notes: Mapped[str] = mapped_column(Text)  # Encrypted
+    _insurance_data: Mapped[str] = mapped_column(String(2000))  # Encrypted JSON
+    _payment_info: Mapped[str] = mapped_column(String(2000))  # Encrypted JSON
+    _delivery_info: Mapped[str] = mapped_column(String(2000))  # Encrypted JSON
+    completion_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
@@ -114,12 +121,12 @@ class Order(Base, AuditMixin):
     created_by = relationship(
         "User",
         foreign_keys=[created_by_id],
-        backref="created_orders"
+        back_populates="created_orders"
     )
     updated_by = relationship(
         "User",
         foreign_keys=[updated_by_id],
-        backref="updated_orders"
+        back_populates="updated_orders"
     )
     shipping_addresses = relationship(
         "ShippingAddress",
