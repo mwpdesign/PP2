@@ -9,7 +9,8 @@ const PatientIntakePage = React.lazy(() => import('./pages/patients/intake'));
 const PatientSelectionPage = React.lazy(() => import('./pages/patients/select'));
 const PatientDetailPage = React.lazy(() => import('./pages/patients/[id]'));
 const IVRManagementPage = React.lazy(() => import('./pages/ivr'));
-const IVRSubmissionPage = React.lazy(() => import('./pages/ivr/submit'));
+const IVRSubmissionPage = React.lazy(() => import('./pages/ivr/submit/[patientId]'));
+const TestIVRPage = React.lazy(() => import('./pages/ivr/submit/TestIVRPage'));
 const OrderManagementPage = React.lazy(() => import('./pages/orders'));
 const ShippingPage = React.lazy(() => import('./pages/shipping'));
 const AnalyticsPage = React.lazy(() => import('./pages/analytics'));
@@ -47,7 +48,11 @@ const App = () => {
               {/* IVR Routes */}
               <Route path="ivr">
                 <Route index element={<IVRManagementPage />} />
-                <Route path="submit" element={<IVRSubmissionPage />} />
+                <Route path="submit">
+                  <Route index element={<Navigate to="/patients/select" replace />} />
+                  <Route path="test/:patientId" element={<TestIVRPage />} />
+                  <Route path=":patientId" element={<IVRSubmissionPage />} />
+                </Route>
               </Route>
               
               {/* Other Routes */}

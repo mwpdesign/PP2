@@ -5,26 +5,7 @@ import { ArrowLeftIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline
 import PageHeader from '../shared/layout/PageHeader';
 import DocumentCard from './DocumentCard';
 import DocumentUpload from './DocumentUpload';
-import { Document } from '../../mock_data/patients';
-
-interface Patient {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  primaryCondition?: string;
-  lastVisit?: string;
-  insuranceProvider?: string;
-  insuranceStatus?: 'active' | 'pending' | 'expired';
-  insuranceNumber?: string;
-  documents?: Document[];
-}
+import { Patient, Document } from '../../types/ivr';
 
 const PatientDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -55,10 +36,25 @@ const PatientDetail: React.FC = () => {
           zipCode: '90001',
           primaryCondition: 'Type 2 Diabetes',
           lastVisit: '2024-05-20',
-          insuranceProvider: 'Blue Cross Blue Shield',
-          insuranceStatus: 'active',
-          insuranceNumber: 'BCBS123456789',
-          documents: []
+          insuranceInfo: {
+            provider: 'Blue Cross Blue Shield',
+            policyNumber: 'BCBS123456789',
+            groupNumber: 'GRP123',
+            status: 'active'
+          },
+          documents: [{
+            id: '1',
+            name: 'Insurance Card',
+            type: 'image/jpeg',
+            size: 1024,
+            url: '/uploads/insurance-card.jpg',
+            uploadedAt: new Date().toISOString(),
+            status: 'uploaded',
+            category: 'insurance',
+            metadata: {
+              side: 'front'
+            }
+          }]
         };
         setPatient(mockPatient);
         setEditedPatient(mockPatient);
@@ -400,12 +396,12 @@ const PatientDetail: React.FC = () => {
                   <input
                     type="text"
                     name="insuranceProvider"
-                    value={editedPatient?.insuranceProvider || ''}
+                    value={editedPatient?.insuranceInfo?.provider || ''}
                     onChange={handleInputChange}
                     className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#2C3E50] focus:ring-[#2C3E50]"
                   />
                 ) : (
-                  <p className="text-gray-900">{patient.insuranceProvider || 'Not provided'}</p>
+                  <p className="text-gray-900">{patient.insuranceInfo?.provider || 'Not provided'}</p>
                 )}
               </div>
 
@@ -415,24 +411,24 @@ const PatientDetail: React.FC = () => {
                   <input
                     type="text"
                     name="insuranceNumber"
-                    value={editedPatient?.insuranceNumber || ''}
+                    value={editedPatient?.insuranceInfo?.policyNumber || ''}
                     onChange={handleInputChange}
                     className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#2C3E50] focus:ring-[#2C3E50]"
                   />
                 ) : (
-                  <p className="text-gray-900">{patient.insuranceNumber || 'Not provided'}</p>
+                  <p className="text-gray-900">{patient.insuranceInfo?.policyNumber || 'Not provided'}</p>
                 )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Insurance Status</label>
                 <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                  ${patient.insuranceStatus === 'active' ? 'bg-green-100 text-green-800' :
-                    patient.insuranceStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    patient.insuranceStatus === 'expired' ? 'bg-red-100 text-red-800' :
+                  ${patient.insuranceInfo?.status === 'active' ? 'bg-green-100 text-green-800' :
+                    patient.insuranceInfo?.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    patient.insuranceInfo?.status === 'expired' ? 'bg-red-100 text-red-800' :
                     'bg-gray-100 text-gray-800'}`}
                 >
-                  {patient.insuranceStatus ? patient.insuranceStatus.charAt(0).toUpperCase() + patient.insuranceStatus.slice(1) : 'Unknown'}
+                  {patient.insuranceInfo?.status ? patient.insuranceInfo?.status.charAt(0).toUpperCase() + patient.insuranceInfo?.status.slice(1) : 'Unknown'}
                 </div>
               </div>
 

@@ -1,11 +1,9 @@
 export enum IVRStatus {
+  DRAFT = 'draft',
   SUBMITTED = 'submitted',
   IN_REVIEW = 'in_review',
-  PENDING_APPROVAL = 'pending_approval',
   APPROVED = 'approved',
-  REJECTED = 'rejected',
-  ESCALATED = 'escalated',
-  CANCELLED = 'cancelled',
+  REJECTED = 'rejected'
 }
 
 export enum IVRPriority {
@@ -24,12 +22,22 @@ export interface User {
 
 export interface Patient {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   dateOfBirth: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  primaryCondition?: string;
+  lastVisitDate?: string;
   insuranceInfo: {
     provider: string;
     policyNumber: string;
     groupNumber: string;
+    status: string;
   };
 }
 
@@ -148,4 +156,163 @@ export interface IVRBatchAction {
 export interface IVRBatchResult {
   success: string[];
   failed: Record<string, string>;
-} 
+}
+
+export type ProductCategory = 'skin_graft' | 'collagen_matrix' | 'negative_pressure' | 'other';
+
+export interface Product {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+  description: string;
+  size?: string;
+}
+
+export interface IVRTracking {
+  id: string;
+  createdBy: string;
+  createdAt: string;
+  lastUpdatedAt: string;
+  lastUpdatedBy: string;
+  status: IVRStatus;
+  statusHistory: {
+    status: IVRStatus;
+    timestamp: string;
+    updatedBy: string;
+    notes?: string;
+  }[];
+}
+
+export interface PhysicianInfo {
+  id: string;
+  name: string;
+  npi: string;
+  medicarePTAN: string;
+  taxId: string;
+  facility: {
+    id: string;
+    name: string;
+    address: string;
+    phone: string;
+  };
+}
+
+export interface TreatmentInfo {
+  skinSubstituteAcknowledged: boolean;
+  qCode: string;
+  startDate: string;
+  numberOfApplications: number;
+  frequency: 'weekly' | 'bi-weekly' | 'monthly' | 'other';
+  totalSurfaceArea: number;
+  diagnosisCodes: {
+    code: string;
+    description: string;
+    isPrimary: boolean;
+  }[];
+  clinicalNotes: string;
+}
+
+export interface InsuranceDetails {
+  verificationStatus: 'pending' | 'verified' | 'failed';
+  verificationDate?: string;
+  policyNumber: string;
+  groupNumber?: string;
+  preAuthRequired: boolean;
+  preAuthNumber?: string;
+  coverageNotes?: string;
+}
+
+export interface Document {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  uploadedAt: string;
+  uploadedBy?: string;
+  status?: 'pending' | 'verified' | 'rejected';
+  notes?: string;
+}
+
+export interface IVRFormData {
+  patientId: string;
+  status: IVRStatus;
+  createdAt: string;
+  updatedAt: string;
+  selectedProducts: {
+    id: string;
+    name: string;
+    category: string;
+    size?: string;
+    quantity: number;
+  }[];
+  treatmentInfo: TreatmentInfo;
+  insuranceDetails: InsuranceDetails;
+  supportingDocuments: Document[];
+  tracking: IVRTracking;
+  physician: PhysicianInfo;
+}
+
+// Mock data for development
+export const mockProducts: Product[] = [
+  {
+    id: 'P1',
+    name: 'Advanced Wound Dressing',
+    code: 'AWD-001',
+    category: 'Wound Care',
+    description: 'Advanced dressing for chronic wounds',
+    size: '4" x 4"'
+  },
+  {
+    id: 'P2',
+    name: 'Compression Bandage',
+    code: 'CB-002',
+    category: 'Compression',
+    description: 'High-compression bandage system',
+    size: '6" x 8 yards'
+  },
+  {
+    id: 'P3',
+    name: 'Negative Pressure Device',
+    code: 'NPD-003',
+    category: 'Negative Pressure',
+    description: 'Portable negative pressure wound therapy device'
+  },
+  {
+    id: 'P4',
+    name: 'Collagen Matrix',
+    code: 'CM-004',
+    category: 'Biologics',
+    description: 'Advanced wound matrix with collagen',
+    size: '2" x 2"'
+  },
+  {
+    id: 'P5',
+    name: 'Antimicrobial Dressing',
+    code: 'AD-005',
+    category: 'Wound Care',
+    description: 'Silver-infused antimicrobial dressing',
+    size: '4" x 5"'
+  }
+];
+
+// Add Q Code options
+export const QCodeOptions = [
+  { value: 'Q4101', label: 'Q4101 - Apligraf' },
+  { value: 'Q4102', label: 'Q4102 - Oasis Wound Matrix' },
+  { value: 'Q4106', label: 'Q4106 - Dermagraft' },
+  { value: 'Q4110', label: 'Q4110 - PriMatrix' },
+  { value: 'Q4116', label: 'Q4116 - Alloderm' },
+  { value: 'Q4121', label: 'Q4121 - TheraSkin' },
+  { value: 'Q4124', label: 'Q4124 - OASIS Ultra Tri-Layer Matrix' },
+  { value: 'Q4128', label: 'Q4128 - FlexHD' },
+  { value: 'Q4132', label: 'Q4132 - Grafix Core' },
+  { value: 'Q4133', label: 'Q4133 - Grafix Prime' }
+];
+
+export const FrequencyOptions = [
+  { value: 'weekly', label: 'Weekly' },
+  { value: 'bi-weekly', label: 'Bi-weekly' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'other', label: 'Other' }
+]; 

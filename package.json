@@ -12,5 +12,9 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "react-hot-toast": "^2.5.2",
+    "react-toastify": "^11.0.5"
   }
-} 
+}
