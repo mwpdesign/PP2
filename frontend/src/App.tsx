@@ -5,8 +5,14 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 // Import components
 const TestPage = React.lazy(() => import('./pages/TestPage'));
 const WoundCareDashboard = React.lazy(() => import('./pages/dashboard/WoundCareDashboard'));
-const PatientIntake = React.lazy(() => import('./pages/patients/intake'));
-const IVRSubmission = React.lazy(() => import('./pages/ivr/submit'));
+const PatientIntakePage = React.lazy(() => import('./pages/patients/intake'));
+const PatientSelectionPage = React.lazy(() => import('./pages/patients/select'));
+const IVRManagementPage = React.lazy(() => import('./pages/ivr'));
+const IVRSubmissionPage = React.lazy(() => import('./pages/ivr/submit'));
+const OrderManagementPage = React.lazy(() => import('./pages/orders'));
+const ShippingPage = React.lazy(() => import('./pages/shipping'));
+const AnalyticsPage = React.lazy(() => import('./pages/analytics'));
+const SettingsPage = React.lazy(() => import('./pages/settings'));
 const MainLayout = React.lazy(() => import('./components/shared/layout/Layout'));
 
 const App = () => {
@@ -28,8 +34,24 @@ const App = () => {
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<WoundCareDashboard />} />
-              <Route path="patients/intake" element={<PatientIntake />} />
-              <Route path="ivr/submit" element={<IVRSubmission />} />
+              
+              {/* Patient Routes */}
+              <Route path="patients">
+                <Route path="intake" element={<PatientIntakePage />} />
+                <Route path="select" element={<PatientSelectionPage />} />
+              </Route>
+              
+              {/* IVR Routes */}
+              <Route path="ivr">
+                <Route index element={<IVRManagementPage />} />
+                <Route path="submit" element={<IVRSubmissionPage />} />
+              </Route>
+              
+              {/* Other Routes */}
+              <Route path="orders" element={<OrderManagementPage />} />
+              <Route path="shipping" element={<ShippingPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
 
             {/* Keep test route accessible */}

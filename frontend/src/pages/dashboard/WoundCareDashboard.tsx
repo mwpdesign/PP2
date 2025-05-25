@@ -90,6 +90,33 @@ const recentActivity = [
   },
 ];
 
+const quickActions = [
+  {
+    name: 'New Patient Intake',
+    description: 'Register a new patient',
+    href: '/patients/intake',
+    icon: UserPlusIcon,
+  },
+  {
+    name: 'Submit IVR Request',
+    description: 'Create insurance verification request',
+    href: '/patients/select',
+    icon: DocumentTextIcon,
+  },
+  {
+    name: 'Track Orders',
+    description: 'View and manage patient orders',
+    href: '/patients/select?redirect=/orders',
+    icon: ShoppingCartIcon,
+  },
+  {
+    name: 'Review IVR Queue',
+    description: 'Check pending IVR requests',
+    href: '/ivr',
+    icon: ClipboardDocumentCheckIcon,
+  },
+];
+
 const WoundCareDashboard: React.FC = () => {
   const urgentNotifications = 2; // Number of new urgent items
 
@@ -264,54 +291,21 @@ const WoundCareDashboard: React.FC = () => {
         <div className="mt-8">
           <h2 className="text-lg font-medium text-gray-700 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link
-              to="/patients/intake"
-              className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors group"
-            >
-              <div className="p-3 bg-blue-50 rounded-full transition-colors group-hover:bg-blue-100">
-                <UserPlusIcon className="h-6 w-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-900">New Patient Intake</p>
-                <p className="text-xs text-gray-500">Wound assessment with photos</p>
-              </div>
-            </Link>
-            <Link
-              to="/ivr/submit"
-              className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors group"
-            >
-              <div className="p-3 bg-green-50 rounded-full transition-colors group-hover:bg-green-100">
-                <DocumentTextIcon className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-900">Submit IVR Request</p>
-                <p className="text-xs text-gray-500">Insurance verification form</p>
-              </div>
-            </Link>
-            <Link
-              to="/orders"
-              className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors group"
-            >
-              <div className="p-3 bg-purple-50 rounded-full transition-colors group-hover:bg-purple-100">
-                <ClipboardDocumentCheckIcon className="h-6 w-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-900">Track Orders</p>
-                <p className="text-xs text-gray-500">Process medical supplies</p>
-              </div>
-            </Link>
-            <Link
-              to="/analytics"
-              className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors group"
-            >
-              <div className="p-3 bg-orange-50 rounded-full transition-colors group-hover:bg-orange-100">
-                <QueueListIcon className="h-6 w-6 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-900">Review IVR Queue</p>
-                <p className="text-xs text-gray-500">Pending approvals for doctors</p>
-              </div>
-            </Link>
+            {quickActions.map((action) => (
+              <Link
+                key={action.name}
+                to={action.href}
+                className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors group"
+              >
+                <div className="p-3 bg-blue-50 rounded-full transition-colors group-hover:bg-blue-100">
+                  <action.icon className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-900">{action.name}</p>
+                  <p className="text-xs text-gray-500">{action.description}</p>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
 
