@@ -1,15 +1,13 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import Header from './Header';
 
 const Layout: React.FC = () => {
   return (
-    <div className="relative min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-gray-100">
       <Sidebar />
       <div className="pl-64">
-        <Header />
-        <main>
+        <main className="min-h-screen">
           <Outlet />
         </main>
       </div>

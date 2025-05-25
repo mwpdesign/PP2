@@ -4,8 +4,10 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 
 // Import components
 const TestPage = React.lazy(() => import('./pages/TestPage'));
-const TestDashboard = React.lazy(() => import('./pages/dashboard/TestDashboard'));
-const MainLayout = React.lazy(() => import('./components/layout/MainLayout').then(module => ({ default: module.MainLayout })));
+const WoundCareDashboard = React.lazy(() => import('./pages/dashboard/WoundCareDashboard'));
+const PatientIntake = React.lazy(() => import('./pages/patients/intake'));
+const IVRSubmission = React.lazy(() => import('./pages/ivr/submit'));
+const MainLayout = React.lazy(() => import('./components/shared/layout/Layout'));
 
 const App = () => {
   console.log('App component rendering');
@@ -25,7 +27,9 @@ const App = () => {
             {/* Main Layout with Dashboard */}
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<TestDashboard />} />
+              <Route path="dashboard" element={<WoundCareDashboard />} />
+              <Route path="patients/intake" element={<PatientIntake />} />
+              <Route path="ivr/submit" element={<IVRSubmission />} />
             </Route>
 
             {/* Keep test route accessible */}

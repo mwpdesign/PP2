@@ -9,6 +9,8 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
+  DocumentTextIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -27,13 +29,13 @@ const navigation = [
   { 
     name: 'IVR Management', 
     path: '/ivr',
-    icon: PhoneIcon,
-    description: 'Call handling and routing'
+    icon: DocumentTextIcon,
+    description: 'Insurance verification forms'
   },
   { 
     name: 'Order Management', 
     path: '/orders',
-    icon: ShoppingCartIcon,
+    icon: ClipboardDocumentCheckIcon,
     description: 'Process and track orders'
   },
   { 
@@ -111,28 +113,25 @@ const Sidebar = () => {
       </nav>
 
       {/* Bottom Section */}
-      <div className="mt-auto border-t border-[#1a2533] pb-6">
+      <div className="mt-auto border-t border-[#1a2533] py-6">
         {/* User Profile */}
-        <div className="px-4 py-4">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="h-10 w-10 rounded-full bg-[#375788] flex items-center justify-center">
-                <span className="text-white font-medium text-lg">Dr</span>
-              </div>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-white">Dr. John</p>
-              <p className="text-xs text-gray-400">Doctor</p>
-            </div>
+        <div className="flex items-center px-4">
+          <div className="h-10 w-10 rounded-full bg-[#375788] flex items-center justify-center">
+            <span className="text-white font-medium text-lg">Dr</span>
           </div>
-          
-          {/* Sign Out Button - Moved under profile info */}
+          <div className="ml-3">
+            <p className="text-sm font-medium text-white">Dr. John</p>
+            <p className="text-xs text-gray-400">Doctor</p>
+          </div>
+        </div>
+        
+        {/* Sign Out Button */}
+        <div className="mt-6 border-t border-[#1a2533] pt-6">
           <button
             onClick={handleSignOut}
-            className="w-full mt-4 flex items-center justify-center px-4 py-2 text-sm text-gray-300 hover:bg-[#1a2533] hover:text-white transition-colors group rounded-lg"
+            className="pl-[3.25rem] text-sm text-gray-300 hover:text-white transition-colors"
           >
-            <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2 text-gray-400 group-hover:text-white" />
-            <span>Sign Out</span>
+            Sign Out
           </button>
         </div>
       </div>

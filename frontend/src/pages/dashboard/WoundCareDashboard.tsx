@@ -5,11 +5,15 @@ import { ChartCard } from '../../components/shared/DashboardWidgets/ChartCard';
 import {
   BellIcon,
   UserPlusIcon,
-  ClipboardDocumentCheckIcon,
+  ClipboardDocumentListIcon,
   ShoppingCartIcon,
   ChartBarIcon,
   ClockIcon,
+  QueueListIcon,
+  DocumentTextIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 // Mock data for IVR processing trends
 const ivrTrendData = [
@@ -95,10 +99,9 @@ const WoundCareDashboard: React.FC = () => {
         {/* Header Section */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Wound Care Dashboard - ACTIVE</h1>
-            <p className="text-sm text-gray-500 mt-1">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
+            <h1 className="text-lg font-medium text-gray-900">{format(new Date(), 'EEEE, MMMM d, yyyy')}</h1>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-4">
             <div className="flex items-center">
               <div className="h-2 w-2 bg-green-500 rounded-full mr-2" />
               <span className="text-sm text-gray-600">System Status: Operational</span>
@@ -121,7 +124,7 @@ const WoundCareDashboard: React.FC = () => {
                   <p className="text-xs text-gray-400 mt-1">requests</p>
                 </div>
                 <div className="p-3 bg-blue-50 rounded-full">
-                  <ClipboardDocumentCheckIcon className="h-6 w-6 text-blue-500" />
+                  <ClipboardDocumentListIcon className="h-6 w-6 text-blue-500" />
                 </div>
               </div>
             </div>
@@ -217,17 +220,17 @@ const WoundCareDashboard: React.FC = () => {
 
           {/* Urgent Items (Notifications) */}
           <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-medium text-gray-700">Notifications</h2>
               <span className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-full">
                 {urgentNotifications} New
               </span>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-2">
               {urgentItems.map((item) => (
-                <div key={item.id} className="p-4 bg-gray-50 rounded-lg">
+                <div key={item.id} className="p-2.5 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
-                    <div className={`h-2 w-2 rounded-full mr-3 ${
+                    <div className={`h-2 w-2 rounded-full mr-2 ${
                       item.priorityColor === 'red' 
                         ? 'bg-red-500' 
                         : item.priorityColor === 'orange'
@@ -235,9 +238,9 @@ const WoundCareDashboard: React.FC = () => {
                         : 'bg-yellow-500'
                     }`} />
                     <div>
-                      <p className="font-medium text-gray-900">{item.title}</p>
-                      <div className="flex items-center mt-1">
-                        <span className={`text-sm ${
+                      <p className="font-medium text-sm text-gray-900">{item.title}</p>
+                      <div className="flex items-center mt-0.5">
+                        <span className={`text-xs ${
                           item.priorityColor === 'red'
                             ? 'text-red-600'
                             : item.priorityColor === 'orange'
@@ -247,7 +250,7 @@ const WoundCareDashboard: React.FC = () => {
                           {item.priority} Priority
                         </span>
                         <span className="mx-2 text-gray-300">•</span>
-                        <span className="text-sm text-gray-500">{item.time}</span>
+                        <span className="text-xs text-gray-500">{item.time}</span>
                       </div>
                     </div>
                   </div>
@@ -261,42 +264,54 @@ const WoundCareDashboard: React.FC = () => {
         <div className="mt-8">
           <h2 className="text-lg font-medium text-gray-700 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <button className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50">
-              <div className="p-3 bg-blue-50 rounded-full">
-                <UserPlusIcon className="h-6 w-6 text-blue-500" />
+            <Link
+              to="/patients/intake"
+              className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors group"
+            >
+              <div className="p-3 bg-blue-50 rounded-full transition-colors group-hover:bg-blue-100">
+                <UserPlusIcon className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-900">New Patient Intake</p>
                 <p className="text-xs text-gray-500">Wound assessment with photos</p>
               </div>
-            </button>
-            <button className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50">
-              <div className="p-3 bg-green-50 rounded-full">
-                <ClipboardDocumentCheckIcon className="h-6 w-6 text-green-500" />
+            </Link>
+            <Link
+              to="/ivr/submit"
+              className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors group"
+            >
+              <div className="p-3 bg-green-50 rounded-full transition-colors group-hover:bg-green-100">
+                <DocumentTextIcon className="h-6 w-6 text-green-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-900">Submit IVR Request</p>
-                <p className="text-xs text-gray-500">Insurance verification for wound products</p>
+                <p className="text-xs text-gray-500">Insurance verification form</p>
               </div>
-            </button>
-            <button className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50">
-              <div className="p-3 bg-purple-50 rounded-full">
-                <ShoppingCartIcon className="h-6 w-6 text-purple-500" />
+            </Link>
+            <Link
+              to="/orders"
+              className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors group"
+            >
+              <div className="p-3 bg-purple-50 rounded-full transition-colors group-hover:bg-purple-100">
+                <ClipboardDocumentCheckIcon className="h-6 w-6 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-900">Track Orders</p>
-                <p className="text-xs text-gray-500">Shipping and logistics status</p>
+                <p className="text-xs text-gray-500">Process medical supplies</p>
               </div>
-            </button>
-            <button className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50">
-              <div className="p-3 bg-orange-50 rounded-full">
-                <ChartBarIcon className="h-6 w-6 text-orange-500" />
+            </Link>
+            <Link
+              to="/analytics"
+              className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors group"
+            >
+              <div className="p-3 bg-orange-50 rounded-full transition-colors group-hover:bg-orange-100">
+                <QueueListIcon className="h-6 w-6 text-orange-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-900">Review IVR Queue</p>
                 <p className="text-xs text-gray-500">Pending approvals for doctors</p>
               </div>
-            </button>
+            </Link>
           </div>
         </div>
 
