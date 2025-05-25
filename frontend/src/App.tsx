@@ -7,6 +7,7 @@ const TestPage = React.lazy(() => import('./pages/TestPage'));
 const WoundCareDashboard = React.lazy(() => import('./pages/dashboard/WoundCareDashboard'));
 const PatientIntakePage = React.lazy(() => import('./pages/patients/intake'));
 const PatientSelectionPage = React.lazy(() => import('./pages/patients/select'));
+const PatientDetailPage = React.lazy(() => import('./pages/patients/[id]'));
 const IVRManagementPage = React.lazy(() => import('./pages/ivr'));
 const IVRSubmissionPage = React.lazy(() => import('./pages/ivr/submit'));
 const OrderManagementPage = React.lazy(() => import('./pages/orders'));
@@ -40,6 +41,7 @@ const App = () => {
                 <Route index element={<Navigate to="/patients/select" replace />} />
                 <Route path="select" element={<PatientSelectionPage />} />
                 <Route path="intake" element={<PatientIntakePage />} />
+                <Route path=":id" element={<PatientDetailPage />} />
               </Route>
               
               {/* IVR Routes */}

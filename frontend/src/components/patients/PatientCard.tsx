@@ -16,6 +16,7 @@ interface Patient {
 interface PatientCardProps {
   patient: Patient;
   onSubmitIVR: (patientId: string) => void;
+  onViewDetails: (patientId: string) => void;
   selected?: boolean;
   onClick?: () => void;
 }
@@ -23,6 +24,7 @@ interface PatientCardProps {
 const PatientCard: React.FC<PatientCardProps> = ({
   patient,
   onSubmitIVR,
+  onViewDetails,
   selected = false,
   onClick
 }) => {
@@ -58,9 +60,16 @@ const PatientCard: React.FC<PatientCardProps> = ({
             </div>
           </div>
           <div>
-            <h3 className="text-lg font-medium text-gray-900">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewDetails(patient.id);
+              }}
+              className="text-lg font-medium text-gray-900 hover:text-[#2C3E50] transition-colors group"
+            >
               {patient.firstName} {patient.lastName}
-            </h3>
+              <span className="block h-0.5 max-w-0 bg-[#2C3E50] transition-all duration-300 group-hover:max-w-full"></span>
+            </button>
             <div className="mt-1 flex items-center space-x-2 text-sm text-gray-500">
               <CalendarIcon className="h-4 w-4" />
               <span>DOB: {format(new Date(patient.dateOfBirth), 'MM/dd/yyyy')}</span>
