@@ -3,13 +3,9 @@
  */
 
 export const formatNumber = (value: number): string => {
-  if (Math.abs(value) >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`;
-  }
-  if (Math.abs(value) >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`;
-  }
-  return value.toLocaleString();
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 2,
+  }).format(value);
 };
 
 export const formatDuration = (seconds: number): string => {
@@ -31,5 +27,9 @@ export const formatCurrency = (value: number): string => {
 };
 
 export const formatPercentage = (value: number): string => {
-  return `${value.toFixed(1)}%`;
+  return new Intl.NumberFormat('en-US', {
+    style: 'percent',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value / 100);
 }; 

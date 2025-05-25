@@ -1,39 +1,24 @@
 import React, { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Box, CircularProgress } from '@mui/material';
 import Sidebar from '../shared/layout/Sidebar';
 
 const LoadingFallback = () => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      backgroundColor: '#f8fafc',
-    }}
-  >
-    <CircularProgress sx={{ color: '#375788' }} />
-  </Box>
+  <div className="flex items-center justify-center h-screen bg-gray-50">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#375788]" />
+  </div>
 );
 
 export const MainLayout: React.FC = () => {
+  console.log('MainLayout component mounted');
+
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          marginLeft: '280px',
-          minHeight: '100vh',
-          backgroundColor: '#f8fafc',
-        }}
-      >
+      <main className="flex-grow ml-[280px] min-h-screen bg-gray-50">
         <Suspense fallback={<LoadingFallback />}>
           <Outlet />
         </Suspense>
-      </Box>
-    </Box>
+      </main>
+    </div>
   );
 }; 

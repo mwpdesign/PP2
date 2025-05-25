@@ -1,91 +1,38 @@
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { ThemeProvider, CssBaseline, CircularProgress, Box } from '@mui/material';
-import { theme } from './theme';
-import { useAuth } from './contexts/AuthContext';
+import React, { Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 
-// Lazy load components with error handling
-const LoginPage = lazy(() => 
-  import('./pages/LoginPage').then(module => ({ default: module.default }))
-);
-
-const MainLayout = lazy(() => 
-  import('./components/layout/MainLayout').then(module => ({ default: module.MainLayout }))
-);
-
-const WoundCareDashboard = lazy(() => 
-  import('./pages/dashboard/WoundCareDashboard').then(module => ({ default: module.default }))
-);
-
-const NewPatientForm = lazy(() => 
-  import('./components/patients/NewPatientForm').then(module => ({ default: module.NewPatientForm }))
-);
-
-const Patients = lazy(() => 
-  import('./components/patients/Patients').then(module => ({ default: module.default }))
-);
-
-// Loading component with proper error handling
-const Loading = () => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#f8fafc',
-    }}
-  >
-    <CircularProgress sx={{ color: '#375788' }} />
-  </Box>
-);
-
-// Protected Route component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  const location = useLocation();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return <>{children}</>;
-};
+// Import components
+const TestPage = React.lazy(() => import('./pages/TestPage'));
+const TestDashboard = React.lazy(() => import('./pages/dashboard/TestDashboard'));
+const MainLayout = React.lazy(() => import('./components/layout/MainLayout').then(module => ({ default: module.MainLayout })));
 
 const App = () => {
+  console.log('App component rendering');
+
   return (
     <ErrorBoundary>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Suspense fallback={<Loading />}>
+      <div className="min-h-screen bg-gray-50">
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-gray-600">Loading...</div>
+          </div>
+        }>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            {/* Test Routes */}
+            <Route path="/test" element={<TestPage />} />
             
-            {/* Protected Routes */}
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <MainLayout />
-                </ProtectedRoute>
-              }
-            >
+            {/* Main Layout with Dashboard */}
+            <Route path="/" element={<MainLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<WoundCareDashboard />} />
-              
-              {/* Patient Routes */}
-              <Route path="patients">
-                <Route index element={<Patients />} />
-                <Route path="new" element={<NewPatientForm />} />
-              </Route>
+              <Route path="dashboard" element={<TestDashboard />} />
             </Route>
 
-            {/* Catch-all route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Keep test route accessible */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </Suspense>
-      </ThemeProvider>
+      </div>
     </ErrorBoundary>
   );
 };

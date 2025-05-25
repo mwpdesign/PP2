@@ -3,54 +3,54 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   HomeIcon,
   UserPlusIcon,
-  ClipboardDocumentCheckIcon,
+  PhoneIcon,
   ShoppingCartIcon,
   TruckIcon,
   ChartBarIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-} from '@heroicons/react/24/solid';
+} from '@heroicons/react/24/outline';
 
 const navigation = [
   { 
     name: 'Dashboard', 
-    path: '/dashboard', 
+    path: '/dashboard',
     icon: HomeIcon,
-    description: 'Overview and analytics'
+    description: 'Overview and KPIs'
   },
   { 
     name: 'Patient Intake', 
-    path: '/intake', 
+    path: '/patients/intake',
     icon: UserPlusIcon,
-    description: 'Wound assessment forms'
+    description: 'New patient assessments'
   },
   { 
     name: 'IVR Management', 
-    path: '/ivr', 
-    icon: ClipboardDocumentCheckIcon,
-    description: 'Submit and track IVR requests'
+    path: '/ivr',
+    icon: PhoneIcon,
+    description: 'Call handling and routing'
   },
   { 
     name: 'Order Management', 
-    path: '/orders', 
+    path: '/orders',
     icon: ShoppingCartIcon,
-    description: 'Post-IVR approval ordering'
+    description: 'Process and track orders'
   },
   { 
     name: 'Shipping & Logistics', 
-    path: '/shipping', 
+    path: '/shipping',
     icon: TruckIcon,
-    description: 'Track order fulfillment'
+    description: 'Delivery management'
   },
   { 
     name: 'Analytics & Reports', 
-    path: '/analytics', 
+    path: '/analytics',
     icon: ChartBarIcon,
-    description: 'Wound care outcomes'
+    description: 'Performance metrics'
   },
   { 
     name: 'Settings', 
-    path: '/settings', 
+    path: '/settings',
     icon: Cog6ToothIcon,
     description: 'System configuration'
   }
@@ -58,51 +58,82 @@ const navigation = [
 
 const Sidebar = () => {
   const location = useLocation();
+  console.log('Sidebar rendering, current path:', location.pathname);
+
+  const handleSignOut = () => {
+    // TODO: Implement sign out logic
+    console.log('Sign out clicked');
+  };
 
   return (
-    <aside className="fixed top-0 left-0 bottom-0 w-64 bg-[#2C3E50] flex flex-col">
-      {/* Logo */}
-      <div className="h-28 flex items-center justify-center px-6 border-b border-[#1a2533]">
-        <img src="/logo2.png" alt="Wound Care Management" className="h-20 w-auto" />
+    <aside className="fixed top-0 left-0 bottom-0 w-64 bg-[#2d3748] flex flex-col">
+      {/* Logo Section - Increased height and padding for better visibility */}
+      <div className="flex items-center justify-center pl-4 pr-8 py-8 border-b border-[#1a2533] bg-[#243141]">
+        <img 
+          src="/logo2.png" 
+          alt="Wound Care IVR" 
+          className="h-20 w-auto"
+          onError={(e) => {
+            const target = e.target as HTMLElement;
+            target.style.display = 'none';
+            const parent = target.parentElement;
+            if (parent) {
+              parent.innerHTML = '<span class="text-white text-2xl font-semibold">Wound Care IVR</span>';
+            }
+          }}
+        />
       </div>
 
-      {/* Navigation */}
+      {/* Navigation Section */}
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-        {navigation.map((item) => (
-          <Link
-            key={item.name}
-            to={item.path}
-            className={`flex items-center px-4 py-3 text-sm rounded-lg transition-colors ${
-              location.pathname === item.path
-                ? 'bg-[#1a2533] text-white shadow-md'
-                : 'text-gray-300 hover:bg-[#1a2533] hover:text-white'
-            }`}
-          >
-            <item.icon className="w-5 h-5 mr-3" />
-            <span>{item.name}</span>
-          </Link>
-        ))}
+        {navigation.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          
+          return (
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`flex items-center px-4 py-3 text-sm rounded-lg transition-colors group ${
+                isActive
+                  ? 'bg-[#1a2533] text-white shadow-md'
+                  : 'text-gray-300 hover:bg-[#1a2533] hover:text-white'
+              }`}
+              title={item.description}
+            >
+              <Icon className={`h-5 w-5 mr-3 ${
+                isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'
+              }`} />
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* User Profile and Sign Out */}
-      <div className="mt-auto border-t border-[#1a2533]">
-        <div className="p-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-[#1a2533] flex items-center justify-center text-white">
-              <span className="text-sm font-medium">Dr</span>
+      {/* Bottom Section */}
+      <div className="mt-auto border-t border-[#1a2533] pb-6">
+        {/* User Profile */}
+        <div className="px-4 py-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <div className="h-10 w-10 rounded-full bg-[#375788] flex items-center justify-center">
+                <span className="text-white font-medium text-lg">Dr</span>
+              </div>
             </div>
-            <div className="flex-1">
+            <div className="ml-3">
               <p className="text-sm font-medium text-white">Dr. John</p>
               <p className="text-xs text-gray-400">Doctor</p>
             </div>
           </div>
-          <Link 
-            to="/logout" 
-            className="mt-3 flex items-center px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-[#1a2533] rounded-lg transition-colors"
+          
+          {/* Sign Out Button - Moved under profile info */}
+          <button
+            onClick={handleSignOut}
+            className="w-full mt-4 flex items-center justify-center px-4 py-2 text-sm text-gray-300 hover:bg-[#1a2533] hover:text-white transition-colors group rounded-lg"
           >
-            <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
+            <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2 text-gray-400 group-hover:text-white" />
             <span>Sign Out</span>
-          </Link>
+          </button>
         </div>
       </div>
     </aside>
