@@ -68,7 +68,7 @@ class Item(Base):
         Boolean,
         default=True
     )
-    metadata: Mapped[dict] = mapped_column(
+    item_metadata: Mapped[dict] = mapped_column(
         JSON,
         nullable=True
     )
@@ -333,7 +333,7 @@ class WarehouseLocation(Base):
         Boolean,
         default=True
     )
-    metadata: Mapped[dict] = mapped_column(
+    location_metadata: Mapped[dict] = mapped_column(
         JSON,
         nullable=True
     )

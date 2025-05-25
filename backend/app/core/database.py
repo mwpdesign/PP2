@@ -102,13 +102,19 @@ async def init_db() -> bool:
                 organization, user, rbac, territory, sensitive_data,
                 patient, facility, order
             )
-            from app.models.logistics import (  # noqa
-                Carrier, ShippingMethod, ShippingLabel,
-                ShippingStatus, ShippingEvent
+            from app.api.orders.models import (  # noqa
+                Product, OrderStatusHistory
+            )
+            from app.services.shipping_types import (  # noqa
+                ShippingServiceType, TrackingStatus, ShippingProvider,
+                ShippingRate, ShippingLabel, TrackingInfo
             )
             from app.analytics.models import (  # noqa
-                DimTime, DimTerritory, DimProvider,
-                DimPatient, DimOrder, FactOrder
+                DimTime, DimGeography, DimOrganization,
+                DimPatientDemographics,
+                DimPatientSatisfaction,
+                DimVerificationPerformance,
+                FactIVRCall, FactOrder
             )
             
             async with engine.begin() as conn:

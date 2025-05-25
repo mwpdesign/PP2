@@ -32,7 +32,7 @@ class Patient(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         json_encoders = {
             datetime: lambda dt: dt.isoformat(),
             UUID: str
@@ -72,7 +72,7 @@ class PatientDocument(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         json_encoders = {
             datetime: lambda dt: dt.isoformat(),
             UUID: str
@@ -85,7 +85,7 @@ class PatientSearchResults(BaseModel):
     patients: List[Patient]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         json_encoders = {
             datetime: lambda dt: dt.isoformat(),
             UUID: str

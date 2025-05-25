@@ -23,6 +23,7 @@ class NotificationBase(BaseModel):
     title: str
     message: str
     data: Optional[Dict] = None
+    notification_metadata: Optional[Dict] = None
     is_read: bool = False
 
 

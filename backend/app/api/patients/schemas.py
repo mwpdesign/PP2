@@ -4,7 +4,7 @@ Handles data validation and serialization with encryption.
 """
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple
-from pydantic import BaseModel, EmailStr, constr, validator
+from pydantic import BaseModel, EmailStr, validator, Field
 from enum import Enum
 
 
@@ -61,9 +61,9 @@ class PatientBase(BaseModel):
     first_name: str
     last_name: str
     date_of_birth: datetime
-    ssn: str = constr(regex=r'^\d{3}-?\d{2}-?\d{4}$')
+    ssn: str = Field(..., pattern=r'^\d{3}-?\d{2}-?\d{4}$')
     address: str
-    phone_number: str = constr(regex=r'^\+?1?\d{9,15}$')
+    phone_number: str = Field(..., pattern=r'^\+?1?\d{9,15}$')
     email: EmailStr
     
     insurance_id: Optional[str] = None
@@ -138,7 +138,7 @@ class PatientResponse(PatientBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class DocumentBase(BaseModel):
@@ -182,7 +182,7 @@ class DocumentResponse(BaseModel):
     access_url: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ConsentBase(BaseModel):
@@ -219,7 +219,7 @@ class ConsentResponse(ConsentBase):
     revocation_reason: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class AuditLogResponse(BaseModel):
@@ -239,7 +239,7 @@ class AuditLogResponse(BaseModel):
     details: Optional[Dict[str, Any]] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class InsuranceVerificationRequest(BaseModel):
@@ -262,7 +262,7 @@ class InsuranceVerificationResponse(BaseModel):
     error_details: Optional[str] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class InsuranceUpdateRequest(BaseModel):
@@ -285,7 +285,7 @@ class InsuranceStatusResponse(BaseModel):
     verification_attempts: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class InsuranceVerificationHistoryResponse(BaseModel):
@@ -300,7 +300,7 @@ class InsuranceVerificationHistoryResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MedicalRecordType(str, Enum):
@@ -393,7 +393,7 @@ class MedicalRecordResponse(MedicalRecordBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MedicalConditionBase(BaseModel):
@@ -436,7 +436,7 @@ class MedicalConditionResponse(MedicalConditionBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MedicationBase(BaseModel):
@@ -481,7 +481,7 @@ class MedicationResponse(MedicationBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class AllergyBase(BaseModel):
@@ -522,7 +522,7 @@ class AllergyResponse(AllergyBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MedicalHistorySearch(BaseModel):
@@ -597,7 +597,7 @@ class MedicalRecordResponse(MedicalRecordBase):
     updated_by: Optional[int] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MedicalConditionBase(BaseModel):
@@ -641,7 +641,7 @@ class MedicalConditionResponse(MedicalConditionBase):
     updated_by: Optional[int] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MedicationBase(BaseModel):
@@ -689,7 +689,7 @@ class MedicationResponse(MedicationBase):
     updated_by: Optional[int] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class AllergyBase(BaseModel):
@@ -731,7 +731,7 @@ class AllergyResponse(AllergyBase):
     updated_by: Optional[int] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MedicalHistorySearch(BaseModel):

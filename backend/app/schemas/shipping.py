@@ -100,6 +100,7 @@ class ShipmentTrackingBase(BaseModel):
     location: Optional[str] = Field(None, max_length=200)
     description: str = Field(..., max_length=500)
     details: Optional[Dict] = None
+    tracking_metadata: Optional[Dict] = None
 
 
 class ShipmentTrackingCreate(ShipmentTrackingBase):
@@ -127,6 +128,7 @@ class ShipmentBase(BaseModel):
     label_url: Optional[str] = Field(None, max_length=500)
     estimated_delivery: Optional[datetime] = None
     actual_delivery: Optional[datetime] = None
+    shipment_metadata: Optional[Dict] = None
 
 
 class ShipmentCreate(ShipmentBase):

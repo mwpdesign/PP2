@@ -46,7 +46,7 @@ class ComplianceCheckResponse(BaseModel):
 
     class Config:
         """Pydantic config."""
-        orm_mode = True
+        from_attributes = True
 
 
 class AccessStatistics(BaseModel):
@@ -116,7 +116,7 @@ class AuditReportResponse(BaseModel):
 
     class Config:
         """Pydantic config."""
-        orm_mode = True
+        from_attributes = True
 
 
 class SecurityIncidentCreate(BaseModel):
@@ -166,4 +166,4 @@ class SecurityIncidentResponse(BaseModel):
 
     class Config:
         """Pydantic config."""
-        orm_mode = True 
+        from_attributes = True 

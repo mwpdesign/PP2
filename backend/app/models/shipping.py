@@ -278,7 +278,7 @@ class Shipment(Base):
     insurance_cost: Mapped[str] = mapped_column(
         String(500)
     )  # Encrypted
-    metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
+    shipment_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -327,7 +327,7 @@ class ShipmentTracking(Base):
         DateTime(timezone=True),
         nullable=False
     )
-    metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
+    tracking_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

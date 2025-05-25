@@ -60,7 +60,7 @@ class UserBrief(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class IVRDocumentResponse(IVRDocumentBase):
     id: UUID
@@ -71,7 +71,7 @@ class IVRDocumentResponse(IVRDocumentBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class IVRReviewResponse(IVRReviewBase):
     id: str
@@ -83,7 +83,7 @@ class IVRReviewResponse(IVRReviewBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class IVREscalationResponse(IVREscalationBase):
     id: str
@@ -95,7 +95,7 @@ class IVREscalationResponse(IVREscalationBase):
     resolved_at: Optional[datetime]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class IVRApprovalResponse(IVRApprovalBase):
     id: str
@@ -104,7 +104,7 @@ class IVRApprovalResponse(IVRApprovalBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class IVRStatusHistoryResponse(BaseModel):
     id: str
@@ -115,7 +115,7 @@ class IVRStatusHistoryResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class IVRRequestResponse(IVRRequestBase):
     id: UUID
@@ -130,7 +130,7 @@ class IVRRequestResponse(IVRRequestBase):
     status_history: List[IVRStatusHistoryResponse] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Queue and Search Schemas
 class IVRQueueParams(BaseModel):
@@ -178,7 +178,7 @@ class IVRSessionItemResponse(IVRSessionItemBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class IVRSessionBase(BaseModel):
     """Base schema for IVR sessions."""
@@ -199,7 +199,7 @@ class IVRSessionUpdate(BaseModel):
     metadata: Optional[Dict] = None
     status: Optional[str] = Field(
         None,
-        regex='^(pending|verified|approved|completed|cancelled)$'
+        pattern='^(pending|verified|approved|completed|cancelled)$'
     )
 
 class IVRSessionResponse(IVRSessionBase):
@@ -209,4 +209,4 @@ class IVRSessionResponse(IVRSessionBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 

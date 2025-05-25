@@ -28,7 +28,7 @@ class NotificationModel(Base):
     )
     content_encrypted: Mapped[str] = mapped_column(String, nullable=False)
     status: Mapped[str] = mapped_column(String, nullable=False)
-    metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
+    notification_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
     retry_count: Mapped[int] = mapped_column(Integer, default=0)
     next_retry_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

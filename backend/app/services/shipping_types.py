@@ -46,6 +46,7 @@ class ShippingServiceType(str, Enum):
 
 class TrackingStatus(str, Enum):
     """Shipment tracking status types."""
+    PENDING = "PENDING"  # Initial state before carrier pickup
     CREATED = "CREATED"
     PICKUP = "PICKUP"
     IN_TRANSIT = "IN_TRANSIT"

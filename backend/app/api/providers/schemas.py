@@ -12,7 +12,7 @@ class FacilityBase(BaseModel):
     name: str
     address: str
     territory_id: Optional[str] = None
-    metadata: Optional[dict] = None
+    facility_metadata: Optional[dict] = None
 
 class ProviderBase(BaseModel):
     facility_id: str
@@ -22,7 +22,7 @@ class ProviderBase(BaseModel):
     email: EmailStr
     phone: str
     specialty: str
-    metadata: Optional[dict] = None
+    provider_metadata: Optional[dict] = None
 
 class CredentialBase(BaseModel):
     provider_id: str
@@ -63,7 +63,7 @@ class TerritoryResponse(TerritoryBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class FacilityResponse(FacilityBase):
     id: str
@@ -73,7 +73,7 @@ class FacilityResponse(FacilityBase):
     territory: Optional[TerritoryResponse] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class CredentialResponse(CredentialBase):
     id: str
@@ -83,7 +83,7 @@ class CredentialResponse(CredentialBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ProviderResponse(ProviderBase):
     id: str
@@ -95,7 +95,7 @@ class ProviderResponse(ProviderBase):
     territories: List[TerritoryResponse] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class RelationshipResponse(RelationshipBase):
     id: str
@@ -104,7 +104,7 @@ class RelationshipResponse(RelationshipBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Search Schemas
 class ProviderSearchParams(BaseModel):

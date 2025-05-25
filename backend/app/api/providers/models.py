@@ -34,7 +34,7 @@ class Facility(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    metadata: Mapped[dict] = mapped_column(JSON, default={})
+    facility_metadata: Mapped[dict] = mapped_column(JSON, default={})
 
     # Relationships
     territory = relationship("ProviderTerritory", back_populates="facilities")
@@ -85,7 +85,7 @@ class Provider(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    metadata: Mapped[dict] = mapped_column(JSON, default={})
+    provider_metadata: Mapped[dict] = mapped_column(JSON, default={})
 
     # Relationships
     facility = relationship("Facility", back_populates="providers")
