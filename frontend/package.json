@@ -25,7 +25,6 @@
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@types/react-pdf": "^7.0.0",
     "@types/react-table": "^7.7.19",
     "axios": "^1.6.7",
     "clsx": "^2.1.0",
@@ -48,6 +47,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/react-pdf": "^6.2.0",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",
     "@vitejs/plugin-react": "^4.5.0",

@@ -1,15 +1,10 @@
 import React from 'react';
-import { format } from 'date-fns';
-import { MetricCard } from '../../components/shared/DashboardWidgets/MetricCard';
 import { ChartCard } from '../../components/shared/DashboardWidgets/ChartCard';
 import {
-  BellIcon,
   UserPlusIcon,
   ClipboardDocumentListIcon,
   ShoppingCartIcon,
-  ChartBarIcon,
   ClockIcon,
-  QueueListIcon,
   DocumentTextIcon,
   ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
@@ -123,19 +118,6 @@ const WoundCareDashboard: React.FC = () => {
   return (
     <div className="bg-gray-50">
       <div className="p-8">
-        {/* Header Section */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-lg font-medium text-gray-900">{format(new Date(), 'EEEE, MMMM d, yyyy')}</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center">
-              <div className="h-2 w-2 bg-green-500 rounded-full mr-2" />
-              <span className="text-sm text-gray-600">System Status: Operational</span>
-            </div>
-          </div>
-        </div>
-
         {/* Key Performance Indicators */}
         <div className="mb-8">
           <h2 className="text-lg font-medium text-gray-700 mb-4">Key Performance Indicators</h2>

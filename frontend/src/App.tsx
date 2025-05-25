@@ -37,8 +37,9 @@ const App = () => {
               
               {/* Patient Routes */}
               <Route path="patients">
-                <Route path="intake" element={<PatientIntakePage />} />
+                <Route index element={<Navigate to="/patients/select" replace />} />
                 <Route path="select" element={<PatientSelectionPage />} />
+                <Route path="intake" element={<PatientIntakePage />} />
               </Route>
               
               {/* IVR Routes */}
