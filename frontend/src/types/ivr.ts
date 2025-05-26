@@ -252,6 +252,21 @@ export interface IVRFormData {
   physician: PhysicianInfo;
 }
 
+export interface DocumentAnnotation {
+  id: string;
+  documentId: string;
+  text: string;
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  type: 'highlight' | 'text' | 'drawing';
+  color: string;
+  points?: number[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Mock data for development
 export const mockProducts: Product[] = [
   {

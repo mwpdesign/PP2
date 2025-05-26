@@ -1,5 +1,6 @@
 """Main FastAPI application."""
 import logging
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
@@ -17,14 +18,37 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Healthcare IVR Platform")
 
 
-# Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Configure CORS based on environment
+IS_DEVELOPMENT = os.getenv('ENVIRONMENT', 'development') == 'development'
+
+if IS_DEVELOPMENT:
+    # Development CORS settings - more permissive
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:3000",  # React development server
+            "http://127.0.0.1:3000",
+            "http://localhost:8000",  # FastAPI development server
+            "http://127.0.0.1:8000",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],  # Allow all methods
+        allow_headers=["*"],  # Allow all headers
+        expose_headers=["*"],  # Expose all headers
+        max_age=3600,  # Cache preflight requests for 1 hour
+    )
+else:
+    # Production CORS settings - more restrictive
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            os.getenv('FRONTEND_URL', 'http://localhost:3000')
+        ],
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+        allow_headers=["Authorization", "Content-Type"],
+        expose_headers=["Content-Range", "X-Total-Count"],
+    )
 
 
 @app.get("/test")

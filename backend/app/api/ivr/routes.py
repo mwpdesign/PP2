@@ -1,6 +1,7 @@
 from typing import Dict, Any, List
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, status
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
 from app.api.ivr.schemas import (
@@ -14,13 +15,16 @@ from app.api.ivr.schemas import (
     IVRBatchResponse,
     IVRSessionCreate,
     IVRSessionUpdate,
-    IVRSessionResponse
+    IVRSessionResponse,
+    IVRDocumentCreate,
+    IVRDocumentResponse
 )
 from app.api.ivr.models import IVRStatus
 from app.api.ivr.workflow_service import IVRWorkflowService
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_permissions
 from app.core.audit import audit_log
+from app.models.ivr import IVRRequest, IVRSession, IVRDocument
 from app.services.ivr_service import IVRService
 
 router = APIRouter(prefix="/ivr", tags=["ivr"])

@@ -6,6 +6,9 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from uuid import UUID
 
 from app.core.config import get_settings
 from app.core.security import get_current_user
@@ -21,6 +24,7 @@ from app.api.patients.schemas import (
     MedicalHistorySearch
 )
 from app.api.patients.encryption_service import PatientEncryptionService
+from app.core.audit import log_phi_access
 
 
 class MedicalHistoryService:
@@ -28,15 +32,29 @@ class MedicalHistoryService:
 
     def __init__(
         self,
-        db: Session,
-        current_user: Any,
-        encryption_service: PatientEncryptionService
+        db: AsyncSession,
+        current_user: Dict[str, Any]
     ):
         """Initialize the service."""
         self.db = db
         self.current_user = current_user
-        self.encryption_service = encryption_service
         self.settings = get_settings()
+
+    async def _log_phi_access(
+        self,
+        action: str,
+        details: Dict[str, Any]
+    ) -> None:
+        """Log PHI access."""
+        await log_phi_access(
+            self.db,
+            {
+                'action': action,
+                'details': details,
+                'user_id': self.current_user["id"],
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        )
 
     async def create_medical_record(
         self,
@@ -44,9 +62,7 @@ class MedicalHistoryService:
     ) -> MedicalRecordResponse:
         """Create a new medical record with encryption."""
         # Verify patient exists and access permissions
-        patient = self.db.query(Patient).filter(
-            Patient.id == record.patient_id
-        ).first()
+        patient = await self.db.get(Patient, record.patient_id)
         if not patient:
             raise ValueError("Patient not found")
 
@@ -61,7 +77,7 @@ class MedicalHistoryService:
         encrypted_data = await self.encryption_service.encrypt_medical_data(
             record_dict,
             {
-                'user_id': self.current_user.id,
+                'user_id': self.current_user["id"],
                 'territory_id': record.territory_id,
                 'record_type': record.record_type
             }
@@ -69,11 +85,11 @@ class MedicalHistoryService:
 
         # Create medical record
         db_record = MedicalRecord(**encrypted_data)
-        db_record.created_by = self.current_user.id
-        db_record.updated_by = self.current_user.id
+        db_record.created_by = self.current_user["id"]
+        db_record.updated_by = self.current_user["id"]
         self.db.add(db_record)
-        self.db.commit()
-        self.db.refresh(db_record)
+        await self.db.commit()
+        await self.db.refresh(db_record)
 
         # Decrypt for response
         decrypted_data = await self.encryption_service.decrypt_medical_data(
@@ -88,9 +104,7 @@ class MedicalHistoryService:
     ) -> MedicalRecordResponse:
         """Update a medical record with encryption."""
         # Get existing record
-        db_record = self.db.query(MedicalRecord).filter(
-            MedicalRecord.id == record_id
-        ).first()
+        db_record = await self.db.get(MedicalRecord, record_id)
         if not db_record:
             raise ValueError("Medical record not found")
 
@@ -113,7 +127,7 @@ class MedicalHistoryService:
             encrypted_data = await self.encryption_service.encrypt_medical_data(
                 update_data,
                 {
-                    'user_id': self.current_user.id,
+                    'user_id': self.current_user["id"],
                     'territory_id': db_record.territory_id,
                     'record_type': db_record.record_type
                 }
@@ -127,10 +141,10 @@ class MedicalHistoryService:
                     and value is not None):
                 setattr(db_record, key, value)
 
-        db_record.updated_by = self.current_user.id
+        db_record.updated_by = self.current_user["id"]
         db_record.updated_at = datetime.utcnow()
-        self.db.commit()
-        self.db.refresh(db_record)
+        await self.db.commit()
+        await self.db.refresh(db_record)
 
         # Decrypt for response
         decrypted_data = await self.encryption_service.decrypt_medical_data(
@@ -144,9 +158,7 @@ class MedicalHistoryService:
     ) -> MedicalRecordResponse:
         """Get a medical record with decryption."""
         # Get record
-        record = self.db.query(MedicalRecord).filter(
-            MedicalRecord.id == record_id
-        ).first()
+        record = await self.db.get(MedicalRecord, record_id)
         if not record:
             raise ValueError("Medical record not found")
 
@@ -169,11 +181,11 @@ class MedicalHistoryService:
     ) -> List[MedicalRecordResponse]:
         """Search medical history with filters."""
         # Build base query
-        query = self.db.query(MedicalRecord)
+        query = select(MedicalRecord).where(
+            MedicalRecord.patient_id == search.patient_id
+        )
 
         # Apply filters
-        if search.patient_id:
-            query = query.filter(MedicalRecord.patient_id == search.patient_id)
         if search.record_type:
             query = query.filter(MedicalRecord.record_type == search.record_type)
         if search.status:
@@ -200,7 +212,8 @@ class MedicalHistoryService:
         )
 
         # Apply pagination
-        records = query.offset(search.skip).limit(search.limit).all()
+        result = await self.db.execute(query.offset(search.skip).limit(search.limit))
+        records = result.scalars().all()
 
         # Decrypt records
         decrypted_records = []
@@ -218,9 +231,7 @@ class MedicalHistoryService:
     ) -> MedicalConditionResponse:
         """Create a new medical condition with encryption."""
         # Verify record exists and access permissions
-        record = self.db.query(MedicalRecord).filter(
-            MedicalRecord.id == condition.medical_record_id
-        ).first()
+        record = await self.db.get(MedicalRecord, condition.medical_record_id)
         if not record:
             raise ValueError("Medical record not found")
 
@@ -235,7 +246,7 @@ class MedicalHistoryService:
         encrypted_data = await self.encryption_service.encrypt_medical_data(
             condition_dict,
             {
-                'user_id': self.current_user.id,
+                'user_id': self.current_user["id"],
                 'territory_id': condition.territory_id,
                 'record_type': 'condition'
             }
@@ -243,11 +254,11 @@ class MedicalHistoryService:
 
         # Create condition
         db_condition = MedicalCondition(**encrypted_data)
-        db_condition.created_by = self.current_user.id
-        db_condition.updated_by = self.current_user.id
+        db_condition.created_by = self.current_user["id"]
+        db_condition.updated_by = self.current_user["id"]
         self.db.add(db_condition)
-        self.db.commit()
-        self.db.refresh(db_condition)
+        await self.db.commit()
+        await self.db.refresh(db_condition)
 
         # Decrypt for response
         decrypted_data = await self.encryption_service.decrypt_medical_data(
@@ -261,9 +272,7 @@ class MedicalHistoryService:
     ) -> MedicationResponse:
         """Create a new medication with encryption."""
         # Verify record exists and access permissions
-        record = self.db.query(MedicalRecord).filter(
-            MedicalRecord.id == medication.medical_record_id
-        ).first()
+        record = await self.db.get(MedicalRecord, medication.medical_record_id)
         if not record:
             raise ValueError("Medical record not found")
 
@@ -278,7 +287,7 @@ class MedicalHistoryService:
         encrypted_data = await self.encryption_service.encrypt_medical_data(
             medication_dict,
             {
-                'user_id': self.current_user.id,
+                'user_id': self.current_user["id"],
                 'territory_id': medication.territory_id,
                 'record_type': 'medication'
             }
@@ -286,11 +295,11 @@ class MedicalHistoryService:
 
         # Create medication
         db_medication = Medication(**encrypted_data)
-        db_medication.created_by = self.current_user.id
-        db_medication.updated_by = self.current_user.id
+        db_medication.created_by = self.current_user["id"]
+        db_medication.updated_by = self.current_user["id"]
         self.db.add(db_medication)
-        self.db.commit()
-        self.db.refresh(db_medication)
+        await self.db.commit()
+        await self.db.refresh(db_medication)
 
         # Decrypt for response
         decrypted_data = await self.encryption_service.decrypt_medical_data(
@@ -304,9 +313,7 @@ class MedicalHistoryService:
     ) -> AllergyResponse:
         """Create a new allergy with encryption."""
         # Verify record exists and access permissions
-        record = self.db.query(MedicalRecord).filter(
-            MedicalRecord.id == allergy.medical_record_id
-        ).first()
+        record = await self.db.get(MedicalRecord, allergy.medical_record_id)
         if not record:
             raise ValueError("Medical record not found")
 
@@ -321,7 +328,7 @@ class MedicalHistoryService:
         encrypted_data = await self.encryption_service.encrypt_medical_data(
             allergy_dict,
             {
-                'user_id': self.current_user.id,
+                'user_id': self.current_user["id"],
                 'territory_id': allergy.territory_id,
                 'record_type': 'allergy'
             }
@@ -329,11 +336,11 @@ class MedicalHistoryService:
 
         # Create allergy
         db_allergy = Allergy(**encrypted_data)
-        db_allergy.created_by = self.current_user.id
-        db_allergy.updated_by = self.current_user.id
+        db_allergy.created_by = self.current_user["id"]
+        db_allergy.updated_by = self.current_user["id"]
         self.db.add(db_allergy)
-        self.db.commit()
-        self.db.refresh(db_allergy)
+        await self.db.commit()
+        await self.db.refresh(db_allergy)
 
         # Decrypt for response
         decrypted_data = await self.encryption_service.decrypt_medical_data(
@@ -348,9 +355,7 @@ class MedicalHistoryService:
     ) -> Dict[str, Any]:
         """Get complete medical history for a patient."""
         # Get patient
-        patient = self.db.query(Patient).filter(
-            Patient.id == patient_id
-        ).first()
+        patient = await self.db.get(Patient, patient_id)
         if not patient:
             raise ValueError("Patient not found")
 
@@ -362,16 +367,16 @@ class MedicalHistoryService:
             raise ValueError("Not authorized to access medical history")
 
         # Build queries
-        record_query = self.db.query(MedicalRecord).filter(
+        record_query = select(MedicalRecord).where(
             MedicalRecord.patient_id == patient_id
         )
-        condition_query = self.db.query(MedicalCondition).filter(
+        condition_query = select(MedicalCondition).where(
             MedicalCondition.patient_id == patient_id
         )
-        medication_query = self.db.query(Medication).filter(
+        medication_query = select(Medication).where(
             Medication.patient_id == patient_id
         )
-        allergy_query = self.db.query(Allergy).filter(
+        allergy_query = select(Allergy).where(
             Allergy.patient_id == patient_id
         )
 
@@ -391,10 +396,17 @@ class MedicalHistoryService:
             )
 
         # Get all records
-        records = record_query.all()
-        conditions = condition_query.all()
-        medications = medication_query.all()
-        allergies = allergy_query.all()
+        result = await self.db.execute(record_query.offset(0).limit(100))
+        records = result.scalars().all()
+
+        result = await self.db.execute(condition_query.offset(0).limit(100))
+        conditions = result.scalars().all()
+
+        result = await self.db.execute(medication_query.offset(0).limit(100))
+        medications = result.scalars().all()
+
+        result = await self.db.execute(allergy_query.offset(0).limit(100))
+        allergies = result.scalars().all()
 
         # Decrypt all data
         decrypted_records = []
@@ -432,4 +444,205 @@ class MedicalHistoryService:
             'conditions': decrypted_conditions,
             'medications': decrypted_medications,
             'allergies': decrypted_allergies
-        } 
+        }
+
+    async def create_medical_history(
+        self,
+        patient_id: UUID,
+        data: Dict[str, Any]
+    ) -> MedicalHistory:
+        """Create a new medical history record."""
+        # Log PHI access
+        await self._log_phi_access(
+            'create_medical_history',
+            {
+                'patient_id': str(patient_id),
+                'user_id': self.current_user["id"],
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        )
+
+        # Create record
+        db_record = MedicalHistory(
+            patient_id=patient_id,
+            **data
+        )
+        db_record.created_by = self.current_user["id"]
+        db_record.updated_by = self.current_user["id"]
+
+        self.db.add(db_record)
+        await self.db.commit()
+        await self.db.refresh(db_record)
+
+        return db_record
+
+    async def update_medical_history(
+        self,
+        record_id: UUID,
+        data: Dict[str, Any]
+    ) -> Optional[MedicalHistory]:
+        """Update a medical history record."""
+        # Log PHI access
+        await self._log_phi_access(
+            'update_medical_history',
+            {
+                'record_id': str(record_id),
+                'user_id': self.current_user["id"],
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        )
+
+        # Get record
+        db_record = await self.db.get(MedicalHistory, record_id)
+        if not db_record:
+            return None
+
+        # Update record
+        for key, value in data.items():
+            setattr(db_record, key, value)
+        db_record.updated_by = self.current_user["id"]
+
+        await self.db.commit()
+        await self.db.refresh(db_record)
+
+        return db_record
+
+    async def get_medical_history(
+        self,
+        patient_id: UUID
+    ) -> Dict[str, Any]:
+        """Get complete medical history for a patient."""
+        # Log PHI access
+        await self._log_phi_access(
+            'get_medical_history',
+            {
+                'patient_id': str(patient_id),
+                'user_id': self.current_user["id"],
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        )
+
+        # Get base history
+        query = select(MedicalHistory).where(
+            MedicalHistory.patient_id == patient_id
+        )
+        result = await self.db.execute(query)
+        history = result.scalar_one_or_none()
+
+        # Get conditions
+        conditions_query = select(MedicalCondition).where(
+            MedicalCondition.patient_id == patient_id
+        )
+        conditions_result = await self.db.execute(conditions_query)
+        conditions = conditions_result.scalars().all()
+
+        # Get medications
+        medications_query = select(Medication).where(
+            Medication.patient_id == patient_id
+        )
+        medications_result = await self.db.execute(medications_query)
+        medications = medications_result.scalars().all()
+
+        # Get allergies
+        allergies_query = select(Allergy).where(
+            Allergy.patient_id == patient_id
+        )
+        allergies_result = await self.db.execute(allergies_query)
+        allergies = allergies_result.scalars().all()
+
+        return {
+            "history": history,
+            "conditions": conditions,
+            "medications": medications,
+            "allergies": allergies
+        }
+
+    async def add_condition(
+        self,
+        patient_id: UUID,
+        data: Dict[str, Any]
+    ) -> MedicalCondition:
+        """Add a medical condition."""
+        # Log PHI access
+        await self._log_phi_access(
+            'add_condition',
+            {
+                'patient_id': str(patient_id),
+                'user_id': self.current_user["id"],
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        )
+
+        # Create condition
+        db_condition = MedicalCondition(
+            patient_id=patient_id,
+            **data
+        )
+        db_condition.created_by = self.current_user["id"]
+        db_condition.updated_by = self.current_user["id"]
+
+        self.db.add(db_condition)
+        await self.db.commit()
+        await self.db.refresh(db_condition)
+
+        return db_condition
+
+    async def add_medication(
+        self,
+        patient_id: UUID,
+        data: Dict[str, Any]
+    ) -> Medication:
+        """Add a medication."""
+        # Log PHI access
+        await self._log_phi_access(
+            'add_medication',
+            {
+                'patient_id': str(patient_id),
+                'user_id': self.current_user["id"],
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        )
+
+        # Create medication
+        db_medication = Medication(
+            patient_id=patient_id,
+            **data
+        )
+        db_medication.created_by = self.current_user["id"]
+        db_medication.updated_by = self.current_user["id"]
+
+        self.db.add(db_medication)
+        await self.db.commit()
+        await self.db.refresh(db_medication)
+
+        return db_medication
+
+    async def add_allergy(
+        self,
+        patient_id: UUID,
+        data: Dict[str, Any]
+    ) -> Allergy:
+        """Add an allergy."""
+        # Log PHI access
+        await self._log_phi_access(
+            'add_allergy',
+            {
+                'patient_id': str(patient_id),
+                'user_id': self.current_user["id"],
+                'timestamp': datetime.utcnow().isoformat()
+            }
+        )
+
+        # Create allergy
+        db_allergy = Allergy(
+            patient_id=patient_id,
+            **data
+        )
+        db_allergy.created_by = self.current_user["id"]
+        db_allergy.updated_by = self.current_user["id"]
+
+        self.db.add(db_allergy)
+        await self.db.commit()
+        await self.db.refresh(db_allergy)
+
+        return db_allergy 

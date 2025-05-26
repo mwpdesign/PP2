@@ -5,8 +5,8 @@ from typing import Optional, Dict, Any
 from uuid import UUID
 from sqlalchemy.orm import Session
 
-from app.api.ivr.models import IVRSession, IVRSessionItem
-from app.api.ivr.schemas import (
+from app.models.ivr import IVRSession, IVRRequest
+from app.schemas.ivr import (
     IVRSessionCreate,
     IVRSessionUpdate
 )
@@ -58,18 +58,18 @@ class IVRService:
             territory_id=session_data.territory_id,
             status='pending',
             insurance_data=session_data.insurance_data,
-            metadata=session_data.metadata
+            session_metadata=session_data.session_metadata
         )
         self.db.add(session)
 
         # Create session items
         for item_data in session_data.items:
-            item = IVRSessionItem(
-                session=session,
-                product_id=item_data.product_id,
-                quantity=item_data.quantity,
+            item = IVRRequest(
+                session_id=session.id,
+                service_type=item_data.service_type,
+                priority=item_data.priority,
                 notes=item_data.notes,
-                insurance_coverage=item_data.insurance_coverage
+                request_metadata=item_data.request_metadata
             )
             self.db.add(item)
 
@@ -113,8 +113,8 @@ class IVRService:
         # Update fields
         if session_data.insurance_data is not None:
             session.insurance_data = session_data.insurance_data
-        if session_data.metadata is not None:
-            session.metadata = session_data.metadata
+        if session_data.session_metadata is not None:
+            session.session_metadata = session_data.session_metadata
         if session_data.status is not None:
             session.status = session_data.status
 

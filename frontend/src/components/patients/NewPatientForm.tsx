@@ -15,7 +15,9 @@ import {
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
-import PatientService from '../../services/patientService';
+import patientService from '../../services/patientService';
+import PhoneInput from '../shared/PhoneInput';
+import { toast } from 'react-hot-toast';
 
 interface NewPatientFormProps {
   onClose: () => void;
@@ -75,7 +77,10 @@ interface FormData {
   zip: string;
   
   governmentIdType: string;
-  governmentId: GovernmentId | null;
+  governmentId: {
+    file: File | null;
+    preview: string | null;
+  } | null;
   
   primaryInsurance: {
     provider: string;
@@ -171,13 +176,11 @@ const documentTypes: DocumentType[] = [
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_FILE_TYPES = {
   'application/pdf': ['.pdf'],
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'image/png': ['.png']
+  'image/*': ['.jpg', '.jpeg', '.png']
 };
 
 const ACCEPTED_IMAGE_TYPES = {
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'image/png': ['.png']
+  'image/*': ['.jpg', '.jpeg', '.png']
 };
 
 interface UploadAreaProps {
@@ -206,6 +209,8 @@ const UploadArea: React.FC<UploadAreaProps> = ({
     isCapturing: false
   });
 
+  const [isDragActive, setIsDragActive] = useState(false);
+
   useEffect(() => {
     // Check if device has camera capability
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -220,11 +225,31 @@ const UploadArea: React.FC<UploadAreaProps> = ({
     }
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const handleDragEnter = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(true);
+  }, []);
+
+  const handleDragLeave = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(false);
+  }, []);
+
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+  }, []);
+
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept,
     maxFiles: 1,
-    maxSize
+    maxSize,
+    onDragEnter: handleDragEnter,
+    onDragLeave: handleDragLeave,
+    onDragOver: handleDragOver
   });
 
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -470,8 +495,6 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
     setIsSaving(true);
     
     try {
-      const patientService = PatientService.getInstance();
-      
       // Convert form data to match PatientFormData interface
       const patientFormData: PatientFormData = {
         firstName: formData.firstName,
@@ -500,19 +523,23 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
         }
       };
       
-      await patientService.registerPatient(patientFormData);
+      // Register the patient
+      const response = await patientService.registerPatient(patientFormData);
       
-      // Show success message
-      alert('Patient registered successfully');
-      navigate('/patients');
-
       // Call the onSave prop with the form data
       onSave(formData);
       
+      // Show success message
+      toast.success('Patient registered successfully');
+      
       // Close the form
       onClose();
+      
+      // Navigate to the patient list page
+      navigate('/patients/select');
     } catch (error) {
       console.error('Error submitting form:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to register patient');
       setErrors(prev => ({
         ...prev,
         submit: error instanceof Error ? error.message : 'Failed to register patient'
@@ -555,51 +582,6 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
     }
 
     // Simulate auto-save
-    setLastSaved(new Date());
-  };
-
-  const formatPhoneNumber = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
-    if (numbers.length === 0) return '';
-    if (numbers.length <= 3) return `(${numbers}`;
-    if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`;
-    return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`;
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const formatted = formatPhoneNumber(value);
-    
-    // Handle nested fields (e.g., primaryInsurance.payerPhone)
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [parent]: {
-          ...(prev[parent as keyof FormData] as Record<string, any>),
-          [child]: formatted
-        }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: formatted
-      }));
-    }
-
-    // Validate the field if needed
-    const error = validateField(name.split('.')[0], formatted);
-    if (error) {
-      setErrors(prev => ({ ...prev, [name.split('.')[0]]: error }));
-    } else {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name.split('.')[0]];
-        return newErrors;
-      });
-    }
-
-    // Update last saved timestamp
     setLastSaved(new Date());
   };
 
@@ -1021,25 +1003,21 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                                   <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Payer Phone
                                   </label>
-                                  <input
-                                    type="tel"
-                                    name="primaryInsurance.payerPhone"
+                                  <PhoneInput
                                     value={formData.primaryInsurance.payerPhone}
-                                    onChange={handlePhoneChange}
-                                    placeholder="(555) 555-5555"
-                                    className={`w-full px-4 py-2 border ${
-                                      errors.payerPhone ? 'border-red-300' : 'border-gray-200'
-                                    } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
-                                    pattern="\(\d{3}\) \d{3}-\d{4}"
-                                    maxLength={14}
-                                    inputMode="numeric"
+                                    onChange={(value) => {
+                                      setFormData((prev: FormData) => ({
+                                        ...prev,
+                                        primaryInsurance: {
+                                          ...prev.primaryInsurance,
+                                          payerPhone: value
+                                        }
+                                      }));
+                                      setLastSaved(new Date());
+                                    }}
+                                    name="primaryInsurance.payerPhone"
+                                    id="primaryInsurance.payerPhone"
                                   />
-                                  {errors.payerPhone && (
-                                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                                      <AlertCircle className="w-4 h-4 mr-1" />
-                                      {errors.payerPhone}
-                                    </p>
-                                  )}
                                 </div>
                               </div>
 
@@ -1078,25 +1056,21 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                                   <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Secondary Payer Phone
                                   </label>
-                                  <input
-                                    type="tel"
-                                    name="secondaryInsurance.payerPhone"
+                                  <PhoneInput
                                     value={formData.secondaryInsurance.payerPhone}
-                                    onChange={handlePhoneChange}
-                                    placeholder="(555) 555-5555"
-                                    className={`w-full px-4 py-2 border ${
-                                      errors.payerPhone ? 'border-red-300' : 'border-gray-200'
-                                    } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
-                                    pattern="\(\d{3}\) \d{3}-\d{4}"
-                                    maxLength={14}
-                                    inputMode="numeric"
+                                    onChange={(value) => {
+                                      setFormData((prev: FormData) => ({
+                                        ...prev,
+                                        secondaryInsurance: {
+                                          ...prev.secondaryInsurance,
+                                          payerPhone: value
+                                        }
+                                      }));
+                                      setLastSaved(new Date());
+                                    }}
+                                    name="secondaryInsurance.payerPhone"
+                                    id="secondaryInsurance.payerPhone"
                                   />
-                                  {errors.payerPhone && (
-                                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                                      <AlertCircle className="w-4 h-4 mr-1" />
-                                      {errors.payerPhone}
-                                    </p>
-                                  )}
                                 </div>
                               </div>
 

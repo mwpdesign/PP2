@@ -9,8 +9,8 @@ from fastapi import HTTPException
 from app.core.config import settings
 from app.core.exceptions import ValidationError
 from app.services.carriers.ups import UPSCarrier
-from app.services.carriers.fedex import FedExCarrier
 from app.services.carriers.usps import USPSCarrier
+from app.services.fedex_provider import FedExProvider
 
 
 class ShippingService:
@@ -20,9 +20,9 @@ class ShippingService:
                 api_key=settings.UPS_API_KEY,
                 account_number=settings.UPS_ACCOUNT_NUMBER
             ),
-            "fedex": FedExCarrier(
+            "fedex": FedExProvider(
                 api_key=settings.FEDEX_API_KEY,
-                account_number=settings.FEDEX_ACCOUNT_NUMBER
+                test_mode=settings.shipping_test_mode
             ),
             "usps": USPSCarrier(
                 api_key=settings.USPS_API_KEY,

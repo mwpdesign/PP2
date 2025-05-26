@@ -131,4 +131,15 @@ class ConflictError(HTTPException):
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
             detail=detail
+        )
+
+
+class UnauthorizedError(HTTPException):
+    """Raised when access is unauthorized."""
+    def __init__(self, detail: str = "Unauthorized access"):
+        """Initialize the exception with a detail message."""
+        super().__init__(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=detail,
+            headers={"WWW-Authenticate": "Bearer"}
         ) 

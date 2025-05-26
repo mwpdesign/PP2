@@ -55,17 +55,41 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
     }
   }, [maxSizeMB, onChange]);
 
+  const handleDragEnter = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+  }, []);
+
+  // Create accept object for react-dropzone
+  const acceptObject = acceptedFileTypes.reduce((acc, type) => {
+    if (type === '.pdf') {
+      return { ...acc, 'application/pdf': ['.pdf'] };
+    } else if (['.jpg', '.jpeg', '.png'].includes(type)) {
+      return { ...acc, 'image/*': ['.jpg', '.jpeg', '.png'] };
+    }
+    return acc;
+  }, {});
+
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: acceptedFileTypes.reduce((acc, type) => ({
-      ...acc,
-      [type.startsWith('.') ? `image/${type.slice(1)}` : type]: []
-    }), {}),
+    accept: acceptObject,
     maxFiles: 1,
     multiple: false,
-    onDragEnter: () => setIsDragging(true),
-    onDragLeave: () => setIsDragging(false),
-    onDropAccepted: () => setIsDragging(false)
+    onDragEnter: handleDragEnter,
+    onDragLeave: handleDragLeave,
+    onDragOver: handleDragOver
   });
 
   const startCamera = async () => {

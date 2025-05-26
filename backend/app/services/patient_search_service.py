@@ -27,7 +27,7 @@ class PatientSearchService:
         self,
         db: Session,
         encryption_service: PatientEncryptionService,
-        current_user: Any
+        current_user: Dict[str, Any]
     ):
         """Initialize the service."""
         self.db = db
@@ -43,7 +43,7 @@ class PatientSearchService:
     ) -> None:
         """Log search operation for HIPAA compliance."""
         log = PatientAuditLog(
-            user_id=self.current_user.id,
+            user_id=self.current_user["id"],
             action_type=f"patient_search_{search_type}",
             action_details={
                 "search_params": search_params,
@@ -62,15 +62,15 @@ class PatientSearchService:
         query = select(Patient)
         
         # Territory-based access control
-        if self.current_user.territory_id:
+        if self.current_user.get("primary_territory_id"):
             query = query.filter(
-                Patient.territory_id == self.current_user.territory_id
+                Patient.territory_id == self.current_user["primary_territory_id"]
             )
         
         # Organization-based access control
-        if self.current_user.organization_id:
+        if self.current_user.get("organization_id"):
             query = query.filter(
-                Patient.organization_id == self.current_user.organization_id
+                Patient.organization_id == self.current_user["organization_id"]
             )
         
         # Basic filters

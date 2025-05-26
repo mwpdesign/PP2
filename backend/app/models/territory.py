@@ -2,36 +2,13 @@
 from datetime import datetime
 from uuid import UUID as PyUUID, uuid4
 from sqlalchemy import (
-    String, DateTime, ForeignKey, Table, Float, JSON, Column
+    String, DateTime, ForeignKey, Float, JSON
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
-
-
-# Association table for territory-role access
-territory_role_access = Table(
-    'territory_role_access',
-    Base.metadata,
-    Column(
-        'territory_id',
-        UUID(as_uuid=True),
-        ForeignKey('territories.id'),
-        primary_key=True
-    ),
-    Column(
-        'role_id',
-        UUID(as_uuid=True),
-        ForeignKey('roles.id'),
-        primary_key=True
-    ),
-    Column(
-        'access_level',
-        String(50),
-        nullable=False
-    )
-)
+from app.models.associations import user_territories, territory_role_access
 
 
 class Territory(Base):
@@ -96,7 +73,12 @@ class Territory(Base):
     users = relationship(
         "User",
         foreign_keys="User.primary_territory_id",
-        back_populates="primary_territory"
+        back_populates="territory"
+    )
+    authorized_users = relationship(
+        "User",
+        secondary=user_territories,
+        back_populates="accessible_territories"
     )
     facilities = relationship("Facility", back_populates="territory")
     orders = relationship("Order", back_populates="territory")
@@ -119,6 +101,24 @@ class Territory(Base):
     )
     audit_reports = relationship(
         "AuditReport",
+        back_populates="territory"
+    )
+    secondary_insurance = relationship(
+        "SecondaryInsurance",
+        back_populates="territory"
+    )
+    ivr_requests = relationship(
+        "IVRRequest",
+        back_populates="territory",
+        cascade="all, delete-orphan"
+    )
+    ivr_sessions = relationship(
+        "IVRSession",
+        back_populates="territory",
+        cascade="all, delete-orphan"
+    )
+    patients = relationship(
+        "Patient",
         back_populates="territory"
     )
 

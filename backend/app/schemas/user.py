@@ -86,4 +86,20 @@ class TokenResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
+        from_attributes = True
+
+
+class UserPreferences(BaseModel):
+    """User preferences schema."""
+    notifications_enabled: bool = True
+    theme: str = "light"
+    timezone: str = "UTC"
+    language: str = "en"
+    dashboard_layout: Optional[dict] = None
+    email_notifications: bool = True
+    sms_notifications: bool = False
+    notification_frequency: str = "daily"
+
+    class Config:
+        """Pydantic configuration."""
         from_attributes = True 

@@ -1,3 +1,4 @@
+"""Patient schemas with support for encrypted PHI fields."""
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, Dict, List
@@ -10,8 +11,9 @@ class PatientRegistration(BaseModel):
     last_name: str
     email: EmailStr
     date_of_birth: str = Field(..., description="Date in YYYY-MM-DD format")
-    insurance_provider: Optional[str] = None
-    insurance_id: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    ssn: Optional[str] = None
 
     class Config:
         json_encoders = {
@@ -23,13 +25,19 @@ class PatientRegistration(BaseModel):
 class Patient(BaseModel):
     """Response schema for patient."""
     id: UUID
+    external_id: Optional[str] = None
     first_name: str
     last_name: str
     email: str
     date_of_birth: datetime
-    insurance_provider: Optional[str] = None
-    insurance_id: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    ssn: Optional[str] = None
+    status: str = 'active'
     created_at: datetime
+    updated_at: Optional[datetime] = None
+    created_by_id: UUID
+    updated_by_id: Optional[UUID] = None
 
     class Config:
         from_attributes = True
@@ -48,8 +56,10 @@ class PatientUpdate(BaseModel):
         None,
         description="Date in YYYY-MM-DD format"
     )
-    insurance_provider: Optional[str] = None
-    insurance_id: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    ssn: Optional[str] = None
+    status: Optional[str] = None
 
     class Config:
         json_encoders = {
@@ -67,7 +77,6 @@ class PatientDocument(BaseModel):
     file_path: str
     document_category: str
     document_metadata: Optional[Dict] = None
-    created_by: UUID
     territory_id: UUID
     created_at: datetime
 

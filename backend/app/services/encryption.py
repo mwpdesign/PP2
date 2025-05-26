@@ -71,14 +71,26 @@ class KMSEncryption:
                 response['CiphertextBlob']
             ).decode('utf-8')
             
-            # Return encrypted data
-            return {
-                key: encrypted if key in [
-                    'first_name', 'last_name', 'email',
-                    'date_of_birth', 'insurance_provider', 'insurance_id'
-                ] else value
-                for key, value in serialized_data.items()
+            # Return encrypted data with proper field names
+            encrypted_data = {}
+            field_mapping = {
+                'first_name': 'encrypted_first_name',
+                'last_name': 'encrypted_last_name',
+                'email': 'encrypted_email',
+                'date_of_birth': 'encrypted_dob',
+                'phone': 'encrypted_phone',
+                'address': 'encrypted_address',
+                'ssn': 'encrypted_ssn'
             }
+            
+            for key, value in serialized_data.items():
+                if key in field_mapping:
+                    encrypted_data[field_mapping[key]] = encrypted
+                else:
+                    encrypted_data[key] = value
+                    
+            return encrypted_data
+            
         except ClientError as e:
             raise Exception(f"Failed to encrypt data: {str(e)}")
 
@@ -149,27 +161,33 @@ def decrypt_patient_data(patient: Any) -> Dict[str, Any]:
     else:
         patient_data = patient
     
-    # Fields to decrypt
-    sensitive_fields = [
-        'first_name', 'last_name', 'email',
-        'date_of_birth', 'insurance_provider', 'insurance_id'
-    ]
+    # Fields mapping for decryption
+    field_mapping = {
+        'encrypted_first_name': 'first_name',
+        'encrypted_last_name': 'last_name',
+        'encrypted_email': 'email',
+        'encrypted_dob': 'date_of_birth',
+        'encrypted_phone': 'phone',
+        'encrypted_address': 'address',
+        'encrypted_ssn': 'ssn'
+    }
     
     decrypted_data = {}
     for field, value in patient_data.items():
-        if field in sensitive_fields and value:
+        if field in field_mapping and value:
             try:
                 decrypted = kms.decrypt(value)
-                if field == 'date_of_birth':
+                plain_field = field_mapping[field]
+                if plain_field == 'date_of_birth':
                     try:
                         dt = datetime.strptime(decrypted, '%Y-%m-%d')
-                        decrypted_data[field] = dt
+                        decrypted_data[plain_field] = dt
                     except ValueError:
-                        decrypted_data[field] = decrypted
+                        decrypted_data[plain_field] = decrypted
                 else:
-                    decrypted_data[field] = decrypted
+                    decrypted_data[plain_field] = decrypted
             except Exception:
-                decrypted_data[field] = value
+                decrypted_data[field_mapping[field]] = None
         else:
             decrypted_data[field] = value
     

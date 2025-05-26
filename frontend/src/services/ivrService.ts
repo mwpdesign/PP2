@@ -1,4 +1,5 @@
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
+import api from './api';
 import {
   IVRRequest,
   IVRQueueParams,
@@ -9,10 +10,10 @@ import {
   IVREscalation,
   Patient,
   Provider,
+  DocumentAnnotation,
 } from '../types/ivr';
-import config from '../config';
 
-const IVR_ENDPOINT = `${config.API_BASE_URL}/api/v1/ivr`;
+const IVR_ENDPOINT = `/api/v1/ivr`;
 
 // Error handling types
 interface APIError {
@@ -20,14 +21,8 @@ interface APIError {
   code: string;
 }
 
-// Cache implementation
-const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
 class IVRService {
   private static instance: IVRService;
-  private retryCount = 3;
-  private retryDelay = 1000;
 
   private constructor() {}
 
@@ -38,39 +33,63 @@ class IVRService {
     return IVRService.instance;
   }
 
-  // Error handling
   private handleError(error: unknown): never {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<APIError>;
-      if (axiosError.response?.data) {
-        throw new Error(axiosError.response.data.message);
-      }
+    if (error instanceof AxiosError) {
+      const apiError = error.response?.data as APIError;
+      throw new Error(apiError?.message || 'An error occurred');
     }
     throw error;
   }
 
-  // Cache management
-  private getCached<T>(key: string): T | null {
-    const cached = cache.get(key);
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      return cached.data as T;
-    }
-    return null;
-  }
-
-  private setCache<T>(key: string, data: T): void {
-    cache.set(key, { data, timestamp: Date.now() });
-  }
-
-  private clearCache(): void {
-    cache.clear();
-  }
-
-  // API Methods
-  async getReviewQueue(params: IVRQueueParams): Promise<IVRQueueResponse> {
+  async getQueue(params: IVRQueueParams): Promise<IVRQueueResponse> {
     try {
-      const response = await axios.get<IVRQueueResponse>(`${IVR_ENDPOINT}/queue`, {
-        params,
+      const response = await api.get<IVRQueueResponse>(IVR_ENDPOINT, { params });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async submitRequest(request: IVRRequest): Promise<void> {
+    try {
+      await api.post(`${IVR_ENDPOINT}/submit`, request);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async batchAction(action: IVRBatchAction): Promise<IVRBatchResult> {
+    try {
+      const response = await api.post<IVRBatchResult>(
+        `${IVR_ENDPOINT}/batch`,
+        action
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async approve(approval: IVRApproval): Promise<void> {
+    try {
+      await api.post(`${IVR_ENDPOINT}/approve`, approval);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async escalate(escalation: IVREscalation): Promise<void> {
+    try {
+      await api.post(`${IVR_ENDPOINT}/escalate`, escalation);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async searchPatients(query: string): Promise<Patient[]> {
+    try {
+      const response = await api.get<Patient[]>(`/api/v1/patients/search`, {
+        params: { query },
       });
       return response.data;
     } catch (error) {
@@ -78,105 +97,22 @@ class IVRService {
     }
   }
 
-  async getIVRRequest(id: string): Promise<IVRRequest> {
-    const cacheKey = `ivr-${id}`;
-    const cached = this.getCached<IVRRequest>(cacheKey);
-    if (cached) return cached;
-
+  async searchProviders(query: string): Promise<Provider[]> {
     try {
-      const response = await axios.get<IVRRequest>(`${IVR_ENDPOINT}/${id}`);
-      this.setCache(cacheKey, response.data);
+      const response = await api.get<Provider[]>(`/api/v1/providers/search`, {
+        params: { query },
+      });
       return response.data;
     } catch (error) {
       this.handleError(error);
     }
   }
 
-  async createIVRRequest(data: Partial<IVRRequest>): Promise<IVRRequest> {
+  async getMetrics(dateRange: '7d' | '30d' | '90d'): Promise<any> {
     try {
-      const response = await axios.post<IVRRequest>(IVR_ENDPOINT, data);
-      this.clearCache();
-      return response.data;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async updateIVRRequest(
-    id: string,
-    data: Partial<IVRRequest>
-  ): Promise<IVRRequest> {
-    try {
-      const response = await axios.put<IVRRequest>(`${IVR_ENDPOINT}/${id}`, data);
-      this.clearCache();
-      return response.data;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async approveIVRRequest(
-    id: string,
-    approval: Partial<IVRApproval>
-  ): Promise<IVRRequest> {
-    try {
-      const response = await axios.post<IVRRequest>(
-        `${IVR_ENDPOINT}/${id}/approve`,
-        approval
-      );
-      this.clearCache();
-      return response.data;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async rejectIVRRequest(
-    id: string,
-    rejection: Partial<IVRApproval>
-  ): Promise<IVRRequest> {
-    try {
-      const response = await axios.post<IVRRequest>(
-        `${IVR_ENDPOINT}/${id}/reject`,
-        rejection
-      );
-      this.clearCache();
-      return response.data;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async escalateIVRRequest(
-    id: string,
-    escalation: Partial<IVREscalation>
-  ): Promise<IVRRequest> {
-    try {
-      const response = await axios.post<IVRRequest>(
-        `${IVR_ENDPOINT}/${id}/escalate`,
-        escalation
-      );
-      this.clearCache();
-      return response.data;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async processBatch(
-    action: 'approve' | 'reject',
-    requestIds: string[]
-  ): Promise<IVRBatchResult> {
-    try {
-      const batchAction: IVRBatchAction = {
-        action,
-        requestIds,
-      };
-      const response = await axios.post<IVRBatchResult>(
-        `${IVR_ENDPOINT}/batch`,
-        batchAction
-      );
-      this.clearCache();
+      const response = await api.get(`${IVR_ENDPOINT}/metrics`, {
+        params: { range: dateRange },
+      });
       return response.data;
     } catch (error) {
       this.handleError(error);
@@ -193,7 +129,7 @@ class IVRService {
       formData.append('file', file);
       formData.append('documentType', documentType);
 
-      const response = await axios.post<IVRRequest>(
+      const response = await api.post<IVRRequest>(
         `${IVR_ENDPOINT}/${ivrId}/documents`,
         formData,
         {
@@ -202,7 +138,28 @@ class IVRService {
           },
         }
       );
-      this.clearCache();
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getDocumentUrl(ivrId: string, documentId: string): Promise<string> {
+    try {
+      const response = await api.get<{ url: string }>(
+        `${IVR_ENDPOINT}/${ivrId}/documents/${documentId}/url`
+      );
+      return response.data.url;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getDocumentAnnotations(documentId: string): Promise<DocumentAnnotation[]> {
+    try {
+      const response = await api.get<DocumentAnnotation[]>(
+        `${IVR_ENDPOINT}/documents/${documentId}/annotations`
+      );
       return response.data;
     } catch (error) {
       this.handleError(error);
@@ -215,7 +172,7 @@ class IVRService {
     data: { text?: string; x?: number; y?: number }
   ): Promise<void> {
     try {
-      await axios.put(
+      await api.put(
         `${IVR_ENDPOINT}/documents/${documentId}/annotations/${annotationId}`,
         data
       );
@@ -223,88 +180,6 @@ class IVRService {
       this.handleError(error);
     }
   }
-
-  async getDocumentUrl(ivrId: string, documentId: string): Promise<string> {
-    try {
-      const response = await axios.get<{ url: string }>(
-        `${IVR_ENDPOINT}/${ivrId}/documents/${documentId}/url`
-      );
-      return response.data.url;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async searchPatients(query: string): Promise<Patient[]> {
-    try {
-      const response = await axios.get<Patient[]>(
-        `${config.API_BASE_URL}/api/v1/patients/search`,
-        {
-          params: { query },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async searchProviders(query: string): Promise<Provider[]> {
-    try {
-      const response = await axios.get<Provider[]>(
-        `${config.API_BASE_URL}/api/v1/providers/search`,
-        {
-          params: { query },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async getMetrics(dateRange: '7d' | '30d' | '90d') {
-    try {
-      const response = await axios.get(`${IVR_ENDPOINT}/metrics`, {
-        params: { range: dateRange },
-      });
-      return response.data;
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-
-  async getDocumentAnnotations(documentId: string): Promise<DocumentAnnotation[]> {
-    try {
-      const response = await axios.get<DocumentAnnotation[]>(
-        `${IVR_ENDPOINT}/documents/${documentId}/annotations`
-      );
-      // Add default values for type and color if not present
-      return response.data.map(annotation => ({
-        ...annotation,
-        type: annotation.type || 'highlight',
-        color: annotation.color || '#ffff00'
-      }));
-    } catch (error) {
-      this.handleError(error);
-    }
-  }
-}
-
-// Add DocumentAnnotation interface
-export interface DocumentAnnotation {
-  id: string;
-  documentId: string;
-  text: string;
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-  type: 'highlight' | 'text' | 'drawing';
-  color: string;
-  points?: number[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 export default IVRService.getInstance(); 

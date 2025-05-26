@@ -7,10 +7,13 @@ import {
   TruckIcon,
   ChartBarIcon,
   Cog6ToothIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/solid';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const Sidebar = () => {
   const location = useLocation();
+  const { logout } = useAuth();
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -22,9 +25,13 @@ const Sidebar = () => {
     { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
   ];
 
-  const handleSignOut = () => {
-    // TODO: Implement sign out logic
-    console.log('Sign out clicked');
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Sign out failed:', error);
+    }
   };
 
   return (
@@ -64,10 +71,17 @@ const Sidebar = () => {
               </Link>
             );
           })}
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center px-4 py-3 text-sm font-medium text-[rgba(255,255,255,0.9)] hover:text-white hover:bg-[rgba(255,255,255,0.1)] rounded-lg transition-colors mt-2"
+          >
+            <ArrowRightOnRectangleIcon className="mr-4 h-5 w-5" />
+            Sign Out
+          </button>
         </nav>
         <div className="mt-auto px-7 pb-4">
           <div className="border-t border-[rgba(255,255,255,0.1)] pt-4 mt-4">
-            <div className="flex items-center px-4 mb-4">
+            <div className="flex items-center px-4">
               <div className="h-10 w-10 rounded-full bg-[#375788] flex items-center justify-center">
                 <span className="text-white font-medium text-lg">Dr</span>
               </div>
@@ -76,12 +90,6 @@ const Sidebar = () => {
                 <p className="text-xs text-[rgba(255,255,255,0.7)]">Doctor</p>
               </div>
             </div>
-            <button
-              onClick={handleSignOut}
-              className="w-full px-4 py-3 text-sm font-medium text-[rgba(255,255,255,0.9)] hover:text-white transition-colors text-left"
-            >
-              Sign Out
-            </button>
           </div>
         </div>
       </div>

@@ -51,6 +51,7 @@ class Organization(Base):
     facilities = relationship("Facility", back_populates="organization")
     territories = relationship("Territory", back_populates="organization")
     roles = relationship("Role", back_populates="organization")
+    patients = relationship("Patient", back_populates="organization")
 
     def __repr__(self):
         """String representation of the organization."""

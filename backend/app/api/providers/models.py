@@ -10,6 +10,7 @@ from app.core.security import generate_uuid
 class Facility(Base):
     """Facility model for healthcare providers."""
     __tablename__ = "facilities"
+    __table_args__ = {'extend_existing': True}
 
     id: Mapped[str] = mapped_column(
         String(36),
@@ -54,6 +55,7 @@ class Facility(Base):
 class Provider(Base):
     """Provider model for healthcare providers."""
     __tablename__ = "providers"
+    __table_args__ = {'extend_existing': True}
 
     id: Mapped[str] = mapped_column(
         String(36),
@@ -150,6 +152,7 @@ class Provider(Base):
 class ProviderCredentials(Base):
     """Provider credentials model."""
     __tablename__ = "provider_credentials"
+    __table_args__ = {'extend_existing': True}
 
     id: Mapped[str] = mapped_column(
         String(36),
@@ -201,6 +204,7 @@ class ProviderCredentials(Base):
 class ProviderTerritory(Base):
     """Provider territory model."""
     __tablename__ = "provider_territories"
+    __table_args__ = {'extend_existing': True}
 
     id: Mapped[str] = mapped_column(
         String(36),
@@ -236,6 +240,7 @@ class ProviderTerritory(Base):
 class ProviderTerritoryAssignment(Base):
     """Provider territory assignment model."""
     __tablename__ = "provider_territory_assignments"
+    __table_args__ = {'extend_existing': True}
 
     provider_id: Mapped[str] = mapped_column(
         String(36),
@@ -257,6 +262,7 @@ class ProviderTerritoryAssignment(Base):
 class ProviderRelationship(Base):
     """Provider relationship model."""
     __tablename__ = "provider_relationships"
+    __table_args__ = {'extend_existing': True}
 
     id: Mapped[str] = mapped_column(
         String(36),

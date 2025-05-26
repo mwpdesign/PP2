@@ -1,62 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import PageHeader from '../../../components/shared/layout/PageHeader';
 import PatientCard from '../../../components/patients/PatientCard';
 import { Patient } from '../../../types/ivr';
-
-// Mock patient data - TODO: Replace with API call
-const mockPatients: Patient[] = [
-  {
-    id: '1',
-    firstName: 'John',
-    lastName: 'Doe',
-    dateOfBirth: '1980-01-15',
-    email: 'john.doe@example.com',
-    phone: '(555) 123-4567',
-    address: '123 Main St',
-    city: 'Los Angeles',
-    state: 'CA',
-    zipCode: '90001',
-    primaryCondition: 'Chronic Wound - Stage 2',
-    lastVisitDate: '2024-03-15',
-    insuranceInfo: {
-      provider: 'Blue Cross Blue Shield',
-      policyNumber: 'BCBS123456789',
-      groupNumber: 'GRP123',
-      status: 'active'
-    }
-  },
-  {
-    id: '2',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    dateOfBirth: '1975-06-22',
-    email: 'jane.smith@example.com',
-    phone: '(555) 987-6543',
-    address: '456 Oak Ave',
-    city: 'San Francisco',
-    state: 'CA',
-    zipCode: '94110',
-    primaryCondition: 'Diabetic Foot Ulcer',
-    lastVisitDate: '2024-03-20',
-    insuranceInfo: {
-      provider: 'Aetna',
-      policyNumber: 'AET987654321',
-      groupNumber: 'GRP456',
-      status: 'pending'
-    }
-  }
-];
+import patientService from '../../../services/patientService';
 
 const PatientSelectionPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredPatients = mockPatients.filter(patient =>
-    `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.insuranceInfo.policyNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchPatients = async (query?: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const results = await patientService.searchPatients(query || '');
+      setPatients(results);
+    } catch (err) {
+      setError('Failed to load patients');
+      console.error('Error fetching patients:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchTerm) {
+        fetchPatients(searchTerm);
+      }
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm]);
 
   const handleViewDetails = (patientId: string) => {
     navigate(`/patients/${patientId}`);
@@ -99,15 +82,29 @@ const PatientSelectionPage: React.FC = () => {
 
       {/* Patient List */}
       <div className="space-y-4">
-        {filteredPatients.map(patient => (
-          <PatientCard
-            key={patient.id}
-            patient={patient}
-            onSelect={handleViewDetails}
-          />
-        ))}
-
-        {filteredPatients.length === 0 && (
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2C3E50]"></div>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-500">{error}</p>
+            <button
+              onClick={() => fetchPatients()}
+              className="mt-2 text-[#2C3E50] hover:text-[#375788]"
+            >
+              Try again
+            </button>
+          </div>
+        ) : patients.length > 0 ? (
+          patients.map(patient => (
+            <PatientCard
+              key={patient.id}
+              patient={patient}
+              onSelect={handleViewDetails}
+            />
+          ))
+        ) : (
           <div className="text-center py-12">
             <p className="text-gray-500">No patients found matching your search criteria.</p>
           </div>

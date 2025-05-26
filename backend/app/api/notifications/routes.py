@@ -1,167 +1,153 @@
-"""API endpoints for notification management."""
-
+"""Notification endpoints for the API."""
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from uuid import UUID
 
 from app.core.database import get_db
-from app.core.auth import get_current_user
-from app.services.notification_service import (
-    NotificationService,
-    NotificationChannel,
-    NotificationPriority
-)
+from app.core.security import get_current_user
+from app.models.notification import Notification
 from app.schemas.notification import (
     NotificationCreate,
-    NotificationResponse,
-    NotificationStatus
+    NotificationUpdate,
+    NotificationResponse
 )
+from app.services.notifications import NotificationService
 
 router = APIRouter()
 
 
-@router.post(
-    "/notifications/",
-    response_model=NotificationResponse,
-    status_code=201,
-    summary="Send a notification"
-)
-async def send_notification(
-    notification: NotificationCreate,
-    channel: NotificationChannel,
-    priority: NotificationPriority = NotificationPriority.MEDIUM,
-    recipient_id: Optional[str] = None,
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Send a notification through specified channel."""
+@router.post("", response_model=NotificationResponse)
+async def create_notification(
+    *,
+    db: AsyncSession = Depends(get_db),
+    notification_in: NotificationCreate,
+    current_user: dict = Depends(get_current_user),
+    recipient_id: Optional[UUID] = None
+) -> NotificationResponse:
+    """Create a new notification."""
     notification_service = NotificationService(db)
     
-    try:
-        result = await notification_service.send_notification(
-            notification=notification,
-            channel=channel,
-            priority=priority,
-            recipient_id=recipient_id or current_user.id
-        )
-        return result
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to send notification: {str(e)}"
-        )
+    # Use recipient_id if provided, otherwise use current user's ID
+    recipient = recipient_id or current_user["id"]
+    
+    notification = await notification_service.create_notification(
+        notification_in,
+        recipient
+    )
+    return notification
 
 
-@router.get(
-    "/notifications/",
-    response_model=List[NotificationResponse],
-    summary="Get notification history"
-)
+@router.get("", response_model=List[NotificationResponse])
 async def get_notifications(
-    recipient_id: Optional[str] = None,
-    channel: Optional[NotificationChannel] = None,
-    status: Optional[NotificationStatus] = None,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
-    limit: int = Query(default=50, le=100),
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get notification history for a recipient."""
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+    recipient_id: Optional[UUID] = None,
+    unread_only: bool = False,
+    skip: int = 0,
+    limit: int = 100
+) -> List[NotificationResponse]:
+    """Get notifications for a user."""
     notification_service = NotificationService(db)
     
-    try:
-        notifications = await notification_service.get_notification_history(
-            recipient_id=recipient_id or current_user.id,
-            channel=channel,
-            start_date=start_date,
-            end_date=end_date,
-            status=status
-        )
-        return notifications[:limit]
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get notifications: {str(e)}"
-        )
+    # Use recipient_id if provided, otherwise use current user's ID
+    recipient = recipient_id or current_user["id"]
+    
+    notifications = await notification_service.get_notifications(
+        recipient_id=recipient,
+        unread_only=unread_only,
+        skip=skip,
+        limit=limit
+    )
+    return notifications
 
 
-@router.get(
-    "/notifications/{notification_id}",
-    response_model=NotificationResponse,
-    summary="Get notification details"
-)
-async def get_notification(
-    notification_id: str,
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get details of a specific notification."""
+@router.put("/{notification_id}", response_model=NotificationResponse)
+async def update_notification(
+    *,
+    db: AsyncSession = Depends(get_db),
+    notification_id: UUID,
+    notification_in: NotificationUpdate,
+    current_user: dict = Depends(get_current_user)
+) -> NotificationResponse:
+    """Update a notification."""
     notification_service = NotificationService(db)
     
-    try:
-        notification = await notification_service.get_notification_status(
-            notification_id
-        )
-        if not notification:
-            raise HTTPException(
-                status_code=404,
-                detail="Notification not found"
-            )
-        return notification
-        
-    except ValueError as e:
+    # Get existing notification
+    notification = await notification_service.get_notification(notification_id)
+    if not notification:
         raise HTTPException(
-            status_code=404,
-            detail=str(e)
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found"
         )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get notification: {str(e)}"
-        )
-
-
-@router.post(
-    "/notifications/bulk",
-    response_model=List[NotificationResponse],
-    status_code=201,
-    summary="Send bulk notifications"
-)
-async def send_bulk_notifications(
-    notifications: List[NotificationCreate],
-    channel: NotificationChannel,
-    priority: NotificationPriority = NotificationPriority.MEDIUM,
-    recipient_ids: List[str] = None,
-    current_user = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Send notifications to multiple recipients."""
-    notification_service = NotificationService(db)
-    results = []
     
-    try:
-        for i, notification in enumerate(notifications):
-            recipient_id = (
-                recipient_ids[i] if recipient_ids and i < len(recipient_ids)
-                else current_user.id
-            )
-            
-            result = await notification_service.send_notification(
-                notification=notification,
-                channel=channel,
-                priority=priority,
-                recipient_id=recipient_id
-            )
-            results.append(result)
-            
-        return results
-        
-    except Exception as e:
+    # Check if user has permission to update
+    if notification.recipient_id != current_user["id"]:
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to send bulk notifications: {str(e)}"
-        ) 
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    
+    notification = await notification_service.update_notification(
+        notification_id,
+        notification_in
+    )
+    return notification
+
+
+@router.delete("/{notification_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_notification(
+    *,
+    db: AsyncSession = Depends(get_db),
+    notification_id: UUID,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a notification."""
+    notification_service = NotificationService(db)
+    
+    # Get existing notification
+    notification = await notification_service.get_notification(notification_id)
+    if not notification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found"
+        )
+    
+    # Check if user has permission to delete
+    if notification.recipient_id != current_user["id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    
+    await notification_service.delete_notification(notification_id)
+
+
+@router.post("/{notification_id}/mark-read")
+async def mark_notification_read(
+    *,
+    db: AsyncSession = Depends(get_db),
+    notification_id: UUID,
+    current_user: dict = Depends(get_current_user)
+):
+    """Mark a notification as read."""
+    notification_service = NotificationService(db)
+    
+    # Get existing notification
+    notification = await notification_service.get_notification(notification_id)
+    if not notification:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found"
+        )
+    
+    # Check if user has permission to update
+    if notification.recipient_id != current_user["id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    
+    await notification_service.mark_notification_read(notification_id)
+    return {"message": "Notification marked as read"} 

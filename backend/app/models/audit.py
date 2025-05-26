@@ -40,6 +40,20 @@ class PHIAccess(Base, AuditMixin):
         ForeignKey('territories.id'),
         nullable=False
     )
+    created_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('users.id'),
+        nullable=False
+    )
+    updated_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('users.id'),
+        nullable=True
+    )
+    access_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False
+    )
     # patient, order, etc.
     resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
     resource_id: Mapped[PyUUID] = mapped_column(
@@ -67,9 +81,23 @@ class PHIAccess(Base, AuditMixin):
     )
     
     # Relationships
-    user = relationship('User', back_populates='phi_access_logs')
+    user = relationship(
+        'User',
+        foreign_keys=[user_id],
+        back_populates='phi_access_logs'
+    )
     patient = relationship('Patient', back_populates='phi_access_logs')
     territory = relationship('Territory', back_populates='phi_access_logs')
+    created_by = relationship(
+        'User',
+        foreign_keys=[created_by_id],
+        back_populates='created_phi_access_logs'
+    )
+    updated_by = relationship(
+        'User',
+        foreign_keys=[updated_by_id],
+        back_populates='updated_phi_access_logs'
+    )
 
 
 class AuditLog(Base, AuditMixin):
@@ -102,10 +130,34 @@ class AuditLog(Base, AuditMixin):
         DateTime(timezone=True),
         default=datetime.utcnow
     )
+    created_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('users.id'),
+        nullable=False
+    )
+    updated_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('users.id'),
+        nullable=True
+    )
     
     # Relationships
-    user = relationship('User', back_populates='audit_logs')
+    user = relationship(
+        'User',
+        foreign_keys=[user_id],
+        back_populates='audit_logs'
+    )
     territory = relationship('Territory', back_populates='audit_logs')
+    created_by = relationship(
+        'User',
+        foreign_keys=[created_by_id],
+        back_populates='created_audit_logs'
+    )
+    updated_by = relationship(
+        'User',
+        foreign_keys=[updated_by_id],
+        back_populates='updated_audit_logs'
+    )
 
 
 class ComplianceCheck(Base, AuditMixin):
@@ -134,9 +186,29 @@ class ComplianceCheck(Base, AuditMixin):
         DateTime(timezone=True),
         nullable=True
     )
+    created_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('users.id'),
+        nullable=False
+    )
+    updated_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('users.id'),
+        nullable=True
+    )
     
     # Relationships
     territory = relationship('Territory', back_populates='compliance_checks')
+    created_by = relationship(
+        'User',
+        foreign_keys=[created_by_id],
+        back_populates='created_compliance_checks'
+    )
+    updated_by = relationship(
+        'User',
+        foreign_keys=[updated_by_id],
+        back_populates='updated_compliance_checks'
+    )
 
 
 class AuditReport(Base, AuditMixin):
@@ -167,6 +239,26 @@ class AuditReport(Base, AuditMixin):
         DateTime(timezone=True),
         default=datetime.utcnow
     )
+    created_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('users.id'),
+        nullable=False
+    )
+    updated_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('users.id'),
+        nullable=True
+    )
     
     # Relationships
-    territory = relationship('Territory', back_populates='audit_reports') 
+    territory = relationship('Territory', back_populates='audit_reports')
+    created_by = relationship(
+        'User',
+        foreign_keys=[created_by_id],
+        back_populates='created_audit_reports'
+    )
+    updated_by = relationship(
+        'User',
+        foreign_keys=[updated_by_id],
+        back_populates='updated_audit_reports'
+    ) 

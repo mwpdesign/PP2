@@ -26,6 +26,7 @@ class Settings(BaseSettings):
         env='SECRET_KEY'
     )
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30  # 30 days
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     ENVIRONMENT: str = "local"
     

@@ -108,10 +108,11 @@ const IVRSubmission: React.FC<IVRSubmissionProps> = ({ onSubmit, onSaveDraft }) 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png'],
       'application/pdf': ['.pdf'],
+      'image/*': ['.jpeg', '.jpg', '.png']
     },
-    maxSize: 10485760, // 10MB
+    maxSize: 10 * 1024 * 1024, // 10MB
+    multiple: true
   });
 
   // Search handlers

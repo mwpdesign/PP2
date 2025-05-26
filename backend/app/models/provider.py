@@ -3,6 +3,7 @@ from sqlalchemy import String, DateTime, Boolean, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from uuid import UUID as PyUUID, uuid4
+from typing import Optional
 
 from app.core.database import Base
 
@@ -10,6 +11,7 @@ from app.core.database import Base
 class Provider(Base):
     """Healthcare Provider model"""
     __tablename__ = "providers"
+    __table_args__ = {'extend_existing': True}
 
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
@@ -114,8 +116,17 @@ class Provider(Base):
 
     # Relationships
     created_by = relationship("User", back_populates="providers")
-    patients = relationship("Patient", back_populates="provider")
+    patients = relationship(
+        "Patient",
+        foreign_keys="Patient.provider_id",
+        back_populates="provider"
+    )
     orders = relationship("Order", back_populates="provider")
+    credentials = relationship(
+        "ProviderCredentials",
+        back_populates="provider",
+        cascade="all, delete-orphan"
+    )
     
     # IVR relationships
     ivr_requests = relationship(
@@ -130,4 +141,68 @@ class Provider(Base):
     )
 
     def __repr__(self):
-        return f"<Provider(id={self.id}, name={self.name})>" 
+        return f"<Provider(id={self.id}, name={self.name})>"
+
+
+class ProviderCredentials(Base):
+    """Provider credentials and certification information."""
+    __tablename__ = "provider_credentials"
+    __table_args__ = {'extend_existing': True}
+    
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+        nullable=False
+    )
+    provider_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("providers.id"),
+        nullable=False
+    )
+    credential_type: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        comment="License, Certificate, etc."
+    )
+    credential_number: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        comment="ENCRYPTED"
+    )
+    issuing_authority: Mapped[str] = mapped_column(
+        String(200),
+        nullable=False
+    )
+    issue_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+    expiration_date: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="active",
+        nullable=False
+    )
+    document_key: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        nullable=True,
+        comment="S3 key for stored document"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    # Relationships
+    provider = relationship("Provider", back_populates="credentials") 

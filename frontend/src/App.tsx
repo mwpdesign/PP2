@@ -1,8 +1,10 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
+import { PrivateRoute } from './components/auth/PrivateRoute';
 
 // Import components
+const LoginPage = React.lazy(() => import('./pages/login'));
 const TestPage = React.lazy(() => import('./pages/TestPage'));
 const WoundCareDashboard = React.lazy(() => import('./pages/dashboard/WoundCareDashboard'));
 const PatientIntakePage = React.lazy(() => import('./pages/patients/intake'));
@@ -29,41 +31,45 @@ const App = () => {
           </div>
         }>
           <Routes>
-            {/* Test Routes */}
+            {/* Public Routes */}
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/test" element={<TestPage />} />
             
-            {/* Main Layout with Dashboard */}
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<WoundCareDashboard />} />
-              
-              {/* Patient Routes */}
-              <Route path="patients">
-                <Route index element={<Navigate to="/patients/select" replace />} />
-                <Route path="select" element={<PatientSelectionPage />} />
-                <Route path="intake" element={<PatientIntakePage />} />
-                <Route path=":id" element={<PatientDetailPage />} />
-              </Route>
-              
-              {/* IVR Routes */}
-              <Route path="ivr">
-                <Route index element={<IVRManagementPage />} />
-                <Route path="submit">
+            {/* Protected Routes */}
+            <Route element={<PrivateRoute />}>
+              {/* Main Layout with Dashboard */}
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<WoundCareDashboard />} />
+                
+                {/* Patient Routes */}
+                <Route path="patients">
                   <Route index element={<Navigate to="/patients/select" replace />} />
-                  <Route path="test/:patientId" element={<TestIVRPage />} />
-                  <Route path=":patientId" element={<IVRSubmissionPage />} />
+                  <Route path="select" element={<PatientSelectionPage />} />
+                  <Route path="intake" element={<PatientIntakePage />} />
+                  <Route path=":id" element={<PatientDetailPage />} />
                 </Route>
+                
+                {/* IVR Routes */}
+                <Route path="ivr">
+                  <Route index element={<IVRManagementPage />} />
+                  <Route path="submit">
+                    <Route index element={<Navigate to="/patients/select" replace />} />
+                    <Route path="test/:patientId" element={<TestIVRPage />} />
+                    <Route path=":patientId" element={<IVRSubmissionPage />} />
+                  </Route>
+                </Route>
+                
+                {/* Other Routes */}
+                <Route path="orders" element={<OrderManagementPage />} />
+                <Route path="shipping" element={<ShippingPage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
-              
-              {/* Other Routes */}
-              <Route path="orders" element={<OrderManagementPage />} />
-              <Route path="shipping" element={<ShippingPage />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
             </Route>
 
-            {/* Keep test route accessible */}
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            {/* Catch all route */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </Suspense>
       </div>

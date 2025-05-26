@@ -22,18 +22,24 @@ load_dotenv()
 
 
 # Get database configuration from environment
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    (
+        f"postgresql+asyncpg://"
+        f"{os.getenv('DB_USER', 'postgres')}:"
+        f"{os.getenv('DB_PASSWORD', 'postgres')}@"
+        f"{os.getenv('DB_HOST', 'localhost')}:"
+        f"{os.getenv('DB_PORT', '5432')}/"
+        f"{os.getenv('DB_NAME', 'healthcare_ivr')}"
+    )
+)
+
+# These are kept for backward compatibility but not used in URL construction
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "healthcare_ivr")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
-
-
-# Create database URL
-DATABASE_URL = (
-    f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}"
-    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-)
 
 
 class DatabaseSettings(BaseSettings):
@@ -44,7 +50,6 @@ class DatabaseSettings(BaseSettings):
     database_required: bool = True  # Enable database by default
     database_url: Optional[str] = DATABASE_URL
     db_echo: bool = False
-    sqlite_url: str = "sqlite+aiosqlite:///./test.db"
 
 
 # Global settings instance
@@ -71,12 +76,14 @@ async def init_db() -> bool:
     
     # Early return if database not required
     if not db_settings.database_required:
-        logger.info("Database connection disabled - running in no-database mode")
+        logger.info(
+            "Database connection disabled - running in no-database mode"
+        )
         return True
     
     try:
-        # Use SQLite as fallback if no DATABASE_URL provided
-        db_url = db_settings.database_url or db_settings.sqlite_url
+        # Use PostgreSQL configuration
+        db_url = db_settings.database_url
         
         engine = create_async_engine(
             db_url,
@@ -100,10 +107,7 @@ async def init_db() -> bool:
             # Import models here to avoid circular imports
             from app.models import (  # noqa
                 organization, user, rbac, territory, sensitive_data,
-                patient, facility, order
-            )
-            from app.api.orders.models import (  # noqa
-                Product, OrderStatusHistory
+                patient, facility, order, product
             )
             from app.services.shipping_types import (  # noqa
                 ShippingServiceType, TrackingStatus, ShippingProvider,

@@ -1,12 +1,13 @@
 """Patient data models with field-level encryption for PHI."""
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
-from sqlalchemy import String, DateTime, ForeignKey, Text, JSON
+from uuid import UUID, uuid4
+from sqlalchemy import String, DateTime, ForeignKey, Text, JSON, LargeBinary
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models.user import User
 
 
 class Patient(Base):
@@ -15,40 +16,144 @@ class Patient(Base):
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        primary_key=True
+        primary_key=True,
+        default=uuid4
     )
-    first_name: Mapped[str] = mapped_column(String(100))
-    last_name: Mapped[str] = mapped_column(String(100))
-    email: Mapped[str] = mapped_column(String(255), unique=True)
-    date_of_birth: Mapped[datetime] = mapped_column(DateTime)
-    insurance_provider: Mapped[Optional[str]] = mapped_column(
+    external_id: Mapped[Optional[str]] = mapped_column(
         String(100),
+        unique=True,
         nullable=True
     )
-    insurance_id: Mapped[Optional[str]] = mapped_column(
-        String(100),
+    encrypted_first_name: Mapped[bytes] = mapped_column(
+        LargeBinary,
+        nullable=False
+    )
+    encrypted_last_name: Mapped[bytes] = mapped_column(
+        LargeBinary,
+        nullable=False
+    )
+    encrypted_dob: Mapped[bytes] = mapped_column(
+        LargeBinary,
+        nullable=False
+    )
+    encrypted_ssn: Mapped[Optional[bytes]] = mapped_column(
+        LargeBinary,
         nullable=True
     )
-    territory_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("territories.id")
+    encrypted_phone: Mapped[Optional[bytes]] = mapped_column(
+        LargeBinary,
+        nullable=True
     )
-
-    # Add timestamp fields directly
+    encrypted_email: Mapped[Optional[bytes]] = mapped_column(
+        LargeBinary,
+        nullable=True
+    )
+    encrypted_address: Mapped[Optional[bytes]] = mapped_column(
+        LargeBinary,
+        nullable=True
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default='active'
+    )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime,
+        DateTime(timezone=True),
+        nullable=False,
         default=datetime.utcnow
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
+        DateTime(timezone=True),
+        nullable=True,
         onupdate=datetime.utcnow
     )
 
+    # Audit fields
+    created_by_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
+    updated_by_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    # Organization and Territory
+    organization_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("organizations.id"),
+        nullable=False
+    )
+    territory_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("territories.id"),
+        nullable=False
+    )
+
+    # Facility and Provider
+    facility_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("facilities.id"),
+        nullable=False
+    )
+    provider_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("providers.id"),
+        nullable=False
+    )
+
     # Relationships
+    created_by: Mapped[User] = relationship(
+        "User",
+        foreign_keys=[created_by_id],
+        back_populates="patients"
+    )
+    updated_by: Mapped[Optional[User]] = relationship(
+        "User",
+        foreign_keys=[updated_by_id],
+        back_populates="updated_patients"
+    )
+    organization = relationship(
+        "Organization",
+        back_populates="patients"
+    )
+    territory = relationship(
+        "Territory",
+        back_populates="patients"
+    )
+    facility = relationship(
+        "Facility",
+        back_populates="patients"
+    )
+    provider = relationship(
+        "Provider",
+        back_populates="patients"
+    )
+    orders = relationship("Order", back_populates="patient")
     documents: Mapped[list["PatientDocument"]] = relationship(
         "PatientDocument",
         back_populates="patient"
+    )
+    secondary_insurance = relationship(
+        "SecondaryInsurance",
+        back_populates="patient",
+        uselist=False
+    )
+    phi_access_logs = relationship(
+        "PHIAccess",
+        back_populates="patient"
+    )
+    ivr_requests = relationship(
+        "IVRRequest",
+        back_populates="patient",
+        cascade="all, delete-orphan"
+    )
+    ivr_sessions = relationship(
+        "IVRSession",
+        back_populates="patient",
+        cascade="all, delete-orphan"
     )
 
 
@@ -58,7 +163,8 @@ class PatientDocument(Base):
 
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        primary_key=True
+        primary_key=True,
+        default=uuid4
     )
     patient_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
@@ -69,10 +175,6 @@ class PatientDocument(Base):
     file_path: Mapped[str] = mapped_column(Text)
     document_category: Mapped[str] = mapped_column(String(50))
     document_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
-    created_by: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("users.id")
-    )
     territory_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("territories.id")
@@ -89,10 +191,32 @@ class PatientDocument(Base):
         onupdate=datetime.utcnow
     )
 
+    # Add audit fields
+    created_by_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
+    updated_by_id: Mapped[Optional[UUID]] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
     # Relationships
     patient: Mapped["Patient"] = relationship(
         "Patient",
         back_populates="documents"
+    )
+    created_by: Mapped[User] = relationship(
+        "User",
+        foreign_keys=[created_by_id],
+        back_populates="created_documents"
+    )
+    updated_by: Mapped[Optional[User]] = relationship(
+        "User",
+        foreign_keys=[updated_by_id],
+        back_populates="updated_documents"
     )
 
     @property

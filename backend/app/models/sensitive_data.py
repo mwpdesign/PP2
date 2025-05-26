@@ -1,7 +1,7 @@
 """Sensitive user data model with encryption support."""
 from datetime import datetime
 from uuid import UUID as PyUUID, uuid4
-from sqlalchemy import String, DateTime, JSON
+from sqlalchemy import String, DateTime, JSON, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
@@ -11,6 +11,7 @@ from app.core.encryption import FieldLevelEncryption
 
 if TYPE_CHECKING:
     from .user import User
+
 
 class SensitiveData(Base):
     """Model for storing sensitive user data with encryption."""
@@ -24,6 +25,7 @@ class SensitiveData(Base):
     )
     user_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
+        ForeignKey("users.id"),
         nullable=False
     )
     encrypted_data: Mapped[dict] = mapped_column(
@@ -47,7 +49,10 @@ class SensitiveData(Base):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="sensitive_data")
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="sensitive_data"
+    )
 
     def __init__(self, **kwargs):
         """Initialize with encryption support."""

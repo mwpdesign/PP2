@@ -66,10 +66,15 @@ class Facility(Base):
     )
 
     # Relationships
+    patients = relationship("Patient", back_populates="facility")
     organization = relationship("Organization", back_populates="facilities")
     territory = relationship("Territory", back_populates="facilities")
-    patients = relationship("Patient", back_populates="facility")
+    ivr_requests = relationship(
+        "IVRRequest",
+        back_populates="facility",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         """String representation of the facility."""
-        return f"<Facility(name='{self.name}')>" 
+        return f"<Facility(name='{self.name}', npi='{self.npi}')>" 

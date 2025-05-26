@@ -1,7 +1,10 @@
+"""IVR workflow service."""
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from datetime import datetime, timedelta
+from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.ivr.models import (
     IVRRequest,
@@ -29,12 +32,131 @@ from app.core.exceptions import (
     ValidationError,
     UnauthorizedError,
 )
+from app.models.ivr import IVRSession
 
 class IVRWorkflowService:
-    def __init__(self, db: Session, current_user: Dict[str, Any]):
+    """Service for managing IVR workflows."""
+
+    def __init__(self, db: AsyncSession):
+        """Initialize IVR workflow service."""
         self.db = db
-        self.current_user = current_user
         self.notification_service = NotificationService()
+
+    async def get_request(self, request_id: UUID) -> Optional[IVRRequest]:
+        """Get IVR request by ID."""
+        request = await self.db.get(IVRRequest, request_id)
+        
+        if not request:
+            raise NotFoundException("IVR request not found")
+        
+        return request
+
+    async def create_request(
+        self,
+        request_data: Dict[str, Any],
+        current_user: Dict[str, Any]
+    ) -> IVRRequest:
+        """Create a new IVR request."""
+        # Verify territory access
+        if not verify_territory_access(
+            current_user,
+            request_data["territory_id"]
+        ):
+            raise UnauthorizedError(
+                "No access to specified territory"
+            )
+
+        # Create request
+        request = IVRRequest(
+            patient_id=request_data["patient_id"],
+            provider_id=request_data["provider_id"],
+            facility_id=request_data["facility_id"],
+            territory_id=request_data["territory_id"],
+            service_type=request_data["service_type"],
+            priority=request_data["priority"],
+            status="pending",
+            request_metadata=request_data.get("request_metadata"),
+            notes=request_data.get("notes"),
+            created_by=current_user["id"],
+            updated_by=current_user["id"]
+        )
+        self.db.add(request)
+
+        # Commit transaction
+        try:
+            await self.db.commit()
+            await self.db.refresh(request)
+            return request
+        except Exception as e:
+            await self.db.rollback()
+            raise ValidationError(
+                f"Failed to create IVR request: {str(e)}"
+            )
+
+    async def update_request(
+        self,
+        request_id: UUID,
+        request_data: Dict[str, Any],
+        current_user: Dict[str, Any]
+    ) -> IVRRequest:
+        """Update an existing IVR request."""
+        # Get request
+        request = await self.get_request(request_id)
+
+        # Verify territory access
+        if not verify_territory_access(
+            current_user,
+            request.territory_id
+        ):
+            raise UnauthorizedError(
+                "No access to request's territory"
+            )
+
+        # Validate status transition
+        if request_data.get("status"):
+            await self._validate_status_transition(
+                request,
+                request_data["status"]
+            )
+
+        # Update fields
+        for field, value in request_data.items():
+            if value is not None:
+                setattr(request, field, value)
+        
+        # Update audit field
+        request.updated_by = current_user["id"]
+
+        # Commit changes
+        try:
+            await self.db.commit()
+            await self.db.refresh(request)
+            return request
+        except Exception as e:
+            await self.db.rollback()
+            raise ValidationError(
+                f"Failed to update IVR request: {str(e)}"
+            )
+
+    async def _validate_status_transition(
+        self,
+        request: IVRRequest,
+        new_status: str
+    ) -> None:
+        """Validate if status transition is allowed."""
+        valid_transitions = {
+            'pending': ['verified', 'cancelled'],
+            'verified': ['approved', 'cancelled'],
+            'approved': ['completed', 'cancelled'],
+            'completed': [],
+            'cancelled': []
+        }
+
+        if new_status not in valid_transitions.get(request.status, []):
+            raise ValidationError(
+                f"Invalid status transition from "
+                f"{request.status} to {new_status}"
+            )
 
     def create_ivr_request(self, request_data: IVRRequestCreate) -> IVRRequest:
         """Create a new IVR request with initial validation."""

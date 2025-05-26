@@ -16,6 +16,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
+import PhoneInput from '../shared/PhoneInput';
 
 interface FormData {
   firstName: string;
@@ -148,12 +149,17 @@ const PatientRegistrationForm: React.FC = () => {
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
+                <PhoneInput
+                  value={formData.phone}
+                  onChange={(value) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      phone: value
+                    }));
+                  }}
                   label="Phone"
                   name="phone"
-                  value={formData.phone}
-                  onChange={handleTextChange}
+                  required
                 />
               </Grid>
               <Grid item xs={12}>

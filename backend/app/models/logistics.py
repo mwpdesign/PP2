@@ -325,6 +325,11 @@ class WarehouseLocation(Base):
         ForeignKey("warehouse_locations.id"),
         nullable=True
     )
+    item_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("items.id"),
+        nullable=True
+    )
     capacity: Mapped[int] = mapped_column(
         Integer,
         nullable=True
@@ -366,6 +371,10 @@ class WarehouseLocation(Base):
     item = relationship(
         "Item",
         back_populates="warehouse_locations"
+    )
+    stock_levels = relationship(
+        "StockLevel",
+        back_populates="location"
     )
 
 

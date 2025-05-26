@@ -3,8 +3,10 @@ HIPAA compliance API endpoints.
 """
 from typing import Dict, List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 
 from app.core.database import get_db
 from app.core.auth import get_current_user
@@ -24,8 +26,15 @@ from app.schemas.compliance import (
     ComplianceReport,
     SecurityIncident,
     AuditLogEntry,
-    ComplianceMetrics
+    ComplianceMetrics,
+    ComplianceLogCreate,
+    ComplianceLogUpdate,
+    ComplianceLogResponse,
+    PHIAccessCreate,
+    PHIAccessUpdate,
+    PHIAccessResponse
 )
+from app.core.security import require_permissions
 
 router = APIRouter()
 
@@ -315,4 +324,236 @@ async def generate_compliance_report(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate compliance report: {str(e)}"
-        ) 
+        )
+
+
+@router.post("/logs", response_model=ComplianceLogResponse)
+@require_permissions(["compliance:write"])
+async def create_compliance_log(
+    *,
+    db: AsyncSession = Depends(get_db),
+    log_in: ComplianceLogCreate,
+    current_user: dict = Depends(get_current_user)
+) -> ComplianceLogResponse:
+    """Create a new compliance log entry."""
+    compliance_service = ComplianceService(db)
+    
+    log = await compliance_service.create_log(
+        log_in,
+        created_by_id=current_user["id"]
+    )
+    return log
+
+
+@router.get("/logs", response_model=List[ComplianceLogResponse])
+@require_permissions(["compliance:read"])
+async def get_compliance_logs(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+    skip: int = 0,
+    limit: int = 100
+) -> List[ComplianceLogResponse]:
+    """Get compliance logs."""
+    compliance_service = ComplianceService(db)
+    
+    logs = await compliance_service.get_logs(
+        organization_id=current_user["organization_id"],
+        skip=skip,
+        limit=limit
+    )
+    return logs
+
+
+@router.get("/logs/{log_id}", response_model=ComplianceLogResponse)
+@require_permissions(["compliance:read"])
+async def get_compliance_log(
+    *,
+    db: AsyncSession = Depends(get_db),
+    log_id: UUID,
+    current_user: dict = Depends(get_current_user)
+) -> ComplianceLogResponse:
+    """Get a compliance log by ID."""
+    compliance_service = ComplianceService(db)
+    
+    log = await compliance_service.get_log(log_id)
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Compliance log not found"
+        )
+    
+    # Check organization access
+    if log.organization_id != current_user["organization_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    
+    return log
+
+
+@router.put("/logs/{log_id}", response_model=ComplianceLogResponse)
+@require_permissions(["compliance:write"])
+async def update_compliance_log(
+    *,
+    db: AsyncSession = Depends(get_db),
+    log_id: UUID,
+    log_in: ComplianceLogUpdate,
+    current_user: dict = Depends(get_current_user)
+) -> ComplianceLogResponse:
+    """Update a compliance log."""
+    compliance_service = ComplianceService(db)
+    
+    # Get existing log
+    log = await compliance_service.get_log(log_id)
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Compliance log not found"
+        )
+    
+    # Check organization access
+    if log.organization_id != current_user["organization_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    
+    log = await compliance_service.update_log(
+        log_id,
+        log_in,
+        updated_by_id=current_user["id"]
+    )
+    return log
+
+
+@router.delete("/logs/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
+@require_permissions(["compliance:write"])
+async def delete_compliance_log(
+    *,
+    db: AsyncSession = Depends(get_db),
+    log_id: UUID,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a compliance log."""
+    compliance_service = ComplianceService(db)
+    
+    # Get existing log
+    log = await compliance_service.get_log(log_id)
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Compliance log not found"
+        )
+    
+    # Check organization access
+    if log.organization_id != current_user["organization_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    
+    await compliance_service.delete_log(log_id)
+
+
+@router.post("/phi-access", response_model=PHIAccessResponse)
+@require_permissions(["compliance:write"])
+async def create_phi_access_log(
+    *,
+    db: AsyncSession = Depends(get_db),
+    access_in: PHIAccessCreate,
+    current_user: dict = Depends(get_current_user)
+) -> PHIAccessResponse:
+    """Create a new PHI access log entry."""
+    compliance_service = ComplianceService(db)
+    
+    access = await compliance_service.create_phi_access(
+        access_in,
+        source=f"user_{current_user['id']}",
+        created_by_id=current_user["id"]
+    )
+    return access
+
+
+@router.get("/phi-access", response_model=List[PHIAccessResponse])
+@require_permissions(["compliance:read"])
+async def get_phi_access_logs(
+    *,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+    skip: int = 0,
+    limit: int = 100
+) -> List[PHIAccessResponse]:
+    """Get PHI access logs."""
+    compliance_service = ComplianceService(db)
+    
+    logs = await compliance_service.get_phi_access_logs(
+        organization_id=current_user["organization_id"],
+        skip=skip,
+        limit=limit
+    )
+    return logs
+
+
+@router.get("/phi-access/{access_id}", response_model=PHIAccessResponse)
+@require_permissions(["compliance:read"])
+async def get_phi_access_log(
+    *,
+    db: AsyncSession = Depends(get_db),
+    access_id: UUID,
+    current_user: dict = Depends(get_current_user)
+) -> PHIAccessResponse:
+    """Get a PHI access log by ID."""
+    compliance_service = ComplianceService(db)
+    
+    log = await compliance_service.get_phi_access_log(access_id)
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="PHI access log not found"
+        )
+    
+    # Check organization access
+    if log.organization_id != current_user["organization_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    
+    return log
+
+
+@router.put("/phi-access/{access_id}", response_model=PHIAccessResponse)
+@require_permissions(["compliance:write"])
+async def update_phi_access_log(
+    *,
+    db: AsyncSession = Depends(get_db),
+    access_id: UUID,
+    access_in: PHIAccessUpdate,
+    current_user: dict = Depends(get_current_user)
+) -> PHIAccessResponse:
+    """Update a PHI access log."""
+    compliance_service = ComplianceService(db)
+    
+    # Get existing log
+    log = await compliance_service.get_phi_access_log(access_id)
+    if not log:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="PHI access log not found"
+        )
+    
+    # Check organization access
+    if log.organization_id != current_user["organization_id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    
+    log = await compliance_service.update_phi_access_log(
+        access_id,
+        access_in,
+        updated_by_id=current_user["id"]
+    )
+    return log 

@@ -138,6 +138,17 @@ class Order(Base, AuditMixin):
         back_populates="order",
         cascade="all, delete-orphan"
     )
+    fulfillment_orders = relationship(
+        "FulfillmentOrder",
+        back_populates="order",
+        cascade="all, delete-orphan"
+    )
+    status_history = relationship(
+        "OrderStatusHistory",
+        back_populates="order",
+        cascade="all, "
+        "delete-orphan"
+    )
 
     @property
     def total_amount(self) -> float:
@@ -212,4 +223,63 @@ class Order(Base, AuditMixin):
         if value is not None:
             self._delivery_info = encrypt_field(str(value))
         else:
-            self._delivery_info = None 
+            self._delivery_info = None
+
+
+class OrderStatusHistory(Base):
+    """History of order status changes."""
+    __tablename__ = 'order_status_history'
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    order_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('orders.id'),
+        nullable=False
+    )
+    from_status: Mapped[str] = mapped_column(
+        Enum(
+            'pending',
+            'verified',
+            'approved',
+            'processing',
+            'completed',
+            'cancelled',
+            name='order_status_enum'
+        ),
+        nullable=True
+    )
+    to_status: Mapped[str] = mapped_column(
+        Enum(
+            'pending',
+            'verified',
+            'approved',
+            'processing',
+            'completed',
+            'cancelled',
+            name='order_status_enum'
+        ),
+        nullable=False
+    )
+    changed_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('users.id'),
+        nullable=False
+    )
+    reason: Mapped[str] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    # Relationships
+    order = relationship('Order', back_populates='status_history')
+    changed_by = relationship(
+        'User',
+        foreign_keys=[changed_by_id],
+        back_populates='order_status_changes'
+    ) 

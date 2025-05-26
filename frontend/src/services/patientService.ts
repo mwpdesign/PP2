@@ -1,7 +1,8 @@
-import axios from 'axios';
+import { AxiosError } from 'axios';
+import api from './api';
 import config from '../config';
 
-const PATIENTS_ENDPOINT = `${config.API_BASE_URL}/api/v1/patients`;
+const PATIENTS_ENDPOINT = `/api/v1/patients`;
 
 interface PatientFormData {
   firstName: string;
@@ -32,107 +33,103 @@ interface PatientFormData {
 
 class PatientService {
   private static instance: PatientService;
-  private token: string | null = null;
 
   private constructor() {}
 
-  public static getInstance(): PatientService {
+  static getInstance(): PatientService {
     if (!PatientService.instance) {
       PatientService.instance = new PatientService();
     }
     return PatientService.instance;
   }
 
-  setToken(token: string) {
-    this.token = token;
-  }
-
-  private getHeaders(isFormData = false) {
-    const headers: Record<string, string> = {};
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-    if (isFormData) {
-      headers['Content-Type'] = 'multipart/form-data';
-    }
-    return headers;
-  }
-
-  async registerPatient(formData: PatientFormData): Promise<any> {
+  async registerPatient(patientData: PatientFormData): Promise<any> {
     try {
-      // Create form data for file uploads
-      const data = new FormData();
-
-      // Add patient information
-      data.append('first_name', formData.firstName);
-      data.append('last_name', formData.lastName);
-      data.append('date_of_birth', formData.dateOfBirth);
-      data.append('gender', formData.gender);
-      data.append('address', formData.address);
-      data.append('city', formData.city);
-      data.append('state', formData.state);
-      data.append('zip', formData.zip);
-      data.append('government_id_type', formData.governmentIdType);
-
-      // Add government ID if provided
-      if (formData.governmentId) {
-        data.append('id_document', formData.governmentId);
+      const formData = new FormData();
+      
+      // Add patient info
+      formData.append('firstName', patientData.firstName);
+      formData.append('lastName', patientData.lastName);
+      formData.append('dateOfBirth', patientData.dateOfBirth);
+      formData.append('gender', patientData.gender);
+      formData.append('address', patientData.address);
+      formData.append('city', patientData.city);
+      formData.append('state', patientData.state);
+      formData.append('zip', patientData.zip);
+      formData.append('governmentIdType', patientData.governmentIdType);
+      
+      if (patientData.governmentId) {
+        formData.append('governmentId', patientData.governmentId);
       }
-
-      // Add primary insurance information
-      data.append('primary_insurance_provider', formData.primaryInsurance.provider);
-      data.append('primary_insurance_policy_number', formData.primaryInsurance.policyNumber);
-      data.append('primary_insurance_payer_phone', formData.primaryInsurance.payerPhone);
-
-      // Add primary insurance cards if provided
-      if (formData.primaryInsurance.cardFront) {
-        data.append('insurance_card_front', formData.primaryInsurance.cardFront);
+      
+      // Add primary insurance info
+      formData.append('primaryInsurance.provider', patientData.primaryInsurance.provider);
+      formData.append('primaryInsurance.policyNumber', patientData.primaryInsurance.policyNumber);
+      formData.append('primaryInsurance.payerPhone', patientData.primaryInsurance.payerPhone);
+      
+      if (patientData.primaryInsurance.cardFront) {
+        formData.append('primaryInsurance.cardFront', patientData.primaryInsurance.cardFront);
       }
-      if (formData.primaryInsurance.cardBack) {
-        data.append('insurance_card_back', formData.primaryInsurance.cardBack);
+      if (patientData.primaryInsurance.cardBack) {
+        formData.append('primaryInsurance.cardBack', patientData.primaryInsurance.cardBack);
       }
-
-      // Add secondary insurance information if provided
-      if (formData.secondaryInsurance.provider) {
-        data.append('secondary_insurance_provider', formData.secondaryInsurance.provider);
-        data.append('secondary_insurance_policy_number', formData.secondaryInsurance.policyNumber);
-        data.append('secondary_insurance_payer_phone', formData.secondaryInsurance.payerPhone);
-
-        if (formData.secondaryInsurance.cardFront) {
-          data.append('secondary_insurance_card_front', formData.secondaryInsurance.cardFront);
+      
+      // Add secondary insurance info if present
+      if (patientData.secondaryInsurance.provider) {
+        formData.append('secondaryInsurance.provider', patientData.secondaryInsurance.provider);
+        formData.append('secondaryInsurance.policyNumber', patientData.secondaryInsurance.policyNumber);
+        formData.append('secondaryInsurance.payerPhone', patientData.secondaryInsurance.payerPhone);
+        
+        if (patientData.secondaryInsurance.cardFront) {
+          formData.append('secondaryInsurance.cardFront', patientData.secondaryInsurance.cardFront);
         }
-        if (formData.secondaryInsurance.cardBack) {
-          data.append('secondary_insurance_card_back', formData.secondaryInsurance.cardBack);
+        if (patientData.secondaryInsurance.cardBack) {
+          formData.append('secondaryInsurance.cardBack', patientData.secondaryInsurance.cardBack);
         }
       }
 
-      const response = await axios.post(PATIENTS_ENDPOINT, data, {
-        headers: this.getHeaders(true),
+      const response = await api.post(`${PATIENTS_ENDPOINT}/register`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (error instanceof AxiosError) {
         throw new Error(error.response?.data?.detail || 'Failed to register patient');
       }
       throw error;
     }
   }
 
-  async searchPatients(query: string): Promise<any[]> {
+  async searchPatients(query: string = ''): Promise<any[]> {
     try {
-      const response = await axios.get(`${PATIENTS_ENDPOINT}/search`, {
+      const response = await api.get(PATIENTS_ENDPOINT, {
         params: { query },
-        headers: this.getHeaders(),
       });
+      return response.data.patients;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        throw new Error(error.response?.data?.detail || 'Failed to search patients');
+      }
+      throw error;
+    }
+  }
+
+  async getPatient(patientId: string): Promise<any> {
+    try {
+      const response = await api.get(`${PATIENTS_ENDPOINT}/${patientId}`);
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.detail || 'Failed to search patients');
+      if (error instanceof AxiosError) {
+        throw new Error(error.response?.data?.detail || 'Failed to get patient details');
       }
       throw error;
     }
   }
 }
 
-export default PatientService; 
+// Export the singleton instance
+const patientService = PatientService.getInstance();
+export default patientService; 

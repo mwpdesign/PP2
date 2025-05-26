@@ -20,6 +20,7 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import PhoneInput from '../shared/PhoneInput';
 
 // Custom styled components for medical-grade UI
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -221,12 +222,17 @@ const SimplePatientForm: React.FC = () => {
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField
-                    fullWidth
+                  <PhoneInput
+                    value={formData.phone}
+                    onChange={(value) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        phone: value
+                      }));
+                    }}
                     label="Phone"
                     name="phone"
-                    value={formData.phone}
-                    onChange={handleTextChange}
+                    required
                   />
                 </Grid>
               </Grid>

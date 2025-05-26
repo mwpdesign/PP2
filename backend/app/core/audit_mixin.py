@@ -38,7 +38,7 @@ class AuditMixin:
         return relationship(
             "User",
             foreign_keys=[cls.created_by_id],
-            backref="created_records"
+            back_populates="created_records"
         )
 
     @declared_attr
@@ -47,5 +47,5 @@ class AuditMixin:
         return relationship(
             "User",
             foreign_keys=[cls.updated_by_id],
-            backref="updated_records"
+            back_populates="updated_records"
         ) 

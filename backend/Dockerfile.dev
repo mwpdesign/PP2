@@ -16,8 +16,7 @@ COPY requirements.txt ./
 
 # Install Python dependencies with explicit upgrade of pip
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir "pydantic[email]" "pydantic-settings>=2.2.1" "structlog==24.1.0" "asyncpg==0.29.0"
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .

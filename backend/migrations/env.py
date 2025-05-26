@@ -1,27 +1,22 @@
+"""Alembic environment configuration."""
 from logging.config import fileConfig
-import os
-import sys
 
+from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from alembic import context
-
-# Add the backend directory to the Python path
-backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if backend_dir not in sys.path:
-    sys.path.append(backend_dir)
-
 from app.core.database import Base
-from app.models.organization import Organization
-from app.models.user import User
-from app.models.rbac import Role, Permission
-from app.models.territory import Territory
-from app.models.facility import Facility
-from app.models.patient import Patient, SecondaryInsurance, PatientDocument
-from app.models.provider import Provider
-from app.models.order import Order
-from app.models.audit import PHIAccess, AuditLog, ComplianceCheck, SecurityIncident, AuditReport
+from app.models.audit import PHIAccess, AuditLog, ComplianceCheck, AuditReport  # noqa
+from app.models.facility import Facility  # noqa
+from app.models.insurance import SecondaryInsurance  # noqa
+from app.models.order import Order  # noqa
+from app.models.organization import Organization  # noqa
+from app.models.patient import Patient, PatientDocument  # noqa
+from app.models.provider import Provider  # noqa
+from app.models.rbac import Role, Permission  # noqa
+from app.models.sensitive_data import SensitiveData  # noqa
+from app.models.territory import Territory  # noqa
+from app.models.user import User  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -40,7 +35,6 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.

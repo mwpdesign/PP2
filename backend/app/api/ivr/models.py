@@ -97,7 +97,7 @@ class IVRRequest(Base):
     current_reviewer = relationship(
         "User",
         foreign_keys=[current_reviewer_id],
-        back_populates="ivr_reviews"
+        back_populates="current_ivr_reviews"
     )
     status_history = relationship(
         "IVRStatusHistory",
@@ -307,7 +307,11 @@ class IVRReview(Base):
 
     # Relationships
     ivr_request = relationship("IVRRequest", back_populates="reviews")
-    reviewer = relationship("User", back_populates="ivr_reviews")
+    reviewer = relationship(
+        "User",
+        foreign_keys=[reviewer_id],
+        back_populates="ivr_reviews"
+    )
 
 
 class IVRDocument(Base):

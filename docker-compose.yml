@@ -26,6 +26,7 @@ services:
     environment:
       - ENVIRONMENT=development
       - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/healthcare_ivr
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=healthcare_ivr
