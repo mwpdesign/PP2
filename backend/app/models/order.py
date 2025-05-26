@@ -6,9 +6,9 @@ from uuid import UUID, uuid4
 from app.db.base_class import Base
 
 
-class Patient(Base):
-    """Patient model for storing patient data."""
-    __tablename__ = "patients"
+class Order(Base):
+    """Order model."""
+    __tablename__ = "orders"
 
     id: Mapped[UUID] = mapped_column(
         primary_key=True,
@@ -16,26 +16,20 @@ class Patient(Base):
         unique=True,
         nullable=False
     )
-    first_name: Mapped[str] = mapped_column(
-        String(100),
+    patient_id: Mapped[UUID] = mapped_column(
+        ForeignKey("patients.id"),
         nullable=False
     )
-    last_name: Mapped[str] = mapped_column(
-        String(100),
+    provider_id: Mapped[UUID] = mapped_column(
+        ForeignKey("providers.id"),
         nullable=False
     )
-    email: Mapped[str] = mapped_column(
-        String(255),
-        unique=True,
-        nullable=False,
-        index=True
-    )
-    phone: Mapped[str] = mapped_column(
-        String(20),
+    status: Mapped[str] = mapped_column(
+        String(50),
         nullable=False
     )
-    date_of_birth: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
+    description: Mapped[str] = mapped_column(
+        String(500),
         nullable=False
     )
     created_by_id: Mapped[UUID] = mapped_column(

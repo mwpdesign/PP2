@@ -1,6 +1,5 @@
-from typing import List
+from typing import List, Optional, Union
 from pydantic_settings import BaseSettings
-from pydantic import AnyHttpUrl, validator
 
 
 class Settings(BaseSettings):
@@ -13,17 +12,17 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     # CORS
-    CORS_ORIGINS: List[AnyHttpUrl] = []
+    CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:3000"]
 
-    @validator("CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v: str | List[str]) -> List[AnyHttpUrl]:
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
+    @property
+    def cors_origins(self) -> List[str]:
+        """Get the list of allowed CORS origins."""
+        if isinstance(self.CORS_ORIGINS, str):
+            return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        return self.CORS_ORIGINS
 
     # Database
     DATABASE_URL: str
@@ -31,16 +30,31 @@ class Settings(BaseSettings):
     MIN_CONNECTIONS_COUNT: int = 3
 
     # Redis
-    REDIS_URL: str
+    REDIS_URL: str = "redis://localhost:6379"
 
-    # AWS Configuration
-    AWS_ACCESS_KEY_ID: str
-    AWS_SECRET_ACCESS_KEY: str
+    # AWS Configuration - Optional for local development
+    AWS_ACCESS_KEY_ID: Optional[str] = "local-dev-key"
+    AWS_SECRET_ACCESS_KEY: Optional[str] = "local-dev-secret"
     AWS_DEFAULT_REGION: str = "us-east-1"
-    AWS_COGNITO_USER_POOL_ID: str
-    AWS_COGNITO_CLIENT_ID: str
-    AWS_S3_BUCKET: str
-    AWS_KMS_KEY_ID: str
+    AWS_COGNITO_USER_POOL_ID: Optional[str] = "local-dev-pool"
+    AWS_COGNITO_CLIENT_ID: Optional[str] = "local-dev-client"
+    AWS_S3_BUCKET: Optional[str] = "local-dev-bucket"
+    AWS_KMS_KEY_ID: Optional[str] = "local-dev-kms"
+
+    @property
+    def use_local_services(self) -> bool:
+        """Determine if local development services should be used."""
+        return self.ENVIRONMENT == "development"
+
+    @property
+    def s3_endpoint_url(self) -> Optional[str]:
+        """Get S3 endpoint URL based on environment."""
+        return "http://localhost:4566" if self.use_local_services else None
+
+    @property
+    def kms_endpoint_url(self) -> Optional[str]:
+        """Get KMS endpoint URL based on environment."""
+        return "http://localhost:4566" if self.use_local_services else None
 
     class Config:
         case_sensitive = True

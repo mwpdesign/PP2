@@ -1,14 +1,14 @@
 from datetime import datetime
-from sqlalchemy import String, DateTime, ForeignKey
+from sqlalchemy import String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from uuid import UUID, uuid4
 
 from app.db.base_class import Base
 
 
-class Patient(Base):
-    """Patient model for storing patient data."""
-    __tablename__ = "patients"
+class Verification(Base):
+    """Verification model."""
+    __tablename__ = "verifications"
 
     id: Mapped[UUID] = mapped_column(
         primary_key=True,
@@ -16,27 +16,29 @@ class Patient(Base):
         unique=True,
         nullable=False
     )
-    first_name: Mapped[str] = mapped_column(
-        String(100),
+    patient_id: Mapped[UUID] = mapped_column(
+        ForeignKey("patients.id"),
         nullable=False
     )
-    last_name: Mapped[str] = mapped_column(
-        String(100),
+    provider_id: Mapped[UUID] = mapped_column(
+        ForeignKey("providers.id"),
         nullable=False
     )
-    email: Mapped[str] = mapped_column(
-        String(255),
-        unique=True,
-        nullable=False,
-        index=True
-    )
-    phone: Mapped[str] = mapped_column(
-        String(20),
+    insurance_id: Mapped[str] = mapped_column(
+        String(50),
         nullable=False
     )
-    date_of_birth: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
+    insurance_group: Mapped[str] = mapped_column(
+        String(50),
+        nullable=True
+    )
+    status: Mapped[str] = mapped_column(
+        String(50),
         nullable=False
+    )
+    notes: Mapped[str] = mapped_column(
+        Text,
+        nullable=True
     )
     created_by_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id"),

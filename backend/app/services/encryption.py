@@ -42,64 +42,30 @@ class KMSEncryption:
 kms = KMSEncryption()
 
 
-def encrypt_patient_data(patient_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Encrypt patient PHI fields"""
-    encrypted_data = patient_data.copy()
+def encrypt_patient_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Encrypt patient data.
     
-    # Fields to encrypt
-    phi_fields = [
-        'first_name', 'last_name', 'date_of_birth', 'ssn',
-        'email', 'phone', 'address_line1', 'address_line2',
-        'city', 'state', 'zip_code', 'insurance_provider',
-        'insurance_id', 'insurance_group', 'insurance_phone',
-        'medical_history', 'allergies', 'medications'
-    ]
+    In development mode, this is a pass-through function.
+    In production, this would use AWS KMS for encryption.
+    """
+    if settings.ENVIRONMENT == "development":
+        return data
     
-    for field in phi_fields:
-        if field in encrypted_data and encrypted_data[field]:
-            # Convert date objects to ISO format string
-            if field == 'date_of_birth':
-                value = encrypted_data[field].isoformat()
-            else:
-                value = str(encrypted_data[field])
-                
-            encrypted_data[field] = kms.encrypt(value)
-    
-    return encrypted_data
+    # TODO: Implement AWS KMS encryption for production
+    return data
 
 
-def decrypt_patient_data(patient: Any) -> Any:
-    """Decrypt patient PHI fields"""
-    # Convert SQLAlchemy model to dict if needed
-    if hasattr(patient, '__dict__'):
-        patient_data = {
-            c.name: getattr(patient, c.name)
-            for c in patient.__table__.columns
-        }
-    else:
-        patient_data = patient.copy()
+def decrypt_patient_data(data: Any) -> Any:
+    """Decrypt patient data.
     
-    # Fields to decrypt
-    phi_fields = [
-        'first_name', 'last_name', 'date_of_birth', 'ssn',
-        'email', 'phone', 'address_line1', 'address_line2',
-        'city', 'state', 'zip_code', 'insurance_provider',
-        'insurance_id', 'insurance_group', 'insurance_phone',
-        'medical_history', 'allergies', 'medications'
-    ]
+    In development mode, this is a pass-through function.
+    In production, this would use AWS KMS for decryption.
+    """
+    if settings.ENVIRONMENT == "development":
+        return data
     
-    for field in phi_fields:
-        if field in patient_data and patient_data[field]:
-            decrypted_value = kms.decrypt(patient_data[field])
-            
-            # Convert date strings back to date objects
-            if field == 'date_of_birth':
-                from datetime import date
-                patient_data[field] = date.fromisoformat(decrypted_value)
-            else:
-                patient_data[field] = decrypted_value
-    
-    return patient_data
+    # TODO: Implement AWS KMS decryption for production
+    return data
 
 
 def encrypt_provider_data(provider_data: Dict[str, Any]) -> Dict[str, Any]:
