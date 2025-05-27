@@ -36,7 +36,7 @@ class FulfillmentService:
         try:
             # Get order details
             order = await self.get_order(order_id)
-            
+
             # Create fulfillment order
             fulfillment_order = FulfillmentOrder(
                 order_id=order_id,
@@ -46,23 +46,23 @@ class FulfillmentService:
                 shipping_info=order.shipping_info
             )
             self.db.add(fulfillment_order)
-            
+
             # Generate picking list
             picking_list = await self.generate_picking_list(
                 fulfillment_order
             )
             self.db.add(picking_list)
-            
+
             # Create quality check record
             quality_check = QualityCheck(
                 fulfillment_order_id=fulfillment_order.id,
                 status="pending"
             )
             self.db.add(quality_check)
-            
+
             self.db.commit()
             return fulfillment_order
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
@@ -80,10 +80,10 @@ class FulfillmentService:
             locations = await self.inventory_service.get_item_locations(
                 fulfillment_order.items
             )
-            
+
             # Optimize picking route
             optimized_route = self.optimize_picking_route(locations)
-            
+
             # Create picking list
             picking_list = PickingList(
                 fulfillment_order_id=fulfillment_order.id,
@@ -91,9 +91,9 @@ class FulfillmentService:
                 status="pending"
             )
             self.db.add(picking_list)
-            
+
             return picking_list
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -150,14 +150,14 @@ class FulfillmentService:
             # Validate return authorization
             if not self.validate_return(return_auth):
                 raise ValidationError("Invalid return authorization")
-            
+
             # Create inspection record
             inspection = ReturnInspection(
                 return_auth_id=return_auth.id,
                 status="pending"
             )
             self.db.add(inspection)
-            
+
             # Update inventory if accepted
             if return_auth.status == "accepted":
                 await self.inventory_service.add_inventory(
@@ -165,10 +165,10 @@ class FulfillmentService:
                     return_auth.quantity,
                     condition=return_auth.condition
                 )
-            
+
             self.db.commit()
             return {"status": "success", "inspection_id": inspection.id}
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
@@ -186,4 +186,4 @@ class FulfillmentService:
             return False
         if not return_auth.reason:
             return False
-        return True 
+        return True

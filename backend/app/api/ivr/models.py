@@ -57,7 +57,7 @@ class IVRRequest(Base):
         ForeignKey("territories.id"),
         nullable=False
     )
-    
+
     # Request Details
     service_type: Mapped[str] = mapped_column(String(100), nullable=False)
     priority: Mapped[IVRPriority] = mapped_column(
@@ -73,7 +73,7 @@ class IVRRequest(Base):
         ForeignKey("users.id"),
         nullable=True
     )
-    
+
     # Metadata
     request_metadata: Mapped[dict] = mapped_column(JSON, default={})
     notes: Mapped[str] = mapped_column(String(1000), nullable=True)
@@ -482,4 +482,4 @@ class IVRSessionItem(Base):
 
     # Relationships
     session = relationship("IVRSession", back_populates="items")
-    product = relationship("Product") 
+    product = relationship("Product")

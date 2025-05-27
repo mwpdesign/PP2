@@ -67,34 +67,34 @@ class DatabaseHealthCheck(HealthCheck):
     def _execute_check(self):
         conn = psycopg2.connect(self.connection_string)
         cur = conn.cursor()
-        
+
         # Check connection
         cur.execute("SELECT version();")
         version = cur.fetchone()[0]
-        
+
         # Check required tables
         required_tables = [
             "users", "organizations", "roles", "permissions",
             "facilities", "doctors", "patients", "ivr_requests",
             "orders", "audit_logs", "territories"
         ]
-        
+
         cur.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
+            SELECT table_name
+            FROM information_schema.tables
             WHERE table_schema = 'public'
         """)
         existing_tables = {row[0] for row in cur.fetchall()}
         missing_tables = set(required_tables) - existing_tables
-        
+
         # Check table row counts
         table_stats = {}
         for table in existing_tables & set(required_tables):
             cur.execute(f"SELECT COUNT(*) FROM {table}")
             table_stats[table] = cur.fetchone()[0]
-        
+
         conn.close()
-        
+
         self.result.update({
             "status": "PASS" if not missing_tables else "FAIL",
             "details": {
@@ -115,7 +115,7 @@ class RedisHealthCheck(HealthCheck):
         client = redis.from_url(self.url)
         info = client.info()
         client.close()
-        
+
         self.result.update({
             "status": "PASS",
             "details": {
@@ -141,11 +141,11 @@ class AWSServiceHealthCheck(HealthCheck):
             "ses": self._check_ses,
             "cloudtrail": self._check_cloudtrail
         }
-        
+
         check_func = service_checks.get(self.service)
         if not check_func:
             raise ValueError(f"Unsupported AWS service: {self.service}")
-        
+
         details = check_func(client)
         self.result.update({
             "status": "PASS",
@@ -199,7 +199,7 @@ class SystemVerificationEngine:
             "overall_status": "UNKNOWN",
             "components": {}
         }
-        
+
         # Configure logging
         self._setup_logging()
 
@@ -207,16 +207,16 @@ class SystemVerificationEngine:
         """Configure logging for the verification engine"""
         log_dir = Path("verification_reports/logs")
         log_dir.mkdir(parents=True, exist_ok=True)
-        
+
         log_file = log_dir / f"verification_{datetime.now():%Y%m%d_%H%M%S}.log"
-        
+
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
         )
-        
+
         self.logger.addHandler(file_handler)
         self.logger.setLevel(logging.INFO)
 
@@ -224,16 +224,16 @@ class SystemVerificationEngine:
         """Run all verification checks"""
         try:
             self.logger.info("Starting system verification")
-            
+
             # Define health checks
             health_checks = [
                 HTTPHealthCheck(
-                    "Frontend", 
+                    "Frontend",
                     "http://localhost:3000",
                     [200]
                 ),
                 HTTPHealthCheck(
-                    "Backend API", 
+                    "Backend API",
                     "http://localhost:8000/health",
                     [200]
                 ),
@@ -251,7 +251,7 @@ class SystemVerificationEngine:
                 AWSServiceHealthCheck("SES", "ses"),
                 AWSServiceHealthCheck("CloudTrail", "cloudtrail")
             ]
-            
+
             # Run all health checks
             for check in health_checks:
                 self.logger.info(f"Running health check: {check.name}")
@@ -260,19 +260,19 @@ class SystemVerificationEngine:
                 self.logger.info(
                     f"Health check {check.name} completed: {result['status']}"
                 )
-            
+
             # Determine overall status
             has_failures = any(
                 component["status"] == "FAIL"
                 for component in self.results["components"].values()
             )
             self.results["overall_status"] = "FAIL" if has_failures else "PASS"
-            
+
             # Generate report
             self._save_report()
-            
+
             return not has_failures, self.results
-            
+
         except Exception as e:
             self.logger.error(f"Verification failed: {str(e)}", exc_info=True)
             self.results["overall_status"] = "ERROR"
@@ -283,13 +283,13 @@ class SystemVerificationEngine:
         """Save verification results to a JSON file"""
         report_dir = Path("verification_reports")
         report_dir.mkdir(exist_ok=True)
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = report_dir / f"verification_report_{timestamp}.json"
-        
+
         with open(report_file, "w") as f:
             json.dump(self.results, f, indent=2)
-        
+
         self.logger.info(f"Verification report saved: {report_file}")
 
 
@@ -298,25 +298,25 @@ def main():
     try:
         verifier = SystemVerificationEngine()
         success, results = verifier.run_verification()
-        
+
         # Print results to console
         print("\n=== System Verification Report ===")
         print(f"Timestamp: {results['timestamp']}")
         print(f"Environment: {results['environment']}")
         print(f"Overall Status: {results['overall_status']}")
         print("\nComponent Status:")
-        
+
         for component, details in results["components"].items():
             status = details["status"]
             status_color = "\033[92m" if status == "PASS" else "\033[91m"
             print(f"{component}: {status_color}{status}\033[0m")
-        
+
         sys.exit(0 if success else 1)
-        
+
     except Exception as e:
         print(f"Error running verification: {str(e)}", file=sys.stderr)
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    main() 
+    main()

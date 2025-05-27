@@ -6,4 +6,4 @@ class BackupValidator:
 
     def validate_latest_backup(self):
         """Validate latest backup."""
-        return {"status": "PASS", "checks": {}} 
+        return {"status": "PASS", "checks": {}}

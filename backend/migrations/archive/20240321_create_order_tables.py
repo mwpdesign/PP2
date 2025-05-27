@@ -301,4 +301,4 @@ def downgrade() -> None:
     op.drop_table('order_approvals')
     op.drop_table('order_status_history')
     op.drop_table('order_items')
-    op.drop_table('orders') 
+    op.drop_table('orders')

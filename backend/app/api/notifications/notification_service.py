@@ -58,4 +58,4 @@ class NotificationService:
                 "Error sending notification: %s",
                 str(e),
                 exc_info=True
-            ) 
+            )

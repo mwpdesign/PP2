@@ -1,13 +1,15 @@
 """
 Authentication routes for user registration, login, and token management.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Dict
 
 from ...services.cognito_service import cognito_service
 from ...core.security import get_current_user, password_validator
+from ...services.security_service import security_service
 from . import models
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
@@ -37,7 +39,7 @@ async def register_user(user: models.UserRegistration):
     is_valid, error_message = password_validator.validate(user.password)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_message)
-    
+
     try:
         result = await cognito_service.user_registration(
             email=user.email,
@@ -100,7 +102,7 @@ async def reset_password(request: models.PasswordResetConfirm):
     is_valid, error_message = password_validator.validate(request.new_password)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_message)
-    
+
     try:
         result = await cognito_service.confirm_password_reset(
             email=request.email,
@@ -168,4 +170,4 @@ async def verify_token(token_data: Dict = Depends(get_current_user)):
         "user": token_data,
         "phi_access": security_service.verify_phi_access(token_data),
         "device_trusted": security_service.verify_device_trust(token_data)
-    } 
+    }

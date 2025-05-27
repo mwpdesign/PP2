@@ -132,4 +132,4 @@ class ShippingProvider:
 
     async def track_shipment(self, tracking_number: str) -> TrackingInfo:
         """Track shipment status."""
-        raise NotImplementedError() 
+        raise NotImplementedError()

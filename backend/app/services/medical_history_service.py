@@ -645,4 +645,4 @@ class MedicalHistoryService:
         await self.db.commit()
         await self.db.refresh(db_allergy)
 
-        return db_allergy 
+        return db_allergy

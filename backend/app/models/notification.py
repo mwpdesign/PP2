@@ -9,7 +9,7 @@ from app.services.notification_service import NotificationChannel, NotificationP
 
 class NotificationModel(Base):
     """Notification model for storing notification records."""
-    
+
     __tablename__ = "notifications"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
@@ -48,4 +48,4 @@ class NotificationModel(Base):
         nullable=False,
         default=datetime.utcnow,
         onupdate=datetime.utcnow
-    ) 
+    )

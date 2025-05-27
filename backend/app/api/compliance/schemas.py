@@ -166,4 +166,4 @@ class SecurityIncidentResponse(BaseModel):
 
     class Config:
         """Pydantic config."""
-        from_attributes = True 
+        from_attributes = True

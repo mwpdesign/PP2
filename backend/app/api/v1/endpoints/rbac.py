@@ -37,15 +37,15 @@ async def create_role(
 ) -> Role:
     """
     Create a new role with permissions.
-    
+
     Args:
         role: Role creation data
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         Created role object
-        
+
     Raises:
         HTTPException: If creation fails or user lacks permission
     """
@@ -130,15 +130,15 @@ async def get_role(
 ) -> Role:
     """
     Get role by ID.
-    
+
     Args:
         role_id: Role ID
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         Role object
-        
+
     Raises:
         HTTPException: If role not found or access denied
     """
@@ -172,18 +172,18 @@ async def list_roles(
 ) -> List[Role]:
     """
     List roles based on user's permissions.
-    
+
     Args:
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         List of role objects
     """
     # Check if user can view all roles
     if current_user.role.permissions.get("view_all_roles"):
         return db.query(Role).all()
-    
+
     # Otherwise, return only roles from user's organization
     return db.query(Role).filter(
         Role.organization_id == current_user.organization_id
@@ -202,16 +202,16 @@ async def update_role(
 ) -> Role:
     """
     Update role details.
-    
+
     Args:
         role_id: Role ID to update
         role_update: Update data
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         Updated role object
-        
+
     Raises:
         HTTPException: If update fails or access denied
     """
@@ -303,15 +303,15 @@ async def create_permission(
 ) -> Permission:
     """
     Create a new permission.
-    
+
     Args:
         permission: Permission creation data
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         Created permission object
-        
+
     Raises:
         HTTPException: If creation fails or user lacks permission
     """
@@ -376,15 +376,15 @@ async def get_permission(
 ) -> Permission:
     """
     Get permission by ID.
-    
+
     Args:
         permission_id: Permission ID
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         Permission object
-        
+
     Raises:
         HTTPException: If permission not found or access denied
     """
@@ -417,14 +417,14 @@ async def list_permissions(
 ) -> List[Permission]:
     """
     List all permissions.
-    
+
     Args:
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         List of permission objects
-        
+
     Raises:
         HTTPException: If user lacks permission
     """
@@ -450,16 +450,16 @@ async def update_permission(
 ) -> Permission:
     """
     Update permission details.
-    
+
     Args:
         permission_id: Permission ID to update
         permission_update: Update data
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         Updated permission object
-        
+
     Raises:
         HTTPException: If update fails or access denied
     """
@@ -508,4 +508,4 @@ async def update_permission(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Database integrity error"
-        ) 
+        )

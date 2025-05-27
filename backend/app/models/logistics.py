@@ -16,9 +16,9 @@ from app.core.database import Base
 
 class Item(Base):
     """Item model for inventory management."""
-    
+
     __tablename__ = "items"
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -101,9 +101,9 @@ class Item(Base):
 
 class FulfillmentOrder(Base):
     """Fulfillment order model."""
-    
+
     __tablename__ = "fulfillment_orders"
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -150,7 +150,7 @@ class FulfillmentOrder(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    
+
     # Relationships
     order = relationship("Order", back_populates="fulfillment_orders")
     picking_lists = relationship(
@@ -165,9 +165,9 @@ class FulfillmentOrder(Base):
 
 class PickingList(Base):
     """Picking list model for order fulfillment."""
-    
+
     __tablename__ = "picking_lists"
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -215,7 +215,7 @@ class PickingList(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    
+
     # Relationships
     fulfillment_order = relationship(
         "FulfillmentOrder",
@@ -226,9 +226,9 @@ class PickingList(Base):
 
 class QualityCheck(Base):
     """Quality check model for order fulfillment."""
-    
+
     __tablename__ = "quality_checks"
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -277,7 +277,7 @@ class QualityCheck(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    
+
     # Relationships
     fulfillment_order = relationship(
         "FulfillmentOrder",
@@ -292,9 +292,9 @@ class QualityCheck(Base):
 
 class WarehouseLocation(Base):
     """Warehouse location model."""
-    
+
     __tablename__ = "warehouse_locations"
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -353,7 +353,7 @@ class WarehouseLocation(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    
+
     # Relationships
     parent_location = relationship(
         "WarehouseLocation",
@@ -380,9 +380,9 @@ class WarehouseLocation(Base):
 
 class InventoryTransaction(Base):
     """Inventory transaction model."""
-    
+
     __tablename__ = "inventory_transactions"
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -420,7 +420,7 @@ class InventoryTransaction(Base):
         nullable=False,
         default=datetime.utcnow
     )
-    
+
     # Relationships
     item = relationship("Item", back_populates="inventory_transactions")
     location = relationship(
@@ -431,9 +431,9 @@ class InventoryTransaction(Base):
 
 class StockLevel(Base):
     """Stock level model."""
-    
+
     __tablename__ = "stock_levels"
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -471,7 +471,7 @@ class StockLevel(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    
+
     # Relationships
     item = relationship("Item", back_populates="stock_levels")
     location = relationship("WarehouseLocation", back_populates="stock_levels")
@@ -479,9 +479,9 @@ class StockLevel(Base):
 
 class ReturnAuthorization(Base):
     """Return authorization model."""
-    
+
     __tablename__ = "return_authorizations"
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -531,7 +531,7 @@ class ReturnAuthorization(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    
+
     # Relationships
     order = relationship("Order")
     item = relationship("Item")
@@ -539,9 +539,9 @@ class ReturnAuthorization(Base):
 
 class ReturnInspection(Base):
     """Return inspection model."""
-    
+
     __tablename__ = "return_inspections"
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -590,7 +590,7 @@ class ReturnInspection(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
-    
+
     # Relationships
     return_auth = relationship("ReturnAuthorization")
-    inspector = relationship("User") 
+    inspector = relationship("User")

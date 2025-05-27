@@ -17,17 +17,17 @@ from app.models.audit import (
 
 class HIPAAComplianceService:
     """Service for managing HIPAA compliance and audit logging."""
-    
+
     def __init__(self, db: Session):
         self.db = db
         self.settings = get_settings()
-        
+
         # HIPAA compliance requirements
         self.phi_retention_period = timedelta(days=365 * 6)  # 6 years
         self.max_failed_logins = 3
         self.password_expiry_days = 90
         self.session_timeout_minutes = 15
-        
+
         # PHI access patterns to monitor
         self.suspicious_patterns = {
             'bulk_access': 50,  # Max records per minute
@@ -48,7 +48,7 @@ class HIPAAComplianceService:
     ) -> None:
         """
         Log PHI access with detailed tracking.
-        
+
         Args:
             user_id: ID of user accessing PHI
             patient_id: ID of patient whose PHI is being accessed
@@ -78,7 +78,7 @@ class HIPAAComplianceService:
                 access_location=request_metadata.get('access_location')
             )
             self.db.add(phi_access)
-            
+
             # Create general audit log
             audit_log = AuditLog(
                 user_id=user_id,
@@ -93,18 +93,20 @@ class HIPAAComplianceService:
                 }
             )
             self.db.add(audit_log)
-            
+
             # Commit the transaction
             self.db.commit()
-            
+
             # Check for suspicious patterns
             await self._check_access_patterns(user_id, patient_id, territory_id)
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to log PHI access: {str(e)}"
+                detail=(
+                    f"Failed to log PHI access: {str(e)}"
+                )
             )
 
     async def run_compliance_check(
@@ -114,7 +116,7 @@ class HIPAAComplianceService:
     ) -> Dict[str, Any]:
         """
         Run automated compliance checks.
-        
+
         Args:
             check_type: Type of compliance check to run
             territory_id: Optional territory to scope the check to
@@ -126,22 +128,28 @@ class HIPAAComplianceService:
                 'violations': [],
                 'warnings': []
             }
-            
+
             if check_type == 'phi_access':
                 # Check PHI access patterns
-                violations = await self._check_phi_access_compliance(territory_id)
+                violations = await self._check_phi_access_compliance(
+                    territory_id
+                )
                 results['violations'].extend(violations)
-            
+
             elif check_type == 'audit_logs':
                 # Check audit log completeness
-                violations = await self._check_audit_log_compliance(territory_id)
+                violations = await self._check_audit_log_compliance(
+                    territory_id
+                )
                 results['violations'].extend(violations)
-            
+
             elif check_type == 'encryption':
                 # Check encryption compliance
-                violations = await self._check_encryption_compliance(territory_id)
+                violations = await self._check_encryption_compliance(
+                    territory_id
+                )
                 results['violations'].extend(violations)
-            
+
             # Record compliance check
             check = ComplianceCheck(
                 check_type=check_type,
@@ -151,15 +159,13 @@ class HIPAAComplianceService:
             )
             self.db.add(check)
             self.db.commit()
-            
+
             return results
-            
+
         except Exception as e:
             self.db.rollback()
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to run compliance check: {str(e)}"
-            )
+            msg = f"Failed to run compliance check: {str(e)}"
+            raise HTTPException(status_code=500, detail=msg)
 
     async def generate_audit_report(
         self,
@@ -170,7 +176,7 @@ class HIPAAComplianceService:
     ) -> Dict[str, Any]:
         """
         Generate HIPAA compliance audit report.
-        
+
         Args:
             report_type: Type of report to generate
             start_date: Start date for report period
@@ -188,7 +194,7 @@ class HIPAAComplianceService:
                 'violations': [],
                 'recommendations': []
             }
-            
+
             # Get PHI access statistics
             phi_stats = await self._get_phi_access_stats(
                 start_date,
@@ -196,23 +202,23 @@ class HIPAAComplianceService:
                 territory_id
             )
             report_data['metrics']['phi_access'] = phi_stats
-            
+
             # Get security incidents
-            incidents = await self._get_security_incidents(
+            security_stats = await self._get_security_incidents(
                 start_date,
                 end_date,
                 territory_id
             )
-            report_data['metrics']['security_incidents'] = incidents
-            
+            report_data['metrics']['security'] = security_stats
+
             # Get compliance check results
-            compliance = await self._get_compliance_check_results(
+            compliance_stats = await self._get_compliance_check_results(
                 start_date,
                 end_date,
                 territory_id
             )
-            report_data['metrics']['compliance_checks'] = compliance
-            
+            report_data['metrics']['compliance'] = compliance_stats
+
             # Save report
             report = AuditReport(
                 report_type=report_type,
@@ -223,14 +229,16 @@ class HIPAAComplianceService:
             )
             self.db.add(report)
             self.db.commit()
-            
+
             return report_data
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to generate audit report: {str(e)}"
+                detail=(
+                    f"Failed to generate audit report: {str(e)}"
+                )
             )
 
     async def report_security_incident(
@@ -245,7 +253,7 @@ class HIPAAComplianceService:
     ) -> SecurityIncident:
         """
         Report a security incident for HIPAA compliance.
-        
+
         Args:
             incident_type: Type of security incident
             description: Description of the incident
@@ -270,12 +278,14 @@ class HIPAAComplianceService:
             self.db.add(incident)
             self.db.commit()
             return incident
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to report security incident: {str(e)}"
+                detail=(
+                    f"Failed to report security incident: {str(e)}"
+                )
             )
 
     async def _check_access_patterns(
@@ -287,7 +297,7 @@ class HIPAAComplianceService:
         """Check for suspicious PHI access patterns."""
         now = datetime.utcnow()
         hour_ago = now - timedelta(hours=1)
-        
+
         # Check for bulk access
         bulk_access = self.db.query(PHIAccess).filter(
             and_(
@@ -295,17 +305,19 @@ class HIPAAComplianceService:
                 PHIAccess.created_at >= hour_ago
             )
         ).count()
-        
+
         if bulk_access > self.settings.MAX_PHI_ACCESS_PER_HOUR:
             await self.report_security_incident(
                 incident_type='bulk_access',
-                description=f'User accessed {bulk_access} PHI records in 1 hour',
+                description=(
+                    f'User accessed {bulk_access} PHI records in 1 hour'
+                ),
                 user_id=user_id,
                 territory_id=territory_id,
                 severity='medium',
                 affected_resources=[{'type': 'patient', 'id': patient_id}]
             )
-        
+
         # Check for territory hopping
         territories = self.db.query(
             PHIAccess.territory_id
@@ -315,11 +327,13 @@ class HIPAAComplianceService:
                 PHIAccess.created_at >= hour_ago
             )
         ).distinct().count()
-        
+
         if territories > self.settings.MAX_TERRITORIES_PER_HOUR:
             await self.report_security_incident(
                 incident_type='territory_hopping',
-                description=f'User accessed {territories} territories in 1 hour',
+                description=(
+                    f'User accessed {territories} territories in 1 hour'
+                ),
                 user_id=user_id,
                 territory_id=territory_id,
                 severity='high',
@@ -334,15 +348,15 @@ class HIPAAComplianceService:
         violations = []
         now = datetime.utcnow()
         day_ago = now - timedelta(days=1)
-        
+
         # Base query
         query = self.db.query(PHIAccess).filter(
             PHIAccess.created_at >= day_ago
         )
-        
+
         if territory_id:
             query = query.filter(PHIAccess.territory_id == territory_id)
-        
+
         # Check for missing audit fields
         missing_fields = query.filter(
             or_(
@@ -351,14 +365,14 @@ class HIPAAComplianceService:
                 PHIAccess.user_agent.is_(None)
             )
         ).all()
-        
+
         if missing_fields:
             violations.append({
                 'type': 'incomplete_audit_logs',
                 'description': 'PHI access logs missing required fields',
                 'count': len(missing_fields)
             })
-        
+
         return violations
 
     async def _check_audit_log_compliance(
@@ -369,15 +383,15 @@ class HIPAAComplianceService:
         violations = []
         now = datetime.utcnow()
         month_ago = now - timedelta(days=30)
-        
+
         # Base query
         query = self.db.query(AuditLog).filter(
             AuditLog.created_at >= month_ago
         )
-        
+
         if territory_id:
             query = query.filter(AuditLog.territory_id == territory_id)
-        
+
         # Check for gaps in audit logs
         gaps = await self._find_audit_log_gaps(query)
         if gaps:
@@ -386,7 +400,7 @@ class HIPAAComplianceService:
                 'description': 'Gaps detected in audit log timeline',
                 'gaps': gaps
             })
-        
+
         return violations
 
     async def _check_encryption_compliance(
@@ -412,10 +426,10 @@ class HIPAAComplianceService:
                 PHIAccess.created_at <= end_date
             )
         )
-        
+
         if territory_id:
             query = query.filter(PHIAccess.territory_id == territory_id)
-        
+
         return {
             'total_access': query.count(),
             'unique_users': query.with_entities(
@@ -446,10 +460,10 @@ class HIPAAComplianceService:
                 SecurityIncident.reported_at <= end_date
             )
         )
-        
+
         if territory_id:
             query = query.filter(SecurityIncident.territory_id == territory_id)
-        
+
         return {
             'total_incidents': query.count(),
             'by_type': dict(
@@ -483,10 +497,10 @@ class HIPAAComplianceService:
                 ComplianceCheck.created_at <= end_date
             )
         )
-        
+
         if territory_id:
             query = query.filter(ComplianceCheck.territory_id == territory_id)
-        
+
         return {
             'total_checks': query.count(),
             'by_type': dict(
@@ -507,15 +521,15 @@ class HIPAAComplianceService:
         """Find gaps in audit log timeline."""
         gaps = []
         logs = query.order_by(AuditLog.created_at).all()
-        
+
         if not logs:
             return gaps
-        
+
         for i in range(len(logs) - 1):
             current = logs[i]
             next_log = logs[i + 1]
             gap = next_log.created_at - current.created_at
-            
+
             # Flag gaps longer than 1 hour
             if gap > timedelta(hours=1):
                 gaps.append({
@@ -523,5 +537,5 @@ class HIPAAComplianceService:
                     'end': next_log.created_at.isoformat(),
                     'duration_minutes': gap.total_seconds() / 60
                 })
-        
-        return gaps 
+
+        return gaps

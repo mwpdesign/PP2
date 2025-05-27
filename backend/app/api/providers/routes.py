@@ -134,4 +134,4 @@ async def verify_credentials(
         credentials = provider_service.verify_provider_credentials(credential_id)
         return credentials
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) 
+        raise HTTPException(status_code=400, detail=str(e))

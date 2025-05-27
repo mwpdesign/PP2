@@ -4,7 +4,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
-from app.core.database import init_db, db_settings
+from app.core.database import init_db
 
 
 # Configure logging
@@ -61,43 +61,29 @@ async def test_endpoint():
 async def startup_event():
     """Initialize application on startup."""
     logger.info("Starting Healthcare IVR Platform API")
-    
-    # Initialize database if required
-    db_success = await init_db()
-    
-    if db_settings.database_required and not db_success:
-        logger.error("Failed to initialize required database connection")
-    else:
-        status = "available" if db_success else "disabled"
-        logger.info(f"Application started successfully. Database {status}")
-    
-    # Import routers after database initialization
+
+    # Initialize database
     try:
-        from app.test_endpoint import router as test_router
-        app.include_router(test_router)
-        logger.info("Test router loaded successfully")
+        db_success = await init_db()
+        if not db_success:
+            logger.error("Failed to initialize database connection")
+            raise RuntimeError("Database initialization failed")
+        logger.info("Database initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to load test router: {str(e)}")
-    
+        logger.error(f"Database initialization error: {str(e)}")
+        raise
+
+    # Include API routes
     try:
-        from .api.auth.routes import router as auth_router
-        app.include_router(auth_router)
-        logger.info("Auth router loaded successfully")
-    except Exception as e:
-        logger.error(f"Failed to load auth router: {str(e)}")
-        logger.info("Continuing without authentication routes")
-    
-    try:
-        # Include all v1 API routes
         app.include_router(api_router, prefix="/api/v1")
         logger.info("API v1 routers loaded successfully")
     except Exception as e:
         logger.error(f"Failed to load API v1 routers: {str(e)}")
-        logger.info("Continuing without API v1 routes")
+        raise
 
 
 # Comment out all startup events for now
 # @app.on_event("startup")
 # async def startup_event():
 #     """Initialize application on startup."""
-#     await init_db() 
+#     await init_db()

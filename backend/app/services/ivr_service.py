@@ -30,10 +30,10 @@ class IVRService:
         session = self.db.query(IVRSession).filter(
             IVRSession.id == session_id
         ).first()
-        
+
         if not session:
             raise NotFoundException("IVR session not found")
-        
+
         return session
 
     async def create_session(
@@ -147,4 +147,4 @@ class IVRService:
             raise ValidationError(
                 f"Invalid status transition from "
                 f"{session.status} to {new_status}"
-            ) 
+            )

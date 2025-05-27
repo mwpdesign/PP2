@@ -222,4 +222,4 @@ class PatientDocument(Base):
     @property
     def full_name(self) -> str:
         """Get patient's full name."""
-        return f"{self.first_name} {self.last_name}" 
+        return f"{self.first_name} {self.last_name}"

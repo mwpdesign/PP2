@@ -43,7 +43,7 @@ class USPSProvider(ShippingProvider):
         """Build XML request for USPS API."""
         root = ET.Element("{}Request".format(api))
         root.set("USERID", get_settings().usps_user_id)
-        
+
         for key, value in data.items():
             if isinstance(value, dict):
                 child = ET.SubElement(root, key)
@@ -53,7 +53,7 @@ class USPSProvider(ShippingProvider):
             else:
                 child = ET.SubElement(root, key)
                 child.text = str(value)
-        
+
         return ET.tostring(root, encoding="unicode")
 
     async def _make_request(
@@ -67,7 +67,7 @@ class USPSProvider(ShippingProvider):
             raise ShippingException("Max retries exceeded for USPS API request")
 
         xml_data = self._build_xml_request(api, data)
-        
+
         try:
             response = await self.client.get(
                 self.base_url,
@@ -77,14 +77,14 @@ class USPSProvider(ShippingProvider):
                 }
             )
             response.raise_for_status()
-            
+
             # Parse XML response
             root = ET.fromstring(response.text)
             error = root.find(".//Error")
             if error is not None:
                 error_msg = error.find("Description").text
                 raise ShippingException(f"USPS API error: {error_msg}")
-            
+
             return self._parse_xml_response(root)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 429:  # Rate limit exceeded
@@ -391,4 +391,4 @@ class USPSProvider(ShippingProvider):
                 error=str(e),
                 metadata={"tracking_number": tracking_number}
             )
-            raise 
+            raise

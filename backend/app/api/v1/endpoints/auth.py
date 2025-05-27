@@ -35,7 +35,7 @@ async def register(
     try:
         # Create user service
         user_service = UserService(db)
-        
+
         # Create user in database
         db_user = await user_service.create_user(
             user_data,
@@ -92,10 +92,10 @@ async def login(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
     )
-    
+
     # Create refresh token
     refresh_token = create_refresh_token(str(user["id"]))
-    
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -111,7 +111,7 @@ async def refresh_token(
     """Get new access token using refresh token."""
     try:
         user_id = verify_refresh_token(token_data.refresh_token)
-        
+
         # Get user from database
         user = await db.get(User, user_id)
         if not user:
@@ -137,7 +137,7 @@ async def refresh_token(
                 if user.primary_territory_id else None
             )
         }
-        
+
         # Create new access token
         access_token = create_access_token(
             data=token_data,
@@ -145,10 +145,10 @@ async def refresh_token(
                 minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
             )
         )
-        
+
         # Create new refresh token
         refresh_token = create_refresh_token(user_id)
-        
+
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
@@ -167,4 +167,4 @@ async def logout(
 ) -> LogoutResponse:
     """Logout current user."""
     # In a stateless JWT system, client should discard tokens
-    return LogoutResponse(message="Successfully logged out") 
+    return LogoutResponse(message="Successfully logged out")

@@ -325,4 +325,4 @@ class OrderSearchResponse(BaseModel):
     skip: int
     limit: int
 
-ProductCategoryResponse.update_forward_refs() 
+ProductCategoryResponse.update_forward_refs()

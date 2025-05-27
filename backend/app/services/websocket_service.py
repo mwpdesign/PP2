@@ -24,7 +24,7 @@ class ConnectionManager:
         self.connection_health: Dict[str, datetime] = {}
         self.encryption_service = EncryptionService()
         self.kms_service = KMSService()
-        
+
         # Start health check task
         asyncio.create_task(self._health_check_loop())
 
@@ -32,19 +32,19 @@ class ConnectionManager:
         """Accept connection and store it."""
         try:
             await websocket.accept()
-            
+
             if user_id not in self.active_connections:
                 self.active_connections[user_id] = set()
             self.active_connections[user_id].add(websocket)
-            
+
             # Record connection time for health checks
             self.connection_health[websocket.__hash__()] = datetime.utcnow()
-            
+
             # Send connection acknowledgment
             await self._send_ack(websocket, "connected")
-            
+
             logger.info(f"WebSocket connection established for user {user_id}")
-            
+
         except Exception as e:
             logger.error(f"Failed to establish WebSocket connection: {str(e)}")
             raise
@@ -56,14 +56,14 @@ class ConnectionManager:
                 self.active_connections[user_id].remove(websocket)
                 if not self.active_connections[user_id]:
                     del self.active_connections[user_id]
-            
+
             # Clean up health check record
             socket_hash = websocket.__hash__()
             if socket_hash in self.connection_health:
                 del self.connection_health[socket_hash]
-                
+
             logger.info(f"WebSocket connection closed for user {user_id}")
-            
+
         except Exception as e:
             logger.error(f"Error during WebSocket disconnect: {str(e)}")
 
@@ -86,15 +86,15 @@ class ConnectionManager:
                     message["data"] = self.encryption_service.encrypt(
                         json.dumps(message["data"])
                     )
-                
+
                 # Add message ID for acknowledgment
                 if require_ack:
                     message["message_id"] = self._generate_message_id()
-                
+
                 # Send message
                 await websocket.send_json(message)
                 success = True
-                
+
                 if require_ack:
                     # Wait for acknowledgment
                     try:
@@ -109,24 +109,24 @@ class ConnectionManager:
                         logger.warning(
                             f"Acknowledgment timeout for message {message['message_id']}"
                         )
-                
+
             except WebSocketDisconnect:
                 await self.disconnect(websocket, user_id)
             except Exception as e:
                 logger.error(f"Error sending message to {user_id}: {str(e)}")
                 success = False
-                
+
         return success
 
     async def broadcast(self, message: dict, territory: Optional[str] = None):
         """Broadcast message to all connected clients in territory."""
         disconnected = []
-        
+
         for user_id, connections in self.active_connections.items():
             # Check territory restrictions if specified
             if territory and not await self._check_territory_access(user_id, territory):
                 continue
-                
+
             for websocket in connections:
                 try:
                     await websocket.send_json(message)
@@ -134,7 +134,7 @@ class ConnectionManager:
                     disconnected.append((websocket, user_id))
                 except Exception as e:
                     logger.error(f"Error broadcasting to {user_id}: {str(e)}")
-                    
+
         # Clean up disconnected clients
         for websocket, user_id in disconnected:
             await self.disconnect(websocket, user_id)
@@ -152,23 +152,23 @@ class ConnectionManager:
         """Check connection health and clean up dead connections."""
         now = datetime.utcnow()
         disconnected = []
-        
+
         for user_id, connections in self.active_connections.items():
             for websocket in connections:
                 socket_hash = websocket.__hash__()
-                
+
                 # Check connection age
                 if socket_hash in self.connection_health:
                     age = (now - self.connection_health[socket_hash]).total_seconds()
                     if age > settings.WEBSOCKET_MAX_AGE:
                         disconnected.append((websocket, user_id))
                         continue
-                
+
                 # Check connection state
                 if websocket.client_state == WebSocketState.DISCONNECTED:
                     disconnected.append((websocket, user_id))
                     continue
-                
+
                 # Send ping
                 try:
                     await websocket.send_json({"type": "ping"})
@@ -180,7 +180,7 @@ class ConnectionManager:
                         disconnected.append((websocket, user_id))
                 except Exception:
                     disconnected.append((websocket, user_id))
-        
+
         # Clean up disconnected clients
         for websocket, user_id in disconnected:
             await self.disconnect(websocket, user_id)
@@ -215,4 +215,4 @@ class ConnectionManager:
     async def _check_territory_access(self, user_id: str, territory: str) -> bool:
         """Check if user has access to territory."""
         # TODO: Implement territory access check
-        return True  # Placeholder 
+        return True  # Placeholder

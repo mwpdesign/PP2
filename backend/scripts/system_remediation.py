@@ -58,7 +58,7 @@ class ServiceRestartAction(RemediationAction):
                 capture_output=True,
                 text=True
             )
-            
+
             # Start service
             subprocess.run(
                 ["docker-compose", "up", "-d", self.service_name],
@@ -66,7 +66,7 @@ class ServiceRestartAction(RemediationAction):
                 capture_output=True,
                 text=True
             )
-            
+
             self.result.update({
                 "status": "PASS",
                 "details": f"Successfully restarted {self.service_name}"
@@ -86,7 +86,7 @@ class DatabaseSchemaAction(RemediationAction):
     def _perform_remediation(self):
         conn = psycopg2.connect(self.connection_string)
         cur = conn.cursor()
-        
+
         try:
             # Run migrations
             subprocess.run(
@@ -95,15 +95,15 @@ class DatabaseSchemaAction(RemediationAction):
                 capture_output=True,
                 text=True
             )
-            
+
             # Verify tables
             cur.execute("""
-                SELECT table_name 
-                FROM information_schema.tables 
+                SELECT table_name
+                FROM information_schema.tables
                 WHERE table_schema = 'public'
             """)
             existing_tables = {row[0] for row in cur.fetchall()}
-            
+
             self.result.update({
                 "status": "PASS",
                 "details": {
@@ -111,7 +111,7 @@ class DatabaseSchemaAction(RemediationAction):
                     "tables_present": list(existing_tables)
                 }
             })
-            
+
         except (subprocess.CalledProcessError, psycopg2.Error) as e:
             raise RuntimeError(f"Failed to update database schema: {str(e)}")
         finally:
@@ -129,13 +129,13 @@ class RedisCleanupAction(RemediationAction):
         try:
             # Get initial stats
             initial_keys = client.dbsize()
-            
+
             # Clear expired keys
             client.execute_command("FLUSHDB")
-            
+
             # Get final stats
             final_keys = client.dbsize()
-            
+
             self.result.update({
                 "status": "PASS",
                 "details": {
@@ -144,7 +144,7 @@ class RedisCleanupAction(RemediationAction):
                     "keys_removed": initial_keys - final_keys
                 }
             })
-            
+
         except redis.RedisError as e:
             raise RuntimeError(f"Failed to clean Redis cache: {str(e)}")
         finally:
@@ -162,7 +162,7 @@ class SystemRemediationEngine:
             "overall_status": "UNKNOWN",
             "actions": {}
         }
-        
+
         # Configure logging
         self._setup_logging()
 
@@ -170,16 +170,16 @@ class SystemRemediationEngine:
         """Configure logging for the remediation engine"""
         log_dir = Path("verification_reports/logs")
         log_dir.mkdir(parents=True, exist_ok=True)
-        
+
         log_file = log_dir / f"remediation_{datetime.now():%Y%m%d_%H%M%S}.log"
-        
+
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
         )
-        
+
         self.logger.addHandler(file_handler)
         self.logger.setLevel(logging.INFO)
 
@@ -187,24 +187,24 @@ class SystemRemediationEngine:
         """Attempt to fix identified issues"""
         try:
             self.logger.info("Starting system remediation")
-            
+
             # Process each component's issues
             for component, details in verification_report["components"].items():
                 if details["status"] == "FAIL":
                     self._remediate_component(component, details)
-            
+
             # Determine overall status
             has_failures = any(
                 action["status"] == "FAIL"
                 for action in self.results["actions"].values()
             )
             self.results["overall_status"] = "FAIL" if has_failures else "PASS"
-            
+
             # Save report
             self._save_report()
-            
+
             return self.results
-            
+
         except Exception as e:
             self.logger.error(f"Remediation failed: {str(e)}", exc_info=True)
             self.results["overall_status"] = "ERROR"
@@ -214,7 +214,7 @@ class SystemRemediationEngine:
     def _remediate_component(self, component: str, details: Dict[str, Any]):
         """Remediate issues for a specific component"""
         self.logger.info(f"Remediating component: {component}")
-        
+
         # Define remediation actions based on component type
         if component in ["Frontend", "Backend API"]:
             action = ServiceRestartAction(
@@ -236,7 +236,7 @@ class SystemRemediationEngine:
                 f"No remediation action defined for component: {component}"
             )
             return
-        
+
         # Execute remediation
         result = action.execute()
         self.results["actions"][action.name] = result
@@ -248,13 +248,13 @@ class SystemRemediationEngine:
         """Save remediation results to a JSON file"""
         report_dir = Path("verification_reports")
         report_dir.mkdir(exist_ok=True)
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = report_dir / f"remediation_report_{timestamp}.json"
-        
+
         with open(report_file, "w") as f:
             json.dump(self.results, f, indent=2)
-        
+
         self.logger.info(f"Remediation report saved: {report_file}")
 
 
@@ -264,37 +264,37 @@ def main():
         # Load the latest verification report
         report_dir = Path("verification_reports")
         reports = sorted(report_dir.glob("verification_report_*.json"))
-        
+
         if not reports:
             print("No verification reports found", file=sys.stderr)
             sys.exit(1)
-        
+
         latest_report = reports[-1]
         with open(latest_report) as f:
             verification_report = json.load(f)
-        
+
         # Run remediation
         remediator = SystemRemediationEngine()
         results = remediator.remediate_issues(verification_report)
-        
+
         # Print results to console
         print("\n=== System Remediation Report ===")
         print(f"Timestamp: {results['timestamp']}")
         print(f"Environment: {results['environment']}")
         print(f"Overall Status: {results['overall_status']}")
         print("\nRemediation Actions:")
-        
+
         for action, details in results["actions"].items():
             status = details["status"]
             status_color = "\033[92m" if status == "PASS" else "\033[91m"
             print(f"{action}: {status_color}{status}\033[0m")
-        
+
         sys.exit(0 if results["overall_status"] == "PASS" else 1)
-        
+
     except Exception as e:
         print(f"Error running remediation: {str(e)}", file=sys.stderr)
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    main() 
+    main()

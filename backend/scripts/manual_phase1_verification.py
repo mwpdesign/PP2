@@ -28,7 +28,7 @@ def create_test_data(session):
     """Create test data and verify relationships."""
     try:
         print("\n=== Creating Test Data ===")
-        
+
         # 1. Create Organization
         print("\nCreating organization...")
         org = Organization(
@@ -150,7 +150,7 @@ def create_test_data(session):
 
         # Verify relationships
         print("\n=== Verifying Relationships ===")
-        
+
         # Verify Organization -> Territory
         org_territories = session.query(Territory).filter_by(
             organization_id=org.id
@@ -204,7 +204,7 @@ def create_test_data(session):
         # Commit changes
         session.commit()
         print("\n✅ All relationships verified successfully!")
-        
+
         return {
             "organization": org,
             "territory": territory,
@@ -226,13 +226,13 @@ def verify_database_connection():
     try:
         print("\n=== Verifying Database Connection ===")
         engine = create_engine(settings.DATABASE_URL)
-        
+
         # Test connection
         with engine.connect() as conn:
             result = conn.execute(text("SELECT version()"))
             version = result.scalar()
             print(f"✅ Connected to PostgreSQL: {version}")
-        
+
         return engine
     except Exception as e:
         print(f"❌ Database connection failed: {str(e)}")
@@ -276,4 +276,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

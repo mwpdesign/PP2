@@ -73,7 +73,7 @@ def test_data_encryption_key_rotation(compliance_validator):
 def test_password_policy_validation(compliance_validator, mock_db, mock_user):
     """Test password policy validation."""
     mock_db.query.return_value.filter.return_value.first.return_value = mock_user
-    
+
     # Test valid password
     valid_password = "StrongP@ssw0rd123"
     result = compliance_validator.validate_password_policy(
@@ -237,4 +237,4 @@ def test_emergency_access_validation(compliance_validator):
     result = compliance_validator.validate_audit_logging(log_entry)
 
     assert result["is_compliant"] is True
-    assert "PHI_ACCESS_LOGGING" in result["checks_performed"] 
+    assert "PHI_ACCESS_LOGGING" in result["checks_performed"]

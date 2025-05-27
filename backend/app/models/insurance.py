@@ -10,7 +10,7 @@ from app.core.database import Base
 
 class SecondaryInsurance(Base):
     """Secondary insurance model for patients."""
-    
+
     __tablename__ = "secondary_insurance"
 
     id: Mapped[PyUUID] = mapped_column(
@@ -88,4 +88,4 @@ class SecondaryInsurance(Base):
 
     def __repr__(self):
         """String representation of secondary insurance."""
-        return f"<SecondaryInsurance(id='{self.id}', provider='{self.insurance_provider}')>" 
+        return f"<SecondaryInsurance(id='{self.id}', provider='{self.insurance_provider}')>"

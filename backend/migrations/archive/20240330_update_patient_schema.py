@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     """Add new patient fields and related tables."""
-    
+
     # Add new columns to patients table
     op.add_column('patients', sa.Column('middle_name', sa.String(100)))
     op.add_column('patients', sa.Column('gender', sa.String(50)))
@@ -77,7 +77,7 @@ def upgrade() -> None:
     # Enable RLS
     op.execute("""
         ALTER TABLE patient_documents ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY patient_documents_isolation_policy ON patient_documents
             FOR ALL
             USING (
@@ -92,7 +92,7 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE secondary_insurance ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY secondary_insurance_isolation_policy ON secondary_insurance
             FOR ALL
             USING (
@@ -134,4 +134,4 @@ def downgrade() -> None:
     op.drop_column('patients', 'skilled_nursing_facility')
     op.drop_column('patients', 'part_a_stay_coverage')
     op.drop_column('patients', 'primary_payer_phone')
-    op.drop_column('patients', 'medical_notes') 
+    op.drop_column('patients', 'medical_notes')

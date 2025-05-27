@@ -34,15 +34,15 @@ async def create_organization(
 ) -> Organization:
     """
     Create a new organization.
-    
+
     Args:
         org: Organization creation data
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         Created organization object
-        
+
     Raises:
         HTTPException: If creation fails or user lacks permission
     """
@@ -102,15 +102,15 @@ async def get_organization(
 ) -> Organization:
     """
     Get organization by ID.
-    
+
     Args:
         org_id: Organization ID
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         Organization object
-        
+
     Raises:
         HTTPException: If organization not found or access denied
     """
@@ -144,18 +144,18 @@ async def list_organizations(
 ) -> List[Organization]:
     """
     List organizations based on user's permissions.
-    
+
     Args:
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         List of organization objects
     """
     # Check if user can view all organizations
     if current_user.role.permissions.get("view_all_organizations"):
         return db.query(Organization).all()
-    
+
     # Otherwise, return only user's organization
     return [
         db.query(Organization)
@@ -176,16 +176,16 @@ async def update_organization(
 ) -> Organization:
     """
     Update organization details.
-    
+
     Args:
         org_id: Organization ID to update
         org_update: Update data
         db: Database session
         current_user: Currently authenticated user
-        
+
     Returns:
         Updated organization object
-        
+
     Raises:
         HTTPException: If update fails or access denied
     """
@@ -237,4 +237,4 @@ async def update_organization(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Database integrity error"
-        ) 
+        )

@@ -22,14 +22,14 @@ class ComplianceOptimizationEngine:
         """Initialize compliance optimizer."""
         self.environment = environment
         self.compliance_checker = HIPAAComplianceChecker(environment)
-        
+
         # Define optimization strategies
         self.compliance_frameworks = {
             'HIPAA': self._optimize_hipaa_compliance,
             'PCI_DSS': self._optimize_pci_compliance,
             'SOC2': self._optimize_soc2_compliance
         }
-        
+
         # Optimization thresholds
         self.thresholds = {
             'min_encryption_score': 0.95,
@@ -40,7 +40,7 @@ class ComplianceOptimizationEngine:
         }
 
     def optimize_compliance(
-        self, 
+        self,
         frameworks: List[str] = None
     ) -> Dict[str, Any]:
         """
@@ -50,7 +50,7 @@ class ComplianceOptimizationEngine:
             frameworks = list(
                 self.compliance_frameworks.keys()
             )
-        
+
         results = {
             'overall_optimization_score': 0,
             'framework_optimizations': {},
@@ -67,7 +67,7 @@ class ComplianceOptimizationEngine:
                 results['framework_optimizations'][
                     framework
                 ] = framework_result
-        
+
         # Calculate overall optimization score
         results['overall_optimization_score'] = (
             self._calculate_optimization_score(
@@ -87,35 +87,35 @@ class ComplianceOptimizationEngine:
                 'recommendations': [],
                 'optimization_score': 0
             }
-            
+
             # Get current compliance status
             compliance_status = self.compliance_checker.validate()
-            
+
             # Optimize PHI protection
             phi_protection = self._optimize_phi_protection(compliance_status)
             results['optimizations']['phi_protection'] = phi_protection
-            
+
             # Optimize access controls
             access_controls = self._optimize_access_controls(compliance_status)
             results['optimizations']['access_controls'] = access_controls
-            
+
             # Optimize audit logging
             audit_logging = self._optimize_audit_logging(compliance_status)
             results['optimizations']['audit_logging'] = audit_logging
-            
+
             # Calculate optimization score
             results['optimization_score'] = (
                 phi_protection['score'] * 0.4 +
                 access_controls['score'] * 0.3 +
                 audit_logging['score'] * 0.3
             )
-            
+
             # Collect recommendations
             for opt in results['optimizations'].values():
                 results['recommendations'].extend(opt.get('recommendations', []))
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"HIPAA optimization failed: {str(e)}")
             return {
@@ -125,7 +125,7 @@ class ComplianceOptimizationEngine:
             }
 
     def _optimize_phi_protection(
-        self, 
+        self,
         compliance_status: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -136,7 +136,7 @@ class ComplianceOptimizationEngine:
             'optimizations': [],
             'recommendations': []
         }
-        
+
         # Check encryption status
         phi_checks = compliance_status['checks'].get('phi_protection', {})
         if not phi_checks.get('compliant', False):
@@ -151,11 +151,11 @@ class ComplianceOptimizationEngine:
             results['optimizations'].append(
                 "PHI protection mechanisms are optimized"
             )
-        
+
         return results
 
     def _optimize_access_controls(
-        self, 
+        self,
         compliance_status: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -166,7 +166,7 @@ class ComplianceOptimizationEngine:
             'optimizations': [],
             'recommendations': []
         }
-        
+
         # Check access control status
         access_checks = compliance_status['checks'].get('access_controls', {})
         if not access_checks.get('compliant', False):
@@ -181,11 +181,11 @@ class ComplianceOptimizationEngine:
             results['optimizations'].append(
                 "Access control mechanisms are optimized"
             )
-        
+
         return results
 
     def _optimize_audit_logging(
-        self, 
+        self,
         compliance_status: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -196,7 +196,7 @@ class ComplianceOptimizationEngine:
             'optimizations': [],
             'recommendations': []
         }
-        
+
         # Check audit logging status
         audit_checks = compliance_status['checks'].get('audit_logging', {})
         if not audit_checks.get('compliant', False):
@@ -211,7 +211,7 @@ class ComplianceOptimizationEngine:
             results['optimizations'].append(
                 "Audit logging mechanisms are optimized"
             )
-        
+
         return results
 
     def _optimize_pci_compliance(self) -> Dict[str, Any]:
@@ -313,7 +313,7 @@ class ComplianceOptimizationEngine:
         }
 
     def _calculate_optimization_score(
-        self, 
+        self,
         framework_results: Dict[str, Any]
     ) -> float:
         """
@@ -321,7 +321,7 @@ class ComplianceOptimizationEngine:
         """
         if not framework_results:
             return 0.0
-        
+
         total_score = sum(
             result.get('optimization_score', 0)
             for result in framework_results.values()
@@ -335,7 +335,7 @@ def main():
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
+
     # Parse arguments
     parser = argparse.ArgumentParser(
         description='Compliance Optimization Engine'
@@ -352,26 +352,26 @@ def main():
         default=['HIPAA', 'PCI_DSS', 'SOC2'],
         help='Compliance frameworks to optimize'
     )
-    
+
     args = parser.parse_args()
 
     try:
         # Initialize optimization engine
         compliance_optimizer = ComplianceOptimizationEngine(args.environment)
-        
+
         # Run compliance optimization
         optimization_results = compliance_optimizer.optimize_compliance(
             frameworks=args.frameworks
         )
-        
+
         # Print optimization results
         print("\nCompliance Optimization Results:")
         print(json.dumps(optimization_results, indent=2))
-        
+
     except Exception as e:
         logger.error(f"Error in main execution: {str(e)}")
         raise
 
 
 if __name__ == '__main__':
-    main() 
+    main()

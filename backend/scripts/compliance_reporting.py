@@ -170,7 +170,7 @@ class ComplianceReportGenerator:
     def _analyze_vulnerabilities(self) -> Dict:
         """Analyze detected vulnerabilities."""
         findings = self.verification_results.get('findings', [])
-        
+
         return {
             'total': len(findings),
             'by_severity': {
@@ -184,7 +184,7 @@ class ComplianceReportGenerator:
     def _analyze_security_controls(self) -> Dict:
         """Analyze security control effectiveness."""
         controls = self.verification_results.get('security_controls', {})
-        
+
         return {
             'total_controls': len(controls),
             'effective_controls': sum(
@@ -204,7 +204,7 @@ class ComplianceReportGenerator:
     def _assess_incident_readiness(self) -> Dict:
         """Assess incident response readiness."""
         readiness_checks = self.verification_results.get('incident_readiness', {})
-        
+
         return {
             'overall_status': readiness_checks.get('status', 'UNKNOWN'),
             'monitoring_status': readiness_checks.get('monitoring', 'UNKNOWN'),
@@ -233,7 +233,7 @@ class ComplianceReportGenerator:
     def _summarize_automated_actions(self) -> Dict:
         """Summarize automated remediation actions."""
         actions = self.remediation_results.get('actions', [])
-        
+
         return {
             'total': len(actions),
             'successful': sum(1 for a in actions if a.get('status') == 'SUCCESS'),
@@ -244,7 +244,7 @@ class ComplianceReportGenerator:
     def _summarize_manual_actions(self) -> Dict:
         """Summarize manual remediation actions."""
         manual_items = self.remediation_results.get('recommendations', [])
-        
+
         return {
             'total': len(manual_items),
             'by_type': self._group_by_type(manual_items),
@@ -257,7 +257,7 @@ class ComplianceReportGenerator:
     def _analyze_pending_items(self) -> Dict:
         """Analyze pending remediation items."""
         pending = self.remediation_results.get('recommendations', [])
-        
+
         return {
             'total': len(pending),
             'by_priority': {
@@ -280,13 +280,13 @@ class ComplianceReportGenerator:
     def _calculate_risk_score(self) -> int:
         """Calculate overall risk score."""
         findings = self.verification_results.get('findings', [])
-        
+
         severity_weights = {
             'HIGH': 5,
             'MEDIUM': 3,
             'LOW': 1
         }
-        
+
         return sum(
             severity_weights.get(f.get('severity', 'LOW'), 1)
             for f in findings
@@ -295,7 +295,7 @@ class ComplianceReportGenerator:
     def _identify_risk_factors(self) -> List[Dict]:
         """Identify key risk factors."""
         findings = self.verification_results.get('findings', [])
-        
+
         return [
             {
                 'type': f.get('type'),
@@ -311,9 +311,9 @@ class ComplianceReportGenerator:
         """Generate prioritized recommendations."""
         findings = self.verification_results.get('findings', [])
         manual_items = self.remediation_results.get('recommendations', [])
-        
+
         recommendations = []
-        
+
         # Add high-priority findings
         for finding in findings:
             if finding.get('severity') == 'HIGH':
@@ -323,7 +323,7 @@ class ComplianceReportGenerator:
                     'description': finding.get('description'),
                     'remediation_steps': self._get_remediation_steps(finding)
                 })
-        
+
         # Add manual remediation items
         for item in manual_items:
             if item.get('type') == 'MANUAL_REVIEW':
@@ -333,7 +333,7 @@ class ComplianceReportGenerator:
                     'description': item.get('description'),
                     'manual_steps': item.get('manual_steps', [])
                 })
-        
+
         return sorted(
             recommendations,
             key=lambda x: 0 if x['priority'] == 'HIGH' else 1
@@ -358,7 +358,7 @@ class ComplianceReportGenerator:
                 "Monitor encryption status"
             ]
         }
-        
+
         return remediation_steps.get(
             finding.get('type'),
             ["Review finding and implement appropriate controls"]
@@ -387,7 +387,7 @@ class ComplianceReportGenerator:
         """Estimate remediation effort."""
         total_items = len(items)
         high_priority = sum(1 for i in items if i.get('priority') == 'HIGH')
-        
+
         if total_items > 20 or high_priority > 5:
             return 'HIGH'
         elif total_items > 10 or high_priority > 2:
@@ -399,7 +399,7 @@ class ComplianceReportGenerator:
 def main():
     """Main entry point for compliance reporting."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description='Enhanced Compliance Reporting System'
     )
@@ -418,46 +418,46 @@ def main():
         help='Output report file'
     )
     args = parser.parse_args()
-    
+
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
+
     try:
         # Load results
         with open(args.verification_results, 'r') as f:
             verification_results = json.load(f)
-        
+
         with open(args.remediation_results, 'r') as f:
             remediation_results = json.load(f)
-        
+
         # Generate report
         generator = ComplianceReportGenerator(
             verification_results,
             remediation_results
         )
         report = generator.generate_comprehensive_report()
-        
+
         # Save or print report
         if args.output:
             with open(args.output, 'w') as f:
                 json.dump(report, f, indent=2)
         else:
             print(json.dumps(report, indent=2))
-        
+
         # Print summary
         print("\nReport Summary:")
         print(f"Overall Status: {report['overall_status']}")
         print(f"Risk Level: {report['summary']['risk_level']}")
         print(f"Compliance Score: {report['risk_assessment']['risk_score']}")
         print(f"Total Recommendations: {len(report['recommendations'])}")
-        
+
     except Exception as e:
         logger.error(f"Report generation failed: {e}")
         sys.exit(1)
 
 
 if __name__ == '__main__':
-    main() 
+    main()

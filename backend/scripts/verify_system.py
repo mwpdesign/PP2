@@ -28,7 +28,7 @@ class SystemVerifier:
             "api": {},
             "security": {}
         }
-        
+
     def verify_services(self) -> bool:
         """Verify all core services are running"""
         services = [
@@ -37,7 +37,7 @@ class SystemVerifier:
             ("database", "postgresql://localhost:5432"),
             ("redis", "redis://localhost:6379")
         ]
-        
+
         for service_name, url in services:
             try:
                 if url.startswith(("http://", "https://")):
@@ -67,9 +67,9 @@ class SystemVerifier:
                     "status": "FAIL",
                     "error": str(e)
                 }
-                
+
         return all(
-            s["status"] == "OK" 
+            s["status"] == "OK"
             for s in self.results["services"].values()
         )
 
@@ -92,7 +92,7 @@ class SystemVerifier:
             "ses",
             "cloudtrail"
         ]
-        
+
         try:
             for service in required_services:
                 client = boto3.client(service)
@@ -107,15 +107,15 @@ class SystemVerifier:
                     client.list_identities()
                 elif service == "cloudtrail":
                     client.list_trails()
-                    
+
                 self.results["aws"][service] = {"status": "OK"}
-                
+
         except Exception as e:
             self.results["aws"][service] = {
                 "status": "FAIL",
                 "error": str(e)
             }
-            
+
         return all(s["status"] == "OK" for s in self.results["aws"].values())
 
     def verify_api_endpoints(self) -> bool:
@@ -130,7 +130,7 @@ class SystemVerifier:
             "/api/v1/orders",
             "/api/v1/analytics/dashboard"
         ]
-        
+
         for endpoint in endpoints:
             try:
                 response = requests.get(f"{base_url}{endpoint}")
@@ -144,7 +144,7 @@ class SystemVerifier:
                     "status": "FAIL",
                     "error": str(e)
                 }
-                
+
         return all(e["status"] == "OK" for e in self.results["api"].values())
 
     def verify_security_compliance(self) -> bool:
@@ -218,9 +218,9 @@ class SystemVerifier:
             self.verify_api_endpoints(),
             self.verify_security_compliance()
         ]
-        
+
         success = all(checks)
-        
+
         # Generate verification report
         timestamp = datetime.now().isoformat()
         report = {
@@ -228,7 +228,7 @@ class SystemVerifier:
             "overall_status": "PASS" if success else "FAIL",
             "results": self.results
         }
-        
+
         # Save report
         os.makedirs("verification_reports", exist_ok=True)
         report_file = (
@@ -236,22 +236,22 @@ class SystemVerifier:
         )
         with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
-            
+
         return success, report
 
 def main():
     """Main entry point for system verifier."""
     verifier = SystemVerifier()
     success, report = verifier.run_verification()
-    
+
     # Print results
     print("\n=== System Verification Report ===")
     print(f"Timestamp: {report['timestamp']}")
     print(f"Overall Status: {report['overall_status']}")
     print("\nDetailed Results:")
     print(json.dumps(report['results'], indent=2))
-    
+
     sys.exit(0 if success else 1)
 
 if __name__ == "__main__":
-    main() 
+    main()

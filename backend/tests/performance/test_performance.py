@@ -244,7 +244,7 @@ class RBACEndpointTester(EndpointPerformanceTester):
 
 class HealthcareIVRLoadTest(HttpUser):
     """Locust load testing class for Healthcare IVR Platform."""
-    
+
     wait_time = between(1, 3)  # Wait 1-3 seconds between tasks
 
     def on_start(self):
@@ -409,4 +409,4 @@ def test_organization_endpoint_performance(performance_test_token: str):
     print("\nOrganization Creation Performance:")
     print(f"Average response time: {stats['avg_response_time']:.2f}ms")
     print(f"95th percentile: {stats['p95_response_time']:.2f}ms")
-    print(f"Success rate: {(stats['successful_requests'] / stats['total_requests']) * 100:.2f}%") 
+    print(f"Success rate: {(stats['successful_requests'] / stats['total_requests']) * 100:.2f}%")

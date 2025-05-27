@@ -27,14 +27,14 @@ from app.core.compliance import SecurityIncidentSeverity, ComplianceService
 
 class SecurityMonitoringService:
     """Service for real-time security monitoring and threat detection."""
-    
+
     def __init__(self, db: Session):
         self.db = db
         self.settings = get_settings()
         self.notification_service = NotificationService(db)
         self.hipaa_service = HIPAAComplianceService(db)
         self.logger = logging.getLogger("security.monitoring")
-        
+
         # Initialize AWS clients
         self.cloudtrail = boto3.client(
             'cloudtrail',
@@ -55,7 +55,7 @@ class SecurityMonitoringService:
             aws_secret_access_key=self.settings.AWS_SECRET_ACCESS_KEY,
             region_name=self.settings.AWS_REGION
         )
-        
+
         # Security thresholds
         self.thresholds = {
             'failed_logins': 5,  # Max failed logins before lockout
@@ -213,7 +213,7 @@ class SecurityMonitoringService:
                 }
             )
             self.db.add(event)
-            
+
             # Check for lockout threshold
             recent_failures = self.db.query(SecurityEvent).filter(
                 and_(
@@ -224,12 +224,12 @@ class SecurityMonitoringService:
                     )
                 )
             ).count()
-            
+
             if recent_failures >= self.thresholds['failed_logins']:
                 await self._lock_account(user_id, 'excessive_failed_logins')
-            
+
             self.db.commit()
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
@@ -259,7 +259,7 @@ class SecurityMonitoringService:
                         'threshold': self.thresholds['phi_access_rate']
                     }
                 )
-            
+
             # Check territory switching
             territory_switches = await self._get_territory_switches(user_id)
             if territory_switches > self.thresholds['territory_switches']:
@@ -273,7 +273,7 @@ class SecurityMonitoringService:
                         'threshold': self.thresholds['territory_switches']
                     }
                 )
-            
+
             # Check off-hours access
             if await self._is_off_hours_access():
                 await self._create_security_alert(
@@ -286,7 +286,7 @@ class SecurityMonitoringService:
                         'allowed_hours': self.thresholds['off_hours_access']
                     }
                 )
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -303,19 +303,19 @@ class SecurityMonitoringService:
         try:
             # Base query
             query = self.db.query(SecurityEvent)
-            
+
             if territory_id:
                 query = query.filter(
                     SecurityEvent.territory_id == territory_id
                 )
-            
+
             query = query.filter(
                 and_(
                     SecurityEvent.created_at >= start_date,
                     SecurityEvent.created_at <= end_date
                 )
             )
-            
+
             # Calculate metrics
             metrics = {
                 'total_events': query.count(),
@@ -338,9 +338,9 @@ class SecurityMonitoringService:
                 ),
                 'compliance_status': await self._get_compliance_status()
             }
-            
+
             return metrics
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -360,7 +360,7 @@ class SecurityMonitoringService:
                     )
                 )
             ).all()
-            
+
             if len(events) >= rule.threshold:
                 await self._create_security_alert(
                     alert_type=rule.alert_type,
@@ -372,7 +372,7 @@ class SecurityMonitoringService:
                         'threshold': rule.threshold
                     }
                 )
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -392,11 +392,11 @@ class SecurityMonitoringService:
                 ],
                 StartTime=datetime.utcnow() - timedelta(minutes=5)
             )
-            
+
             for event in response['Events']:
                 # Parse event
                 event_data = json.loads(event['CloudTrailEvent'])
-                
+
                 # Check for sensitive operations
                 if event_data['eventType'] in ['AwsApiCall', 'AwsConsoleAction']:
                     if any(s in event_data['eventName'].lower() for s in ['delete', 'update', 'modify']):
@@ -410,7 +410,7 @@ class SecurityMonitoringService:
                                 'source_ip': event_data['sourceIPAddress']
                             }
                         )
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -436,7 +436,7 @@ class SecurityMonitoringService:
                 details=details or {}
             )
             self.db.add(alert)
-            
+
             # Create incident if high severity
             if severity == 'high':
                 incident = SecurityIncident(
@@ -448,12 +448,12 @@ class SecurityMonitoringService:
                     details=details or {}
                 )
                 self.db.add(incident)
-            
+
             # Send notifications
             await self._send_security_notifications(alert)
-            
+
             self.db.commit()
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
@@ -470,7 +470,7 @@ class SecurityMonitoringService:
                 user.is_active = False
                 user.locked_reason = reason
                 user.locked_at = datetime.utcnow()
-                
+
                 # Create security event
                 event = SecurityEvent(
                     event_type='account_lockout',
@@ -482,12 +482,12 @@ class SecurityMonitoringService:
                     }
                 )
                 self.db.add(event)
-                
+
                 # Notify user and security team
                 await self._send_lockout_notifications(user_id, reason)
-                
+
                 self.db.commit()
-                
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
@@ -500,7 +500,7 @@ class SecurityMonitoringService:
         try:
             # Get notification recipients
             recipients = await self._get_security_team_members(alert.territory_id)
-            
+
             # Send notifications
             await self.notification_service.send_notification(
                 user_ids=recipients,
@@ -512,11 +512,11 @@ class SecurityMonitoringService:
                     'timestamp': datetime.utcnow().isoformat()
                 }
             )
-            
+
             # Send SNS alert for high severity
             if alert.severity == 'high':
                 await self._send_sns_alert(alert)
-                
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -532,13 +532,13 @@ class SecurityMonitoringService:
                 'details': alert.details,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             self.sns.publish(
                 TopicArn=self.settings.SECURITY_ALERTS_SNS_TOPIC,
                 Message=json.dumps(message),
                 Subject=f"High Severity Security Alert: {alert.alert_type}"
             )
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -554,12 +554,12 @@ class SecurityMonitoringService:
             query = self.db.query(User).filter(
                 User.roles.contains(['security_officer'])
             )
-            
+
             if territory_id:
                 query = query.filter(User.territory_id == territory_id)
-                
+
             return [user.id for user in query.all()]
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -573,22 +573,22 @@ class SecurityMonitoringService:
             latest_check = self.db.query(ComplianceCheck).order_by(
                 ComplianceCheck.created_at.desc()
             ).first()
-            
+
             if not latest_check:
                 return {
                     'status': 'unknown',
                     'last_check': None,
                     'violations': []
                 }
-            
+
             return {
                 'status': 'compliant' if not latest_check.violations else 'non_compliant',
                 'last_check': latest_check.created_at.isoformat(),
                 'violations': latest_check.violations
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
                 detail=f"Error getting compliance status: {str(e)}"
-            ) 
+            )

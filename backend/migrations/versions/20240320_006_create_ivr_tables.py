@@ -289,7 +289,7 @@ def upgrade() -> None:
     # Create RLS policies
     op.execute("""
         ALTER TABLE ivr_sessions ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY session_access_policy ON ivr_sessions
             FOR ALL
             USING (
@@ -302,7 +302,7 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE ivr_prompts ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY prompt_access_policy ON ivr_prompts
             FOR ALL
             USING (
@@ -312,14 +312,15 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE ivr_interactions ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY interaction_access_policy ON ivr_interactions
             FOR ALL
             USING (
                 EXISTS (
                     SELECT 1 FROM ivr_sessions s
                     WHERE s.id = session_id
-                    AND s.organization_id = current_setting('app.current_org_id')::uuid
+                    AND s.organization_id = \
+                        current_setting('app.current_org_id')::uuid
                     AND s.territory_id = ANY(
                         current_setting('app.user_territories')::uuid[]
                     )
@@ -329,14 +330,15 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE ivr_recordings ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY recording_access_policy ON ivr_recordings
             FOR ALL
             USING (
                 EXISTS (
                     SELECT 1 FROM ivr_sessions s
                     WHERE s.id = session_id
-                    AND s.organization_id = current_setting('app.current_org_id')::uuid
+                    AND s.organization_id = \
+                        current_setting('app.current_org_id')::uuid
                     AND s.territory_id = ANY(
                         current_setting('app.user_territories')::uuid[]
                     )
@@ -378,4 +380,4 @@ def downgrade() -> None:
     op.drop_table('ivr_recordings')
     op.drop_table('ivr_interactions')
     op.drop_table('ivr_prompts')
-    op.drop_table('ivr_sessions') 
+    op.drop_table('ivr_sessions')

@@ -18,15 +18,15 @@ from app.core.config import get_settings, settings
 
 class EncryptionConfig:
     """Configuration for encryption services."""
-    
+
     def __init__(self):
         """Initialize encryption configuration."""
         self.settings = get_settings()
-        
+
         # KMS key configuration
         self.key_rotation_period = timedelta(days=90)  # HIPAA best practice
         self.key_alias_prefix = 'alias/healthcare-ivr'
-        
+
         # Encryption contexts
         self.resource_types = {
             'patient': 'PHI',
@@ -35,11 +35,11 @@ class EncryptionConfig:
             'document': 'PHI',
             'audit': 'AUDIT'
         }
-        
+
         # Access logging configuration
         self.log_decryption_access = True
         self.log_retention_days = 365  # HIPAA requires 6 years
-        
+
         # Performance optimization
         self.key_cache_ttl = timedelta(minutes=30)
         self.max_batch_size = 100
@@ -57,7 +57,7 @@ class EncryptionConfig:
         """
         if resource_type not in self.resource_types:
             raise ValueError(f"Invalid resource type: {resource_type}")
-        
+
         context = {
             'resource_type': resource_type,
             'resource_id': resource_id,
@@ -66,20 +66,20 @@ class EncryptionConfig:
             'application': 'healthcare-ivr-platform',
             'encryption_version': '1.0'
         }
-        
+
         if user_id:
             context['user_id'] = user_id
-        
+
         if additional_context:
             context.update(additional_context)
-        
+
         return context
 
     def get_key_alias(self, resource_type: str) -> str:
         """Get the KMS key alias for a resource type."""
         if resource_type not in self.resource_types:
             raise ValueError(f"Invalid resource type: {resource_type}")
-        
+
         return f"{self.key_alias_prefix}-{resource_type}"
 
     def should_rotate_key(self, key_creation_date: datetime) -> bool:
@@ -101,14 +101,14 @@ class EncryptionConfig:
             'resource_id',
             'data_classification'
         ]
-        
+
         try:
             for field in required:
                 if field not in context:
                     raise ValueError(
                         f"Missing required field in context: {field}"
                     )
-            
+
             if (
                 'resource_type' in context and
                 context['resource_type'] not in self.resource_types
@@ -116,7 +116,7 @@ class EncryptionConfig:
                 raise ValueError(
                     f"Invalid resource type: {context['resource_type']}"
                 )
-            
+
             return True
         except ValueError as e:
             raise HTTPException(
@@ -131,7 +131,7 @@ encryption_config = EncryptionConfig()
 
 def get_encryption_config() -> EncryptionConfig:
     """Dependency injection for encryption configuration."""
-    return encryption_config 
+    return encryption_config
 
 
 class FieldLevelEncryption:
@@ -241,7 +241,7 @@ class FieldLevelEncryption:
 
 class EncryptionError(Exception):
     """Custom exception for encryption-related errors."""
-    pass 
+    pass
 
 
 def get_encryption_key():
@@ -253,7 +253,7 @@ def encrypt_field(value: str) -> str:
     """Encrypt a field value."""
     if not value:
         return value
-    
+
     # Handle date strings
     if isinstance(value, str) and 'T' in value:
         try:
@@ -261,7 +261,7 @@ def encrypt_field(value: str) -> str:
             value = dt.strftime('%Y-%m-%d')
         except ValueError:
             pass
-    
+
     key = get_encryption_key()
     encrypted = key.encrypt(value.encode())
     return base64.urlsafe_b64encode(encrypted).decode()
@@ -271,11 +271,11 @@ def decrypt_field(encrypted_value: str) -> str:
     """Decrypt a field value."""
     if not encrypted_value:
         return encrypted_value
-    
+
     try:
         key = get_encryption_key()
         decoded = base64.urlsafe_b64decode(encrypted_value.encode())
         decrypted = key.decrypt(decoded).decode()
         return decrypted
     except Exception as e:
-        raise EncryptionError(f"Failed to decrypt field: {str(e)}") 
+        raise EncryptionError(f"Failed to decrypt field: {str(e)}")

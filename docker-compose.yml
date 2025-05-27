@@ -6,7 +6,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     ports:
-      - "3000:3000"
+      - "0.0.0.0:3000:3000"
     environment:
       - REACT_APP_BACKEND_URL=http://localhost:8000
       - REACT_APP_WS_URL=ws://localhost:8000/ws
@@ -45,6 +45,8 @@ services:
       - ENABLE_AUDIT_LOGGING=true
       - ENABLE_PHI_ENCRYPTION=false
       - LOG_LEVEL=DEBUG
+      - FRONTEND_URL=http://localhost:3000
+      - CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
     volumes:
       - ./backend:/app
     depends_on:

@@ -50,7 +50,9 @@ class APIDocumentationGenerator:
         openapi_schema["info"]["x-api-versioning"] = {
             "current": "v1",
             "supported": ["v1"],
-            "deprecation_policy": "https://api.healthcareivr.com/deprecation-policy"
+            "deprecation_policy": (
+                "https://api.healthcareivr.com/deprecation-policy"
+            )
         }
 
         # Save OpenAPI spec
@@ -66,7 +68,8 @@ class APIDocumentationGenerator:
 # Healthcare IVR Platform API
 
 ## Overview
-This API provides a comprehensive interface for managing a HIPAA-compliant healthcare IVR platform.
+This API provides a comprehensive interface for managing a HIPAA-compliant
+healthcare IVR platform.
 
 ## Key Features
 - User Management & Authentication
@@ -78,7 +81,8 @@ This API provides a comprehensive interface for managing a HIPAA-compliant healt
 - Real-time Analytics
 
 ## Authentication
-All API endpoints require JWT authentication. Tokens can be obtained through the `/users/login` endpoint.
+All API endpoints require JWT authentication. Tokens can be obtained through
+the `/users/login` endpoint.
 
 ## Rate Limiting
 - Standard tier: 100 requests/minute
@@ -102,14 +106,14 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
     def generate_endpoint_documentation(self) -> Dict[str, Any]:
         """Generate detailed endpoint documentation."""
         endpoints = {}
-        
+
         for route in self.app.routes:
             if hasattr(route, "methods"):
                 path = route.path
                 for method in route.methods:
-                    if not path in endpoints:
+                    if path not in endpoints:
                         endpoints[path] = {}
-                    
+
                     endpoints[path][method.lower()] = {
                         "summary": route.name,
                         "description": route.description or "",
@@ -253,32 +257,24 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
         return params
 
     def _get_endpoint_tags(self, route) -> List[str]:
-        """Get endpoint tags based on path."""
-        path = route.path.strip("/")
-        parts = path.split("/")
-        if len(parts) > 1:
-            return [parts[1]]
+        """Get endpoint tags for grouping."""
+        if hasattr(route, "tags") and route.tags:
+            return [tag for tag in route.tags if tag != ""]
         return ["default"]
 
     def generate_api_documentation(self) -> Dict[str, Any]:
-        """Generate complete API documentation."""
+        """Generate comprehensive API documentation."""
         openapi_spec = self.generate_openapi_spec()
-        endpoints = self.generate_endpoint_documentation()
+        endpoint_docs = self.generate_endpoint_documentation()
 
         documentation = {
-            "generated_at": datetime.now().isoformat(),
-            "openapi_spec": openapi_spec,
-            "endpoints": endpoints,
-            "metadata": {
-                "version": "1.0.0",
-                "base_url": "https://api.healthcareivr.com",
-                "support_email": "api-support@healthcareivr.com",
-                "deprecation_policy": "https://api.healthcareivr.com/deprecation-policy"
-            }
+            "openapi": openapi_spec,
+            "endpoints": endpoint_docs,
+            "generated_at": datetime.utcnow().isoformat()
         }
 
         # Save complete documentation
-        doc_path = os.path.join(self.docs_dir, "api_documentation.json")
+        doc_path = os.path.join(self.docs_dir, "complete_docs.json")
         with open(doc_path, "w") as f:
             json.dump(documentation, f, indent=2)
 
@@ -286,70 +282,65 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
 
 
 def generate_markdown_docs(documentation: Dict[str, Any]) -> str:
-    """Generate Markdown documentation from API spec."""
-    md = f"""# Healthcare IVR Platform API Documentation
-Generated at: {documentation['generated_at']}
+    """Generate markdown documentation from API spec."""
+    markdown = []
 
-{documentation['openapi_spec']['info']['description']}
+    # Add title and description
+    if "info" in documentation["openapi"]:
+        info = documentation["openapi"]["info"]
+        markdown.extend([
+            f"# {info['title']}",
+            "",
+            info.get("description", ""),
+            ""
+        ])
 
-## Base URL
-{documentation['metadata']['base_url']}
-
-## Authentication
-Bearer token authentication is required for all endpoints.
-Token format: `Authorization: Bearer <token>`
-
-## Endpoints
-
-"""
-    
+    # Add endpoints documentation
+    markdown.append("## Endpoints\n")
     for path, methods in documentation["endpoints"].items():
-        md += f"### {path}\n\n"
+        markdown.append(f"### {path}\n")
         for method, details in methods.items():
-            md += f"#### {method.upper()}\n\n"
-            md += f"**Summary:** {details['summary']}\n\n"
-            if details['description']:
-                md += f"**Description:** {details['description']}\n\n"
-            
-            if details['parameters']:
-                md += "**Parameters:**\n\n"
-                for param in details['parameters']:
-                    md += f"- `{param['name']}` ({param['in']}): "
-                    md += f"{'Required' if param['required'] else 'Optional'}\n"
-            
-            if details['requestBody']:
-                md += "**Request Body:**\n\n```json\n"
-                md += json.dumps(
-                    details['requestBody']['content']['application/json']['schema'],
-                    indent=2
-                )
-                md += "\n```\n\n"
-            
-            md += "**Responses:**\n\n"
-            for status, response in details['responses'].items():
-                md += f"- {status}: {response['description']}\n"
-            
-            md += "\n---\n\n"
+            markdown.extend([
+                f"#### {method.upper()}",
+                "",
+                details.get("description", "No description"),
+                "",
+                "**Parameters:**"
+            ])
 
-    # Save Markdown documentation
-    docs_dir = os.path.dirname(documentation['metadata']['base_url'])
-    md_path = os.path.join(docs_dir, "api_documentation.md")
-    with open(md_path, "w") as f:
-        f.write(md)
+            # Add parameters documentation
+            if details["parameters"]:
+                for param in details["parameters"]:
+                    param_desc = (
+                        f"- {param['name']} ({param['in']}): "
+                        f"{param['description']}"
+                    )
+                    markdown.append(param_desc)
+            else:
+                markdown.append("None")
 
-    return md
+            markdown.append("")
+
+    # Save markdown documentation
+    docs_path = os.path.dirname(os.path.dirname(__file__))
+    markdown_path = os.path.join(docs_path, "docs", "api.md")
+    markdown_content = "\n".join(markdown)
+
+    with open(markdown_path, "w") as f:
+        f.write(markdown_content)
+
+    return markdown_content
 
 
 def main():
     """Generate API documentation."""
-    from app.main import app  # Import your FastAPI app
-    
+    app = FastAPI()
     generator = APIDocumentationGenerator(app)
     documentation = generator.generate_api_documentation()
-    markdown_docs = generate_markdown_docs(documentation)
-    
-    print(f"Documentation generated in: {generator.docs_dir}")
+
+    # Generate markdown documentation
+    generate_markdown_docs(documentation)
 
 
 if __name__ == "__main__":
-    main() 
+    main()

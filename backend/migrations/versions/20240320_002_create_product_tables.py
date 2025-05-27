@@ -1,7 +1,7 @@
 """Create product tables for catalog and inventory management.
 
 Revision ID: 20240320_002_create_product_tables
-Revises: 20240320_001_create_core_tables
+Revises: 20240320_001_6_create_provider_credentials
 Create Date: 2024-03-20 11:00:00.000000
 """
 from datetime import datetime
@@ -13,7 +13,7 @@ import uuid
 
 # revision identifiers, used by Alembic
 revision = '20240320_002_create_product_tables'
-down_revision = '20240320_001_create_core_tables'
+down_revision = '20240320_001_6_create_provider_credentials'
 branch_labels = None
 depends_on = None
 
@@ -358,7 +358,7 @@ def upgrade() -> None:
     # Create RLS policies
     op.execute("""
         ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY product_access_policy ON products
             FOR ALL
             USING (
@@ -368,7 +368,7 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY inventory_access_policy ON inventory
             FOR ALL
             USING (
@@ -381,7 +381,7 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE inventory_transactions ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY inventory_txn_access_policy ON inventory_transactions
             FOR ALL
             USING (
@@ -403,7 +403,8 @@ def downgrade() -> None:
     op.execute("""
         DROP POLICY IF EXISTS product_access_policy ON products;
         DROP POLICY IF EXISTS inventory_access_policy ON inventory;
-        DROP POLICY IF EXISTS inventory_txn_access_policy ON inventory_transactions;
+        DROP POLICY IF EXISTS inventory_txn_access_policy ON \
+            inventory_transactions;
     """)
 
     # Drop indexes
@@ -426,4 +427,4 @@ def downgrade() -> None:
     op.drop_table('inventory_transactions')
     op.drop_table('inventory')
     op.drop_table('products')
-    op.drop_table('product_categories') 
+    op.drop_table('product_categories')

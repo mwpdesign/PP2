@@ -13,7 +13,7 @@ from app.services.carriers.base import BaseCarrier
 
 class USPSCarrier(BaseCarrier):
     """USPS carrier service implementation."""
-    
+
     def __init__(self, api_key: str, account_number: str):
         """Initialize USPS carrier service."""
         super().__init__("USPS")
@@ -42,7 +42,7 @@ class USPSCarrier(BaseCarrier):
             )
             response.raise_for_status()
             data = self._parse_xml_response(response.text)
-            
+
             return [{
                 "service": rate["ServiceID"],
                 "carrier": "USPS",
@@ -51,7 +51,7 @@ class USPSCarrier(BaseCarrier):
                 "delivery_days": rate.get("DeliveryDays"),
                 "service_name": self._get_service_name(rate["ServiceID"])
             } for rate in data["RateResponse"]["Package"]["Postage"]]
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -70,9 +70,9 @@ class USPSCarrier(BaseCarrier):
             )
             response.raise_for_status()
             data = self._parse_xml_response(response.text)
-            
+
             label_response = data["EVSResponse"]["Label"]
-            
+
             return {
                 "tracking_number": label_response["TrackingNumber"],
                 "label_url": self._store_label(
@@ -82,7 +82,7 @@ class USPSCarrier(BaseCarrier):
                 "service": shipment_info["service_code"],
                 "created_at": datetime.utcnow()
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -101,10 +101,10 @@ class USPSCarrier(BaseCarrier):
             )
             response.raise_for_status()
             data = self._parse_xml_response(response.text)
-            
+
             track_info = data["TrackResponse"]["TrackInfo"]
             latest_event = track_info["TrackDetail"][0]
-            
+
             return {
                 "status": self._get_status_description(
                     latest_event["EventCode"]
@@ -131,7 +131,7 @@ class USPSCarrier(BaseCarrier):
                 "tracking_number": tracking_number,
                 "last_updated": datetime.utcnow()
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -150,10 +150,10 @@ class USPSCarrier(BaseCarrier):
             )
             response.raise_for_status()
             data = self._parse_xml_response(response.text)
-            
+
             address_result = data["AddressValidateResponse"]["Address"]
             is_valid = address_result.get("Error") is None
-            
+
             return {
                 "is_valid": is_valid,
                 "suggested_address": {
@@ -169,7 +169,7 @@ class USPSCarrier(BaseCarrier):
                     else [address_result["Error"]["Description"]]
                 )
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -291,4 +291,4 @@ class USPSCarrier(BaseCarrier):
     def _store_label(self, label_data: str) -> str:
         """Store shipping label and return URL."""
         # TODO: Implement label storage (S3, etc.)
-        return f"https://example.com/labels/{label_data[:10]}.pdf" 
+        return f"https://example.com/labels/{label_data[:10]}.pdf"

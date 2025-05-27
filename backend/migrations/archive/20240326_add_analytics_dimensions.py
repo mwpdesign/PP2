@@ -29,7 +29,7 @@ def upgrade():
         sa.Column('sentiment_score', sa.Float(), nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     op.create_index(
         'idx_satisfaction_level',
         'dim_patient_satisfaction',
@@ -40,7 +40,7 @@ def upgrade():
         'dim_patient_satisfaction',
         ['feedback_category']
     )
-    
+
     # Create verification performance dimension
     op.create_table(
         'dim_verification_performance',
@@ -52,7 +52,7 @@ def upgrade():
         sa.Column('sla_category', sa.String(20), nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     op.create_index(
         'idx_verification_type',
         'dim_verification_performance',
@@ -63,7 +63,7 @@ def upgrade():
         'dim_verification_performance',
         ['sla_category']
     )
-    
+
     # Add new columns to fact_calls
     op.add_column(
         'fact_calls',
@@ -81,7 +81,7 @@ def upgrade():
         'fact_calls',
         sa.Column('feedback_text', sa.String(500))
     )
-    
+
     # Add foreign key constraints
     op.create_foreign_key(
         'fk_calls_satisfaction',
@@ -97,7 +97,7 @@ def upgrade():
         ['verification_performance_id'],
         ['id']
     )
-    
+
     # Add indexes for new columns
     op.create_index(
         'idx_calls_satisfaction',
@@ -109,7 +109,7 @@ def upgrade():
         'fact_calls',
         ['verification_performance_id']
     )
-    
+
     # Add new columns to agg_daily_metrics
     op.add_column(
         'agg_daily_metrics',
@@ -171,17 +171,17 @@ def downgrade():
     # Remove indexes
     op.drop_index('idx_calls_satisfaction', 'fact_calls')
     op.drop_index('idx_calls_verification', 'fact_calls')
-    
+
     # Remove foreign key constraints
     op.drop_constraint('fk_calls_satisfaction', 'fact_calls')
     op.drop_constraint('fk_calls_verification', 'fact_calls')
-    
+
     # Remove columns from fact_calls
     op.drop_column('fact_calls', 'satisfaction_id')
     op.drop_column('fact_calls', 'verification_performance_id')
     op.drop_column('fact_calls', 'sentiment_score')
     op.drop_column('fact_calls', 'feedback_text')
-    
+
     # Remove columns from agg_daily_metrics
     op.drop_column('agg_daily_metrics', 'satisfaction_by_category')
     op.drop_column('agg_daily_metrics', 'sentiment_trend')
@@ -189,13 +189,13 @@ def downgrade():
     op.drop_column('agg_daily_metrics', 'verification_by_type')
     op.drop_column('agg_daily_metrics', 'sla_performance')
     op.drop_column('agg_daily_metrics', 'error_distribution')
-    
+
     # Drop indexes from dimension tables
     op.drop_index('idx_satisfaction_level', 'dim_patient_satisfaction')
     op.drop_index('idx_feedback_category', 'dim_patient_satisfaction')
     op.drop_index('idx_verification_type', 'dim_verification_performance')
     op.drop_index('idx_sla_category', 'dim_verification_performance')
-    
+
     # Drop dimension tables
     op.drop_table('dim_patient_satisfaction')
-    op.drop_table('dim_verification_performance') 
+    op.drop_table('dim_verification_performance')

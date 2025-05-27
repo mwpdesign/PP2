@@ -230,4 +230,4 @@ def downgrade() -> None:
     # Drop tables
     op.drop_table('product_inventory')
     op.drop_table('products')
-    op.drop_table('product_categories') 
+    op.drop_table('product_categories')

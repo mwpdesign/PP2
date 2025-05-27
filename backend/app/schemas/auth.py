@@ -18,7 +18,7 @@ class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=100)
     organization_id: str
     primary_territory_id: Optional[str] = None
-    
+
     @validator("password")
     def validate_password(cls, v):
         """Validate password strength."""
@@ -67,7 +67,7 @@ class UserResponse(UserBase):
     mfa_enabled: bool = False
     force_password_change: bool = False
     last_login: Optional[str] = None
-    
+
     class Config:
         """Pydantic config."""
         from_attributes = True
@@ -75,4 +75,4 @@ class UserResponse(UserBase):
 
 class LogoutResponse(BaseModel):
     """Logout response schema."""
-    message: str 
+    message: str

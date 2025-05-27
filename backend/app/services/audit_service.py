@@ -48,4 +48,4 @@ async def log_phi_access(
             "Error logging PHI access: %s",
             str(e),
             exc_info=True
-        ) 
+        )

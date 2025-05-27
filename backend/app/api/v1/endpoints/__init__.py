@@ -1,1 +1,1 @@
-"""Healthcare IVR Platform API v1 endpoints.""" 
+"""Healthcare IVR Platform API v1 endpoints."""

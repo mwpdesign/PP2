@@ -49,4 +49,4 @@ async def async_session(async_engine):
 async def async_client():
     """Create an async client for testing."""
     async with AsyncClient(app=app, base_url="http://test") as client:
-        yield client 
+        yield client

@@ -21,7 +21,7 @@ async def test_update_status_success(
 ):
     """Test successful order status update."""
     service = OrderStatusService(db)
-    
+
     result = await service.update_status(
         order_id=test_order.id,
         new_status="PENDING_VERIFICATION",
@@ -29,19 +29,19 @@ async def test_update_status_success(
         territory_id=test_user.territory_id,
         notes="Test status update"
     )
-    
+
     # Verify order status updated
     assert result["status"] == "PENDING_VERIFICATION"
     assert result["order_id"] == test_order.id
     assert result["updated_by"] == test_user.id
-    
+
     # Verify history record created
     history = db.query(OrderStatusHistory).first()
     assert history is not None
     assert history.order_id == test_order.id
     assert history.previous_status == "DRAFT"
     assert history.new_status == "PENDING_VERIFICATION"
-    
+
     # Verify notifications sent
     mock_notification_service.send_notification.assert_called_once()
     mock_websocket_service.assert_called_once()
@@ -54,7 +54,7 @@ async def test_update_status_invalid_transition(
 ):
     """Test invalid status transition."""
     service = OrderStatusService(db)
-    
+
     with pytest.raises(HTTPException) as exc:
         await service.update_status(
             order_id=test_order.id,
@@ -62,7 +62,7 @@ async def test_update_status_invalid_transition(
             user_id=test_user.id,
             territory_id=test_user.territory_id
         )
-    
+
     assert exc.value.status_code == 400
     assert "Invalid transition" in str(exc.value.detail)
 
@@ -74,7 +74,7 @@ async def test_update_status_wrong_territory(
 ):
     """Test status update with wrong territory."""
     service = OrderStatusService(db)
-    
+
     with pytest.raises(HTTPException) as exc:
         await service.update_status(
             order_id=test_order.id,
@@ -82,7 +82,7 @@ async def test_update_status_wrong_territory(
             user_id=test_user.id,
             territory_id=999  # Wrong territory
         )
-    
+
     assert exc.value.status_code == 403
     assert "Not authorized for this territory" in str(exc.value.detail)
 
@@ -104,14 +104,14 @@ async def test_get_status_history_success(
     )
     db.add(history)
     db.commit()
-    
+
     service = OrderStatusService(db)
     result = await service.get_status_history(
         order_id=test_order.id,
         user_id=test_user.id,
         territory_id=test_user.territory_id
     )
-    
+
     assert len(result) == 1
     assert result[0]["previous_status"] == "DRAFT"
     assert result[0]["new_status"] == "PENDING_VERIFICATION"
@@ -137,7 +137,7 @@ async def test_bulk_update_status_success(
     )
     db.add(order2)
     db.commit()
-    
+
     service = OrderStatusService(db)
     result = await service.bulk_update_status(
         order_ids=[test_order.id, order2.id],
@@ -145,14 +145,14 @@ async def test_bulk_update_status_success(
         user_id=test_user.id,
         territory_id=test_user.territory_id
     )
-    
+
     assert len(result["successful"]) == 2
     assert len(result["failed"]) == 0
-    
+
     # Verify both orders updated
     orders = db.query(Order).all()
     assert all(o.status == "PENDING_VERIFICATION" for o in orders)
-    
+
     # Verify history records created
     history = db.query(OrderStatusHistory).all()
     assert len(history) == 2
@@ -171,7 +171,7 @@ async def test_bulk_update_status_partial_failure(
         user_id=test_user.id,
         territory_id=test_user.territory_id
     )
-    
+
     assert len(result["successful"]) == 1
     assert len(result["failed"]) == 1
-    assert result["failed"][0]["order_id"] == 999 
+    assert result["failed"][0]["order_id"] == 999

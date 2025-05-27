@@ -36,14 +36,14 @@ class HIPAAComplianceChecker:
                 'violations': [],
                 'remediation_steps': []
             }
-            
+
             # Check KMS key configuration
             kms_keys = self._verify_kms_configuration()
             if not kms_keys['compliant']:
                 results['compliant'] = False
                 results['violations'].extend(kms_keys['violations'])
                 results['remediation_steps'].extend(kms_keys['remediation_steps'])
-            
+
             # Check RDS encryption
             rds_encryption = self._verify_rds_encryption()
             if not rds_encryption['compliant']:
@@ -52,7 +52,7 @@ class HIPAAComplianceChecker:
                 results['remediation_steps'].extend(
                     rds_encryption['remediation_steps']
                 )
-            
+
             # Check S3 bucket encryption
             s3_encryption = self._verify_s3_encryption()
             if not s3_encryption['compliant']:
@@ -61,9 +61,9 @@ class HIPAAComplianceChecker:
                 results['remediation_steps'].extend(
                     s3_encryption['remediation_steps']
                 )
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"PHI protection check failed: {str(e)}")
             return {
@@ -80,7 +80,7 @@ class HIPAAComplianceChecker:
                 'violations': [],
                 'remediation_steps': []
             }
-            
+
             # Check IAM password policy
             password_policy = self._verify_password_policy()
             if not password_policy['compliant']:
@@ -89,7 +89,7 @@ class HIPAAComplianceChecker:
                 results['remediation_steps'].extend(
                     password_policy['remediation_steps']
                 )
-            
+
             # Check IAM roles and permissions
             roles_check = self._verify_iam_roles()
             if not roles_check['compliant']:
@@ -98,7 +98,7 @@ class HIPAAComplianceChecker:
                 results['remediation_steps'].extend(
                     roles_check['remediation_steps']
                 )
-            
+
             # Check access key rotation
             key_rotation = self._verify_access_key_rotation()
             if not key_rotation['compliant']:
@@ -107,9 +107,9 @@ class HIPAAComplianceChecker:
                 results['remediation_steps'].extend(
                     key_rotation['remediation_steps']
                 )
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"Access control check failed: {str(e)}")
             return {
@@ -126,7 +126,7 @@ class HIPAAComplianceChecker:
                 'violations': [],
                 'remediation_steps': []
             }
-            
+
             # Check CloudTrail configuration
             cloudtrail_check = self._verify_cloudtrail_config()
             if not cloudtrail_check['compliant']:
@@ -135,7 +135,7 @@ class HIPAAComplianceChecker:
                 results['remediation_steps'].extend(
                     cloudtrail_check['remediation_steps']
                 )
-            
+
             # Check log retention
             log_retention = self._verify_log_retention()
             if not log_retention['compliant']:
@@ -144,7 +144,7 @@ class HIPAAComplianceChecker:
                 results['remediation_steps'].extend(
                     log_retention['remediation_steps']
                 )
-            
+
             # Check log metrics and alerts
             log_metrics = self._verify_log_metrics()
             if not log_metrics['compliant']:
@@ -153,9 +153,9 @@ class HIPAAComplianceChecker:
                 results['remediation_steps'].extend(
                     log_metrics['remediation_steps']
                 )
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"Audit logging check failed: {str(e)}")
             return {
@@ -169,20 +169,20 @@ class HIPAAComplianceChecker:
         try:
             keys = self.kms.list_keys()
             key_metadata = []
-            
+
             for key in keys['Keys']:
                 metadata = self.kms.describe_key(KeyId=key['KeyId'])
                 key_metadata.append(metadata['KeyMetadata'])
-            
+
             violations = []
             remediation_steps = []
-            
+
             # Check key rotation
             non_rotating_keys = [
                 key['KeyId'] for key in key_metadata
                 if not key.get('KeyRotationEnabled', False)
             ]
-            
+
             if non_rotating_keys:
                 violations.append(
                     f"KMS keys without rotation enabled: {non_rotating_keys}"
@@ -190,23 +190,23 @@ class HIPAAComplianceChecker:
                 remediation_steps.append(
                     "Enable automatic key rotation for non-rotating keys"
                 )
-            
+
             # Check key usage
             unused_keys = [
                 key['KeyId'] for key in key_metadata
                 if key['KeyState'] == 'Enabled' and not key.get('KeyUsage')
             ]
-            
+
             if unused_keys:
                 violations.append(f"Unused KMS keys found: {unused_keys}")
                 remediation_steps.append("Review and disable unused KMS keys")
-            
+
             return {
                 'compliant': len(violations) == 0,
                 'violations': violations,
                 'remediation_steps': remediation_steps
             }
-            
+
         except Exception as e:
             logger.error(f"KMS configuration check failed: {str(e)}")
             return {
@@ -219,10 +219,10 @@ class HIPAAComplianceChecker:
         """Verify IAM password policy."""
         try:
             policy = self.iam.get_account_password_policy()['PasswordPolicy']
-            
+
             violations = []
             remediation_steps = []
-            
+
             # Check minimum length
             if policy['MinimumPasswordLength'] < self.thresholds['min_password_length']:
                 violations.append(
@@ -232,7 +232,7 @@ class HIPAAComplianceChecker:
                 remediation_steps.append(
                     "Increase minimum password length in IAM password policy"
                 )
-            
+
             # Check password reuse prevention
             if policy.get('PasswordReusePrevention', 0) < self.thresholds['password_reuse_prevention']:
                 violations.append(
@@ -241,7 +241,7 @@ class HIPAAComplianceChecker:
                 remediation_steps.append(
                     "Configure password reuse prevention in IAM password policy"
                 )
-            
+
             # Check required character types
             required_chars = [
                 'RequireSymbols',
@@ -249,12 +249,12 @@ class HIPAAComplianceChecker:
                 'RequireUppercaseCharacters',
                 'RequireLowercaseCharacters'
             ]
-            
+
             missing_chars = [
                 char for char in required_chars
                 if not policy.get(char, False)
             ]
-            
+
             if missing_chars:
                 violations.append(
                     f"Missing character requirements: {missing_chars}"
@@ -262,13 +262,13 @@ class HIPAAComplianceChecker:
                 remediation_steps.append(
                     "Enable all character type requirements in password policy"
                 )
-            
+
             return {
                 'compliant': len(violations) == 0,
                 'violations': violations,
                 'remediation_steps': remediation_steps
             }
-            
+
         except Exception as e:
             logger.error(f"Password policy check failed: {str(e)}")
             return {
@@ -281,10 +281,10 @@ class HIPAAComplianceChecker:
         """Verify CloudTrail configuration."""
         try:
             trails = self.cloudtrail.describe_trails()
-            
+
             violations = []
             remediation_steps = []
-            
+
             for trail in trails['trailList']:
                 # Check encryption
                 if not trail.get('KmsKeyId'):
@@ -294,7 +294,7 @@ class HIPAAComplianceChecker:
                     remediation_steps.append(
                         f"Enable KMS encryption for trail {trail['Name']}"
                     )
-                
+
                 # Check multi-region
                 if not trail.get('IsMultiRegionTrail'):
                     violations.append(
@@ -303,7 +303,7 @@ class HIPAAComplianceChecker:
                     remediation_steps.append(
                         f"Enable multi-region logging for trail {trail['Name']}"
                     )
-                
+
                 # Check log file validation
                 if not trail.get('LogFileValidationEnabled'):
                     violations.append(
@@ -312,13 +312,13 @@ class HIPAAComplianceChecker:
                     remediation_steps.append(
                         f"Enable log file validation for trail {trail['Name']}"
                     )
-            
+
             return {
                 'compliant': len(violations) == 0,
                 'violations': violations,
                 'remediation_steps': remediation_steps
             }
-            
+
         except Exception as e:
             logger.error(f"CloudTrail configuration check failed: {str(e)}")
             return {
@@ -332,7 +332,7 @@ def main():
     """Main entry point for compliance checker."""
     import argparse
     import json
-    
+
     parser = argparse.ArgumentParser(
         description='HIPAA Compliance Checker'
     )
@@ -347,31 +347,31 @@ def main():
         help='Output file for compliance results'
     )
     args = parser.parse_args()
-    
+
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
+
     checker = HIPAAComplianceChecker(args.environment)
-    
+
     try:
         results = checker.validate()
-        
+
         if args.output:
             with open(args.output, 'w') as f:
                 json.dump(results, f, indent=2)
         else:
             print(json.dumps(results, indent=2))
-            
+
         # Exit with status code based on compliance results
         sys.exit(0 if results['passed'] else 1)
-        
+
     except Exception as e:
         logger.error(f"Compliance check failed: {str(e)}")
         sys.exit(1)
 
 
 if __name__ == '__main__':
-    main() 
+    main()

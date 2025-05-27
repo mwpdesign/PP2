@@ -206,4 +206,4 @@ async def get_compliance_status(
     """Get current compliance status."""
     service = SecurityMonitoringService(db)
     status = await service.get_compliance_status()
-    return status 
+    return status

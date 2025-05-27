@@ -182,4 +182,4 @@ class S3Service:
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to list files: {str(e)}"
-            ) 
+            )

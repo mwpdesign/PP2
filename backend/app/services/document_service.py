@@ -12,12 +12,12 @@ from app.services.s3_service import S3Service
 
 class DocumentService:
     """Service for document-related operations."""
-    
+
     def __init__(self, db: AsyncSession):
         """Initialize document service with database session."""
         self.db = db
         self.s3_service = S3Service()
-    
+
     async def upload_document(
         self,
         file_data: bytes,
@@ -34,7 +34,7 @@ class DocumentService:
         # Generate unique S3 key
         date_path = datetime.utcnow().strftime('%Y/%m/%d')
         s3_key = f"documents/{document_type}/{date_path}/{uuid4()}/{filename}"
-        
+
         # Add required metadata
         doc_metadata = {
             'user_id': user_id,
@@ -43,7 +43,7 @@ class DocumentService:
             'territory_id': territory_id,
             **(metadata or {})
         }
-        
+
         # Upload to S3
         result = await self.s3_service.upload_file(
             file_content=file_data,
@@ -51,12 +51,12 @@ class DocumentService:
             content_type='application/octet-stream',
             metadata=doc_metadata
         )
-        
+
         return {
             'document_id': result['s3_key'],
             'metadata': doc_metadata
         }
-        
+
     async def get_document(
         self,
         document_id: str,
@@ -80,7 +80,7 @@ class DocumentService:
                     detail="Document not found"
                 )
             raise
-        
+
     async def delete_document(
         self,
         document_id: str,
@@ -91,7 +91,7 @@ class DocumentService:
         Ensures proper cleanup of PHI data.
         """
         await self.s3_service.delete_file(document_id)
-        
+
     async def get_provider_documents(
         self,
         provider_id: str
@@ -102,7 +102,7 @@ class DocumentService:
         )
         result = await self.db.execute(query)
         credentials = result.scalars().all()
-        
+
         documents = []
         for cred in credentials:
             if cred.document_key:
@@ -113,5 +113,5 @@ class DocumentService:
                     documents.extend(doc_metadata.get('files', []))
                 except HTTPException:
                     continue
-                    
-        return documents 
+
+        return documents

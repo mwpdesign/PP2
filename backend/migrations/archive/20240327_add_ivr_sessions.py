@@ -169,4 +169,4 @@ def downgrade() -> None:
 
     # Drop tables
     op.drop_table('ivr_session_items')
-    op.drop_table('ivr_sessions') 
+    op.drop_table('ivr_sessions')

@@ -127,7 +127,7 @@ class Provider(Base):
         back_populates="provider",
         cascade="all, delete-orphan"
     )
-    
+
     # IVR relationships
     ivr_requests = relationship(
         "IVRRequest",
@@ -140,6 +140,20 @@ class Provider(Base):
         cascade="all, delete-orphan"
     )
 
+    # Provider relationships
+    provider_relationships = relationship(
+        "ProviderRelationship",
+        foreign_keys="ProviderRelationship.provider_id",
+        back_populates="provider",
+        cascade="all, delete-orphan"
+    )
+    related_provider_relationships = relationship(
+        "ProviderRelationship",
+        foreign_keys="ProviderRelationship.related_provider_id",
+        back_populates="related_provider",
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f"<Provider(id={self.id}, name={self.name})>"
 
@@ -148,7 +162,7 @@ class ProviderCredentials(Base):
     """Provider credentials and certification information."""
     __tablename__ = "provider_credentials"
     __table_args__ = {'extend_existing': True}
-    
+
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -205,4 +219,75 @@ class ProviderCredentials(Base):
     )
 
     # Relationships
-    provider = relationship("Provider", back_populates="credentials") 
+    provider = relationship("Provider", back_populates="credentials")
+
+
+class ProviderRelationship(Base):
+    """Provider relationship model for managing provider-to-provider
+    relationships."""
+    __tablename__ = "provider_relationships"
+    __table_args__ = {'extend_existing': True}
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+        nullable=False
+    )
+    provider_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("providers.id"),
+        nullable=False
+    )
+    related_provider_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("providers.id"),
+        nullable=False
+    )
+    relationship_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False
+    )
+    start_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
+    end_date: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+    status: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    # Relationships
+    provider = relationship(
+        "Provider",
+        foreign_keys=[provider_id],
+        back_populates="provider_relationships"
+    )
+    related_provider = relationship(
+        "Provider",
+        foreign_keys=[related_provider_id],
+        back_populates="related_provider_relationships"
+    )
+
+    def __repr__(self):
+        return (
+            f"<ProviderRelationship("
+            f"provider_id={self.provider_id}, "
+            f"related_provider_id={self.related_provider_id}, "
+            f"type={self.relationship_type})>"
+        )

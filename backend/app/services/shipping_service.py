@@ -44,7 +44,7 @@ class ShippingService:
                 if preferred_carrier
                 else self.carriers.values()
             )
-            
+
             for carrier in carriers:
                 try:
                     carrier_rates = await carrier.get_rates(
@@ -55,12 +55,12 @@ class ShippingService:
                 except Exception as e:
                     # Log carrier-specific error but continue with others
                     print(f"Error getting rates from {carrier}: {str(e)}")
-                    
+
             if not rates:
                 raise ValidationError("No shipping rates available")
-                
+
             return sorted(rates, key=lambda x: x["total_cost"])
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -76,17 +76,17 @@ class ShippingService:
         try:
             if carrier not in self.carriers:
                 raise ValidationError(f"Invalid carrier: {carrier}")
-                
+
             carrier_service = self.carriers[carrier]
             label = await carrier_service.create_label(shipment_info)
-            
+
             return {
                 "tracking_number": label["tracking_number"],
                 "label_url": label["label_url"],
                 "carrier": carrier,
                 "created_at": datetime.utcnow()
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -102,12 +102,12 @@ class ShippingService:
         try:
             if carrier not in self.carriers:
                 raise ValidationError(f"Invalid carrier: {carrier}")
-                
+
             carrier_service = self.carriers[carrier]
             tracking_info = await carrier_service.track_shipment(
                 tracking_number
             )
-            
+
             return {
                 "status": tracking_info["status"],
                 "location": tracking_info.get("location"),
@@ -115,7 +115,7 @@ class ShippingService:
                 "history": tracking_info.get("history", []),
                 "last_updated": datetime.utcnow()
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -135,7 +135,7 @@ class ShippingService:
                 if carrier
                 else self.carriers.values()
             )
-            
+
             for carrier_service in carriers:
                 try:
                     result = await carrier_service.validate_address(address)
@@ -150,16 +150,16 @@ class ShippingService:
                         "Error validating address with "
                         f"{carrier_service}: {str(e)}"
                     )
-                    
+
             if not validation_results:
                 raise ValidationError("Address validation failed")
-                
+
             return {
                 "is_valid": any(r["is_valid"] for r in validation_results),
                 "results": validation_results,
                 "validated_at": datetime.utcnow()
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -177,14 +177,14 @@ class ShippingService:
         try:
             if carrier not in self.carriers:
                 raise ValidationError(f"Invalid carrier: {carrier}")
-                
+
             carrier_service = self.carriers[carrier]
             estimate = await carrier_service.estimate_delivery(
                 service_type,
                 origin,
                 destination
             )
-            
+
             return {
                 "estimated_date": estimate["delivery_date"],
                 "service_type": service_type,
@@ -192,9 +192,9 @@ class ShippingService:
                 "confidence_level": estimate.get("confidence_level"),
                 "estimated_at": datetime.utcnow()
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to estimate delivery date: {str(e)}"
-            ) 
+            )

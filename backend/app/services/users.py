@@ -11,10 +11,10 @@ from app.core.password import get_password_hash
 
 class UserService:
     """Service for user-related operations."""
-    
+
     def __init__(self, db: AsyncSession):
         """Initialize service with database session.
-        
+
         Args:
             db: Database session
         """
@@ -26,14 +26,14 @@ class UserService:
         created_by_id: UUID
     ) -> User:
         """Create a new user.
-        
+
         Args:
             user_data: User creation data
             created_by_id: ID of user creating this user
-            
+
         Returns:
             User: Created user object
-            
+
         Raises:
             ValueError: If user already exists
         """
@@ -47,13 +47,13 @@ class UserService:
             )
         )
         existing_user = result.scalar_one_or_none()
-        
+
         if existing_user:
             if existing_user.email == user_data.email:
                 raise ValueError("Email already registered")
             else:
                 raise ValueError("Username already taken")
-        
+
         # Create new user
         db_user = User(
             email=user_data.email,
@@ -71,19 +71,19 @@ class UserService:
             is_superuser=user_data.is_superuser,
             created_by=created_by_id
         )
-        
+
         self.db.add(db_user)
         await self.db.commit()
         await self.db.refresh(db_user)
-        
+
         return db_user
 
     async def get_user(self, user_id: UUID) -> Optional[User]:
         """Get user by ID.
-        
+
         Args:
             user_id: User ID
-            
+
         Returns:
             Optional[User]: User object if found
         """
@@ -96,12 +96,12 @@ class UserService:
         limit: int = 100
     ) -> List[User]:
         """Get users for an organization.
-        
+
         Args:
             organization_id: Organization ID
             skip: Number of records to skip
             limit: Maximum number of records to return
-            
+
         Returns:
             List[User]: List of users
         """
@@ -120,15 +120,15 @@ class UserService:
         updated_by_id: UUID
     ) -> User:
         """Update user data.
-        
+
         Args:
             user_id: User ID
             user_data: Update data
             updated_by_id: ID of user making the update
-            
+
         Returns:
             User: Updated user object
-            
+
         Raises:
             ValueError: If user not found
         """
@@ -146,15 +146,15 @@ class UserService:
         user.updated_by = updated_by_id
         await self.db.commit()
         await self.db.refresh(user)
-        
+
         return user
 
     async def delete_user(self, user_id: UUID) -> None:
         """Delete a user.
-        
+
         Args:
             user_id: User ID to delete
-            
+
         Raises:
             ValueError: If user not found
         """
@@ -172,15 +172,15 @@ class UserService:
         updated_by_id: UUID
     ) -> User:
         """Update user preferences.
-        
+
         Args:
             user_id: User ID
             preferences: New preferences
             updated_by_id: ID of user making the update
-            
+
         Returns:
             User: Updated user object
-            
+
         Raises:
             ValueError: If user not found
         """
@@ -191,10 +191,10 @@ class UserService:
         # Update preferences
         user.preferences = preferences.dict()
         user.updated_by = updated_by_id
-        
+
         await self.db.commit()
         await self.db.refresh(user)
-        
+
         return user
 
     async def get_user_by_email(
@@ -202,10 +202,10 @@ class UserService:
         email: str
     ) -> User:
         """Get user by email.
-        
+
         Args:
             email: User email
-            
+
         Returns:
             User: User object
         """
@@ -219,10 +219,10 @@ class UserService:
         username: str
     ) -> User:
         """Get user by username.
-        
+
         Args:
             username: Username
-            
+
         Returns:
             User: User object
         """
@@ -237,15 +237,15 @@ class UserService:
         new_password: str
     ) -> User:
         """Update user password.
-        
+
         Args:
             user: User object
             new_password: New password
-            
+
         Returns:
             User: Updated user object
         """
         user.set_password(new_password)
         await self.db.commit()
         await self.db.refresh(user)
-        return user 
+        return user

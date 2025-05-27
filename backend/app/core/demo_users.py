@@ -116,4 +116,4 @@ ROLE_PERMISSIONS = {
         "orders:read",
         "analytics:read"
     ]
-} 
+}

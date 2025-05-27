@@ -31,13 +31,13 @@ class BackupValidator:
         self.s3 = boto3.client('s3')
         self.sns = boto3.client('sns')
         self.cloudwatch = boto3.client('cloudwatch')
-        
+
         # Configuration
         self.backup_vault = 'healthcare-ivr-backup-vault'
         self.test_restore_db = 'backup-validation-db'
         self.sns_topic = 'arn:aws:sns:us-east-1:123456789012:backup-validation'
         self.required_tags = ['PHI', 'Environment', 'BackupRetention']
-        
+
         # Validation thresholds
         self.thresholds = {
             'max_backup_age': 24,  # hours
@@ -52,19 +52,19 @@ class BackupValidator:
             # Get latest backup job
             max_age = self.thresholds['max_backup_age']
             created_after = datetime.utcnow() - timedelta(hours=max_age)
-            
+
             response = self.backup.list_backup_jobs(
                 ByState='COMPLETED',
                 ByCreatedBefore=datetime.utcnow(),
                 ByCreatedAfter=created_after,
                 MaxResults=1
             )
-            
+
             if not response['BackupJobs']:
                 raise ValueError("No recent backup jobs found")
-            
+
             latest_job = response['BackupJobs'][0]
-            
+
             # Validate backup
             validation_results = {
                 'job_id': latest_job['BackupJobId'],
@@ -73,7 +73,7 @@ class BackupValidator:
                 'status': latest_job['State'],
                 'validations': {}
             }
-            
+
             # Perform validation checks
             validation_results['validations'].update(
                 self._validate_backup_metadata(latest_job)
@@ -87,21 +87,21 @@ class BackupValidator:
             validation_results['validations'].update(
                 self._validate_retention(latest_job)
             )
-            
+
             # Test restore if all validations pass
             if all(validation_results['validations'].values()):
                 validation_results['validations']['restore_test'] = \
                     self._test_restore(latest_job)
-            
+
             # Send validation metrics
             self._publish_metrics(validation_results)
-            
+
             # Send notifications if any validations failed
             if not all(validation_results['validations'].values()):
                 self._send_alert(validation_results)
-            
+
             return validation_results
-            
+
         except Exception as e:
             logger.error(f"Backup validation failed: {str(e)}")
             self._send_alert({
@@ -118,11 +118,11 @@ class BackupValidator:
                 BackupVaultName=self.backup_vault,
                 RecoveryPointArn=backup_job['RecoveryPointArn']
             )
-            
+
             # Check required tags
             tags = recovery_point.get('Tags', {})
             has_required_tags = all(tag in tags for tag in self.required_tags)
-            
+
             # Validate metadata
             metadata = recovery_point.get('Metadata', {})
             has_valid_metadata = all([
@@ -130,12 +130,12 @@ class BackupValidator:
                 metadata.get('EngineVersion'),
                 metadata.get('BackupMethod')
             ])
-            
+
             return {
                 'metadata_validation': has_valid_metadata,
                 'tags_validation': has_required_tags
             }
-            
+
         except ClientError as e:
             logger.error(f"Metadata validation failed: {str(e)}")
             return {
@@ -150,12 +150,12 @@ class BackupValidator:
                 BackupVaultName=self.backup_vault,
                 RecoveryPointArn=backup_job['RecoveryPointArn']
             )
-            
+
             backup_size = recovery_point.get('BackupSizeInBytes', 0)
             is_valid_size = backup_size >= self.thresholds['min_backup_size']
-            
+
             return {'size_validation': is_valid_size}
-            
+
         except ClientError as e:
             logger.error(f"Size validation failed: {str(e)}")
             return {'size_validation': False}
@@ -167,11 +167,11 @@ class BackupValidator:
                 BackupVaultName=self.backup_vault,
                 RecoveryPointArn=backup_job['RecoveryPointArn']
             )
-            
+
             is_encrypted = recovery_point.get('EncryptionKeyArn') is not None
-            
+
             return {'encryption_validation': is_encrypted}
-            
+
         except ClientError as e:
             logger.error(f"Encryption validation failed: {str(e)}")
             return {'encryption_validation': False}
@@ -183,13 +183,13 @@ class BackupValidator:
                 BackupVaultName=self.backup_vault,
                 RecoveryPointArn=backup_job['RecoveryPointArn']
             )
-            
+
             retention = recovery_point.get('Lifecycle', {})
             retention_days = retention.get('DeleteAfterDays', 0)
             is_valid = retention_days >= self.thresholds['retention_period']
-            
+
             return {'retention_validation': is_valid}
-            
+
         except ClientError as e:
             logger.error(f"Retention validation failed: {str(e)}")
             return {'retention_validation': False}
@@ -207,16 +207,16 @@ class BackupValidator:
                 IamRoleArn=backup_job['IamRoleArn'],
                 ResourceType=backup_job['ResourceType']
             )
-            
+
             # Wait for restore to complete
             waiter = self.backup.get_waiter('restore_job_completed')
             waiter.wait(
                 RestoreJobId=restore_job['RestoreJobId'],
                 WaiterConfig={'Delay': 30, 'MaxAttempts': 40}
             )
-            
+
             return True
-            
+
         except ClientError as e:
             logger.error(f"Restore test failed: {str(e)}")
             return False
@@ -225,7 +225,7 @@ class BackupValidator:
         """Publish validation metrics to CloudWatch."""
         try:
             metric_data = []
-            
+
             # Add validation metrics
             for validation, result in validation_results['validations'].items():
                 metric_data.append({
@@ -236,12 +236,12 @@ class BackupValidator:
                     'Unit': 'Count',
                     'Timestamp': datetime.utcnow()
                 })
-            
+
             self.cloudwatch.put_metric_data(
                 Namespace='BackupValidation',
                 MetricData=metric_data
             )
-            
+
         except ClientError as e:
             logger.error(f"Failed to publish metrics: {str(e)}")
 
@@ -253,13 +253,13 @@ class BackupValidator:
                 'timestamp': datetime.utcnow().isoformat(),
                 'environment': 'production'
             }
-            
+
             self.sns.publish(
                 TopicArn=self.sns_topic,
                 Message=json.dumps(message, indent=2),
                 Subject='Backup Validation Alert'
             )
-            
+
         except ClientError as e:
             logger.error(f"Failed to send alert: {str(e)}")
 
@@ -273,9 +273,9 @@ def main():
         help='Validate latest backup only'
     )
     args = parser.parse_args()
-    
+
     validator = BackupValidator()
-    
+
     try:
         if args.latest:
             results = validator.validate_latest_backup()
@@ -287,4 +287,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main() 
+    main()

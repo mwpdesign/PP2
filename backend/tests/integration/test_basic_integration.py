@@ -28,7 +28,7 @@ async def test_auth_flow(test_client, test_user):
     assert response.status_code == 200
     token_data = response.json()
     assert "access_token" in token_data
-    
+
     # Verify token
     auth_header = f"Bearer {token_data['access_token']}"
     headers = {"Authorization": auth_header}
@@ -52,14 +52,14 @@ async def test_patient_workflow(
         "phone": "+1234567890",
         "territory": test_data["test_user"]["territory"]
     }
-    
+
     response = await test_client.post(
         "/api/v1/patients/register",
         json=patient_data
     )
     assert response.status_code == 201
     patient_id = response.json()["id"]
-    
+
     # Retrieve patient
     response = await test_client.get(f"/api/v1/patients/{patient_id}")
     assert response.status_code == 200
@@ -85,11 +85,11 @@ async def test_order_workflow(
             }
         ]
     }
-    
+
     response = await test_client.post("/api/v1/orders/create", json=order_data)
     assert response.status_code == 201
     order_id = response.json()["id"]
-    
+
     # Verify order status
     response = await test_client.get(f"/api/v1/orders/{order_id}")
     assert response.status_code == 200
@@ -109,11 +109,11 @@ async def test_ivr_workflow(
         "phone_number": "+1234567890",
         "territory": test_data["test_user"]["territory"]
     }
-    
+
     response = await test_client.post("/api/v1/ivr/start-call", json=call_data)
     assert response.status_code == 200
     call_id = response.json()["call_id"]
-    
+
     # Verify call status
     response = await test_client.get(f"/api/v1/ivr/calls/{call_id}")
     assert response.status_code == 200
@@ -135,7 +135,7 @@ async def test_security_features(test_client):
             }
         )
     assert response.status_code == 429  # Too many requests
-    
+
     # Test invalid token
     headers = {"Authorization": "Bearer invalid_token"}
     response = await test_client.get("/api/v1/auth/verify", headers=headers)
@@ -153,7 +153,7 @@ async def test_compliance_features(
     patient_id = test_data["test_patient"]["id"]
     response = await test_client.get(f"/api/v1/patients/{patient_id}")
     assert response.status_code == 200
-    
+
     # Verify audit log
     response = await test_client.get(
         "/api/v1/audit/logs",
@@ -182,13 +182,13 @@ async def test_notification_system(
         "message": "Your order has been processed",
         "territory": test_data["test_user"]["territory"]
     }
-    
+
     response = await test_client.post(
         "/api/v1/notifications/send",
         json=notification_data
     )
     assert response.status_code == 200
-    
+
     # Verify notification delivery
     response = await test_client.get(
         "/api/v1/notifications/user",
@@ -197,4 +197,4 @@ async def test_notification_system(
     assert response.status_code == 200
     notifications = response.json()
     assert len(notifications) > 0
-    assert notifications[0]["type"] == "order_status" 
+    assert notifications[0]["type"] == "order_status"

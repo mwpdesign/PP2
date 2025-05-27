@@ -62,13 +62,13 @@ async def search_patients(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Territory ID is required"
             )
-        
+
         # Base query
         query_filter = select(Patient).where(
             Patient.territory_id == territory_id
         )
         logger.debug("Base query created")
-        
+
         # Apply search filter if query provided
         if query:
             logger.debug(f"Applying search filter for query: {query}")
@@ -77,24 +77,28 @@ async def search_patients(
             query_filter = query_filter.where(
                 Patient.status == 'active'
             )
-        
+
         # Get total count
         logger.debug("Getting total count")
-        total = await db.scalar(
-            select(func.count()).select_from(query_filter.subquery())
+        count_query = select(func.count()).select_from(Patient).where(
+            Patient.territory_id == territory_id
         )
+        if query:
+            count_query = count_query.where(Patient.status == 'active')
+
+        total = await db.scalar(count_query)
         logger.info(f"Total patients found: {total}")
-        
+
         # Apply pagination
         logger.debug(f"Applying pagination - skip: {skip}, limit: {limit}")
         query_filter = query_filter.offset(skip).limit(limit)
-        
+
         # Execute query
         logger.debug("Executing main query")
         result = await db.execute(query_filter)
         patients = result.scalars().all()
         logger.info(f"Retrieved {len(patients)} patients")
-        
+
         # Decrypt patient data
         logger.debug("Starting patient data decryption")
         decrypted_patients = []
@@ -108,13 +112,13 @@ async def search_patients(
                 )
                 logger.error(f"Decryption error type: {type(decrypt_err)}")
                 raise
-        
+
         logger.info("Patient search completed successfully")
         return PatientSearchResults(
-            total=total,
+            total=total or 0,  # Default to 0 if None
             patients=decrypted_patients
         )
-        
+
     except Exception as e:
         logger.error(f"Patient search failed with error: {str(e)}")
         logger.error(f"Error type: {type(e)}")
@@ -135,7 +139,7 @@ async def register_patient(
     try:
         # Encrypt sensitive data
         encrypted_data = encrypt_patient_data(patient_data.dict())
-        
+
         # Create patient instance with encrypted data
         db_patient = Patient(
             external_id=None,  # Will be set by business logic if needed
@@ -150,16 +154,16 @@ async def register_patient(
             created_by_id=current_user["id"],
             updated_by_id=current_user["id"]
         )
-        
+
         # Add to database
         db.add(db_patient)
         await db.commit()
         await db.refresh(db_patient)
-        
+
         # Decrypt for response
         decrypted_patient = decrypt_patient_data(db_patient)
         return PatientSchema(**decrypted_patient)
-        
+
     except Exception as e:
         await db.rollback()
         raise HTTPException(
@@ -181,7 +185,7 @@ async def get_patient(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Patient not found"
         )
-    
+
     # Decrypt data for response
     decrypted_patient = decrypt_patient_data(patient)
     return PatientSchema(**decrypted_patient)
@@ -202,27 +206,27 @@ async def update_patient(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Patient not found"
         )
-    
+
     try:
         # Encrypt updated data
         update_data = patient_in.dict(exclude_unset=True)
         encrypted_data = encrypt_patient_data(update_data)
-        
+
         # Update patient with encrypted data
         for field, value in encrypted_data.items():
             if value is not None:  # Only update provided fields
                 setattr(patient, field, value)
-        
+
         # Update audit field
         patient.updated_by_id = current_user["id"]
-            
+
         await db.commit()
         await db.refresh(patient)
-        
+
         # Decrypt data for response
         decrypted_patient = decrypt_patient_data(patient)
         return PatientSchema(**decrypted_patient)
-        
+
     except Exception as e:
         await db.rollback()
         raise HTTPException(
@@ -244,7 +248,7 @@ async def delete_patient(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Patient not found"
         )
-    
+
     try:
         # Soft delete by updating status
         patient.status = 'deleted'
@@ -278,13 +282,13 @@ async def upload_patient_document(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Patient not found"
             )
-        
+
         # Upload file
         doc_path = await s3_service.upload_file(
             document,
             f"patients/{patient_id}/{document_category}/{document.filename}"
         )
-        
+
         # Create document record
         db_doc = PatientDocument(
             patient_id=patient_id,
@@ -299,13 +303,13 @@ async def upload_patient_document(
             updated_by_id=current_user.get("id"),
             territory_id=patient.territory_id
         )
-        
+
         db.add(db_doc)
         await db.commit()
         await db.refresh(db_doc)
-        
+
         return db_doc
-        
+
     except Exception as e:
         await db.rollback()
         raise HTTPException(

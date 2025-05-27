@@ -131,4 +131,4 @@ async def delete_order(
 
     db.delete(db_order)
     db.commit()
-    return None 
+    return None

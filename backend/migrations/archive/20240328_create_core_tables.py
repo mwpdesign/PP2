@@ -252,7 +252,7 @@ def upgrade() -> None:
     # Create RLS policies
     op.execute("""
         ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY user_isolation_policy ON users
             FOR ALL
             USING (
@@ -269,7 +269,7 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE sensitive_user_data ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY sensitive_data_access_policy ON sensitive_user_data
             FOR ALL
             USING (
@@ -280,7 +280,7 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE territories ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY territory_access_policy ON territories
             FOR ALL
             USING (
@@ -324,4 +324,4 @@ def downgrade() -> None:
     op.drop_table('role_permissions')
     op.drop_table('permissions')
     op.drop_table('roles')
-    op.drop_table('organizations') 
+    op.drop_table('organizations')

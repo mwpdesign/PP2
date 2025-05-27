@@ -80,4 +80,4 @@ def downgrade() -> None:
     op.drop_index('ix_order_status_history_created', 'order_status_history')
 
     # Drop table
-    op.drop_table('order_status_history') 
+    op.drop_table('order_status_history')

@@ -32,4 +32,4 @@ print(f"Created alias: {alias_name}")
 # Update .env file with key ID
 env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
 with open(env_file, 'a') as f:
-    f.write(f"\nAWS_KMS_KEY_ID={key_id}\n") 
+    f.write(f"\nAWS_KMS_KEY_ID={key_id}\n")

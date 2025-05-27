@@ -56,21 +56,21 @@ class KMSEncryption:
         try:
             # Serialize data
             serialized_data = self._serialize_data(data)
-            
+
             # Convert data to JSON string
             data_str = json.dumps(serialized_data)
-            
+
             # Encrypt data
             response = self.client.encrypt(
                 KeyId=self.key_id,
                 Plaintext=data_str.encode('utf-8')
             )
-            
+
             # Base64 encode the encrypted data
             encrypted = base64.b64encode(
                 response['CiphertextBlob']
             ).decode('utf-8')
-            
+
             # Return encrypted data with proper field names
             encrypted_data = {}
             field_mapping = {
@@ -82,15 +82,15 @@ class KMSEncryption:
                 'address': 'encrypted_address',
                 'ssn': 'encrypted_ssn'
             }
-            
+
             for key, value in serialized_data.items():
                 if key in field_mapping:
                     encrypted_data[field_mapping[key]] = encrypted
                 else:
                     encrypted_data[key] = value
-                    
+
             return encrypted_data
-            
+
         except ClientError as e:
             raise Exception(f"Failed to encrypt data: {str(e)}")
 
@@ -99,16 +99,16 @@ class KMSEncryption:
         try:
             # Base64 decode the encrypted data
             ciphertext = base64.b64decode(encrypted_data)
-            
+
             # Decrypt data
             response = self.client.decrypt(
                 CiphertextBlob=ciphertext,
                 KeyId=self.key_id
             )
-            
+
             # Parse decrypted JSON string
             decrypted = json.loads(response['Plaintext'].decode())
-            
+
             # Handle date_of_birth field specially
             if 'date_of_birth' in decrypted:
                 try:
@@ -118,7 +118,7 @@ class KMSEncryption:
                     )
                 except (ValueError, TypeError):
                     pass
-            
+
             return decrypted
         except ClientError as e:
             raise Exception(f"Failed to decrypt data: {str(e)}")
@@ -146,7 +146,7 @@ def encrypt_patient_data(data: Dict[str, Any]) -> Dict[str, Any]:
                     pass
             elif isinstance(value, datetime):
                 data_copy[key] = value.strftime('%Y-%m-%d')
-    
+
     return kms.encrypt(data_copy)
 
 
@@ -160,7 +160,7 @@ def decrypt_patient_data(patient: Any) -> Dict[str, Any]:
         }
     else:
         patient_data = patient
-    
+
     # Fields mapping for decryption
     field_mapping = {
         'encrypted_first_name': 'first_name',
@@ -171,7 +171,7 @@ def decrypt_patient_data(patient: Any) -> Dict[str, Any]:
         'encrypted_address': 'address',
         'encrypted_ssn': 'ssn'
     }
-    
+
     decrypted_data = {}
     for field, value in patient_data.items():
         if field in field_mapping and value:
@@ -190,21 +190,21 @@ def decrypt_patient_data(patient: Any) -> Dict[str, Any]:
                 decrypted_data[field_mapping[field]] = None
         else:
             decrypted_data[field] = value
-    
+
     return decrypted_data
 
 
 def encrypt_provider_data(provider_data: Dict[str, Any]) -> Dict[str, Any]:
     """Encrypt provider sensitive fields"""
     encrypted_data = provider_data.copy()
-    
+
     # Fields to encrypt
     sensitive_fields = ['tax_id']
-    
+
     for field in sensitive_fields:
         if field in encrypted_data and encrypted_data[field]:
             encrypted_data[field] = kms.encrypt(str(encrypted_data[field]))
-    
+
     return encrypted_data
 
 
@@ -218,12 +218,12 @@ def decrypt_provider_data(provider: Any) -> Any:
         }
     else:
         provider_data = provider.copy()
-    
+
     # Fields to decrypt
     sensitive_fields = ['tax_id']
-    
+
     for field in sensitive_fields:
         if field in provider_data and provider_data[field]:
             provider_data[field] = kms.decrypt(provider_data[field])
-    
-    return provider_data 
+
+    return provider_data

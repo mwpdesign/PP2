@@ -81,7 +81,7 @@ def test_create_organization(
         },
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "New Organization"
@@ -102,7 +102,7 @@ def test_get_organization(
         f"/api/v1/organizations/{test_organization.id}",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(test_organization.id)
@@ -131,7 +131,7 @@ def test_list_organizations(
         "/api/v1/organizations/",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 2
@@ -156,7 +156,7 @@ def test_update_organization(
         },
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "Updated Organization"
@@ -266,4 +266,4 @@ def test_duplicate_organization_name(
         headers={"Authorization": f"Bearer {admin_token}"}
     )
     assert response.status_code == 400
-    assert "already exists" in response.json()["detail"].lower() 
+    assert "already exists" in response.json()["detail"].lower()

@@ -161,4 +161,4 @@ class SecurityEventHandler:
     async def _update_event_status(self, event: Dict) -> None:
         """Update security event status."""
         # TODO: Implement event status update
-        pass 
+        pass

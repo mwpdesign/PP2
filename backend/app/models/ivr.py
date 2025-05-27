@@ -124,4 +124,4 @@ class IVRDocument(Base):
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=False
-    ) 
+    )

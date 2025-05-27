@@ -125,7 +125,7 @@ def test_create_role(
         },
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "TEST_ROLE"
@@ -160,7 +160,7 @@ def test_get_role(
         f"/api/v1/rbac/roles/{role.id}",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(role.id)
@@ -193,7 +193,7 @@ def test_list_roles(
         "/api/v1/rbac/roles/",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 3
@@ -234,7 +234,7 @@ def test_update_role(
         },
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["name"] == "UPDATED_ROLE"
@@ -261,7 +261,7 @@ def test_create_permission(
         },
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "custom_permission"
@@ -282,7 +282,7 @@ def test_get_permission(
         f"/api/v1/rbac/permissions/{permission.id}",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(permission.id)
@@ -302,7 +302,7 @@ def test_list_permissions(
         "/api/v1/rbac/permissions/",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= len(test_permissions)
@@ -326,7 +326,7 @@ def test_update_permission(
         },
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(permission.id)
@@ -426,4 +426,4 @@ def test_invalid_input(
         "/api/v1/rbac/roles/not-a-uuid",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    assert response.status_code == 422 
+    assert response.status_code == 422

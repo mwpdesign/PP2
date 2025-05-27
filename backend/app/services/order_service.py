@@ -44,7 +44,7 @@ class OrderService:
         ivr_session = await self.ivr_service.get_session(ivr_session_id)
         if not ivr_session:
             raise NotFoundException("IVR session not found")
-        
+
         if ivr_session.status != 'approved':
             raise ValidationError(
                 "Cannot create order from unapproved IVR session"
@@ -520,7 +520,7 @@ class OrderService:
                 weight=sum(item.quantity * 0.5 for item in order.items),
                 requires_signature=True,
                 is_temperature_controlled=any(
-                    item.product.requires_temperature_control 
+                    item.product.requires_temperature_control
                     for item in order.items
                 )
             )
@@ -565,4 +565,4 @@ class OrderService:
         except Exception as e:
             raise ValidationError(
                 f"Failed to create shipping label: {str(e)}"
-            ) 
+            )

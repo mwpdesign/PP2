@@ -166,4 +166,4 @@ class IVRCallResponse(IVRCallBase):
 
     class Config:
         """Pydantic config."""
-        from_attributes = True 
+        from_attributes = True

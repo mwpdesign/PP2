@@ -119,4 +119,4 @@ class ProviderSearchResponse(BaseModel):
     items: List[ProviderResponse]
     total: int
     page: int
-    size: int 
+    size: int

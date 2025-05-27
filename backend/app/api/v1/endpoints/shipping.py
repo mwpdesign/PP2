@@ -75,9 +75,9 @@ async def create_shipping_address(
         phone=address.phone,
         email=address.email
     )
-    
+
     validation_results = await shipping_service.validate_address(addr)
-    
+
     # Check if at least one carrier validates the address
     if not any(
         result.get("valid", False)
@@ -160,7 +160,7 @@ async def create_shipment(
     # Get addresses from database
     from_addr = db.query(ShippingAddress).get(shipment.from_address_id)
     to_addr = db.query(ShippingAddress).get(shipment.to_address_id)
-    
+
     if not from_addr or not to_addr:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -179,7 +179,7 @@ async def create_shipment(
         phone=from_addr.phone,
         email=from_addr.email
     )
-    
+
     to_address = Address(
         street1=to_addr.street1,
         street2=to_addr.street2,
@@ -534,7 +534,7 @@ async def get_shipping_rates(
     # Get addresses from database
     from_addr = db.query(ShippingAddress).get(from_address_id)
     to_addr = db.query(ShippingAddress).get(to_address_id)
-    
+
     if not from_addr or not to_addr:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -553,7 +553,7 @@ async def get_shipping_rates(
         phone=from_addr.phone,
         email=from_addr.email
     )
-    
+
     to_address = Address(
         street1=to_addr.street1,
         street2=to_addr.street2,
@@ -565,7 +565,7 @@ async def get_shipping_rates(
         phone=to_addr.phone,
         email=to_addr.email
     )
-    
+
     package = Package(
         weight=weight,
         length=length,
@@ -628,4 +628,4 @@ async def track_shipment(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
-        ) 
+        )

@@ -69,4 +69,4 @@ class ProviderSearchResults(BaseModel):
     providers: list[ProviderResponse]
 
     class Config:
-        from_attributes = True 
+        from_attributes = True

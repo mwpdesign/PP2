@@ -308,14 +308,15 @@ def upgrade() -> None:
     # Create RLS policies
     op.execute("""
         ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY user_isolation_policy ON users
             FOR ALL
             USING (
                 organization_id = current_setting('app.current_org_id')::uuid
                 AND (
                     id = current_setting('app.current_user_id')::uuid
-                    OR current_setting('app.current_user_role') = 'admin'
+                    OR \
+            current_setting('app.current_user_role') = 'admin'
                     OR primary_territory_id = ANY(
                         current_setting('app.user_territories')::uuid[]
                     )
@@ -325,25 +326,30 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE sensitive_user_data ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY sensitive_data_access_policy ON sensitive_user_data
             FOR ALL
             USING (
                 user_id = current_setting('app.current_user_id')::uuid
-                OR current_setting('app.current_user_role') = 'admin'
+                OR \
+            current_setting('app.current_user_role') = 'admin'
             );
     """)
 
     op.execute("""
         ALTER TABLE territories ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY territory_access_policy ON territories
             FOR ALL
             USING (
-                organization_id = current_setting('app.current_org_id')::uuid
+                organization_id = \
+                    current_setting('app.current_org_id')::uuid
                 AND (
-                    id = ANY(current_setting('app.user_territories')::uuid[])
-                    OR current_setting('app.current_user_role') = 'admin'
+                    id = ANY(
+                        current_setting('app.user_territories')::uuid[]
+                    )
+                    OR current_setting('app.current_user_role') = \
+                        'admin'
                 )
             );
     """)
@@ -354,7 +360,8 @@ def downgrade() -> None:
     # Drop RLS policies
     op.execute("""
         DROP POLICY IF EXISTS user_isolation_policy ON users;
-        DROP POLICY IF EXISTS sensitive_data_access_policy ON sensitive_user_data;
+        DROP POLICY IF EXISTS sensitive_data_access_policy ON \
+            sensitive_user_data;
         DROP POLICY IF EXISTS territory_access_policy ON territories;
     """)
 
@@ -377,4 +384,4 @@ def downgrade() -> None:
     op.drop_table('users')
     op.drop_table('territories')
     op.drop_table('roles')
-    op.drop_table('organizations') 
+    op.drop_table('organizations')

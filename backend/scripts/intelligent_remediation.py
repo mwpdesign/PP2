@@ -15,7 +15,7 @@ from cryptography.fernet import Fernet
 
 class IntelligentRemediationEngine:
     """Intelligent remediation engine for Healthcare IVR Platform"""
-    
+
     def __init__(self, verification_report: Dict[str, Any]):
         self.verification_report = verification_report
         self.project_root = Path(os.getcwd())
@@ -30,22 +30,22 @@ class IntelligentRemediationEngine:
         """Configure logging for the remediation engine"""
         logger = logging.getLogger('intelligent_remediation')
         logger.setLevel(logging.INFO)
-        
+
         # Create logs directory
         log_dir = (
-            self.project_root / 
+            self.project_root /
             "remediation_reports/logs"
         )
         log_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create file handler
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file = log_dir / f"remediation_{timestamp}.log"
-        
+
         handler = logging.FileHandler(log_file)
         fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         handler.setFormatter(logging.Formatter(fmt))
-        
+
         logger.addHandler(handler)
         return logger
 
@@ -53,7 +53,7 @@ class IntelligentRemediationEngine:
         """Remediate project structure issues"""
         self.logger.info("Remediating project structure issues")
         actions = []
-        
+
         # Create missing directories
         for dir_name, details in issues.get('directories', {}).items():
             if not details.get('exists', True):
@@ -70,7 +70,7 @@ class IntelligentRemediationEngine:
                         'status': 'FAIL',
                         'error': str(e)
                     })
-        
+
         # Create missing files with templates
         templates = {
             'README.md': self._get_readme_template(),
@@ -79,16 +79,16 @@ class IntelligentRemediationEngine:
             'requirements.txt': self._get_requirements_template(),
             'package.json': self._get_package_json_template()
         }
-        
+
         for file_name, details in issues.get('files', {}).items():
             if not details.get('exists', True):
                 try:
                     file_path = self.project_root / file_name
                     file_path.parent.mkdir(parents=True, exist_ok=True)
-                    
+
                     template = templates.get(file_name, '# Generated file\n')
                     file_path.write_text(template)
-                    
+
                     actions.append({
                         'action': f'Created file {file_name}',
                         'status': 'SUCCESS'
@@ -99,7 +99,7 @@ class IntelligentRemediationEngine:
                         'status': 'FAIL',
                         'error': str(e)
                     })
-        
+
         return actions
 
     def remediate_development_environment(
@@ -108,7 +108,7 @@ class IntelligentRemediationEngine:
         """Remediate development environment issues"""
         self.logger.info("Remediating development environment issues")
         actions = []
-        
+
         # Install missing tools
         package_managers = {
             'python': 'pip install',
@@ -116,12 +116,12 @@ class IntelligentRemediationEngine:
             'docker': 'brew install',
             'terraform': 'brew install'
         }
-        
+
         for tool, details in issues.get('tools', {}).items():
             if not details.get('installed', True):
                 try:
                     manager = next(
-                        (m for t, m in package_managers.items() 
+                        (m for t, m in package_managers.items()
                          if t in tool),
                         None
                     )
@@ -143,7 +143,7 @@ class IntelligentRemediationEngine:
                         'status': 'FAIL',
                         'error': str(e)
                     })
-        
+
         return actions
 
     def remediate_docker_services(
@@ -152,7 +152,7 @@ class IntelligentRemediationEngine:
         """Remediate Docker service issues"""
         self.logger.info("Remediating Docker service issues")
         actions = []
-        
+
         for service, details in issues.get('services', {}).items():
             if not details.get('running', True):
                 try:
@@ -163,7 +163,7 @@ class IntelligentRemediationEngine:
                         capture_output=True,
                         text=True
                     )
-                    
+
                     # Verify service started
                     result = subprocess.run(
                         ['docker-compose', 'ps', service, '--format', 'json'],
@@ -172,7 +172,7 @@ class IntelligentRemediationEngine:
                         text=True
                     )
                     service_status = json.loads(result.stdout)
-                    
+
                     if 'running' in service_status.get('State', '').lower():
                         actions.append({
                             'action': f'Started Docker service {service}',
@@ -190,14 +190,14 @@ class IntelligentRemediationEngine:
                         'status': 'FAIL',
                         'error': str(e)
                     })
-        
+
         return actions
 
     def remediate_database(self, issues: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Remediate database issues"""
         self.logger.info("Remediating database issues")
         actions = []
-        
+
         if not issues.get('connection', {}).get('connected', True):
             try:
                 # Try to start database service
@@ -218,19 +218,19 @@ class IntelligentRemediationEngine:
                     'error': str(e)
                 })
                 return actions
-        
+
         # Create missing tables
         try:
             db_url = "postgresql://localhost:5432/healthcare_ivr"
             conn = psycopg2.connect(db_url)
             cur = conn.cursor()
-            
+
             for table, details in issues.get('tables', {}).items():
                 if not details.get('exists', True):
                     try:
                         # Get table schema from migrations
                         schema_file = (
-                            self.project_root / 
+                            self.project_root /
                             'backend/migrations/schemas' /
                             f'{table}.sql'
                         )
@@ -254,16 +254,16 @@ class IntelligentRemediationEngine:
                             'status': 'FAIL',
                             'error': str(e)
                         })
-            
+
             conn.close()
-            
+
         except Exception as e:
             actions.append({
                 'action': 'Failed to connect to database',
                 'status': 'FAIL',
                 'error': str(e)
             })
-        
+
         return actions
 
     def remediate_aws_services(
@@ -272,7 +272,7 @@ class IntelligentRemediationEngine:
         """Remediate AWS service issues"""
         self.logger.info("Remediating AWS service issues")
         actions = []
-        
+
         for service, details in issues.get('services', {}).items():
             if details.get('status') == 'FAIL':
                 try:
@@ -296,14 +296,14 @@ class IntelligentRemediationEngine:
                         'status': 'FAIL',
                         'error': str(e)
                     })
-        
+
         return actions
 
     def _remediate_cognito(self, issues: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Remediate Cognito issues"""
         actions = []
         client = boto3.client('cognito-idp')
-        
+
         try:
             # Create user pool if none exists
             if not issues.get('user_pools', 0):
@@ -330,20 +330,20 @@ class IntelligentRemediationEngine:
                 'status': 'FAIL',
                 'error': str(e)
             })
-        
+
         return actions
 
     def _remediate_s3(self, issues: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Remediate S3 issues"""
         actions = []
         client = boto3.client('s3')
-        
+
         required_buckets = [
             'healthcare-ivr-documents',
             'healthcare-ivr-backups',
             'healthcare-ivr-audit-logs'
         ]
-        
+
         for bucket in required_buckets:
             try:
                 if bucket not in issues.get('details', []):
@@ -376,14 +376,14 @@ class IntelligentRemediationEngine:
                     'status': 'FAIL',
                     'error': str(e)
                 })
-        
+
         return actions
 
     def _remediate_kms(self, issues: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Remediate KMS issues"""
         actions = []
         client = boto3.client('kms')
-        
+
         try:
             if not issues.get('keys', 0):
                 response = client.create_key(
@@ -408,14 +408,14 @@ class IntelligentRemediationEngine:
                 'status': 'FAIL',
                 'error': str(e)
             })
-        
+
         return actions
 
     def _remediate_ses(self, issues: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Remediate SES issues"""
         actions = []
         client = boto3.client('ses')
-        
+
         try:
             # Verify email identity if needed
             if issues.get('quota', 0) == 0:
@@ -431,7 +431,7 @@ class IntelligentRemediationEngine:
                 'status': 'FAIL',
                 'error': str(e)
             })
-        
+
         return actions
 
     def _remediate_cloudtrail(
@@ -440,7 +440,7 @@ class IntelligentRemediationEngine:
         """Remediate CloudTrail issues"""
         actions = []
         client = boto3.client('cloudtrail')
-        
+
         try:
             if not issues.get('trails', 0):
                 response = client.create_trail(
@@ -461,7 +461,7 @@ class IntelligentRemediationEngine:
                 'status': 'FAIL',
                 'error': str(e)
             })
-        
+
         return actions
 
     def remediate_security_compliance(
@@ -470,7 +470,7 @@ class IntelligentRemediationEngine:
         """Remediate security and compliance issues"""
         self.logger.info("Remediating security and compliance issues")
         actions = []
-        
+
         for check, details in issues.get('checks', {}).items():
             if details.get('status') == 'FAIL':
                 try:
@@ -496,7 +496,7 @@ class IntelligentRemediationEngine:
                         'status': 'FAIL',
                         'error': str(e)
                     })
-        
+
         return actions
 
     def _remediate_ssl_config(
@@ -504,7 +504,7 @@ class IntelligentRemediationEngine:
     ) -> List[Dict[str, Any]]:
         """Remediate SSL configuration issues"""
         actions = []
-        
+
         try:
             # Generate self-signed certificate for development
             subprocess.run(
@@ -529,7 +529,7 @@ class IntelligentRemediationEngine:
                 'status': 'FAIL',
                 'error': str(e)
             })
-        
+
         return actions
 
     def _remediate_auth_config(
@@ -537,7 +537,7 @@ class IntelligentRemediationEngine:
     ) -> List[Dict[str, Any]]:
         """Remediate authentication configuration issues"""
         actions = []
-        
+
         try:
             # Generate JWT secret if missing
             if 'JWT_SECRET' in issues.get('missing_env_vars', []):
@@ -553,7 +553,7 @@ class IntelligentRemediationEngine:
                 'status': 'FAIL',
                 'error': str(e)
             })
-        
+
         return actions
 
     def _remediate_encryption_config(
@@ -561,7 +561,7 @@ class IntelligentRemediationEngine:
     ) -> List[Dict[str, Any]]:
         """Remediate encryption configuration issues"""
         actions = []
-        
+
         try:
             # Generate encryption key if missing
             if 'ENCRYPTION_KEY' in issues.get('missing_env_vars', []):
@@ -577,7 +577,7 @@ class IntelligentRemediationEngine:
                 'status': 'FAIL',
                 'error': str(e)
             })
-        
+
         return actions
 
     def _remediate_audit_logging(
@@ -585,14 +585,14 @@ class IntelligentRemediationEngine:
     ) -> List[Dict[str, Any]]:
         """Remediate audit logging issues"""
         actions = []
-        
+
         try:
             if not issues.get('table_exists', True):
                 conn = psycopg2.connect(
                     "postgresql://localhost:5432/healthcare_ivr"
                 )
                 cur = conn.cursor()
-                
+
                 # Create audit_logs table
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS audit_logs (
@@ -609,7 +609,7 @@ class IntelligentRemediationEngine:
                 """)
                 conn.commit()
                 conn.close()
-                
+
                 actions.append({
                     'action': 'Created audit_logs table',
                     'status': 'SUCCESS'
@@ -620,29 +620,29 @@ class IntelligentRemediationEngine:
                 'status': 'FAIL',
                 'error': str(e)
             })
-        
+
         return actions
 
     def _update_env_file(self, key: str, value: str) -> None:
         """Update .env file with new key-value pair"""
         env_file = self.project_root / '.env'
-        
+
         if not env_file.exists():
             env_file.write_text(f'{key}={value}\n')
             return
-        
+
         lines = env_file.read_text().splitlines()
         key_exists = False
-        
+
         for i, line in enumerate(lines):
             if line.startswith(f'{key}='):
                 lines[i] = f'{key}={value}'
                 key_exists = True
                 break
-        
+
         if not key_exists:
             lines.append(f'{key}={value}')
-        
+
         env_file.write_text('\n'.join(lines) + '\n')
 
     def _get_readme_template(self) -> str:
@@ -826,7 +826,7 @@ requests>=2.26.0
     def perform_remediation(self) -> Dict[str, Any]:
         """Perform comprehensive system remediation"""
         self.logger.info("Starting comprehensive system remediation")
-        
+
         components = self.verification_report.get('components', {})
         for component, issues in components.items():
             if issues.get('status') == 'FAIL':
@@ -850,36 +850,36 @@ requests>=2.26.0
                         'status': 'FAIL',
                         'error': str(e)
                     })
-        
+
         # Determine overall remediation status
         has_failures = any(
             action.get('status') == 'FAIL'
             for action in self.remediation_results['actions_taken']
         )
-        
+
         self.remediation_results['overall_status'] = (
             'FAIL' if has_failures else 'PASS'
         )
-        
+
         return self.remediation_results
 
     def generate_report(self) -> str:
         """Generate and save remediation report"""
         self.logger.info("Generating remediation report")
-        
+
         # Perform remediation
         self.perform_remediation()
-        
+
         # Save report
         report_dir = self.project_root / "remediation_reports"
         report_dir.mkdir(parents=True, exist_ok=True)
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = report_dir / f"remediation_{timestamp}.json"
-        
+
         with open(report_file, "w") as f:
             json.dump(self.remediation_results, f, indent=2)
-        
+
         self.logger.info(f"Remediation report saved: {report_file}")
         return str(report_file)
 
@@ -892,27 +892,27 @@ def main():
         if not report_dir.exists():
             print("No verification reports found", file=sys.stderr)
             sys.exit(1)
-        
+
         reports = sorted(report_dir.glob("final_verification_*.json"))
         if not reports:
             print("No verification reports found", file=sys.stderr)
             sys.exit(1)
-        
+
         latest_report = reports[-1]
         with open(latest_report) as f:
             verification_report = json.load(f)
-        
+
         # Initialize and run remediation
         remediation = IntelligentRemediationEngine(verification_report)
         report_path = remediation.generate_report()
-        
+
         # Print summary
         print("\n=== Intelligent Remediation Report ===")
         print(f"Report saved to: {report_path}")
         status = remediation.remediation_results['overall_status']
         print(f"Overall Status: {status}")
         print("\nActions Taken:")
-        
+
         for action in remediation.remediation_results['actions_taken']:
             status = action.get('status', 'UNKNOWN')
             color = "\033[92m" if status == 'SUCCESS' else "\033[91m"
@@ -920,17 +920,17 @@ def main():
             if status == 'FAIL':
                 error = action.get('error', 'Unknown error')
                 print(f"  Error: {error}")
-        
+
         exit_code = (
             0 if remediation.remediation_results['overall_status'] == 'PASS'
             else 1
         )
         sys.exit(exit_code)
-        
+
     except Exception as e:
         print(f"Error during remediation: {str(e)}", file=sys.stderr)
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    main() 
+    main()

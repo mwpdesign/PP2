@@ -20,7 +20,7 @@ async def create_test_user():
         "postgresql+asyncpg://postgres:password@db:5432/healthcare_ivr",
         echo=True
     )
-    
+
     async_session = async_sessionmaker(
         engine,
         class_=AsyncSession,
@@ -70,4 +70,4 @@ async def create_test_user():
 
 
 if __name__ == "__main__":
-    asyncio.run(create_test_user()) 
+    asyncio.run(create_test_user())

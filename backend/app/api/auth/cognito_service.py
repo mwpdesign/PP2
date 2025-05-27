@@ -2,14 +2,15 @@
 AWS Cognito service wrapper for handling authentication and user management.
 Implements HIPAA-compliant authentication flows with MFA support.
 """
-from typing import Dict, Optional, List
+from typing import Dict
 import boto3
 from botocore.exceptions import ClientError
 from fastapi import HTTPException, status
 import os
-import json
-import time
-from datetime import datetime, timedelta
+import hmac
+import base64
+import hashlib
+
 
 class CognitoService:
     def __init__(self):
@@ -17,11 +18,13 @@ class CognitoService:
         self.user_pool_id = os.getenv('COGNITO_USER_POOL_ID')
         self.client_id = os.getenv('COGNITO_CLIENT_ID')
         self.client_secret = os.getenv('COGNITO_CLIENT_SECRET')
-        
+
         if not all([self.user_pool_id, self.client_id, self.client_secret]):
             raise ValueError("Missing required Cognito configuration")
 
-    async def register_user(self, email: str, password: str, attributes: Dict[str, str]) -> Dict:
+    async def register_user(
+        self, email: str, password: str, attributes: Dict[str, str]
+    ) -> Dict:
         """Register a new user with Cognito."""
         try:
             response = self.client.sign_up(
@@ -45,7 +48,9 @@ class CognitoService:
                 detail=str(e)
             )
 
-    async def confirm_registration(self, email: str, confirmation_code: str) -> Dict:
+    async def confirm_registration(
+        self, email: str, confirmation_code: str
+    ) -> Dict:
         """Confirm user registration with verification code."""
         try:
             self.client.confirm_sign_up(
@@ -73,25 +78,33 @@ class CognitoService:
                     'SECRET_HASH': self._compute_secret_hash(email)
                 }
             )
-            
+
             challenge_name = auth_response.get('ChallengeName')
-            
-            if challenge_name == 'SMS_MFA' or challenge_name == 'SOFTWARE_TOKEN_MFA':
+
+            if challenge_name in ('SMS_MFA', 'SOFTWARE_TOKEN_MFA'):
                 return {
                     'status': 'MFA_REQUIRED',
                     'session': auth_response['Session'],
                     'challenge_name': challenge_name
                 }
-            
-            return self._process_auth_tokens(auth_response['AuthenticationResult'])
-            
+
+            return self._process_auth_tokens(
+                auth_response['AuthenticationResult']
+            )
+
         except ClientError as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=str(e)
             )
 
-    async def verify_mfa(self, email: str, session: str, mfa_code: str, challenge_name: str) -> Dict:
+    async def verify_mfa(
+        self,
+        email: str,
+        session: str,
+        mfa_code: str,
+        challenge_name: str
+    ) -> Dict:
         """Verify MFA code and complete authentication."""
         try:
             auth_response = self.client.respond_to_auth_challenge(
@@ -104,9 +117,11 @@ class CognitoService:
                     'SECRET_HASH': self._compute_secret_hash(email)
                 }
             )
-            
-            return self._process_auth_tokens(auth_response['AuthenticationResult'])
-            
+
+            return self._process_auth_tokens(
+                auth_response['AuthenticationResult']
+            )
+
         except ClientError as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -116,17 +131,20 @@ class CognitoService:
     async def refresh_token(self, refresh_token: str) -> Dict:
         """Refresh the access token using a valid refresh token."""
         try:
+            auth_params = {
+                'REFRESH_TOKEN': refresh_token,
+                'SECRET_HASH': self._compute_secret_hash(refresh_token)
+            }
             auth_response = self.client.initiate_auth(
                 ClientId=self.client_id,
                 AuthFlow='REFRESH_TOKEN_AUTH',
-                AuthParameters={
-                    'REFRESH_TOKEN': refresh_token,
-                    'SECRET_HASH': self._compute_secret_hash(refresh_token)
-                }
+                AuthParameters=auth_params
             )
-            
-            return self._process_auth_tokens(auth_response['AuthenticationResult'])
-            
+
+            return self._process_auth_tokens(
+                auth_response['AuthenticationResult']
+            )
+
         except ClientError as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -177,7 +195,12 @@ class CognitoService:
                 detail=str(e)
             )
 
-    async def complete_password_reset(self, email: str, confirmation_code: str, new_password: str) -> Dict:
+    async def complete_password_reset(
+        self,
+        email: str,
+        confirmation_code: str,
+        new_password: str
+    ) -> Dict:
         """Complete the password reset process."""
         try:
             self.client.confirm_forgot_password(
@@ -196,15 +219,15 @@ class CognitoService:
 
     def _compute_secret_hash(self, username: str) -> str:
         """Compute the secret hash for Cognito API calls."""
-        import hmac
-        import base64
-        
         message = username + self.client_id
-        dig = hmac.new(
-            key=self.client_secret.encode('utf-8'),
-            msg=message.encode('utf-8'),
-            digestmod=__import__('hashlib').sha256
-        ).digest()
+        key = self.client_secret.encode('utf-8')
+        msg = message.encode('utf-8')
+        hasher = hmac.new(
+            key=key,
+            msg=msg,
+            digestmod=hashlib.sha256
+        )
+        dig = hasher.digest()
         return base64.b64encode(dig).decode()
 
     def _process_auth_tokens(self, auth_result: Dict) -> Dict:
@@ -215,4 +238,4 @@ class CognitoService:
             'refresh_token': auth_result.get('RefreshToken'),
             'expires_in': auth_result['ExpiresIn'],
             'token_type': auth_result['TokenType']
-        } 
+        }

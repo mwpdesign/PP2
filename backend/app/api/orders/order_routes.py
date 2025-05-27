@@ -179,4 +179,4 @@ async def bulk_update_order_status(
         notes=update_data.notes,
         request_metadata=request_metadata
     )
-    return result 
+    return result

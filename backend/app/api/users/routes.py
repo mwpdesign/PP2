@@ -234,11 +234,11 @@ async def assign_user_roles(
     # Update user roles and territories
     db_user.roles = []
     db_user.territories = []
-    
+
     for assignment in role_assignments:
         role = await db.query(Role).filter(Role.id == assignment.role_id).first()
         db_user.roles.append(role)
-        
+
         if assignment.territory_id:
             territory = await db.query(Territory).filter(
                 Territory.id == assignment.territory_id
@@ -246,4 +246,4 @@ async def assign_user_roles(
             db_user.territories.append(territory)
 
     await db.commit()
-    return {"message": "User roles and territories assigned successfully"} 
+    return {"message": "User roles and territories assigned successfully"}

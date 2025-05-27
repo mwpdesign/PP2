@@ -1,5 +1,1 @@
-"""
-Healthcare IVR Platform backend application.
-"""
-
-"""Healthcare IVR Platform Backend.""" 
+"""Healthcare IVR Platform backend application."""

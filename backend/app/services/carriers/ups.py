@@ -13,7 +13,7 @@ from app.services.carriers.base import BaseCarrier
 
 class UPSCarrier(BaseCarrier):
     """UPS carrier service implementation."""
-    
+
     def __init__(self, api_key: str, account_number: str):
         """Initialize UPS carrier service."""
         super().__init__("UPS")
@@ -78,7 +78,7 @@ class UPSCarrier(BaseCarrier):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return [{
                 "service": rate["Service"]["Code"],
                 "carrier": "UPS",
@@ -87,7 +87,7 @@ class UPSCarrier(BaseCarrier):
                 "delivery_days": rate.get("GuaranteedDaysToDelivery"),
                 "service_name": self._get_service_name(rate["Service"]["Code"])
             } for rate in data["RateResponse"]["RatedShipment"]]
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -163,14 +163,14 @@ class UPSCarrier(BaseCarrier):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             shipment_results = data["ShipmentResponse"]["ShipmentResults"]
             tracking_number = shipment_results["TrackingNumber"]
             label_image = (
                 shipment_results["PackageResults"]
                 ["ShippingLabel"]["GraphicImage"]
             )
-            
+
             return {
                 "tracking_number": tracking_number,
                 "label_url": self._store_label(label_image),
@@ -178,7 +178,7 @@ class UPSCarrier(BaseCarrier):
                 "service": shipment_info["service_code"],
                 "created_at": datetime.utcnow()
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -204,10 +204,10 @@ class UPSCarrier(BaseCarrier):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             package = data["TrackResponse"]["Shipment"][0]["Package"][0]
             current_status = package["Activity"][0]
-            
+
             return {
                 "status": self._get_status_description(
                     current_status["Status"]["Code"]
@@ -237,7 +237,7 @@ class UPSCarrier(BaseCarrier):
                 "tracking_number": tracking_number,
                 "last_updated": datetime.utcnow()
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -264,7 +264,7 @@ class UPSCarrier(BaseCarrier):
             )
             response.raise_for_status()
             data = response.json()
-            
+
             is_valid = bool(
                 data["XAVResponse"].get("ValidAddressIndicator")
             )
@@ -272,7 +272,7 @@ class UPSCarrier(BaseCarrier):
                 "CandidateAddressList",
                 [{}]
             )[0].get("AddressKeyFormat", {})
-            
+
             return {
                 "is_valid": is_valid,
                 "suggested_address": {
@@ -284,7 +284,7 @@ class UPSCarrier(BaseCarrier):
                 } if suggested else None,
                 "errors": [] if is_valid else ["Invalid address"]
             }
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -337,4 +337,4 @@ class UPSCarrier(BaseCarrier):
             "StateProvinceCode": address["state"],
             "PostalCode": address["postal_code"],
             "CountryCode": address["country"]
-        } 
+        }

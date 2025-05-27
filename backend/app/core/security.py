@@ -69,7 +69,7 @@ security = HTTPBearer()
 
 def generate_uuid() -> str:
     """Generate a new UUID string.
-    
+
     Returns:
         str: A new UUID string
     """
@@ -78,14 +78,14 @@ def generate_uuid() -> str:
 
 async def verify_territory_access(user: dict, territory_id: UUID) -> bool:
     """Verify if a user has access to a specific territory.
-    
+
     Args:
         user: User dictionary containing territory access information
         territory_id: UUID of the territory to check access for
-        
+
     Returns:
         bool: True if user has access, False otherwise
-        
+
     Raises:
         HTTPException: If user doesn't have access to the territory
     """
@@ -114,29 +114,29 @@ def create_access_token(
     expires_delta: Optional[timedelta] = None
 ) -> str:
     """Create a new access token.
-    
+
     Args:
         data: Data to encode in the token
         expires_delta: Optional expiration time delta
-        
+
     Returns:
         str: Encoded JWT token
     """
     to_encode = data.copy()
-    
+
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
-    
+
     to_encode.update({
         "exp": expire,
         "iat": datetime.utcnow(),
         "type": "access"
     })
-    
+
     encoded_jwt = jwt.encode(
         to_encode,
         settings.SECRET_KEY,
@@ -147,13 +147,13 @@ def create_access_token(
 
 def verify_token(token: str) -> Dict[str, Any]:
     """Verify and decode a JWT token.
-    
+
     Args:
         token: JWT token to verify
-        
+
     Returns:
         dict: Decoded token payload
-        
+
     Raises:
         HTTPException: If token is invalid
     """
@@ -174,13 +174,13 @@ def verify_token(token: str) -> Dict[str, Any]:
 
 def verify_development_token(token: str) -> dict:
     """Verify development mode JWT token.
-    
+
     Args:
         token: JWT token
-        
+
     Returns:
         Dict containing user information
-        
+
     Raises:
         HTTPException: If token is invalid
     """
@@ -199,14 +199,14 @@ def verify_development_token(token: str) -> dict:
                     "is_superuser": True
                 }
             }
-        
+
         # In non-development mode, verify the token
         payload = jwt.decode(
             token,
             settings.SECRET_KEY,
             algorithms=[ALGORITHM]
         )
-        
+
         # Extract user info from payload
         user_info = {
             "username": payload.get("sub"),
@@ -220,9 +220,9 @@ def verify_development_token(token: str) -> dict:
                 "is_superuser": payload.get("is_superuser", False)
             }
         }
-        
+
         return user_info
-        
+
     except JWTError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -235,14 +235,14 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get current authenticated user from token.
-    
+
     Args:
         credentials: HTTP Authorization credentials
         db: Database session
-        
+
     Returns:
         Dict[str, Any]: User data
-        
+
     Raises:
         HTTPException: If token is invalid or user not found
     """
@@ -265,7 +265,7 @@ async def get_current_user(
             )
             if user_data:
                 return user_data
-            
+
             # If not found, return first demo user (for testing)
             return next(iter(DEMO_USERS.values()))
 
@@ -341,10 +341,10 @@ def sanitize_phi(text: str) -> str:
 
 def create_refresh_token(user_id: str) -> str:
     """Create a refresh token.
-    
+
     Args:
         user_id: User ID to encode in token
-        
+
     Returns:
         str: Encoded refresh token
     """
@@ -357,13 +357,13 @@ def create_refresh_token(user_id: str) -> str:
 
 def verify_refresh_token(token: str) -> str:
     """Verify a refresh token.
-    
+
     Args:
         token: Refresh token to verify
-        
+
     Returns:
         str: User ID from token
-        
+
     Raises:
         HTTPException: If token is invalid
     """
@@ -425,12 +425,12 @@ async def authenticate_user(
     password: str
 ) -> Optional[Dict[str, Any]]:
     """Authenticate a user.
-    
+
     Args:
         db: Database session
         username: Username or email
         password: Password
-        
+
     Returns:
         Optional[Dict[str, Any]]: User data if authenticated, None otherwise
     """
@@ -445,7 +445,7 @@ async def authenticate_user(
                     (u for u in DEMO_USERS.values() if u["username"] == username),
                     None
                 )
-            
+
             if user_data and user_data["password"] == password:
                 return user_data
             return None
@@ -496,10 +496,10 @@ async def authenticate_user(
 
 def require_roles(allowed_roles: list[str]):
     """Role-based access control decorator.
-    
+
     Args:
         allowed_roles: List of allowed roles
-        
+
     Returns:
         Callable: Role checker function
     """
@@ -507,13 +507,13 @@ def require_roles(allowed_roles: list[str]):
         current_user: Dict[str, Any] = Depends(get_current_user)
     ) -> Dict[str, Any]:
         """Check if current user has required role.
-        
+
         Args:
             current_user: Current authenticated user
-            
+
         Returns:
             Dict[str, Any]: User data if authorized
-            
+
         Raises:
             HTTPException: If user doesn't have required role
         """
@@ -535,10 +535,10 @@ def require_roles(allowed_roles: list[str]):
 
 def require_permissions(required_permissions: list[str]):
     """Decorator to check if user has required permissions.
-    
+
     Args:
         required_permissions: List of required permission strings
-        
+
     Returns:
         Decorator function
     """
@@ -596,10 +596,10 @@ class PasswordValidator:
     @staticmethod
     def validate(password: str) -> tuple[bool, Optional[str]]:
         """Validate password strength.
-        
+
         Args:
             password: Password to validate
-            
+
         Returns:
             tuple: (is_valid, error_message)
         """
@@ -624,4 +624,4 @@ class PasswordValidator:
 
 
 # Global instance
-password_validator = PasswordValidator() 
+password_validator = PasswordValidator()

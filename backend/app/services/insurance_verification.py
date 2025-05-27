@@ -26,7 +26,7 @@ class InsuranceVerificationService:
         self.settings = get_settings()
         self.kms_service = AWSKMSService()
         self.client = httpx.AsyncClient(timeout=30.0)
-        
+
         # Provider API configurations
         self.provider_configs = {
             'medicare': {
@@ -79,7 +79,7 @@ class InsuranceVerificationService:
                         'X-User-ID': str(user_id)
                     }
                 )
-                
+
                 if response.status_code != 200:
                     raise HTTPException(
                         status_code=response.status_code,
@@ -241,4 +241,4 @@ class InsuranceVerificationService:
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to update verification status: {str(e)}"
-            ) 
+            )

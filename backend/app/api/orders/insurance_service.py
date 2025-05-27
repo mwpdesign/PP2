@@ -14,9 +14,9 @@ settings = get_settings()
 class InsuranceVerificationService:
     def __init__(self, db: Session):
         self.db = db
-    
+
     async def verify_insurance_coverage(
-        self, 
+        self,
         order_id: int,
         patient_id: int,
         insurance_data: Dict,
@@ -25,14 +25,14 @@ class InsuranceVerificationService:
     ) -> Dict:
         """
         Verify insurance coverage for an order
-        
+
         Args:
             order_id: ID of the order being verified
             patient_id: ID of the patient
             insurance_data: Insurance information to verify
             user_id: ID of user performing verification
             territory_id: Territory ID for access control
-        
+
         Returns:
             Dict containing verification results
         """
@@ -137,7 +137,7 @@ class InsuranceVerificationService:
 
             # Decrypt verification data
             verification_data = decrypt_phi(order.insurance_verification)
-            
+
             return {
                 "status": order.verification_status,
                 "last_verified_at": order.last_verified_at,
@@ -149,4 +149,4 @@ class InsuranceVerificationService:
             raise HTTPException(
                 status_code=500,
                 detail="Error retrieving verification status"
-            ) 
+            )

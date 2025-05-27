@@ -37,14 +37,14 @@ class NotificationService:
         self.db = db
         self.kms_service = KMSService()
         self.encryption_service = EncryptionService()
-        
+
         # Initialize channel-specific services
         self.email_service = None  # Will be initialized on demand
         self.sms_service = None    # Will be initialized on demand
-        
+
         # PHI filtering patterns - regularly updated from configuration
         self.phi_patterns = self._load_phi_patterns()
-        
+
         # Retry configuration
         self.max_retries = settings.NOTIFICATION_MAX_RETRIES
         self.retry_intervals = [30, 60, 120, 300, 600]  # Exponential backoff in seconds
@@ -69,11 +69,11 @@ class NotificationService:
     def filter_phi(self, content: str) -> str:
         """Filter out PHI from notification content."""
         filtered_content = content
-        
+
         for category, patterns in self.phi_patterns.items():
             for pattern in patterns:
                 filtered_content = self._redact_pattern(filtered_content, pattern)
-        
+
         return filtered_content
 
     def _redact_pattern(self, content: str, pattern: str) -> str:
@@ -93,7 +93,7 @@ class NotificationService:
         try:
             # Filter PHI from content
             filtered_content = self.filter_phi(notification.content)
-            
+
             # Encrypt sensitive content
             encrypted_content = self.encryption_service.encrypt(
                 json.dumps({
@@ -101,7 +101,7 @@ class NotificationService:
                     "filtered": filtered_content
                 })
             )
-            
+
             # Create notification record
             db_notification = NotificationModel(
                 recipient_id=recipient_id,
@@ -112,19 +112,19 @@ class NotificationService:
                 metadata=metadata,
                 created_at=datetime.utcnow()
             )
-            
+
             # Save to database
             self.db.add(db_notification)
             self.db.commit()
-            
+
             # Send through appropriate channel
             success = await self._send_through_channel(
-                channel, 
+                channel,
                 filtered_content,
                 recipient_id,
                 metadata
             )
-            
+
             if success:
                 db_notification.status = NotificationStatus.DELIVERED
                 db_notification.delivered_at = datetime.utcnow()
@@ -132,7 +132,7 @@ class NotificationService:
                 db_notification.status = NotificationStatus.FAILED
                 # Queue for retry if appropriate
                 await self._handle_failed_delivery(db_notification)
-            
+
             self.db.commit()
             return db_notification
 
@@ -153,21 +153,21 @@ class NotificationService:
                 from app.services.ses_service import SESService
                 self.email_service = SESService()
             return await self.email_service.send_email(recipient_id, content, metadata)
-            
+
         elif channel == NotificationChannel.SMS:
             if not self.sms_service:
                 from app.services.sms_service import SMSService
                 self.sms_service = SMSService()
             return await self.sms_service.send_sms(recipient_id, content, metadata)
-            
+
         elif channel == NotificationChannel.IN_APP:
             # Implement in-app notification logic
             return await self._send_in_app_notification(recipient_id, content, metadata)
-            
+
         elif channel == NotificationChannel.PUSH:
             # Implement push notification logic
             return await self._send_push_notification(recipient_id, content, metadata)
-        
+
         return False
 
     async def _handle_failed_delivery(self, notification: NotificationModel):
@@ -179,7 +179,7 @@ class NotificationService:
         # Calculate next retry time using exponential backoff
         retry_index = min(notification.retry_count, len(self.retry_intervals) - 1)
         next_retry_delay = self.retry_intervals[retry_index]
-        
+
         notification.retry_count += 1
         notification.next_retry_at = datetime.utcnow() + next_retry_delay
         notification.status = NotificationStatus.RETRY_PENDING
@@ -189,10 +189,10 @@ class NotificationService:
         notification = self.db.query(NotificationModel).filter(
             NotificationModel.id == notification_id
         ).first()
-        
+
         if not notification:
             raise ValueError(f"Notification {notification_id} not found")
-            
+
         return notification.status
 
     async def update_delivery_status(
@@ -205,17 +205,17 @@ class NotificationService:
         notification = self.db.query(NotificationModel).filter(
             NotificationModel.id == notification_id
         ).first()
-        
+
         if not notification:
             raise ValueError(f"Notification {notification_id} not found")
-            
+
         notification.status = status
         if status == NotificationStatus.DELIVERED:
             notification.delivered_at = datetime.utcnow()
-        
+
         if metadata:
             notification.metadata.update(metadata)
-            
+
         self.db.commit()
 
     async def get_notification_history(
@@ -230,7 +230,7 @@ class NotificationService:
         query = self.db.query(NotificationModel).filter(
             NotificationModel.recipient_id == recipient_id
         )
-        
+
         if channel:
             query = query.filter(NotificationModel.channel == channel)
         if start_date:
@@ -239,5 +239,5 @@ class NotificationService:
             query = query.filter(NotificationModel.created_at <= end_date)
         if status:
             query = query.filter(NotificationModel.status == status)
-            
-        return query.order_by(NotificationModel.created_at.desc()).all() 
+
+        return query.order_by(NotificationModel.created_at.desc()).all()

@@ -48,7 +48,7 @@ def create_demo_users(session):
         # Hash password
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(user_data["password"].encode(), salt)
-        
+
         user = User(
             email=user_data["email"],
             password_hash=hashed_password.decode(),
@@ -102,7 +102,7 @@ def create_demo_orders(session, patient, provider):
     """Create demo orders"""
     statuses = ["pending", "confirmed", "processing", "completed"]
     orders = []
-    
+
     for i, status in enumerate(statuses):
         order_date = datetime.now() - timedelta(days=i*2)
         order = Order(
@@ -115,7 +115,7 @@ def create_demo_orders(session, patient, provider):
         )
         session.add(order)
         orders.append(order)
-    
+
     return orders
 
 def create_demo_ivr_calls(session, patient, orders):
@@ -138,7 +138,7 @@ def main():
     """Main function to seed demo data"""
     # Get database URL from environment or use default
     database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/healthcare_ivr")
-    
+
     # Create database engine and session
     engine = create_engine(database_url)
     Session = sessionmaker(bind=engine)
@@ -171,4 +171,4 @@ def main():
         session.close()
 
 if __name__ == "__main__":
-    main() 
+    main()

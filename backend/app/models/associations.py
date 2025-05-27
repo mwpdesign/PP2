@@ -44,4 +44,4 @@ territory_role_access = Table(
         String(50),
         nullable=False
     )
-) 
+)

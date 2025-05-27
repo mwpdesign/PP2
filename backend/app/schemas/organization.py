@@ -48,4 +48,4 @@ class OrganizationInDB(OrganizationBase):
 
 class OrganizationResponse(OrganizationInDB):
     """Organization response schema."""
-    pass 
+    pass

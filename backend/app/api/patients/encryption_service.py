@@ -14,7 +14,7 @@ class PatientEncryptionService:
         """Initialize encryption service with KMS service dependency."""
         self.kms = kms_service
         self.settings = get_settings()
-        
+
         # Fields that require encryption (PHI)
         self.encrypted_fields = {
             'first_name',
@@ -29,7 +29,7 @@ class PatientEncryptionService:
             'diagnosis_codes',
             'treatment_notes'
         }
-        
+
         # Fields that require special handling
         self.date_fields = {'date_of_birth'}
         self.array_fields = {'diagnosis_codes'}
@@ -51,7 +51,7 @@ class PatientEncryptionService:
                 **(context or {})
             }
             data_key = await self.kms.create_data_key(encryption_context)
-            
+
             encrypted_data = {}
             for field, value in patient_data.items():
                 if field in self.encrypted_fields and value is not None:
@@ -60,7 +60,7 @@ class PatientEncryptionService:
                         value = value.isoformat()
                     elif field in self.array_fields:
                         value = ','.join(value)
-                    
+
                     # Encrypt the field
                     encrypted_field = await self.kms.encrypt_field(
                         str(value),
@@ -70,7 +70,7 @@ class PatientEncryptionService:
                     encrypted_data[field] = encrypted_field
                 else:
                     encrypted_data[field] = value
-            
+
             return encrypted_data
         except Exception as e:
             raise HTTPException(
@@ -101,7 +101,7 @@ class PatientEncryptionService:
                         value['encrypted_key'],
                         value.get('encryption_context', {})
                     )
-                    
+
                     # Handle special field types
                     if field in self.date_fields:
                         from datetime import datetime as dt
@@ -112,11 +112,11 @@ class PatientEncryptionService:
                             if decrypted_value
                             else []
                         )
-                    
+
                     decrypted_data[field] = decrypted_value
                 else:
                     decrypted_data[field] = value
-            
+
             return decrypted_data
         except Exception as e:
             raise HTTPException(
@@ -155,7 +155,7 @@ class PatientEncryptionService:
                     rotated_data[field] = rotated_field
                 else:
                     rotated_data[field] = value
-            
+
             return rotated_data
         except Exception as e:
             raise HTTPException(
@@ -197,4 +197,4 @@ class PatientEncryptionService:
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid encryption: {str(e)}"
-            ) 
+            )

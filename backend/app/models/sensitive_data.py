@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 class SensitiveData(Base):
     """Model for storing sensitive user data with encryption."""
-    
+
     __tablename__ = "sensitive_data"
 
     id: Mapped[PyUUID] = mapped_column(
@@ -94,4 +94,4 @@ class SensitiveData(Base):
         """Decrypt and return address."""
         if 'address' in self.encrypted_data:
             return self.encryption.decrypt(self.encrypted_data['address'])
-        return None 
+        return None

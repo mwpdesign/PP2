@@ -102,20 +102,20 @@ class UPSProvider(ShippingProvider):
             # Prepare tracking request
             endpoint = f"{self.base_url}/track/v1/details/{tracking_number}"
             headers = self._get_auth_headers()
-            
+
             # Make API request
             response = requests.get(
                 endpoint,
                 headers=headers
             )
-            
+
             if response.status_code != 200:
                 raise ShippingException(
                     f"UPS API error: {response.text}"
                 )
-            
+
             result = response.json()
-            
+
             # Log successful tracking
             audit_shipping_operation(
                 operation="track_shipment",
@@ -123,7 +123,7 @@ class UPSProvider(ShippingProvider):
                 status="success",
                 details=result
             )
-            
+
             return self._parse_tracking_response(result)
         except Exception as e:
             # Log failed tracking
@@ -187,4 +187,4 @@ class UPSProvider(ShippingProvider):
         response: Dict[str, Any]
     ) -> TrackingInfo:
         """Parse UPS tracking response into TrackingInfo."""
-        raise NotImplementedError() 
+        raise NotImplementedError()

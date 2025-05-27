@@ -20,4 +20,4 @@ async def register_patient(patient: PatientRegistration):
     return {
         "message": "Patient registration received",
         "patient": patient.dict()
-    } 
+    }

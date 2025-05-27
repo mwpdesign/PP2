@@ -45,10 +45,10 @@ class IVRWorkflowService:
     async def get_request(self, request_id: UUID) -> Optional[IVRRequest]:
         """Get IVR request by ID."""
         request = await self.db.get(IVRRequest, request_id)
-        
+
         if not request:
             raise NotFoundException("IVR request not found")
-        
+
         return request
 
     async def create_request(
@@ -123,7 +123,7 @@ class IVRWorkflowService:
         for field, value in request_data.items():
             if value is not None:
                 setattr(request, field, value)
-        
+
         # Update audit field
         request.updated_by = current_user["id"]
 
@@ -188,7 +188,7 @@ class IVRWorkflowService:
     ) -> IVRRequest:
         """Update IVR request status with history tracking."""
         ivr_request = self._get_ivr_request(request_id)
-        
+
         # Create status history
         status_history = IVRStatusHistory(
             ivr_request=ivr_request,
@@ -386,4 +386,4 @@ class IVRWorkflowService:
 
     def _notify_escalation(self, ivr_request: IVRRequest, escalation: IVREscalation):
         """Send notifications for IVR escalation."""
-        self.notification_service.notify_escalation(ivr_request, escalation) 
+        self.notification_service.notify_escalation(ivr_request, escalation)

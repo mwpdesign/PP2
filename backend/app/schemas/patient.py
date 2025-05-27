@@ -98,4 +98,4 @@ class PatientSearchResults(BaseModel):
         json_encoders = {
             datetime: lambda dt: dt.isoformat(),
             UUID: str
-        } 
+        }

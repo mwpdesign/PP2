@@ -10,7 +10,7 @@ from app.core.database import Base
 
 class Facility(Base):
     """Facility model representing healthcare facilities."""
-    
+
     __tablename__ = 'facilities'
 
     id: Mapped[PyUUID] = mapped_column(
@@ -35,7 +35,7 @@ class Facility(Base):
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
     fax: Mapped[str] = mapped_column(String(20))
     email: Mapped[str] = mapped_column(String(255))
-    
+
     # Organization and Territory
     organization_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
@@ -77,4 +77,4 @@ class Facility(Base):
 
     def __repr__(self):
         """String representation of the facility."""
-        return f"<Facility(name='{self.name}', npi='{self.npi}')>" 
+        return f"<Facility(name='{self.name}', npi='{self.npi}')>"

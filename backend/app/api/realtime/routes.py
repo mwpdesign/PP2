@@ -27,34 +27,34 @@ async def websocket_endpoint(
         if not user:
             await websocket.close(code=4001)
             return
-            
+
         # Accept connection
         await manager.connect(websocket, user.id)
-        
+
         try:
             while True:
                 # Receive message
                 data = await websocket.receive_json()
-                
+
                 # Handle message types
                 message_type = data.get('type')
-                
+
                 if message_type == 'ping':
                     await websocket.send_json({'type': 'pong'})
-                    
+
                 elif message_type == 'ack':
                     # Handle message acknowledgment
                     message_id = data.get('message_id')
                     if message_id:
                         await queue_service.delete_message(message_id)
-                        
+
                 else:
                     # Handle other message types
                     await handle_websocket_message(data, user.id, websocket)
-                    
+
         except WebSocketDisconnect:
             await manager.disconnect(websocket, user.id)
-            
+
     except Exception as e:
         await websocket.close(code=4000)
 
@@ -64,7 +64,7 @@ async def handle_websocket_message(data: dict, user_id: str, websocket: WebSocke
     try:
         message_type = data.get('type')
         content = data.get('content')
-        
+
         if message_type == 'subscribe':
             # Handle subscription requests
             channels = content.get('channels', [])
@@ -74,7 +74,7 @@ async def handle_websocket_message(data: dict, user_id: str, websocket: WebSocke
                 'type': 'subscribed',
                 'channels': channels
             })
-            
+
         elif message_type == 'unsubscribe':
             # Handle unsubscribe requests
             channels = content.get('channels', [])
@@ -84,7 +84,7 @@ async def handle_websocket_message(data: dict, user_id: str, websocket: WebSocke
                 'type': 'unsubscribed',
                 'channels': channels
             })
-            
+
         elif message_type == 'status':
             # Handle status update requests
             status = content.get('status')
@@ -94,7 +94,7 @@ async def handle_websocket_message(data: dict, user_id: str, websocket: WebSocke
                     'type': 'status_updated',
                     'status': status
                 })
-                
+
     except Exception as e:
         await websocket.send_json({
             'type': 'error',
@@ -115,18 +115,18 @@ async def send_notification(
             message=message,
             user_id=user_id
         )
-        
+
         # Attempt immediate delivery if user is connected
         success = await manager.send_personal_message(
             message=message,
             user_id=user_id
         )
-        
+
         return {
             "status": "delivered" if success else "queued",
             "user_id": user_id
         }
-        
+
     except Exception as e:
         return {
             "status": "error",
@@ -148,17 +148,17 @@ async def broadcast_message(
             user_id="broadcast",
             territory=territory
         )
-        
+
         # Attempt immediate broadcast
         await manager.broadcast(message, territory)
-        
+
         return {
             "status": "success",
             "territory": territory
         }
-        
+
     except Exception as e:
         return {
             "status": "error",
             "message": str(e)
-        } 
+        }

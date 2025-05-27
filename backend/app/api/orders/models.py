@@ -23,7 +23,7 @@ class Product(Base):
 
 class OrderStatusHistory(Base):
     """Order status history model."""
-    
+
     __tablename__ = "order_status_history"
 
     id: Mapped[PyUUID] = mapped_column(

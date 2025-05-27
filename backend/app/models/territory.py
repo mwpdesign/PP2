@@ -13,7 +13,7 @@ from app.models.associations import user_territories, territory_role_access
 
 class Territory(Base):
     """Territory model for geographic and organizational boundaries."""
-    
+
     __tablename__ = 'territories'
 
     id: Mapped[PyUUID] = mapped_column(
@@ -24,13 +24,13 @@ class Territory(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     description: Mapped[str] = mapped_column(String(500))
-    
+
     # Geographic boundaries
     latitude: Mapped[float] = mapped_column(Float, nullable=True)
     longitude: Mapped[float] = mapped_column(Float, nullable=True)
     radius_miles: Mapped[float] = mapped_column(Float, nullable=True)
     boundaries: Mapped[dict] = mapped_column(JSON, nullable=True)  # GeoJSON
-    
+
     # Organization
     organization_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
@@ -42,7 +42,7 @@ class Territory(Base):
         ForeignKey('territories.id'),
         nullable=True
     )
-    
+
     # Settings and metadata
     settings: Mapped[dict] = mapped_column(
         JSON,
@@ -147,4 +147,4 @@ class Territory(Base):
 
     def is_descendant_of(self, other_territory) -> bool:
         """Check if this territory is a descendant of another territory."""
-        return other_territory.is_ancestor_of(self) 
+        return other_territory.is_ancestor_of(self)

@@ -46,7 +46,7 @@ class CognitoService:
                 Password=password,
                 UserAttributes=attributes
             )
-            
+
             # Auto confirm user for development
             if settings.ENVIRONMENT == "development":
                 self.client.admin_confirm_sign_up(
@@ -136,4 +136,4 @@ class CognitoService:
             return response
 
         except ClientError as e:
-            raise Exception(f"Failed to update user attributes: {str(e)}") 
+            raise Exception(f"Failed to update user attributes: {str(e)}")

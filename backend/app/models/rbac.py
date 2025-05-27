@@ -40,7 +40,7 @@ role_permissions = Table(
 
 class Role(Base):
     """Role model for RBAC."""
-    
+
     __tablename__ = 'roles'
 
     id: Mapped[PyUUID] = mapped_column(
@@ -95,7 +95,7 @@ class Role(Base):
 
 class Permission(Base):
     """Permission model for RBAC."""
-    
+
     __tablename__ = 'permissions'
 
     id: Mapped[PyUUID] = mapped_column(
@@ -127,4 +127,4 @@ class Permission(Base):
 
     def __repr__(self):
         """String representation of the permission."""
-        return f"<Permission(name='{self.name}')>" 
+        return f"<Permission(name='{self.name}')>"

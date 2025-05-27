@@ -65,12 +65,12 @@ class PatientBase(BaseModel):
     address: str
     phone_number: str = Field(..., pattern=r'^\+?1?\d{9,15}$')
     email: EmailStr
-    
+
     insurance_id: Optional[str] = None
     insurance_provider: Optional[str] = None
     insurance_group: Optional[str] = None
     insurance_type: Optional[InsuranceType] = None
-    
+
     status: PatientStatus = PatientStatus.ACTIVE
     territory_id: int
     organization_id: int
@@ -109,11 +109,11 @@ class PatientUpdate(BaseModel):
     address: Optional[str] = None
     phone_number: Optional[str] = None
     email: Optional[EmailStr] = None
-    
+
     insurance_provider: Optional[str] = None
     insurance_group: Optional[str] = None
     insurance_type: Optional[InsuranceType] = None
-    
+
     status: Optional[PatientStatus] = None
     territory_id: Optional[int] = None
 
@@ -848,4 +848,4 @@ class SearchAuditLog(BaseModel):
     ip_address: str
     user_agent: str
     timestamp: datetime
-    rate_limit_remaining: int 
+    rate_limit_remaining: int

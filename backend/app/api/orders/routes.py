@@ -43,7 +43,7 @@ async def list_products(
 ):
     """List products with filtering options."""
     await verify_territory_access(current_user, territory_id)
-    
+
     inventory_service = InventoryService(db)
     search_params = ProductSearchParams(
         query=query,
@@ -52,7 +52,7 @@ async def list_products(
         compliance_status=compliance_status,
         in_stock_only=in_stock_only
     )
-    
+
     return await inventory_service.search_products(**search_params.dict())
 
 @router.get("/products/{product_id}", response_model=ProductResponse)
@@ -64,11 +64,11 @@ async def get_product(
 ):
     """Get detailed product information."""
     await verify_territory_access(current_user, territory_id)
-    
+
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     return product
 
 @router.post("/products", response_model=ProductResponse)
@@ -83,27 +83,27 @@ async def create_product(
             status_code=403,
             detail="Only administrators can create products"
         )
-    
+
     db_product = Product(**product.dict(exclude={"category_ids"}))
-    
+
     # Add categories
     if product.category_ids:
         categories = db.query(ProductCategory).filter(
             ProductCategory.id.in_(product.category_ids)
         ).all()
         db_product.categories = categories
-    
+
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
-    
+
     await audit_product_change(
         db,
         "create",
         db_product.id,
         current_user["id"]
     )
-    
+
     return db_product
 
 @router.put("/products/{product_id}", response_model=ProductResponse)
@@ -119,11 +119,11 @@ async def update_product(
             status_code=403,
             detail="Only administrators can update products"
         )
-    
+
     db_product = db.query(Product).filter(Product.id == product_id).first()
     if not db_product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     # Update fields
     for field, value in product.dict(exclude_unset=True).items():
         if field == "category_ids" and value is not None:
@@ -133,17 +133,17 @@ async def update_product(
             db_product.categories = categories
         else:
             setattr(db_product, field, value)
-    
+
     db.commit()
     db.refresh(db_product)
-    
+
     await audit_product_change(
         db,
         "update",
         product_id,
         current_user["id"]
     )
-    
+
     return db_product
 
 @router.get("/products/{product_id}/inventory", response_model=List[ProductInventoryResponse])
@@ -155,20 +155,20 @@ async def get_product_inventory(
 ):
     """Get product inventory levels."""
     await verify_territory_access(current_user, territory_id)
-    
+
     inventory_service = InventoryService(db)
     available, message = await inventory_service.get_product_availability(
         product_id,
         territory_id
     )
-    
+
     if not available:
         raise HTTPException(status_code=404, detail=message)
-    
+
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     return product.inventory
 
 @router.post("/products/{product_id}/inventory", response_model=ProductInventoryResponse)
@@ -184,7 +184,7 @@ async def update_inventory(
             status_code=403,
             detail="Only administrators can update inventory"
         )
-    
+
     inventory_service = InventoryService(db)
     try:
         return await inventory_service.update_stock_level(
@@ -205,7 +205,7 @@ async def reserve_inventory(
 ):
     """Reserve product inventory for an order."""
     await verify_territory_access(current_user, params.territory_id)
-    
+
     inventory_service = InventoryService(db)
     try:
         return await inventory_service.reserve_inventory(
@@ -227,7 +227,7 @@ async def get_product_compliance(
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    
+
     return product.compliance
 
 @router.get("/products/categories", response_model=List[ProductCategoryResponse])
@@ -252,12 +252,12 @@ async def create_category(
             status_code=403,
             detail="Only administrators can create categories"
         )
-    
+
     db_category = ProductCategory(**category.dict())
     db.add(db_category)
     db.commit()
     db.refresh(db_category)
-    
+
     return db_category
 
 @router.post(
@@ -368,4 +368,4 @@ async def create_order_from_ivr(
 ) -> OrderResponse:
     """Create a new order from an approved IVR session."""
     order_service = OrderService(db, current_user)
-    return await order_service.create_order_from_ivr(ivr_session_id) 
+    return await order_service.create_order_from_ivr(ivr_session_id)

@@ -4,11 +4,10 @@ Analytics models for the healthcare IVR platform.
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import (
-    String, DateTime, Boolean, Integer, Float, JSON, ForeignKey, Index,
-    Column
+    Boolean, DateTime, Float, ForeignKey, Index, Integer, JSON, String
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
 
@@ -18,9 +17,11 @@ from app.core.database import Base
 class DimTime(Base):
     """Time dimension for date-based analytics."""
     __tablename__ = "dim_time"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    date: Mapped[datetime] = mapped_column(DateTime, nullable=False, unique=True)
+    date: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, unique=True
+    )
     year: Mapped[int] = mapped_column(Integer, nullable=False)
     month: Mapped[int] = mapped_column(Integer, nullable=False)
     day: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -30,7 +31,7 @@ class DimTime(Base):
     quarter: Mapped[int] = mapped_column(Integer, nullable=False)
     is_weekend: Mapped[bool] = mapped_column(Boolean, nullable=False)
     is_holiday: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    
+
     # Indexes for common queries
     __table_args__ = (
         Index('idx_time_date', 'date'),
@@ -41,7 +42,7 @@ class DimTime(Base):
 class DimGeography(Base):
     """Geography dimension for location-based analytics."""
     __tablename__ = "dim_geography"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     territory_id: Mapped[str] = mapped_column(String(36), nullable=False)
     state: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -49,7 +50,7 @@ class DimGeography(Base):
     zip_code: Mapped[str] = mapped_column(String(10), nullable=False)
     timezone: Mapped[str] = mapped_column(String(50), nullable=False)
     region: Mapped[str] = mapped_column(String(50), nullable=False)
-    
+
     __table_args__ = (
         Index('idx_geography_territory', 'territory_id'),
         Index('idx_geography_region', 'region')
@@ -59,15 +60,16 @@ class DimGeography(Base):
 class DimOrganization(Base):
     """Organization dimension for company-based analytics."""
     __tablename__ = "dim_organization"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     org_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    type: Mapped[str] = mapped_column(String(50), nullable=False)  # hospital, clinic, pharmacy, etc.
+    # hospital, clinic, pharmacy, etc.
+    type: Mapped[str] = mapped_column(String(50), nullable=False)
     size_category: Mapped[str] = mapped_column(String(20), nullable=False)
     subscription_tier: Mapped[str] = mapped_column(String(20), nullable=False)
     territory_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    
+
     __table_args__ = (
         Index('idx_org_territory', 'territory_id'),
         Index('idx_org_type', 'type')
@@ -77,16 +79,18 @@ class DimOrganization(Base):
 class DimInsuranceProvider(Base):
     """Insurance provider dimension for performance analytics."""
     __tablename__ = "dim_insurance_provider"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    provider_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
+    provider_id: Mapped[str] = mapped_column(
+        String(36), nullable=False, unique=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     # private, medicare, medicaid
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     coverage_level: Mapped[str] = mapped_column(String(50), nullable=False)
     # expected response time in seconds
     response_sla: Mapped[int] = mapped_column(Integer, nullable=False)
-    
+
     __table_args__ = (
         Index('idx_provider_type', 'type'),
         Index('idx_provider_name', 'name')
@@ -96,7 +100,7 @@ class DimInsuranceProvider(Base):
 class DimPatientDemographics(Base):
     """Anonymized patient demographics for population analytics."""
     __tablename__ = "dim_patient_demographics"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     age_group: Mapped[str] = mapped_column(String(20), nullable=False)
     gender: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -104,7 +108,7 @@ class DimPatientDemographics(Base):
     zip3: Mapped[str] = mapped_column(String(3), nullable=False)
     income_bracket: Mapped[Optional[str]] = mapped_column(String(20))
     insurance_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    
+
     __table_args__ = (
         Index('idx_demographics_zip3', 'zip3'),
         Index('idx_demographics_age', 'age_group')
@@ -114,13 +118,22 @@ class DimPatientDemographics(Base):
 class DimPatientSatisfaction(Base):
     """Dimension for tracking detailed patient satisfaction metrics."""
     __tablename__ = "dim_patient_satisfaction"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    satisfaction_level: Mapped[str] = mapped_column(String(20), nullable=False)  # high, medium, low
-    feedback_category: Mapped[str] = mapped_column(String(50), nullable=False)  # wait time, service quality, etc.
-    response_channel: Mapped[str] = mapped_column(String(20), nullable=False)  # ivr, sms, email
+    # high, medium, low
+    satisfaction_level: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )
+    # wait time, service quality, etc.
+    feedback_category: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )
+    # ivr, sms, email
+    response_channel: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )
     sentiment_score: Mapped[float] = mapped_column(Float, nullable=False)
-    
+
     __table_args__ = (
         Index('idx_satisfaction_level', 'satisfaction_level'),
         Index('idx_feedback_category', 'feedback_category')
@@ -130,17 +143,44 @@ class DimPatientSatisfaction(Base):
 class DimVerificationPerformance(Base):
     """Dimension for detailed insurance verification performance metrics."""
     __tablename__ = "dim_verification_performance"
-    
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    verification_type: Mapped[str] = mapped_column(String(50), nullable=False)  # real-time, batch, manual
-    response_time_category: Mapped[str] = mapped_column(String(20), nullable=False)  # fast, medium, slow
-    error_type: Mapped[Optional[str]] = mapped_column(String(50))  # timeout, invalid data, system error
-    retry_count: Mapped[int] = mapped_column(Integer, default=0)
-    sla_category: Mapped[str] = mapped_column(String(20), nullable=False)  # met, missed, critical
-    
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True
+    )
+    # real-time, batch, manual
+    verification_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False
+    )
+    # fast, medium, slow
+    response_time_category: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False
+    )
+    # timeout, invalid data, system error
+    error_type: Mapped[Optional[str]] = mapped_column(
+        String(50)
+    )
+    retry_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+    # met, missed, critical
+    sla_category: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False
+    )
+
     __table_args__ = (
-        Index('idx_verification_type', 'verification_type'),
-        Index('idx_sla_category', 'sla_category')
+        Index(
+            'idx_verification_type',
+            'verification_type'
+        ),
+        Index(
+            'idx_sla_category',
+            'sla_category'
+        )
     )
 
 
@@ -149,67 +189,146 @@ class DimVerificationPerformance(Base):
 class FactIVRCall(Base):
     """Fact table for IVR call analytics."""
     __tablename__ = "fact_ivr_call"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    call_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
-    time_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_time.id'), nullable=False)
-    geography_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_geography.id'), nullable=False)
-    organization_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_organization.id'), nullable=False)
-    
+    call_id: Mapped[str] = mapped_column(
+        String(36), nullable=False, unique=True
+    )
+    time_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey('dim_time.id'), nullable=False
+    )
+    geography_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey('dim_geography.id'), nullable=False
+    )
+    organization_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey('dim_organization.id'), nullable=False
+    )
+
     # Metrics
-    duration_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
-    menu_selections: Mapped[dict] = mapped_column(JSON, nullable=False)
-    outcome: Mapped[str] = mapped_column(String(50), nullable=False)
-    satisfaction_score: Mapped[Optional[int]] = mapped_column(Integer)
-    error_count: Mapped[int] = mapped_column(Integer, default=0)
-    transfer_count: Mapped[int] = mapped_column(Integer, default=0)
-    
+    duration_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False
+    )
+    menu_selections: Mapped[dict] = mapped_column(
+        JSON, nullable=False
+    )
+    outcome: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )
+    satisfaction_score: Mapped[Optional[int]] = mapped_column(
+        Integer
+    )
+    error_count: Mapped[int] = mapped_column(
+        Integer, default=0
+    )
+    transfer_count: Mapped[int] = mapped_column(
+        Integer, default=0
+    )
+
     # Additional metrics for insurance performance
-    insurance_provider_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_insurance_provider.id'), nullable=False)
-    approval_status: Mapped[str] = mapped_column(String(50), nullable=False)
-    verification_time_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
-    patient_demographics_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('dim_patient_demographics.id'))
-    
+    insurance_provider_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey('dim_insurance_provider.id'),
+        nullable=False
+    )
+    approval_status: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )
+    verification_time_seconds: Mapped[int] = mapped_column(
+        Integer, nullable=False
+    )
+    patient_demographics_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey('dim_patient_demographics.id')
+    )
+
     # Additional metrics for satisfaction and verification
-    satisfaction_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('dim_patient_satisfaction.id'))
-    verification_performance_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey('dim_verification_performance.id'))
-    sentiment_score: Mapped[Optional[float]] = mapped_column(Float)
-    feedback_text: Mapped[Optional[str]] = mapped_column(String(500))
-    
+    satisfaction_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey('dim_patient_satisfaction.id')
+    )
+    verification_performance_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey('dim_verification_performance.id')
+    )
+    sentiment_score: Mapped[Optional[float]] = mapped_column(
+        Float
+    )
+    feedback_text: Mapped[Optional[str]] = mapped_column(
+        String(500)
+    )
+
     # Partitioning by date for performance
-    partition_date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    
+    partition_date: Mapped[DateTime] = mapped_column(
+        DateTime, nullable=False
+    )
+
     __table_args__ = (
         Index('idx_calls_date', 'partition_date'),
         Index('idx_calls_outcome', 'outcome'),
         Index('idx_calls_approval', 'approval_status'),
         Index('idx_calls_satisfaction', 'satisfaction_id'),
-        Index('idx_calls_verification', 'verification_performance_id')
+        Index(
+            'idx_calls_verification',
+            'verification_performance_id'
+        )
     )
 
 
 class FactOrder(Base):
     """Fact table for order analytics."""
     __tablename__ = "fact_order"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    order_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
-    time_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_time.id'), nullable=False)
-    geography_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_geography.id'), nullable=False)
-    organization_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_organization.id'), nullable=False)
-    
+    order_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True
+    )
+    time_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey('dim_time.id'),
+        nullable=False
+    )
+    geography_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey('dim_geography.id'),
+        nullable=False
+    )
+    organization_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey('dim_organization.id'),
+        nullable=False
+    )
+
     # Metrics
-    total_amount: Mapped[float] = mapped_column(Float, nullable=False)
-    item_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    shipping_cost: Mapped[float] = mapped_column(Float, nullable=False)
-    processing_time_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
-    status: Mapped[str] = mapped_column(String(50), nullable=False)
-    carrier: Mapped[str] = mapped_column(String(50), nullable=False)
-    delivery_sla_met: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    
+    total_amount: Mapped[float] = mapped_column(
+        Float,
+        nullable=False
+    )
+    item_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False
+    )
+    shipping_cost: Mapped[float] = mapped_column(
+        Float,
+        nullable=False
+    )
+    processing_time_seconds: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False
+    )
+    carrier: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False
+    )
+    delivery_sla_met: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False
+    )
+
     # Partitioning by date for performance
     partition_date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    
+
     __table_args__ = (
         Index('idx_orders_date', 'partition_date'),
         Index('idx_orders_status', 'status')
@@ -219,26 +338,78 @@ class FactOrder(Base):
 class FactNotification(Base):
     """Fact table for notification analytics."""
     __tablename__ = "fact_notification"
-    
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    notification_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
-    time_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_time.id'), nullable=False)
-    geography_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_geography.id'), nullable=False)
-    organization_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_organization.id'), nullable=False)
-    
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True
+    )
+    notification_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True
+    )
+    time_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey('dim_time.id'),
+        nullable=False
+    )
+    geography_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey('dim_geography.id'),
+        nullable=False
+    )
+    organization_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey(
+            'dim_organization.id'
+        ),
+        nullable=False
+    )
+
     # Metrics
-    channel: Mapped[str] = mapped_column(String(20), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), nullable=False)
-    delivery_time_seconds: Mapped[int] = mapped_column(Integer)
-    retry_count: Mapped[int] = mapped_column(Integer, default=0)
-    priority: Mapped[str] = mapped_column(String(20), nullable=False)
-    
+    channel: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False
+    )
+    delivery_time_seconds: Mapped[int] = mapped_column(
+        Integer
+    )
+    retry_count: Mapped[int] = mapped_column(
+        Integer,
+        default=0
+    )
+    priority: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False
+    )
+
     # Partitioning by date for performance
-    partition_date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    
+    partition_date: Mapped[DateTime] = mapped_column(
+        DateTime,
+        nullable=False
+    )
+
     __table_args__ = (
-        Index('idx_notifications_date', 'partition_date'),
-        Index('idx_notifications_channel', 'channel')
+        Index(
+            'idx_notifications_date',
+            'partition_date'
+        ),
+        Index(
+            'idx_notifications_channel',
+            'channel'
+        ),
+        Index(
+            'idx_notifications_status',
+            'status'
+        ),
+        Index(
+            'idx_notifications_priority',
+            'priority'
+        )
     )
 
 
@@ -247,80 +418,234 @@ class FactNotification(Base):
 class DailyMetrics(Base):
     """Pre-calculated daily metrics for fast dashboard access."""
     __tablename__ = "agg_daily_metrics"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    organization_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_organization.id'), nullable=False)
-    territory_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    
+    organization_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey('dim_organization.id'),
+        nullable=False
+    )
+    territory_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False
+    )
+
     # Call metrics
-    total_calls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    avg_call_duration: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    call_success_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    
+    total_calls: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+    avg_call_duration: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+    call_success_rate: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+
     # Order metrics
-    total_orders: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    total_revenue: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    avg_order_value: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    sla_compliance_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    
+    total_orders: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+    total_revenue: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+    avg_order_value: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+    sla_compliance_rate: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+
     # Notification metrics
-    notification_success_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    avg_delivery_time: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    
+    notification_success_rate: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+    avg_delivery_time: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+
     # System metrics
-    error_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    system_latency: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    
+    error_rate: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+    system_latency: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+
     # Insurance provider metrics
-    verification_success_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    avg_verification_time: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    approval_rate_by_provider: Mapped[JSONB] = mapped_column(JSONB, nullable=False, default={})
-    
+    verification_success_rate: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+    avg_verification_time: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+    approval_rate_by_provider: Mapped[JSONB] = mapped_column(
+        JSONB,
+        nullable=False,
+        default={}
+    )
+
     # Fulfillment metrics
-    avg_fulfillment_time: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    fulfillment_sla_compliance: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    
+    avg_fulfillment_time: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+    fulfillment_sla_compliance: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+
     # Territory metrics
-    territory_approval_rates: Mapped[JSONB] = mapped_column(JSONB, nullable=False, default={})
-    territory_response_times: Mapped[JSONB] = mapped_column(JSONB, nullable=False, default={})
-    
+    territory_approval_rates: Mapped[JSONB] = mapped_column(
+        JSONB,
+        nullable=False,
+        default={}
+    )
+    territory_response_times: Mapped[JSONB] = mapped_column(
+        JSONB,
+        nullable=False,
+        default={}
+    )
+
     # Additional satisfaction metrics
-    satisfaction_by_category: Mapped[JSONB] = mapped_column(JSONB, nullable=False, default={})
-    sentiment_trend: Mapped[JSONB] = mapped_column(JSONB, nullable=False, default={})
-    feedback_categories: Mapped[JSONB] = mapped_column(JSONB, nullable=False, default={})
-    
+    satisfaction_by_category: Mapped[JSONB] = mapped_column(
+        JSONB,
+        nullable=False,
+        default={}
+    )
+    sentiment_trend: Mapped[JSONB] = mapped_column(
+        JSONB,
+        nullable=False,
+        default={}
+    )
+    feedback_categories: Mapped[JSONB] = mapped_column(
+        JSONB,
+        nullable=False,
+        default={}
+    )
+
     # Additional verification metrics
-    verification_by_type: Mapped[JSONB] = mapped_column(JSONB, nullable=False, default={})
-    sla_performance: Mapped[JSONB] = mapped_column(JSONB, nullable=False, default={})
-    error_distribution: Mapped[JSONB] = mapped_column(JSONB, nullable=False, default={})
-    
+    verification_by_type: Mapped[JSONB] = mapped_column(
+        JSONB,
+        nullable=False,
+        default={}
+    )
+    sla_performance: Mapped[JSONB] = mapped_column(
+        JSONB,
+        nullable=False,
+        default={}
+    )
+    error_distribution: Mapped[JSONB] = mapped_column(
+        JSONB,
+        nullable=False,
+        default={}
+    )
+
     __table_args__ = (
         Index('idx_daily_metrics_date', 'date'),
-        Index('idx_daily_metrics_territory', 'territory_id')
+        Index('idx_daily_metrics_org', 'organization_id'),
+        Index(
+            'idx_daily_metrics_territory',
+            'territory_id'
+        )
     )
 
 
 class HourlyMetrics(Base):
     """Pre-calculated hourly metrics for real-time analytics."""
     __tablename__ = "agg_hourly_metrics"
-    
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    hour: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    organization_id: Mapped[int] = mapped_column(Integer, ForeignKey('dim_organization.id'), nullable=False)
-    territory_id: Mapped[str] = mapped_column(String(36), nullable=False)
-    
+
+    id: Mapped[int] = mapped_column(
+        Integer,
+        primary_key=True
+    )
+    hour: Mapped[DateTime] = mapped_column(
+        DateTime,
+        nullable=False
+    )
+    organization_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey('dim_organization.id'),
+        nullable=False
+    )
+    territory_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False
+    )
+
     # Real-time metrics
-    active_calls: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    active_orders: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    pending_notifications: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    system_health_score: Mapped[float] = mapped_column(Float, nullable=False, default=100)
-    
+    active_calls: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+    active_orders: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+    pending_notifications: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+    system_health_score: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=100
+    )
+
     # Performance metrics
-    avg_response_time: Mapped[float] = mapped_column(Float, nullable=False, default=0)
-    error_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    
+    avg_response_time: Mapped[float] = mapped_column(
+        Float,
+        nullable=False,
+        default=0
+    )
+    error_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+
     __table_args__ = (
-        Index('idx_hourly_metrics_hour', 'hour'),
-        Index('idx_hourly_metrics_territory', 'territory_id')
-    ) 
+        Index(
+            'idx_hourly_metrics_hour',
+            'hour'
+        ),
+        Index(
+            'idx_hourly_metrics_org',
+            'organization_id'
+        ),
+        Index(
+            'idx_hourly_metrics_territory',
+            'territory_id'
+        )
+    )

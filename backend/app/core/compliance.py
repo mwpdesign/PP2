@@ -128,4 +128,4 @@ class ComplianceService:
     async def _initiate_incident_response(self, incident: Dict) -> None:
         """Start automated incident response procedures."""
         # TODO: Implement automated incident response
-        pass 
+        pass

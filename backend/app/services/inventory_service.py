@@ -32,16 +32,16 @@ class InventoryService:
                     WarehouseLocation.item_id == item["id"],
                     WarehouseLocation.quantity >= item["quantity"]
                 ).all()
-                
+
                 if not item_locations:
                     raise ValidationError(
                         f"Insufficient stock for item {item['id']}"
                     )
-                    
+
                 locations.extend(item_locations)
-                
+
             return locations
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -65,13 +65,13 @@ class InventoryService:
                 condition=condition
             )
             self.db.add(transaction)
-            
+
             # Update or create stock level
             stock = self.db.query(StockLevel).filter(
                 StockLevel.item_id == item_id,
                 StockLevel.condition == condition
             ).first()
-            
+
             if stock:
                 stock.quantity += quantity
                 stock.last_updated = datetime.utcnow()
@@ -82,7 +82,7 @@ class InventoryService:
                     condition=condition
                 )
                 self.db.add(stock)
-            
+
             # Assign warehouse location if provided
             if location:
                 warehouse_loc = WarehouseLocation(
@@ -94,10 +94,10 @@ class InventoryService:
                     bin=location.get("bin")
                 )
                 self.db.add(warehouse_loc)
-            
+
             self.db.commit()
             return transaction
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
@@ -117,10 +117,10 @@ class InventoryService:
             stock = self.db.query(StockLevel).filter(
                 StockLevel.item_id == item_id
             ).first()
-            
+
             if not stock or stock.quantity < quantity:
                 raise ValidationError("Insufficient stock")
-            
+
             # Create removal transaction
             transaction = InventoryTransaction(
                 item_id=item_id,
@@ -128,11 +128,11 @@ class InventoryService:
                 type="removal"
             )
             self.db.add(transaction)
-            
+
             # Update stock level
             stock.quantity -= quantity
             stock.last_updated = datetime.utcnow()
-            
+
             # Update warehouse location if specified
             if location_id:
                 location = self.db.query(WarehouseLocation).get(location_id)
@@ -142,10 +142,10 @@ class InventoryService:
                             "Insufficient stock at location"
                         )
                     location.quantity -= quantity
-                    
+
             self.db.commit()
             return transaction
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
@@ -163,7 +163,7 @@ class InventoryService:
             if item_id:
                 query = query.filter(StockLevel.item_id == item_id)
             return query.all()
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -179,16 +179,16 @@ class InventoryService:
             low_stock = self.db.query(StockLevel).filter(
                 StockLevel.quantity <= threshold
             ).all()
-            
+
             return [{
                 "item_id": stock.item_id,
                 "quantity": stock.quantity,
                 "condition": stock.condition,
                 "last_updated": stock.last_updated
             } for stock in low_stock]
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to get low stock items: {str(e)}"
-            ) 
+            )

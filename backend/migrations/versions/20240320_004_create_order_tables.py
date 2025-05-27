@@ -307,7 +307,7 @@ def upgrade() -> None:
     # Create RLS policies
     op.execute("""
         ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY order_access_policy ON orders
             FOR ALL
             USING (
@@ -320,14 +320,15 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY order_items_access_policy ON order_items
             FOR ALL
             USING (
                 EXISTS (
                     SELECT 1 FROM orders o
                     WHERE o.id = order_id
-                    AND o.organization_id = current_setting('app.current_org_id')::uuid
+                    AND o.organization_id =
+                        current_setting('app.current_org_id')::uuid
                     AND o.territory_id = ANY(
                         current_setting('app.user_territories')::uuid[]
                     )
@@ -337,14 +338,15 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE order_status_history ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY status_history_access_policy ON order_status_history
             FOR ALL
             USING (
                 EXISTS (
                     SELECT 1 FROM orders o
                     WHERE o.id = order_id
-                    AND o.organization_id = current_setting('app.current_org_id')::uuid
+                    AND o.organization_id =
+                        current_setting('app.current_org_id')::uuid
                     AND o.territory_id = ANY(
                         current_setting('app.user_territories')::uuid[]
                     )
@@ -354,14 +356,15 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE order_documents ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY order_documents_access_policy ON order_documents
             FOR ALL
             USING (
                 EXISTS (
                     SELECT 1 FROM orders o
                     WHERE o.id = order_id
-                    AND o.organization_id = current_setting('app.current_org_id')::uuid
+                    AND o.organization_id =
+                        current_setting('app.current_org_id')::uuid
                     AND o.territory_id = ANY(
                         current_setting('app.user_territories')::uuid[]
                     )
@@ -376,8 +379,10 @@ def downgrade() -> None:
     op.execute("""
         DROP POLICY IF EXISTS order_access_policy ON orders;
         DROP POLICY IF EXISTS order_items_access_policy ON order_items;
-        DROP POLICY IF EXISTS status_history_access_policy ON order_status_history;
-        DROP POLICY IF EXISTS order_documents_access_policy ON order_documents;
+        DROP POLICY IF EXISTS status_history_access_policy
+            ON order_status_history;
+        DROP POLICY IF EXISTS order_documents_access_policy
+            ON order_documents;
     """)
 
     # Drop indexes
@@ -405,4 +410,4 @@ def downgrade() -> None:
     op.drop_table('order_documents')
     op.drop_table('order_status_history')
     op.drop_table('order_items')
-    op.drop_table('orders') 
+    op.drop_table('orders')

@@ -133,13 +133,13 @@ async def test_patient_document_upload(
 ):
     """Test patient document upload functionality."""
     import io
-    
+
     # Create a test file
     file_content = io.BytesIO(b"Test medical document content")
     files = {
         "file": ("test_document.pdf", file_content, "application/pdf")
     }
-    
+
     form_data = {
         "document_type": "medical_record",
         "document_category": "test_category"
@@ -166,8 +166,8 @@ async def test_patient_facility_query(
     )
     assert response.status_code == 200
     data = response.json()
-    
+
     # Verify facility information is included
     assert data["facility_id"] == str(test_facility.id)
     assert "facility" in data
-    assert data["facility"]["name"] == test_facility.name 
+    assert data["facility"]["name"] == test_facility.name

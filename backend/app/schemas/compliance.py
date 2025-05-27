@@ -184,4 +184,4 @@ class ComplianceReport(BaseModel):
                     "Update security training"
                 ]
             }
-        } 
+        }

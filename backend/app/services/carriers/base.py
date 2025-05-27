@@ -8,7 +8,7 @@ from typing import Dict, List
 
 class BaseCarrier(ABC):
     """Base carrier service implementation."""
-    
+
     def __init__(self, name: str):
         """Initialize base carrier service."""
         self.name = name
@@ -44,4 +44,4 @@ class BaseCarrier(ABC):
         address: Dict
     ) -> Dict:
         """Validate address with carrier."""
-        pass 
+        pass

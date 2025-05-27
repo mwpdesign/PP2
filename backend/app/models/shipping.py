@@ -335,4 +335,4 @@ class ShipmentTracking(Base):
     )
 
     # Relationships
-    shipment = relationship("Shipment", back_populates="tracking_events") 
+    shipment = relationship("Shipment", back_populates="tracking_events")

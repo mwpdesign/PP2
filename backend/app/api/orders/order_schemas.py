@@ -107,4 +107,4 @@ class BulkStatusUpdateResponse(BaseModel):
     failed: List[Dict] = Field(
         ...,
         description="Orders that failed to update"
-    ) 
+    )

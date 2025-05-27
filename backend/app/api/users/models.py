@@ -124,7 +124,7 @@ class Role(Base):
         secondary=user_roles,
         back_populates='roles'
     )
-    
+
     # Hierarchical relationships
     parent_roles: Mapped[List["Role"]] = relationship(
         'Role',
@@ -226,7 +226,7 @@ class User(Base):
                     t.id == territory_id for t in self.territories
                 ):
                     return True
-            
+
             # Check inherited permissions through role hierarchy
             for parent_role in role.parent_roles:
                 if any(p.name == permission_name for p in parent_role.permissions):
@@ -234,7 +234,7 @@ class User(Base):
                         t.id == territory_id for t in self.territories
                     ):
                         return True
-        
+
         return False
 
     def get_territories(self) -> List[Territory]:
@@ -247,9 +247,9 @@ class User(Base):
         for role in self.roles:
             # Add direct permissions
             permissions.update(role.permissions)
-            
+
             # Add inherited permissions
             for parent_role in role.parent_roles:
                 permissions.update(parent_role.permissions)
-        
-        return list(permissions) 
+
+        return list(permissions)

@@ -136,7 +136,7 @@ class HIPAAComplianceValidator:
 
             # Generate encryption audit trail
             results["encryption_hash"] = hashlib.sha256(
-                encrypted_data if "encrypted_data" in locals() 
+                encrypted_data if "encrypted_data" in locals()
                 else data.encode()
             ).hexdigest()
 
@@ -367,4 +367,4 @@ class HIPAAComplianceValidator:
     def _verify_password(self, password: str, hashed_password: str) -> bool:
         """Verify password against hashed version."""
         # Implementation depends on your password hashing mechanism
-        pass 
+        pass

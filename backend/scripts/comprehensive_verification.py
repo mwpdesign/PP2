@@ -26,7 +26,7 @@ class ComprehensiveVerifier:
             "overall_status": "UNKNOWN",
             "categories": {}
         }
-        
+
         # Configure logging
         self._setup_logging()
 
@@ -34,17 +34,17 @@ class ComprehensiveVerifier:
         """Configure logging for the verification engine"""
         log_dir = Path("verification_reports/logs")
         log_dir.mkdir(parents=True, exist_ok=True)
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file = log_dir / f"comprehensive_{timestamp}.log"
-        
+
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
             )
         )
-        
+
         self.logger.addHandler(file_handler)
         self.logger.setLevel(logging.INFO)
 
@@ -58,7 +58,7 @@ class ComprehensiveVerifier:
                 check=True
             )
             services = json.loads(result.stdout)
-            
+
             service_status = {}
             for service in services:
                 is_running = "running" in service["State"].lower()
@@ -67,9 +67,9 @@ class ComprehensiveVerifier:
                     "state": service["State"],
                     "ports": service.get("Ports", "")
                 }
-            
+
             all_passing = all(
-                s["status"] == "PASS" 
+                s["status"] == "PASS"
                 for s in service_status.values()
             )
             return {
@@ -88,7 +88,7 @@ class ComprehensiveVerifier:
             # Check frontend server
             base_url = "http://localhost:3000"
             response = requests.get(base_url, timeout=10)
-            
+
             # Check critical frontend endpoints
             endpoints = [
                 "/",
@@ -97,7 +97,7 @@ class ComprehensiveVerifier:
                 "/patients",
                 "/orders"
             ]
-            
+
             endpoint_status = {}
             for endpoint in endpoints:
                 try:
@@ -112,7 +112,7 @@ class ComprehensiveVerifier:
                         "status": "FAIL",
                         "error": str(e)
                     }
-            
+
             return {
                 "status": "PASS" if response.status_code == 200 else "FAIL",
                 "details": {
@@ -132,7 +132,7 @@ class ComprehensiveVerifier:
             # Check health endpoint
             base_url = "http://localhost:8000"
             health_response = requests.get(f"{base_url}/health", timeout=10)
-            
+
             # Check critical API endpoints
             endpoints = [
                 "/api/v1/users",
@@ -141,7 +141,7 @@ class ComprehensiveVerifier:
                 "/api/v1/providers",
                 "/api/v1/analytics"
             ]
-            
+
             endpoint_status = {}
             for endpoint in endpoints:
                 try:
@@ -157,7 +157,7 @@ class ComprehensiveVerifier:
                         "status": "FAIL",
                         "error": str(e)
                     }
-            
+
             return {
                 "status": "PASS" if health_response.status_code == 200 else "FAIL",
                 "details": {
@@ -176,11 +176,11 @@ class ComprehensiveVerifier:
         try:
             conn = psycopg2.connect("postgresql://localhost:5432/healthcare_ivr")
             cur = conn.cursor()
-            
+
             # Check connection
             cur.execute("SELECT version();")
             version = cur.fetchone()[0]
-            
+
             # Check required tables
             required_tables = [
                 "users",
@@ -195,30 +195,30 @@ class ComprehensiveVerifier:
                 "audit_logs",
                 "territories"
             ]
-            
+
             cur.execute("""
-                SELECT table_name 
-                FROM information_schema.tables 
+                SELECT table_name
+                FROM information_schema.tables
                 WHERE table_schema = 'public'
             """)
             existing_tables = {row[0] for row in cur.fetchall()}
             missing_tables = set(required_tables) - existing_tables
-            
+
             # Check table schemas
             schema_status = {}
             for table in existing_tables & set(required_tables):
                 cur.execute(f"""
-                    SELECT column_name, data_type 
-                    FROM information_schema.columns 
+                    SELECT column_name, data_type
+                    FROM information_schema.columns
                     WHERE table_name = '{table}'
                 """)
                 schema_status[table] = {
                     "columns": {row[0]: row[1] for row in cur.fetchall()},
                     "row_count": self._get_table_count(cur, table)
                 }
-            
+
             conn.close()
-            
+
             return {
                 "status": "PASS" if not missing_tables else "FAIL",
                 "details": {
@@ -247,7 +247,7 @@ class ComprehensiveVerifier:
             "ses": self._verify_ses,
             "cloudtrail": self._verify_cloudtrail
         }
-        
+
         results = {}
         for service, verify_func in services.items():
             try:
@@ -258,7 +258,7 @@ class ComprehensiveVerifier:
                     "status": "FAIL",
                     "error": str(e)
                 }
-        
+
         return {
             "status": "PASS" if all(r["status"] == "PASS" for r in results.values()) else "FAIL",
             "details": results
@@ -327,7 +327,7 @@ class ComprehensiveVerifier:
             "encryption_config": self._verify_encryption_config(),
             "audit_logging": self._verify_audit_logging()
         }
-        
+
         return {
             "status": "PASS" if all(c["status"] == "PASS" for c in security_checks.values()) else "FAIL",
             "details": security_checks
@@ -362,9 +362,9 @@ class ComprehensiveVerifier:
             "COGNITO_CLIENT_ID",
             "JWT_SECRET"
         ]
-        
+
         missing_vars = [var for var in required_env_vars if not os.getenv(var)]
-        
+
         return {
             "status": "PASS" if not missing_vars else "FAIL",
             "details": {
@@ -379,9 +379,9 @@ class ComprehensiveVerifier:
             "KMS_KEY_ID",
             "ENCRYPTION_KEY"
         ]
-        
+
         missing_vars = [var for var in required_env_vars if not os.getenv(var)]
-        
+
         return {
             "status": "PASS" if not missing_vars else "FAIL",
             "details": {
@@ -395,24 +395,24 @@ class ComprehensiveVerifier:
         try:
             conn = psycopg2.connect("postgresql://localhost:5432/healthcare_ivr")
             cur = conn.cursor()
-            
+
             # Check audit_logs table
             cur.execute("""
                 SELECT EXISTS (
-                    SELECT FROM information_schema.tables 
+                    SELECT FROM information_schema.tables
                     WHERE table_name = 'audit_logs'
                 )
             """)
             table_exists = cur.fetchone()[0]
-            
+
             if table_exists:
                 cur.execute("SELECT COUNT(*) FROM audit_logs")
                 log_count = cur.fetchone()[0]
             else:
                 log_count = 0
-            
+
             conn.close()
-            
+
             return {
                 "status": "PASS" if table_exists else "FAIL",
                 "details": {
@@ -438,7 +438,7 @@ class ComprehensiveVerifier:
             "docs/troubleshooting.md",
             "docs/user_manual.md"
         ]
-        
+
         doc_status = {}
         for doc in required_docs:
             doc_path = Path(doc)
@@ -454,7 +454,7 @@ class ComprehensiveVerifier:
                 doc_status[doc] = {
                     "exists": False
                 }
-        
+
         return {
             "status": "PASS" if all(d["exists"] for d in doc_status.values()) else "FAIL",
             "details": doc_status
@@ -464,7 +464,7 @@ class ComprehensiveVerifier:
         """Run all verification checks"""
         try:
             self.logger.info("Starting comprehensive system verification")
-            
+
             # Run all verifications
             verifications = {
                 "docker_services": self.verify_docker_services,
@@ -475,23 +475,23 @@ class ComprehensiveVerifier:
                 "security": self.verify_security,
                 "documentation": self.verify_documentation
             }
-            
+
             for category, verify_func in verifications.items():
                 self.logger.info(f"Verifying {category}")
                 self.results["categories"][category] = verify_func()
-            
+
             # Determine overall status
             has_failures = any(
                 category["status"] == "FAIL"
                 for category in self.results["categories"].values()
             )
             self.results["overall_status"] = "FAIL" if has_failures else "PASS"
-            
+
             # Save report
             self._save_report()
-            
+
             return not has_failures, self.results
-            
+
         except Exception as e:
             self.logger.error(f"Verification failed: {str(e)}", exc_info=True)
             self.results["overall_status"] = "ERROR"
@@ -502,13 +502,13 @@ class ComprehensiveVerifier:
         """Save verification results to a JSON file"""
         report_dir = Path("verification_reports")
         report_dir.mkdir(exist_ok=True)
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_file = report_dir / f"comprehensive_report_{timestamp}.json"
-        
+
         with open(report_file, "w") as f:
             json.dump(self.results, f, indent=2)
-        
+
         self.logger.info(f"Verification report saved: {report_file}")
 
 
@@ -517,25 +517,25 @@ def main():
     try:
         verifier = ComprehensiveVerifier()
         success, results = verifier.run_verification()
-        
+
         # Print results to console
         print("\n=== Comprehensive System Verification Report ===")
         print(f"Timestamp: {results['timestamp']}")
         print(f"Environment: {results['environment']}")
         print(f"Overall Status: {results['overall_status']}")
         print("\nCategory Status:")
-        
+
         for category, details in results["categories"].items():
             status = details["status"]
             status_color = "\033[92m" if status == "PASS" else "\033[91m"
             print(f"{category}: {status_color}{status}\033[0m")
-        
+
         sys.exit(0 if success else 1)
-        
+
     except Exception as e:
         print(f"Error running verification: {str(e)}", file=sys.stderr)
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    main() 
+    main()

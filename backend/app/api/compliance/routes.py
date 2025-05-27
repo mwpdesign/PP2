@@ -1,9 +1,11 @@
-"""
-HIPAA compliance API endpoints.
-"""
+"""HIPAA compliance API endpoints."""
+
 from typing import Dict, List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import (
+    APIRouter, Depends, HTTPException,
+    Query, status
+)
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
@@ -12,16 +14,19 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.services.hipaa_audit_service import HIPAAComplianceService
 from app.api.compliance.schemas import (
-    ComplianceViolation,
     ComplianceCheckResponse,
-    AccessStatistics,
-    AccessPattern,
     AuditReportResponse,
     SecurityIncidentCreate,
     SecurityIncidentResponse
 )
-from app.core.compliance import ComplianceService, SecurityIncidentSeverity
-from app.core.security_events import SecurityEventHandler, SecurityEventType
+from app.core.compliance import (
+    ComplianceService,
+    SecurityIncidentSeverity
+)
+from app.core.security_events import (
+    SecurityEventHandler,
+    SecurityEventType
+)
 from app.schemas.compliance import (
     ComplianceReport,
     SecurityIncident,
@@ -39,14 +44,22 @@ from app.core.security import require_permissions
 router = APIRouter()
 
 
+
+
 @router.post(
     "/compliance/check",
     response_model=ComplianceCheckResponse,
     tags=["compliance"]
 )
 async def run_compliance_check(
-    check_type: str = Query(..., description="Type of compliance check to run"),
-    territory_id: Optional[int] = Query(None, description="Territory to scope check to"),
+    check_type: str = Query(
+        ...,
+        description="Type of compliance check to run"
+    ),
+    territory_id: Optional[int] = Query(
+        None,
+        description="Territory to scope check to"
+    ),
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user)
 ):
@@ -64,6 +77,8 @@ async def run_compliance_check(
     return await service.run_compliance_check(check_type, territory_id)
 
 
+
+
 @router.get(
     "/compliance/audit-report",
     response_model=AuditReportResponse,
@@ -71,9 +86,18 @@ async def run_compliance_check(
 )
 async def generate_audit_report(
     report_type: str = Query(..., description="Type of report to generate"),
-    start_date: datetime = Query(..., description="Start date for report period"),
-    end_date: datetime = Query(..., description="End date for report period"),
-    territory_id: Optional[int] = Query(None, description="Territory to scope report to"),
+    start_date: datetime = Query(
+        ...,
+        description="Start date for report period"
+    ),
+    end_date: datetime = Query(
+        ...,
+        description="End date for report period"
+    ),
+    territory_id: Optional[int] = Query(
+        None,
+        description="Territory to scope report to"
+    ),
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user)
 ):
@@ -98,6 +122,8 @@ async def generate_audit_report(
         end_date,
         territory_id
     )
+
+
 
 
 @router.post(
@@ -126,17 +152,34 @@ async def report_security_incident(
     )
 
 
+
+
 @router.get(
     "/compliance/incidents",
     response_model=List[SecurityIncidentResponse],
     tags=["compliance"]
 )
 async def list_security_incidents(
-    territory_id: Optional[int] = Query(None, description="Territory to filter by"),
-    status: Optional[str] = Query(None, description="Status to filter by"),
-    severity: Optional[str] = Query(None, description="Severity to filter by"),
-    start_date: Optional[datetime] = Query(None, description="Start date for filtering"),
-    end_date: Optional[datetime] = Query(None, description="End date for filtering"),
+    territory_id: Optional[int] = Query(
+        None,
+        description="Territory to filter by"
+    ),
+    status: Optional[str] = Query(
+        None,
+        description="Status to filter by"
+    ),
+    severity: Optional[str] = Query(
+        None,
+        description="Severity to filter by"
+    ),
+    start_date: Optional[datetime] = Query(
+        None,
+        description="Start date for filtering"
+    ),
+    end_date: Optional[datetime] = Query(
+        None,
+        description="End date for filtering"
+    ),
     skip: int = Query(0, description="Number of records to skip"),
     limit: int = Query(10, description="Number of records to return"),
     db: Session = Depends(get_db),
@@ -168,6 +211,8 @@ async def list_security_incidents(
     )
 
 
+
+
 @router.get(
     "/compliance/audit-logs",
     response_model=List[AuditLogEntry],
@@ -180,7 +225,7 @@ async def get_audit_logs(
     patient_id: int = None,
     territory_id: int = None,
     limit: int = Query(default=50, le=100),
-    current_user = Depends(get_current_user),
+    current_user: Dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Retrieve PHI access audit logs with filtering options."""
@@ -198,8 +243,12 @@ async def get_audit_logs(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve audit logs: {str(e)}"
+            detail=(
+                f"Error retrieving audit logs: {str(e)}"
+            )
         )
+
+
 
 
 @router.get(
@@ -213,7 +262,7 @@ async def get_security_incidents(
     start_date: datetime = None,
     end_date: datetime = None,
     limit: int = Query(default=50, le=100),
-    current_user = Depends(get_current_user),
+    current_user: Dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Retrieve security incidents with filtering options."""
@@ -234,21 +283,23 @@ async def get_security_incidents(
         )
 
 
+
+
 @router.post(
-    "/compliance/incidents",
+    "/compliance/incidents/report",
     response_model=SecurityIncident,
     status_code=201,
     summary="Report security incident"
 )
-async def report_security_incident(
+async def create_security_incident(
     incident_type: SecurityEventType,
     severity: SecurityIncidentSeverity,
     details: Dict,
     affected_patients: List[int] = None,
-    current_user = Depends(get_current_user),
+    current_user: Dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Report a new security incident."""
+    """Create a new security incident report."""
     event_handler = SecurityEventHandler(db)
     try:
         incident = await event_handler.handle_security_event(
@@ -265,19 +316,17 @@ async def report_security_incident(
         )
 
 
-@router.get(
-    "/compliance/metrics",
-    response_model=ComplianceMetrics,
-    summary="Get compliance metrics"
-)
+
+
+@router.get("/compliance/metrics", response_model=ComplianceMetrics)
 async def get_compliance_metrics(
     start_date: datetime = None,
     end_date: datetime = None,
     territory_id: int = None,
-    current_user = Depends(get_current_user),
+    current_user: Dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get compliance and security metrics."""
+    """Get compliance metrics for the specified time period."""
     compliance_service = ComplianceService(db)
     try:
         metrics = await compliance_service.get_compliance_metrics(
@@ -293,11 +342,9 @@ async def get_compliance_metrics(
         )
 
 
-@router.get(
-    "/compliance/report",
-    response_model=ComplianceReport,
-    summary="Generate compliance report"
-)
+
+
+@router.get("/compliance/report", response_model=ComplianceReport)
 async def generate_compliance_report(
     start_date: datetime,
     end_date: datetime,
@@ -305,7 +352,7 @@ async def generate_compliance_report(
     include_metrics: bool = True,
     include_incidents: bool = True,
     include_audit_logs: bool = True,
-    current_user = Depends(get_current_user),
+    current_user: Dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Generate a comprehensive compliance report."""
@@ -327,6 +374,8 @@ async def generate_compliance_report(
         )
 
 
+
+
 @router.post("/logs", response_model=ComplianceLogResponse)
 @require_permissions(["compliance:write"])
 async def create_compliance_log(
@@ -337,12 +386,13 @@ async def create_compliance_log(
 ) -> ComplianceLogResponse:
     """Create a new compliance log entry."""
     compliance_service = ComplianceService(db)
-    
     log = await compliance_service.create_log(
         log_in,
         created_by_id=current_user["id"]
     )
     return log
+
+
 
 
 @router.get("/logs", response_model=List[ComplianceLogResponse])
@@ -356,13 +406,14 @@ async def get_compliance_logs(
 ) -> List[ComplianceLogResponse]:
     """Get compliance logs."""
     compliance_service = ComplianceService(db)
-    
     logs = await compliance_service.get_logs(
         organization_id=current_user["organization_id"],
         skip=skip,
         limit=limit
     )
     return logs
+
+
 
 
 @router.get("/logs/{log_id}", response_model=ComplianceLogResponse)
@@ -375,22 +426,21 @@ async def get_compliance_log(
 ) -> ComplianceLogResponse:
     """Get a compliance log by ID."""
     compliance_service = ComplianceService(db)
-    
     log = await compliance_service.get_log(log_id)
     if not log:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Compliance log not found"
         )
-    
     # Check organization access
     if log.organization_id != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
     return log
+
+
 
 
 @router.put("/logs/{log_id}", response_model=ComplianceLogResponse)
@@ -404,7 +454,6 @@ async def update_compliance_log(
 ) -> ComplianceLogResponse:
     """Update a compliance log."""
     compliance_service = ComplianceService(db)
-    
     # Get existing log
     log = await compliance_service.get_log(log_id)
     if not log:
@@ -412,20 +461,20 @@ async def update_compliance_log(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Compliance log not found"
         )
-    
     # Check organization access
     if log.organization_id != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
     log = await compliance_service.update_log(
         log_id,
         log_in,
         updated_by_id=current_user["id"]
     )
     return log
+
+
 
 
 @router.delete("/logs/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -438,7 +487,6 @@ async def delete_compliance_log(
 ):
     """Delete a compliance log."""
     compliance_service = ComplianceService(db)
-    
     # Get existing log
     log = await compliance_service.get_log(log_id)
     if not log:
@@ -446,15 +494,15 @@ async def delete_compliance_log(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Compliance log not found"
         )
-    
     # Check organization access
     if log.organization_id != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
     await compliance_service.delete_log(log_id)
+
+
 
 
 @router.post("/phi-access", response_model=PHIAccessResponse)
@@ -467,13 +515,14 @@ async def create_phi_access_log(
 ) -> PHIAccessResponse:
     """Create a new PHI access log entry."""
     compliance_service = ComplianceService(db)
-    
     access = await compliance_service.create_phi_access(
         access_in,
         source=f"user_{current_user['id']}",
         created_by_id=current_user["id"]
     )
     return access
+
+
 
 
 @router.get("/phi-access", response_model=List[PHIAccessResponse])
@@ -487,13 +536,14 @@ async def get_phi_access_logs(
 ) -> List[PHIAccessResponse]:
     """Get PHI access logs."""
     compliance_service = ComplianceService(db)
-    
     logs = await compliance_service.get_phi_access_logs(
         organization_id=current_user["organization_id"],
         skip=skip,
         limit=limit
     )
     return logs
+
+
 
 
 @router.get("/phi-access/{access_id}", response_model=PHIAccessResponse)
@@ -506,22 +556,21 @@ async def get_phi_access_log(
 ) -> PHIAccessResponse:
     """Get a PHI access log by ID."""
     compliance_service = ComplianceService(db)
-    
     log = await compliance_service.get_phi_access_log(access_id)
     if not log:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PHI access log not found"
         )
-    
     # Check organization access
     if log.organization_id != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
     return log
+
+
 
 
 @router.put("/phi-access/{access_id}", response_model=PHIAccessResponse)
@@ -535,7 +584,6 @@ async def update_phi_access_log(
 ) -> PHIAccessResponse:
     """Update a PHI access log."""
     compliance_service = ComplianceService(db)
-    
     # Get existing log
     log = await compliance_service.get_phi_access_log(access_id)
     if not log:
@@ -543,17 +591,15 @@ async def update_phi_access_log(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PHI access log not found"
         )
-    
     # Check organization access
     if log.organization_id != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
     log = await compliance_service.update_phi_access_log(
         access_id,
         access_in,
         updated_by_id=current_user["id"]
     )
-    return log 
+    return log

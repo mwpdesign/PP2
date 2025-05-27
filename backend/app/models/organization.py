@@ -10,7 +10,7 @@ from app.core.database import Base
 
 class Organization(Base):
     """Model for healthcare organizations."""
-    
+
     __tablename__ = "organizations"
 
     id: Mapped[PyUUID] = mapped_column(
@@ -55,4 +55,4 @@ class Organization(Base):
 
     def __repr__(self):
         """String representation of the organization."""
-        return f"<Organization(name='{self.name}')>" 
+        return f"<Organization(name='{self.name}')>"

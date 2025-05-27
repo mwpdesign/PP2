@@ -285,7 +285,7 @@ def upgrade() -> None:
     # Create RLS policies
     op.execute("""
         ALTER TABLE analytics_dimensions ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY dimension_access_policy ON analytics_dimensions
             FOR ALL
             USING (
@@ -295,7 +295,7 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE analytics_metrics ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY metric_access_policy ON analytics_metrics
             FOR ALL
             USING (
@@ -305,7 +305,7 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE analytics_facts ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY fact_access_policy ON analytics_facts
             FOR ALL
             USING (
@@ -318,7 +318,7 @@ def upgrade() -> None:
 
     op.execute("""
         ALTER TABLE analytics_reports ENABLE ROW LEVEL SECURITY;
-        
+
         CREATE POLICY report_access_policy ON analytics_reports
             FOR ALL
             USING (
@@ -356,4 +356,4 @@ def downgrade() -> None:
     op.drop_table('analytics_reports')
     op.drop_table('analytics_facts')
     op.drop_table('analytics_metrics')
-    op.drop_table('analytics_dimensions') 
+    op.drop_table('analytics_dimensions')

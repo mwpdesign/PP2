@@ -23,7 +23,7 @@ class SMSService:
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
         )
         self.kms_service = KMSService()
-        
+
         # SMS configuration
         self.sender_id = settings.SMS_SENDER_ID
         self.max_price = settings.SMS_MAX_PRICE
@@ -54,17 +54,17 @@ class SMSService:
         try:
             # Get recipient phone from user service
             phone_number = await self._get_recipient_phone(recipient_id)
-            
+
             # Validate phone number format
             if not self._validate_phone_number(phone_number):
                 logger.error(f"Invalid phone number format: {phone_number}")
                 return False
-            
+
             # Check opt-out status
             if await self._is_opted_out(phone_number):
                 logger.info(f"Recipient {phone_number} has opted out of SMS")
                 return False
-            
+
             # Send SMS
             response = self.sns_client.publish(
                 PhoneNumber=phone_number,
@@ -80,18 +80,18 @@ class SMSService:
                     }
                 }
             )
-            
+
             logger.info(
                 f"SMS sent successfully to {phone_number}, "
                 f"MessageId: {response['MessageId']}"
             )
-            
+
             return True
-            
+
         except ClientError as e:
             logger.error(f"Failed to send SMS: {str(e)}")
             return False
-            
+
         except Exception as e:
             logger.error(f"Unexpected error sending SMS: {str(e)}")
             return False
@@ -114,7 +114,7 @@ class SMSService:
                 phoneNumber=phone_number
             )
             return response['isOptedOut']
-            
+
         except ClientError as e:
             logger.error(f"Failed to check opt-out status: {str(e)}")
             return True
@@ -124,7 +124,7 @@ class SMSService:
         try:
             response = self.sns_client.list_phone_numbers_opted_out()
             return response['phoneNumbers']
-            
+
         except ClientError as e:
             logger.error(f"Failed to get opt-out list: {str(e)}")
             return []
@@ -134,10 +134,10 @@ class SMSService:
         try:
             # Log opt-out for compliance
             logger.info(f"Processing opt-out request for {phone_number}")
-            
+
             # Update user preferences in database
             await self._update_user_preferences(phone_number, opted_out=True)
-            
+
         except Exception as e:
             logger.error(f"Failed to process opt-out: {str(e)}")
             raise
@@ -149,4 +149,4 @@ class SMSService:
     ):
         """Update user notification preferences."""
         # TODO: Implement user preferences update
-        pass 
+        pass

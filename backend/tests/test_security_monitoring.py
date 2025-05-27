@@ -21,20 +21,20 @@ async def test_handle_failed_authentication(
 ):
     """Test handling failed authentication attempts."""
     service = SecurityMonitoringService(db)
-    
+
     # Test single failed attempt
     await service.handle_failed_authentication(
         user_id=test_user.id,
         ip_address="192.168.1.1",
         user_agent="test-browser"
     )
-    
+
     events = db.query(SecurityEvent).all()
     assert len(events) == 1
     assert events[0].event_type == "failed_authentication"
     assert events[0].user_id == test_user.id
     assert events[0].severity == "medium"
-    
+
     # Test account lockout after multiple failures
     for _ in range(4):  # Total will be 5 with previous attempt
         await service.handle_failed_authentication(
@@ -42,7 +42,7 @@ async def test_handle_failed_authentication(
             ip_address="192.168.1.1",
             user_agent="test-browser"
         )
-    
+
     # Verify account locked
     test_user = db.query(test_user.__class__).get(test_user.id)
     assert not test_user.is_active
@@ -57,7 +57,7 @@ async def test_detect_suspicious_patterns(
 ):
     """Test detection of suspicious access patterns."""
     service = SecurityMonitoringService(db)
-    
+
     # Create test events for rate limiting
     for _ in range(101):  # Exceed phi_access_rate threshold
         await service.detect_suspicious_patterns(
@@ -66,14 +66,14 @@ async def test_detect_suspicious_patterns(
             action="view",
             resource_type="patient"
         )
-    
+
     # Verify excessive access alert created
     alerts = db.query(SecurityAlert).filter(
         SecurityAlert.alert_type == "excessive_access"
     ).all()
     assert len(alerts) > 0
     assert alerts[0].severity == "high"
-    
+
     # Verify SNS notification sent for high severity
     mock_aws["sns"].publish.assert_called()
 
@@ -85,7 +85,7 @@ async def test_security_metrics(
 ):
     """Test security metrics collection."""
     service = SecurityMonitoringService(db)
-    
+
     # Create test security events
     events = [
         SecurityEvent(
@@ -103,7 +103,7 @@ async def test_security_metrics(
     ]
     db.add_all(events)
     db.commit()
-    
+
     # Get metrics
     start_date = datetime.utcnow() - timedelta(days=1)
     end_date = datetime.utcnow()
@@ -112,7 +112,7 @@ async def test_security_metrics(
         end_date=end_date,
         territory_id=test_user.territory_id
     )
-    
+
     assert metrics["total_events"] == 2
     assert metrics["by_severity"]["medium"] == 1
     assert metrics["by_severity"]["high"] == 1
@@ -128,7 +128,7 @@ async def test_evaluate_security_rule(
 ):
     """Test security rule evaluation."""
     service = SecurityMonitoringService(db)
-    
+
     # Create events matching rule criteria
     events = []
     for _ in range(test_security_rule.threshold):
@@ -140,13 +140,13 @@ async def test_evaluate_security_rule(
             created_at=datetime.utcnow()
         )
         events.append(event)
-    
+
     db.add_all(events)
     db.commit()
-    
+
     # Evaluate rule
     await service._evaluate_rule(test_security_rule)
-    
+
     # Verify alert created
     alerts = db.query(SecurityAlert).filter(
         SecurityAlert.alert_type == test_security_rule.alert_type
@@ -163,7 +163,7 @@ async def test_create_security_alert(
 ):
     """Test security alert creation."""
     service = SecurityMonitoringService(db)
-    
+
     # Create high severity alert
     await service._create_security_alert(
         alert_type="test_alert",
@@ -172,20 +172,20 @@ async def test_create_security_alert(
         territory_id=test_user.territory_id,
         details={"test": "data"}
     )
-    
+
     # Verify alert created
     alert = db.query(SecurityAlert).first()
     assert alert is not None
     assert alert.alert_type == "test_alert"
     assert alert.severity == "high"
-    
+
     # Verify incident created for high severity
     incident = db.query(SecurityIncident).first()
     assert incident is not None
     assert incident.incident_type == "test_alert"
     assert incident.severity == "high"
     assert incident.status == "open"
-    
+
     # Verify notifications sent
     mock_notification_service.send_notification.assert_called_once()
     mock_aws["sns"].publish.assert_called_once()
@@ -197,7 +197,7 @@ async def test_check_cloudtrail_events(
 ):
     """Test CloudTrail event monitoring."""
     service = SecurityMonitoringService(db)
-    
+
     # Mock CloudTrail events
     mock_aws["cloudtrail"].lookup_events.return_value = {
         "Events": [{
@@ -211,13 +211,13 @@ async def test_check_cloudtrail_events(
             """
         }]
     }
-    
+
     # Check events
     await service._check_cloudtrail_events()
-    
+
     # Verify alert created for sensitive operation
     alerts = db.query(SecurityAlert).filter(
         SecurityAlert.alert_type == "sensitive_aws_operation"
     ).all()
     assert len(alerts) == 1
-    assert alerts[0].severity == "high" 
+    assert alerts[0].severity == "high"

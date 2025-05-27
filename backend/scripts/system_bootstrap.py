@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def create_initial_roles(session) -> dict:
     """Create initial system roles."""
     logger.info("Creating initial roles...")
-    
+
     roles = {
         "ADMIN": "System Administrator",
         "PROVIDER": "Healthcare Provider",
@@ -31,7 +31,7 @@ def create_initial_roles(session) -> dict:
         "PATIENT": "Patient User",
         "SUPPORT": "Support Staff"
     }
-    
+
     role_objects = {}
     for role_name, description in roles.items():
         role = session.query(Role).filter_by(name=role_name).first()
@@ -40,13 +40,13 @@ def create_initial_roles(session) -> dict:
             session.add(role)
             logger.info(f"Created role: {role_name}")
         role_objects[role_name] = role
-    
+
     return role_objects
 
 def create_initial_organization(session) -> Organization:
     """Create the initial healthcare organization."""
     logger.info("Creating initial organization...")
-    
+
     org = session.query(Organization).first()
     if not org:
         org = Organization(
@@ -59,13 +59,13 @@ def create_initial_organization(session) -> Organization:
         )
         session.add(org)
         logger.info("Created initial organization")
-    
+
     return org
 
 def create_admin_user(session, org: Organization, admin_role: Role):
     """Create the initial admin user."""
     logger.info("Creating admin user...")
-    
+
     admin_email = "admin@healthcare-ivr.com"
     admin = session.query(User).filter_by(email=admin_email).first()
     if not admin:
@@ -81,7 +81,7 @@ def create_admin_user(session, org: Organization, admin_role: Role):
         admin.roles.append(admin_role)
         session.add(admin)
         logger.info("Created admin user")
-        
+
         # Create audit log for admin user creation
         audit = AuditLog(
             user_id=None,  # System action
@@ -95,7 +95,7 @@ def create_admin_user(session, org: Organization, admin_role: Role):
 def create_sample_ivr_flow(session):
     """Create a sample IVR flow for testing."""
     logger.info("Creating sample IVR flow...")
-    
+
     flow = session.query(IVRFlow).filter_by(name="Sample Flow").first()
     if not flow:
         flow = IVRFlow(
@@ -105,7 +105,7 @@ def create_sample_ivr_flow(session):
             version=1
         )
         session.add(flow)
-        
+
         # Create sample nodes
         welcome = IVRNode(
             flow=flow,
@@ -128,43 +128,43 @@ def create_sample_ivr_flow(session):
 def bootstrap_system():
     """Bootstrap the system with initial configuration."""
     logger.info("Starting system bootstrap...")
-    
+
     # Load settings
     settings = get_settings()
-    
+
     try:
         # Create database engine
         engine = create_engine(settings.get_database_url())
-        
+
         # Create all tables
         Base.metadata.create_all(engine)
         logger.info("Created database schema")
-        
+
         # Create session
         Session = sessionmaker(bind=engine)
         session = Session()
-        
+
         try:
             # Create initial data
             roles = create_initial_roles(session)
             org = create_initial_organization(session)
             create_admin_user(session, org, roles["ADMIN"])
             create_sample_ivr_flow(session)
-            
+
             # Commit all changes
             session.commit()
             logger.info("System bootstrap completed successfully!")
-            
+
         except SQLAlchemyError as e:
             session.rollback()
             logger.error(f"Database error during bootstrap: {e}")
             sys.exit(1)
         finally:
             session.close()
-            
+
     except Exception as e:
         logger.error(f"Error during system bootstrap: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
-    bootstrap_system() 
+    bootstrap_system()

@@ -1,28 +1,31 @@
+"""Provider models."""
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, ForeignKey, DateTime, Boolean, JSON
+from uuid import UUID
+
+from sqlalchemy import String, ForeignKey, DateTime, JSON
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 
 from app.core.database import Base
 from app.core.encryption import encrypt_field, decrypt_field
 from app.core.security import generate_uuid
+
 
 class Facility(Base):
     """Facility model for healthcare providers."""
     __tablename__ = "facilities"
     __table_args__ = {'extend_existing': True}
 
-    id: Mapped[str] = mapped_column(
-        String(36),
+    id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         primary_key=True,
         default=generate_uuid
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    encrypted_address: Mapped[Optional[str]] = mapped_column(
-        String(1024)
-    )
-    territory_id: Mapped[str] = mapped_column(
-        String(36),
+    encrypted_address: Mapped[Optional[str]] = mapped_column(String(1024))
+    territory_id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         ForeignKey("provider_territories.id")
     )
     status: Mapped[str] = mapped_column(String(50), default="active")
@@ -52,28 +55,25 @@ class Facility(Base):
     def address(self, value: str):
         self.encrypted_address = encrypt_field(value) if value else None
 
+
 class Provider(Base):
     """Provider model for healthcare providers."""
     __tablename__ = "providers"
     __table_args__ = {'extend_existing': True}
 
-    id: Mapped[str] = mapped_column(
-        String(36),
+    id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         primary_key=True,
         default=generate_uuid
     )
-    facility_id: Mapped[str] = mapped_column(
-        String(36),
+    facility_id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         ForeignKey("facilities.id")
     )
     # National Provider Identifier
     encrypted_npi: Mapped[Optional[str]] = mapped_column(String(255))
-    encrypted_first_name: Mapped[Optional[str]] = mapped_column(
-        String(255)
-    )
-    encrypted_last_name: Mapped[Optional[str]] = mapped_column(
-        String(255)
-    )
+    encrypted_first_name: Mapped[Optional[str]] = mapped_column(String(255))
+    encrypted_last_name: Mapped[Optional[str]] = mapped_column(String(255))
     encrypted_email: Mapped[Optional[str]] = mapped_column(String(255))
     encrypted_phone: Mapped[Optional[str]] = mapped_column(String(255))
     specialty: Mapped[str] = mapped_column(String(100))
@@ -91,7 +91,10 @@ class Provider(Base):
 
     # Relationships
     facility = relationship("Facility", back_populates="providers")
-    credentials = relationship("ProviderCredentials", back_populates="provider")
+    credentials = relationship(
+        "ProviderCredentials",
+        back_populates="provider"
+    )
     territories = relationship(
         "ProviderTerritory",
         secondary="provider_territory_assignments"
@@ -99,7 +102,10 @@ class Provider(Base):
 
     @property
     def npi(self) -> Optional[str]:
-        return decrypt_field(self.encrypted_npi) if self.encrypted_npi else None
+        return (
+            decrypt_field(self.encrypted_npi)
+            if self.encrypted_npi else None
+        )
 
     @npi.setter
     def npi(self, value: str):
@@ -149,18 +155,19 @@ class Provider(Base):
     def phone(self, value: str):
         self.encrypted_phone = encrypt_field(value) if value else None
 
+
 class ProviderCredentials(Base):
     """Provider credentials model."""
     __tablename__ = "provider_credentials"
     __table_args__ = {'extend_existing': True}
 
-    id: Mapped[str] = mapped_column(
-        String(36),
+    id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         primary_key=True,
         default=generate_uuid
     )
-    provider_id: Mapped[str] = mapped_column(
-        String(36),
+    provider_id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         ForeignKey("providers.id")
     )
     # e.g., "medical_license", "board_certification"
@@ -199,23 +206,26 @@ class ProviderCredentials(Base):
 
     @credential_number.setter
     def credential_number(self, value: str):
-        self.encrypted_credential_number = encrypt_field(value) if value else None
+        self.encrypted_credential_number = (
+            encrypt_field(value) if value else None
+        )
+
 
 class ProviderTerritory(Base):
     """Provider territory model."""
     __tablename__ = "provider_territories"
     __table_args__ = {'extend_existing': True}
 
-    id: Mapped[str] = mapped_column(
-        String(36),
+    id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         primary_key=True,
         default=generate_uuid
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     # GeoJSON data for territory boundaries
     boundary_data: Mapped[dict] = mapped_column(JSON)
-    parent_id: Mapped[Optional[str]] = mapped_column(
-        String(36),
+    parent_id: Mapped[Optional[UUID]] = mapped_column(
+        PostgresUUID(as_uuid=True),
         ForeignKey("provider_territories.id")
     )
     status: Mapped[str] = mapped_column(String(50), default="active")
@@ -237,18 +247,19 @@ class ProviderTerritory(Base):
     )
     children = relationship("ProviderTerritory")
 
+
 class ProviderTerritoryAssignment(Base):
     """Provider territory assignment model."""
     __tablename__ = "provider_territory_assignments"
     __table_args__ = {'extend_existing': True}
 
-    provider_id: Mapped[str] = mapped_column(
-        String(36),
+    provider_id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         ForeignKey("providers.id"),
         primary_key=True
     )
-    territory_id: Mapped[str] = mapped_column(
-        String(36),
+    territory_id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         ForeignKey("provider_territories.id"),
         primary_key=True
     )
@@ -258,23 +269,29 @@ class ProviderTerritoryAssignment(Base):
         DateTime(timezone=True),
         default=datetime.utcnow
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
 
 class ProviderRelationship(Base):
     """Provider relationship model."""
     __tablename__ = "provider_relationships"
     __table_args__ = {'extend_existing': True}
 
-    id: Mapped[str] = mapped_column(
-        String(36),
+    id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         primary_key=True,
         default=generate_uuid
     )
-    provider_id: Mapped[str] = mapped_column(
-        String(36),
+    provider_id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         ForeignKey("providers.id")
     )
-    related_provider_id: Mapped[str] = mapped_column(
-        String(36),
+    related_provider_id: Mapped[UUID] = mapped_column(
+        PostgresUUID(as_uuid=True),
         ForeignKey("providers.id")
     )
     # e.g., "supervisor", "colleague"
@@ -300,4 +317,4 @@ class ProviderRelationship(Base):
     related_provider = relationship(
         "Provider",
         foreign_keys=[related_provider_id]
-    ) 
+    )

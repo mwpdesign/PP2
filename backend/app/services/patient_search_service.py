@@ -60,28 +60,28 @@ class PatientSearchService:
     ) -> Any:
         """Build base query with territory and access control filters."""
         query = select(Patient)
-        
+
         # Territory-based access control
         if self.current_user.get("primary_territory_id"):
             query = query.filter(
                 Patient.territory_id == self.current_user["primary_territory_id"]
             )
-        
+
         # Organization-based access control
         if self.current_user.get("organization_id"):
             query = query.filter(
                 Patient.organization_id == self.current_user["organization_id"]
             )
-        
+
         # Basic filters
         if search_request.status:
             query = query.filter(Patient.status == search_request.status)
-        
+
         if search_request.insurance_verified is not None:
             query = query.filter(
                 Patient.insurance_verified == search_request.insurance_verified
             )
-        
+
         return query
 
     async def _apply_search_filters(
@@ -91,7 +91,7 @@ class PatientSearchService:
     ) -> Any:
         """Apply search filters to query."""
         filters = []
-        
+
         # Text search filters
         if search_request.query:
             filters.append(
@@ -99,7 +99,7 @@ class PatientSearchService:
                     func.plainto_tsquery('english', search_request.query)
                 )
             )
-        
+
         # Encrypted field filters
         if search_request.first_name:
             encrypted_first_name = self.encryption_service.encrypt(
@@ -108,7 +108,7 @@ class PatientSearchService:
             filters.append(
                 Patient.first_name_encrypted == encrypted_first_name
             )
-        
+
         if search_request.last_name:
             encrypted_last_name = self.encryption_service.encrypt(
                 search_request.last_name
@@ -116,7 +116,7 @@ class PatientSearchService:
             filters.append(
                 Patient.last_name_encrypted == encrypted_last_name
             )
-        
+
         if search_request.medical_record_number:
             encrypted_mrn = self.encryption_service.encrypt(
                 search_request.medical_record_number
@@ -124,11 +124,11 @@ class PatientSearchService:
             filters.append(
                 Patient.medical_record_number_encrypted == encrypted_mrn
             )
-        
+
         # Apply all filters
         if filters:
             query = query.filter(or_(*filters))
-        
+
         return query
 
     async def _apply_advanced_filters(
@@ -147,19 +147,19 @@ class PatientSearchService:
                     Patient.date_of_birth_encrypted <= max_date
                 )
             )
-        
+
         if advanced_filters.diagnosis_codes:
             query = query.join(MedicalCondition).filter(
                 MedicalCondition.icd_code.in_(
                     advanced_filters.diagnosis_codes
                 )
             )
-        
+
         if advanced_filters.medication_codes:
             query = query.join(Medication).filter(
                 Medication.code.in_(advanced_filters.medication_codes)
             )
-        
+
         if advanced_filters.visit_dates:
             start_date, end_date = advanced_filters.visit_dates
             query = query.filter(
@@ -168,13 +168,13 @@ class PatientSearchService:
                     Patient.last_visit_date <= end_date
                 )
             )
-        
+
         if advanced_filters.last_visit_within_days:
             cutoff_date = datetime.utcnow() - timedelta(
                 days=advanced_filters.last_visit_within_days
             )
             query = query.filter(Patient.last_visit_date >= cutoff_date)
-        
+
         return query
 
     async def _apply_sorting_pagination(
@@ -190,16 +190,16 @@ class PatientSearchService:
         total_count = await self.db.scalar(
             select(func.count()).select_from(query.subquery())
         )
-        
+
         # Apply sorting
         if sort_order == 'desc':
             query = query.order_by(getattr(Patient, sort_by).desc())
         else:
             query = query.order_by(getattr(Patient, sort_by).asc())
-        
+
         # Apply pagination
         query = query.offset(skip).limit(limit)
-        
+
         return query, total_count
 
     async def search_patients(
@@ -212,10 +212,10 @@ class PatientSearchService:
         try:
             # Build base query
             query = await self._build_base_query(search_request)
-            
+
             # Apply search filters
             query = await self._apply_search_filters(query, search_request)
-            
+
             # Apply sorting and pagination
             query, total_count = await self._apply_sorting_pagination(
                 query,
@@ -224,31 +224,31 @@ class PatientSearchService:
                 search_request.skip,
                 search_request.limit
             )
-            
+
             # Execute query
             results = await self.db.execute(query)
             patients = results.scalars().all()
-            
+
             # Log search operation
             await self._log_search(
                 "basic",
                 search_request.dict(),
                 len(patients)
             )
-            
+
             # Decrypt patient data
             decrypted_patients = [
                 await self.encryption_service.decrypt_patient(patient)
                 for patient in patients
             ]
-            
+
             return PatientSearchResponse(
                 items=decrypted_patients,
                 total=total_count,
                 skip=search_request.skip,
                 limit=search_request.limit
             )
-            
+
         except Exception as e:
             # Log error without exposing PHI
             await self._log_search(
@@ -269,16 +269,16 @@ class PatientSearchService:
         try:
             # Build base query
             query = await self._build_base_query(search_request)
-            
+
             # Apply basic search filters
             query = await self._apply_search_filters(query, search_request)
-            
+
             # Apply advanced filters
             query = await self._apply_advanced_filters(
                 query,
                 advanced_filters
             )
-            
+
             # Apply sorting and pagination
             query, total_count = await self._apply_sorting_pagination(
                 query,
@@ -287,11 +287,11 @@ class PatientSearchService:
                 search_request.skip,
                 search_request.limit
             )
-            
+
             # Execute query
             results = await self.db.execute(query)
             patients = results.scalars().all()
-            
+
             # Log search operation
             await self._log_search(
                 "advanced",
@@ -301,20 +301,20 @@ class PatientSearchService:
                 },
                 len(patients)
             )
-            
+
             # Decrypt patient data
             decrypted_patients = [
                 await self.encryption_service.decrypt_patient(patient)
                 for patient in patients
             ]
-            
+
             return PatientSearchResponse(
                 items=decrypted_patients,
                 total=total_count,
                 skip=search_request.skip,
                 limit=search_request.limit
             )
-            
+
         except Exception as e:
             # Log error without exposing PHI
             await self._log_search(
@@ -333,26 +333,26 @@ class PatientSearchService:
         """
         try:
             results = {}
-            
+
             for search_id, search_params in bulk_request.searches.items():
                 # Create search request
                 search_request = PatientSearchRequest(**search_params)
-                
+
                 # Perform search
                 search_results = await self.search_patients(search_request)
-                
+
                 # Store results
                 results[search_id] = search_results.items
-            
+
             # Log bulk search operation
             await self._log_search(
                 "bulk",
                 bulk_request.dict(),
                 sum(len(items) for items in results.values())
             )
-            
+
             return results
-            
+
         except Exception as e:
             # Log error without exposing PHI
             await self._log_search(
@@ -360,4 +360,4 @@ class PatientSearchService:
                 {"error": str(e)},
                 0
             )
-            raise 
+            raise

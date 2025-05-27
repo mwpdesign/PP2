@@ -234,7 +234,7 @@ def audit_shipping_operation(
 
 class AuditMixin:
     """Mixin class for adding audit fields to models."""
-    
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=datetime.utcnow,
@@ -267,4 +267,4 @@ class AuditMixin:
         "User",
         foreign_keys=[updated_by_id],
         backref="updated_records"
-    ) 
+    )

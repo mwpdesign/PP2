@@ -33,7 +33,7 @@ async def test_complete_order_workflow(
             }
         ]
     }
-    
+
     response = client.post(
         "/api/v1/orders",
         json=order_data,
@@ -41,12 +41,12 @@ async def test_complete_order_workflow(
     )
     assert response.status_code == 201
     order_id = response.json()["id"]
-    
+
     # Verify order created in DRAFT status
     order = db.query(Order).filter(Order.id == order_id).first()
     assert order is not None
     assert order.status == "DRAFT"
-    
+
     # Submit order for verification
     response = client.post(
         f"/api/v1/orders/{order_id}/submit",
@@ -54,7 +54,7 @@ async def test_complete_order_workflow(
     )
     assert response.status_code == 200
     assert response.json()["status"] == "PENDING_VERIFICATION"
-    
+
     # Verify insurance
     response = client.post(
         f"/api/v1/orders/{order_id}/verify",
@@ -62,7 +62,7 @@ async def test_complete_order_workflow(
     )
     assert response.status_code == 200
     assert response.json()["status"] == "VERIFIED"
-    
+
     # Start processing
     response = client.post(
         f"/api/v1/orders/{order_id}/process",
@@ -70,7 +70,7 @@ async def test_complete_order_workflow(
     )
     assert response.status_code == 200
     assert response.json()["status"] == "PROCESSING"
-    
+
     # Mark ready to ship
     response = client.post(
         f"/api/v1/orders/{order_id}/ready",
@@ -78,7 +78,7 @@ async def test_complete_order_workflow(
     )
     assert response.status_code == 200
     assert response.json()["status"] == "READY_TO_SHIP"
-    
+
     # Ship order
     response = client.post(
         f"/api/v1/orders/{order_id}/ship",
@@ -87,7 +87,7 @@ async def test_complete_order_workflow(
     )
     assert response.status_code == 200
     assert response.json()["status"] == "SHIPPED"
-    
+
     # Mark delivered
     response = client.post(
         f"/api/v1/orders/{order_id}/deliver",
@@ -95,7 +95,7 @@ async def test_complete_order_workflow(
     )
     assert response.status_code == 200
     assert response.json()["status"] == "DELIVERED"
-    
+
     # Complete order
     response = client.post(
         f"/api/v1/orders/{order_id}/complete",
@@ -103,13 +103,13 @@ async def test_complete_order_workflow(
     )
     assert response.status_code == 200
     assert response.json()["status"] == "COMPLETED"
-    
+
     # Verify notifications sent at each step
     assert mock_notification_service.send_notification.call_count >= 8
-    
+
     # Verify WebSocket broadcasts
     assert mock_websocket_service.call_count >= 8
-    
+
     # Verify security events logged
     events = db.query(SecurityEvent).all()
     assert len(events) > 0  # Should have audit logs for each action
@@ -133,7 +133,7 @@ async def test_order_territory_isolation(
             }
         ]
     }
-    
+
     response = client.post(
         "/api/v1/orders",
         json=order_data,
@@ -141,7 +141,7 @@ async def test_order_territory_isolation(
     )
     assert response.status_code == 201
     order_id = response.json()["id"]
-    
+
     # Try to access from different territory
     wrong_territory = test_user.territory_id + 1
     response = client.get(
@@ -149,7 +149,7 @@ async def test_order_territory_isolation(
         headers={"X-Territory-ID": str(wrong_territory)}
     )
     assert response.status_code == 403
-    
+
     # Try to update from different territory
     response = client.post(
         f"/api/v1/orders/{order_id}/submit",
@@ -186,7 +186,7 @@ async def test_concurrent_order_processing(
         )
         assert response.status_code == 201
         order_ids.append(response.json()["id"])
-    
+
     # Submit all orders concurrently
     for order_id in order_ids:
         response = client.post(
@@ -194,12 +194,12 @@ async def test_concurrent_order_processing(
             headers={"X-Territory-ID": str(test_user.territory_id)}
         )
         assert response.status_code == 200
-    
+
     # Verify all orders updated
     orders = db.query(Order).filter(
         Order.id.in_(order_ids)
     ).all()
     assert all(o.status == "PENDING_VERIFICATION" for o in orders)
-    
+
     # Verify notifications sent for all orders
-    assert mock_notification_service.send_notification.call_count >= len(order_ids) 
+    assert mock_notification_service.send_notification.call_count >= len(order_ids)

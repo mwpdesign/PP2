@@ -19,18 +19,18 @@ from app.services.security_monitoring import SecurityMonitoringService
 
 class IncidentResponseService:
     """Service for automated incident response and forensics."""
-    
+
     def __init__(self, db: Session):
         self.db = db
         self.settings = get_settings()
         self.notification_service = NotificationService(db)
         self.security_service = SecurityMonitoringService(db)
-        
+
         # Initialize AWS clients
         self.s3 = boto3.client('s3')
         self.sns = boto3.client('sns')
         self.cloudwatch = boto3.client('cloudwatch')
-        
+
         # Response thresholds
         self.thresholds = {
             'high_severity_timeout': 60,  # Minutes until escalation
@@ -51,13 +51,13 @@ class IncidentResponseService:
             incident = self.db.query(SecurityIncident).filter(
                 SecurityIncident.id == incident_id
             ).first()
-            
+
             if not incident:
                 raise HTTPException(
                     status_code=404,
                     detail="Incident not found"
                 )
-            
+
             # Create incident timeline
             timeline = IncidentTimeline(
                 incident_id=incident_id,
@@ -69,21 +69,21 @@ class IncidentResponseService:
                 }
             )
             self.db.add(timeline)
-            
+
             # Collect forensic data
             await self._collect_forensic_data(incident)
-            
+
             # Apply automated response based on incident type
             await self._apply_automated_response(incident)
-            
+
             # Check for escalation needs
             await self._check_escalation_needs(incident)
-            
+
             # Send notifications
             await self._send_incident_notifications(incident)
-            
+
             self.db.commit()
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
@@ -99,13 +99,13 @@ class IncidentResponseService:
         try:
             # Collect relevant logs
             logs = await self._collect_relevant_logs(incident)
-            
+
             # Collect system state
             system_state = await self._collect_system_state(incident)
-            
+
             # Collect user activity
             user_activity = await self._collect_user_activity(incident)
-            
+
             # Store forensic data
             forensic_data = ForensicData(
                 incident_id=incident.id,
@@ -118,10 +118,10 @@ class IncidentResponseService:
                 }
             )
             self.db.add(forensic_data)
-            
+
             # Upload to secure S3 bucket
             await self._upload_forensic_data(forensic_data)
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -141,12 +141,12 @@ class IncidentResponseService:
                 'compliance_violation': self._handle_compliance_violation,
                 'system_compromise': self._handle_system_compromise
             }
-            
+
             if incident.incident_type in response_actions:
                 await response_actions[incident.incident_type](incident)
             else:
                 await self._handle_default_response(incident)
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -165,10 +165,10 @@ class IncidentResponseService:
                     user_id=incident.details['user_id'],
                     reason="unauthorized_access_detected"
                 )
-            
+
             # Revoke active sessions
             await self._revoke_active_sessions(incident)
-            
+
             # Log response action
             await self._log_response_action(
                 incident_id=incident.id,
@@ -178,7 +178,7 @@ class IncidentResponseService:
                     'timestamp': datetime.utcnow().isoformat()
                 }
             )
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -193,10 +193,10 @@ class IncidentResponseService:
         try:
             # Increase monitoring
             await self._increase_monitoring(incident)
-            
+
             # Apply access restrictions
             await self._apply_access_restrictions(incident)
-            
+
             # Log response action
             await self._log_response_action(
                 incident_id=incident.id,
@@ -206,7 +206,7 @@ class IncidentResponseService:
                     'timestamp': datetime.utcnow().isoformat()
                 }
             )
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -221,13 +221,13 @@ class IncidentResponseService:
         try:
             # Isolate affected systems
             await self._isolate_affected_systems(incident)
-            
+
             # Start data audit
             await self._start_data_audit(incident)
-            
+
             # Notify compliance team
             await self._notify_compliance_team(incident)
-            
+
             # Log response action
             await self._log_response_action(
                 incident_id=incident.id,
@@ -238,7 +238,7 @@ class IncidentResponseService:
                     'timestamp': datetime.utcnow().isoformat()
                 }
             )
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -253,16 +253,16 @@ class IncidentResponseService:
         try:
             # Get incident age
             age = datetime.utcnow() - incident.created_at
-            
+
             # Get timeout for severity
             timeout = self.thresholds.get(
                 f"{incident.severity}_severity_timeout",
                 self.thresholds['medium_severity_timeout']
             )
-            
+
             if age > timedelta(minutes=timeout):
                 await self._escalate_incident(incident)
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -279,7 +279,7 @@ class IncidentResponseService:
             incident.priority = "high"
             incident.escalated = True
             incident.escalated_at = datetime.utcnow()
-            
+
             # Create timeline entry
             timeline = IncidentTimeline(
                 incident_id=incident.id,
@@ -290,10 +290,10 @@ class IncidentResponseService:
                 }
             )
             self.db.add(timeline)
-            
+
             # Notify security team
             await self._send_escalation_notifications(incident)
-            
+
             # Log escalation
             await self._log_response_action(
                 incident_id=incident.id,
@@ -303,7 +303,7 @@ class IncidentResponseService:
                     'timestamp': datetime.utcnow().isoformat()
                 }
             )
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
@@ -318,7 +318,7 @@ class IncidentResponseService:
         try:
             # Get notification recipients
             recipients = await self._get_notification_recipients(incident)
-            
+
             # Prepare notification data
             notification_data = {
                 'incident_id': incident.id,
@@ -328,14 +328,14 @@ class IncidentResponseService:
                 'details': incident.details,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             # Send notifications
             await self.notification_service.send_notification(
                 user_ids=recipients,
                 notification_type="security_incident",
                 data=notification_data
             )
-            
+
             # Send SNS alert for high severity
             if incident.severity == "high":
                 await self._send_sns_alert(
@@ -343,9 +343,9 @@ class IncidentResponseService:
                     message=notification_data,
                     subject=f"High Severity Incident: {incident.incident_type}"
                 )
-            
+
         except Exception as e:
             raise HTTPException(
                 status_code=500,
                 detail=f"Error sending incident notifications: {str(e)}"
-            ) 
+            )

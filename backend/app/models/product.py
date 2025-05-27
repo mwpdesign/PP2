@@ -51,4 +51,4 @@ class Product(Base):
 
     def __repr__(self):
         """String representation of the product."""
-        return f"<Product(name='{self.name}', sku='{self.sku}')>" 
+        return f"<Product(name='{self.name}', sku='{self.sku}')>"

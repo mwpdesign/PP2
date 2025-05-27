@@ -130,7 +130,7 @@ def test_create_user(
         },
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["username"] == "test_user"
@@ -168,7 +168,7 @@ def test_user_login(
             "password": password
         }
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
@@ -209,7 +209,7 @@ def test_update_user(
         },
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["email"] == "updated@example.com"
@@ -228,7 +228,7 @@ def test_get_current_user(
         "/api/v1/users/me",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(admin_user.id)
@@ -262,7 +262,7 @@ def test_get_user_by_id(
         f"/api/v1/users/{test_user.id}",
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == str(test_user.id)
@@ -376,4 +376,4 @@ def test_invalid_input(
         },
         headers={"Authorization": f"Bearer {admin_token}"}
     )
-    assert response.status_code == 422 
+    assert response.status_code == 422

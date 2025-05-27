@@ -74,7 +74,7 @@ async def get_ivr_request(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="IVR request not found"
         )
-    
+
     # Verify territory access
     await verify_territory_access(current_user, ivr_request["territory_id"])
     return ivr_request
@@ -145,7 +145,7 @@ async def get_ivr_session(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="IVR session not found"
         )
-    
+
     # Verify territory access
     await verify_territory_access(current_user, ivr_session["territory_id"])
     return ivr_session
@@ -189,7 +189,7 @@ async def create_ivr_document(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="IVR request not found"
         )
-    
+
     # Verify territory access
     await verify_territory_access(current_user, ivr_request["territory_id"])
 
@@ -216,7 +216,7 @@ async def create_ivr_script(
 ) -> IVRScriptResponse:
     """Create a new IVR script."""
     ivr_service = IVRService(db)
-    
+
     script = await ivr_service.create_script(
         script_in,
         created_by_id=current_user["id"]
@@ -235,7 +235,7 @@ async def get_ivr_scripts(
 ) -> List[IVRScriptResponse]:
     """Get IVR scripts."""
     ivr_service = IVRService(db)
-    
+
     scripts = await ivr_service.get_scripts(
         organization_id=current_user["organization_id"],
         skip=skip,
@@ -254,21 +254,21 @@ async def get_ivr_script(
 ) -> IVRScriptResponse:
     """Get an IVR script by ID."""
     ivr_service = IVRService(db)
-    
+
     script = await ivr_service.get_script(script_id)
     if not script:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="IVR script not found"
         )
-    
+
     # Check organization access
     if script["organization_id"] != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     return script
 
 
@@ -283,7 +283,7 @@ async def update_ivr_script(
 ) -> IVRScriptResponse:
     """Update an IVR script."""
     ivr_service = IVRService(db)
-    
+
     # Get existing script
     script = await ivr_service.get_script(script_id)
     if not script:
@@ -291,14 +291,14 @@ async def update_ivr_script(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="IVR script not found"
         )
-    
+
     # Check organization access
     if script["organization_id"] != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     script = await ivr_service.update_script(
         script_id,
         script_in,
@@ -317,7 +317,7 @@ async def delete_ivr_script(
 ):
     """Delete an IVR script."""
     ivr_service = IVRService(db)
-    
+
     # Get existing script
     script = await ivr_service.get_script(script_id)
     if not script:
@@ -325,14 +325,14 @@ async def delete_ivr_script(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="IVR script not found"
         )
-    
+
     # Check organization access
     if script["organization_id"] != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     await ivr_service.delete_script(script_id)
 
 
@@ -348,7 +348,7 @@ async def upload_script_audio(
 ) -> IVRScriptResponse:
     """Upload audio file for an IVR script."""
     ivr_service = IVRService(db)
-    
+
     # Get existing script
     script = await ivr_service.get_script(script_id)
     if not script:
@@ -356,21 +356,21 @@ async def upload_script_audio(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="IVR script not found"
         )
-    
+
     # Check organization access
     if script["organization_id"] != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     # Upload audio file
     audio_url = await s3_service.upload_file(
         file=audio_file,
         folder="ivr-audio",
         uploaded_by_id=current_user["id"]
     )
-    
+
     # Update script with audio URL
     script = await ivr_service.update_script(
         script_id,
@@ -390,7 +390,7 @@ async def create_ivr_call(
 ) -> IVRCallResponse:
     """Create a new IVR call."""
     ivr_service = IVRService(db)
-    
+
     call = await ivr_service.create_call(
         call_in,
         created_by_id=current_user["id"]
@@ -409,7 +409,7 @@ async def get_ivr_calls(
 ) -> List[IVRCallResponse]:
     """Get IVR calls."""
     ivr_service = IVRService(db)
-    
+
     calls = await ivr_service.get_calls(
         organization_id=current_user["organization_id"],
         skip=skip,
@@ -428,21 +428,21 @@ async def get_ivr_call(
 ) -> IVRCallResponse:
     """Get an IVR call by ID."""
     ivr_service = IVRService(db)
-    
+
     call = await ivr_service.get_call(call_id)
     if not call:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="IVR call not found"
         )
-    
+
     # Check organization access
     if call["organization_id"] != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     return call
 
 
@@ -457,7 +457,7 @@ async def update_ivr_call(
 ) -> IVRCallResponse:
     """Update an IVR call."""
     ivr_service = IVRService(db)
-    
+
     # Get existing call
     call = await ivr_service.get_call(call_id)
     if not call:
@@ -465,17 +465,17 @@ async def update_ivr_call(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="IVR call not found"
         )
-    
+
     # Check organization access
     if call["organization_id"] != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     call = await ivr_service.update_call(
         call_id,
         call_in,
         updated_by_id=current_user["id"]
     )
-    return call 
+    return call

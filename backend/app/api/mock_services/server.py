@@ -100,12 +100,12 @@ async def get_ups_rates(request: ShipmentRequest) -> Dict[str, Any]:
     # Validate credentials
     if not all(UPS_CREDS.values()):
         raise HTTPException(status_code=401, detail="Invalid UPS credentials")
-    
+
     # Calculate mock rate based on weight
     base_rate = 10.00
     rate_per_pound = 0.50
     total = base_rate + (request.weight * rate_per_pound)
-    
+
     return {
         "service_type": request.service_type,
         "total_charges": round(total, 2),
@@ -124,7 +124,7 @@ async def create_shipment(request: ShipmentRequest) -> Dict[str, Any]:
     """Mock UPS shipment creation."""
     # Generate mock tracking number
     tracking_number = f"1Z999{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-    
+
     return {
         "tracking_number": tracking_number,
         "label_url": f"http://localhost:8001/labels/{tracking_number}.pdf",
@@ -159,7 +159,7 @@ async def initiate_call(request: CallRequest) -> Dict[str, Any]:
     """Mock Twilio call initiation."""
     # Generate mock call SID
     call_sid = f"CA{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-    
+
     return {
         "sid": call_sid,
         "to": request.to_number,
@@ -186,4 +186,4 @@ async def get_call_status(call_sid: str) -> Dict[str, Any]:
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "8001"))
-    uvicorn.run(app, host="0.0.0.0", port=port) 
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -29,21 +29,21 @@ class MultiCarrierShippingService:
         """Initialize shipping service with carrier providers."""
         settings = get_settings()
         self.providers: Dict[CarrierType, ShippingProvider] = {}
-        
+
         # Initialize UPS provider if configured
         if settings.ups_api_key:
             self.providers[CarrierType.UPS] = UPSProvider(
                 api_key=settings.ups_api_key,
                 test_mode=settings.shipping_test_mode
             )
-        
+
         # Initialize FedEx provider if configured
         if settings.fedex_api_key:
             self.providers[CarrierType.FEDEX] = FedExProvider(
                 api_key=settings.fedex_api_key,
                 test_mode=settings.shipping_test_mode
             )
-        
+
         # Initialize USPS provider if configured
         if settings.usps_api_key:
             self.providers[CarrierType.USPS] = USPSProvider(
@@ -58,13 +58,13 @@ class MultiCarrierShippingService:
         """Get shipping provider by carrier type."""
         if carrier and carrier not in self.providers:
             raise ShippingException(f"Carrier {carrier} not configured")
-        
+
         if not carrier:
             # Return first available provider if none specified
             if not self.providers:
                 raise ShippingException("No shipping carriers configured")
             return next(iter(self.providers.values()))
-        
+
         return self.providers[carrier]
 
     async def validate_address(
@@ -214,4 +214,4 @@ class MultiCarrierShippingService:
             best_rate.service_type,
             CarrierType(best_rate.carrier),
             reference
-        ) 
+        )

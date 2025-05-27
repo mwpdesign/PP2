@@ -100,4 +100,4 @@ class ComplianceStatusResponse(BaseModel):
     violations: List[Dict] = []
 
     class Config:
-        from_attributes = True 
+        from_attributes = True

@@ -22,7 +22,7 @@ class AWSKMSService:
             'alias/healthcare-ivr-phi'
         )
         self.region = os.getenv('AWS_REGION', 'us-east-1')
-        
+
         # Encryption context for additional security
         self.base_encryption_context = {
             'application': 'healthcare-ivr-platform',
@@ -39,13 +39,13 @@ class AWSKMSService:
                 **self.base_encryption_context,
                 **(context or {})
             }
-            
+
             response = self.kms_client.generate_data_key(
                 KeyId=self.key_id,
                 KeySpec='AES_256',
                 EncryptionContext=encryption_context
             )
-            
+
             return {
                 'plaintext_key': base64.b64encode(
                     response['Plaintext']
@@ -63,8 +63,8 @@ class AWSKMSService:
             )
 
     async def encrypt_field(
-        self, 
-        plaintext: str, 
+        self,
+        plaintext: str,
         context: Optional[Dict] = None,
         data_key: Optional[Dict] = None
     ) -> Dict:
@@ -75,11 +75,11 @@ class AWSKMSService:
         try:
             # Generate or use provided data key
             key_data = data_key or await self.create_data_key(context)
-            
+
             # Encrypt the field using the data key
             f = Fernet(key_data['plaintext_key'])
             encrypted_data = f.encrypt(plaintext.encode())
-            
+
             return {
                 'encrypted_data': base64.b64encode(
                     encrypted_data
@@ -96,7 +96,7 @@ class AWSKMSService:
             )
 
     async def decrypt_field(
-        self, 
+        self,
         encrypted_data: str,
         encrypted_key: str,
         context: Optional[Dict] = None
@@ -110,17 +110,17 @@ class AWSKMSService:
                 **self.base_encryption_context,
                 **(context or {})
             }
-            
+
             # Decrypt the data key
             key_response = self.kms_client.decrypt(
                 CiphertextBlob=base64.b64decode(encrypted_key),
                 EncryptionContext=encryption_context
             )
-            
+
             # Use the decrypted data key to decrypt the field
             f = Fernet(base64.b64encode(key_response['Plaintext']))
             decrypted_data = f.decrypt(base64.b64decode(encrypted_data))
-            
+
             return decrypted_data.decode('utf-8')
         except ClientError as e:
             raise HTTPException(
@@ -150,13 +150,13 @@ class AWSKMSService:
                     }
                 ]
             )
-            
+
             # Update key alias to point to new key
             self.kms_client.update_alias(
                 AliasName=self.key_alias,
                 TargetKeyId=new_key['KeyMetadata']['KeyId']
             )
-            
+
             return {
                 'new_key_id': new_key['KeyMetadata']['KeyId'],
                 'old_key_id': old_key_id,
@@ -169,7 +169,7 @@ class AWSKMSService:
             )
 
     async def reencrypt_data(
-        self, 
+        self,
         encrypted_data: Dict,
         new_context: Optional[Dict] = None
     ) -> Dict:
@@ -183,7 +183,7 @@ class AWSKMSService:
                 encrypted_data['encrypted_key'],
                 encrypted_data.get('encryption_context', {})
             )
-            
+
             # Encrypt with new key
             return await self.encrypt_field(
                 decrypted_data,
@@ -193,4 +193,4 @@ class AWSKMSService:
             raise HTTPException(
                 status_code=500,
                 detail=f"Re-encryption failed: {str(e)}"
-            ) 
+            )

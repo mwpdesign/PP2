@@ -1,1 +1,1 @@
-"""Healthcare IVR Platform validation scripts.""" 
+"""Healthcare IVR Platform validation scripts."""

@@ -27,10 +27,10 @@ async def create_notification(
 ) -> NotificationResponse:
     """Create a new notification."""
     notification_service = NotificationService(db)
-    
+
     # Use recipient_id if provided, otherwise use current user's ID
     recipient = recipient_id or current_user["id"]
-    
+
     notification = await notification_service.create_notification(
         notification_in,
         recipient
@@ -50,10 +50,10 @@ async def get_notifications(
 ) -> List[NotificationResponse]:
     """Get notifications for a user."""
     notification_service = NotificationService(db)
-    
+
     # Use recipient_id if provided, otherwise use current user's ID
     recipient = recipient_id or current_user["id"]
-    
+
     notifications = await notification_service.get_notifications(
         recipient_id=recipient,
         unread_only=unread_only,
@@ -73,7 +73,7 @@ async def update_notification(
 ) -> NotificationResponse:
     """Update a notification."""
     notification_service = NotificationService(db)
-    
+
     # Get existing notification
     notification = await notification_service.get_notification(notification_id)
     if not notification:
@@ -81,14 +81,14 @@ async def update_notification(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Notification not found"
         )
-    
+
     # Check if user has permission to update
     if notification.recipient_id != current_user["id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     notification = await notification_service.update_notification(
         notification_id,
         notification_in
@@ -105,7 +105,7 @@ async def delete_notification(
 ):
     """Delete a notification."""
     notification_service = NotificationService(db)
-    
+
     # Get existing notification
     notification = await notification_service.get_notification(notification_id)
     if not notification:
@@ -113,14 +113,14 @@ async def delete_notification(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Notification not found"
         )
-    
+
     # Check if user has permission to delete
     if notification.recipient_id != current_user["id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     await notification_service.delete_notification(notification_id)
 
 
@@ -133,7 +133,7 @@ async def mark_notification_read(
 ):
     """Mark a notification as read."""
     notification_service = NotificationService(db)
-    
+
     # Get existing notification
     notification = await notification_service.get_notification(notification_id)
     if not notification:
@@ -141,13 +141,13 @@ async def mark_notification_read(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Notification not found"
         )
-    
+
     # Check if user has permission to update
     if notification.recipient_id != current_user["id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     await notification_service.mark_notification_read(notification_id)
-    return {"message": "Notification marked as read"} 
+    return {"message": "Notification marked as read"}

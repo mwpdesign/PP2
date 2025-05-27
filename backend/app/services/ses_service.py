@@ -27,7 +27,7 @@ class SESService:
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
         )
         self.kms_service = KMSService()
-        
+
         # Email configuration
         self.sender = settings.SES_SENDER_EMAIL
         self.bounce_topic_arn = settings.SNS_BOUNCE_TOPIC_ARN
@@ -44,26 +44,26 @@ class SESService:
         try:
             # Get recipient email from user service
             recipient_email = await self._get_recipient_email(recipient_id)
-            
+
             # Create message container
             msg = MIMEMultipart('alternative')
             msg['Subject'] = metadata.get('subject', 'Healthcare Notification')
             msg['From'] = self.sender
             msg['To'] = recipient_email
-            
+
             # Create HTML and plain text versions
             text_content = self._create_text_content(content)
             html_content = self._create_html_content(content)
-            
+
             msg.attach(MIMEText(text_content, 'plain'))
             msg.attach(MIMEText(html_content, 'html'))
-            
+
             # Add attachments if any
             if attachments:
                 for filename, file_content in attachments.items():
                     # Encrypt attachment
                     encrypted_content = self.kms_service.encrypt(file_content)
-                    
+
                     attachment = MIMEApplication(encrypted_content)
                     attachment.add_header(
                         'Content-Disposition',
@@ -71,7 +71,7 @@ class SESService:
                         filename=filename
                     )
                     msg.attach(attachment)
-            
+
             # Send email
             response = self.ses_client.send_raw_email(
                 Source=self.sender,
@@ -79,14 +79,14 @@ class SESService:
                 RawMessage={'Data': msg.as_string()},
                 ConfigurationSetName=settings.SES_CONFIGURATION_SET
             )
-            
+
             logger.info(
                 f"Email sent successfully to {recipient_email}, "
                 f"MessageId: {response['MessageId']}"
             )
-            
+
             return True
-            
+
         except ClientError as e:
             error = e.response['Error']
             logger.error(
@@ -94,7 +94,7 @@ class SESService:
                 f"Type: {error['Code']}"
             )
             return False
-            
+
         except Exception as e:
             logger.error(f"Unexpected error sending email: {str(e)}")
             return False
@@ -108,7 +108,7 @@ class SESService:
         """Create plain text email content."""
         return f"""
         {content}
-        
+
         ---
         This is a secure healthcare notification.
         Please do not reply to this email.
@@ -146,22 +146,22 @@ class SESService:
                 NotificationType='Bounce',
                 SnsTopic=self.bounce_topic_arn
             )
-            
+
             # Set up complaint notifications
             self.ses_client.set_identity_notification_topic(
                 Identity=self.sender,
                 NotificationType='Complaint',
                 SnsTopic=self.complaint_topic_arn
             )
-            
+
             # Enable notifications
             self.ses_client.set_identity_feedback_forwarding_enabled(
                 Identity=self.sender,
                 ForwardingEnabled=True
             )
-            
+
             logger.info("Successfully configured bounce and complaint handling")
-            
+
         except ClientError as e:
             logger.error(f"Failed to configure bounce handling: {str(e)}")
-            raise 
+            raise

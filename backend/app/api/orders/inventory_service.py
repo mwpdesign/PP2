@@ -252,4 +252,4 @@ class InventoryService:
     ) -> Dict:
         """Generate inventory report for a territory."""
         # Implementation for inventory reporting and analytics
-        pass  # TODO: Implement detailed reporting logic 
+        pass  # TODO: Implement detailed reporting logic

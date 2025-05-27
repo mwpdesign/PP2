@@ -64,7 +64,7 @@ class PHIAccess(Base, AuditMixin):
         ARRAY(String),
         nullable=False
     )
-    
+
     # Request Context
     ip_address: Mapped[str] = mapped_column(String(50))
     user_agent: Mapped[str] = mapped_column(String(255))
@@ -73,13 +73,13 @@ class PHIAccess(Base, AuditMixin):
     session_id: Mapped[str] = mapped_column(String(100))
     access_reason: Mapped[str] = mapped_column(String(255))
     access_location: Mapped[str] = mapped_column(String(100))
-    
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=datetime.utcnow
     )
-    
+
     # Relationships
     user = relationship(
         'User',
@@ -140,7 +140,7 @@ class AuditLog(Base, AuditMixin):
         ForeignKey('users.id'),
         nullable=True
     )
-    
+
     # Relationships
     user = relationship(
         'User',
@@ -196,7 +196,7 @@ class ComplianceCheck(Base, AuditMixin):
         ForeignKey('users.id'),
         nullable=True
     )
-    
+
     # Relationships
     territory = relationship('Territory', back_populates='compliance_checks')
     created_by = relationship(
@@ -249,7 +249,7 @@ class AuditReport(Base, AuditMixin):
         ForeignKey('users.id'),
         nullable=True
     )
-    
+
     # Relationships
     territory = relationship('Territory', back_populates='audit_reports')
     created_by = relationship(
@@ -261,4 +261,4 @@ class AuditReport(Base, AuditMixin):
         'User',
         foreign_keys=[updated_by_id],
         back_populates='updated_audit_reports'
-    ) 
+    )

@@ -22,49 +22,49 @@ def upgrade() -> None:
         ['search_vector'],
         postgresql_using='gin'
     )
-    
+
     # Create composite index for territory-based filtering
     op.create_index(
         'ix_patients_territory_org',
         'patients',
         ['territory_id', 'organization_id']
     )
-    
+
     # Create index for status-based filtering
     op.create_index(
         'ix_patients_status',
         'patients',
         ['status']
     )
-    
+
     # Create index for insurance verification filtering
     op.create_index(
         'ix_patients_insurance_verified',
         'patients',
         ['insurance_verified']
     )
-    
+
     # Create index for last visit date range queries
     op.create_index(
         'ix_patients_last_visit_date',
         'patients',
         ['last_visit_date']
     )
-    
+
     # Create index for consent status filtering
     op.create_index(
         'ix_patients_consent_status',
         'patients',
         ['consent_status']
     )
-    
+
     # Create composite index for provider/facility filtering
     op.create_index(
         'ix_patients_provider_facility',
         'patients',
         ['provider_id', 'facility_id']
     )
-    
+
     # Create index for medical record number (encrypted)
     op.create_index(
         'ix_patients_mrn_encrypted',
@@ -82,4 +82,4 @@ def downgrade() -> None:
     op.drop_index('ix_patients_last_visit_date', table_name='patients')
     op.drop_index('ix_patients_consent_status', table_name='patients')
     op.drop_index('ix_patients_provider_facility', table_name='patients')
-    op.drop_index('ix_patients_mrn_encrypted', table_name='patients') 
+    op.drop_index('ix_patients_mrn_encrypted', table_name='patients')

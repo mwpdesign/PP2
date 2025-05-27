@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship, declared_attr, Mapped, mapped_column
 
 class AuditMixin:
     """Mixin class for adding audit fields to models."""
-    
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=datetime.utcnow,
@@ -48,4 +48,4 @@ class AuditMixin:
             "User",
             foreign_keys=[cls.updated_by_id],
             back_populates="updated_records"
-        ) 
+        )

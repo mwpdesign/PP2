@@ -226,4 +226,4 @@ async def update_session(
         session_id,
         session_data,
         current_user
-    ) 
+    )

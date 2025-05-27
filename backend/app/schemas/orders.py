@@ -61,4 +61,4 @@ class OrderResponse(OrderBase):
     shipments: list[ShipmentResponse] = []
 
     class Config:
-        from_attributes = True 
+        from_attributes = True

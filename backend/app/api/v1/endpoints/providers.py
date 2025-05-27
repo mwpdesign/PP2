@@ -29,7 +29,7 @@ async def create_provider(
 ) -> ProviderResponse:
     """Create a new provider."""
     provider_service = ProviderService(db)
-    
+
     provider = await provider_service.create_provider(
         provider_in,
         created_by_id=current_user["id"]
@@ -48,7 +48,7 @@ async def get_providers(
 ) -> List[ProviderResponse]:
     """Get providers."""
     provider_service = ProviderService(db)
-    
+
     providers = await provider_service.get_providers(
         organization_id=current_user["organization_id"],
         skip=skip,
@@ -67,21 +67,21 @@ async def get_provider(
 ) -> ProviderResponse:
     """Get a provider by ID."""
     provider_service = ProviderService(db)
-    
+
     provider = await provider_service.get_provider(provider_id)
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Provider not found"
         )
-    
+
     # Check organization access
     if provider.organization_id != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     return provider
 
 
@@ -96,7 +96,7 @@ async def update_provider(
 ) -> ProviderResponse:
     """Update a provider."""
     provider_service = ProviderService(db)
-    
+
     # Get existing provider
     provider = await provider_service.get_provider(provider_id)
     if not provider:
@@ -104,14 +104,14 @@ async def update_provider(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Provider not found"
         )
-    
+
     # Check organization access
     if provider.organization_id != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     provider = await provider_service.update_provider(
         provider_id,
         provider_in,
@@ -130,7 +130,7 @@ async def delete_provider(
 ):
     """Delete a provider."""
     provider_service = ProviderService(db)
-    
+
     # Get existing provider
     provider = await provider_service.get_provider(provider_id)
     if not provider:
@@ -138,14 +138,14 @@ async def delete_provider(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Provider not found"
         )
-    
+
     # Check organization access
     if provider.organization_id != current_user["organization_id"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
         )
-    
+
     await provider_service.delete_provider(provider_id)
 
 
@@ -162,7 +162,7 @@ async def search_providers(
     """Search providers with filters and pagination"""
     # Base query
     query_filter = select(Provider)
-    
+
     # Apply search filters
     if query:
         search_filter = or_(
@@ -171,28 +171,28 @@ async def search_providers(
             Provider.email.ilike(f"%{query}%")
         )
         query_filter = query_filter.where(search_filter)
-    
+
     if specialty:
         query_filter = query_filter.where(Provider.specialty == specialty)
-    
+
     if accepting_new_patients is not None:
         query_filter = query_filter.where(
             Provider.accepting_new_patients == accepting_new_patients
         )
-    
+
     # Get total count
     total = await db.scalar(
         select(func.count()).select_from(query_filter.subquery())
     )
-    
+
     # Apply pagination
     query_filter = query_filter.offset(skip).limit(limit)
-    
+
     # Execute query
     result = await db.execute(query_filter)
     providers = result.scalars().all()
-    
+
     return ProviderSearchResults(
         total=total,
         providers=providers
-    ) 
+    )

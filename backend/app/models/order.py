@@ -282,4 +282,4 @@ class OrderStatusHistory(Base):
         'User',
         foreign_keys=[changed_by_id],
         back_populates='order_status_changes'
-    ) 
+    )

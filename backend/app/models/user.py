@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 
 class User(Base):
     """User model."""
-    
+
     __tablename__ = "users"
-    
+
     id = Column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -34,11 +34,11 @@ class User(Base):
     encrypted_password = Column(String(255))
     first_name = Column(String(100))
     last_name = Column(String(100))
-    
+
     # Status fields
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
-    
+
     # Role fields
     role_id = Column(
         UUID(as_uuid=True),
@@ -46,7 +46,7 @@ class User(Base):
         nullable=False
     )
     role = relationship("Role", back_populates="users")
-    
+
     # Audit fields
     created_at = Column(
         DateTime(timezone=True),
@@ -58,7 +58,7 @@ class User(Base):
         onupdate=func.now()
     )
     last_login = Column(DateTime(timezone=True))
-    
+
     # Security fields
     mfa_enabled = Column(Boolean, default=False)
     mfa_secret = Column(String(32))
@@ -66,7 +66,7 @@ class User(Base):
     password_changed_at = Column(DateTime(timezone=True))
     failed_login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime(timezone=True))
-    
+
     # Organizational details
     organization_id = Column(
         UUID(as_uuid=True),
@@ -308,4 +308,4 @@ class User(Base):
         """Check if account is locked."""
         if not self.locked_until:
             return False
-        return datetime.utcnow() < self.locked_until 
+        return datetime.utcnow() < self.locked_until

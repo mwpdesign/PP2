@@ -12,7 +12,7 @@ from app.core.audit import audit_shipping_operation
 from app.services.shipping_types import (
     ShippingProvider, Address, Package, ShippingRate,
     ShippingLabel, TrackingInfo, ShippingServiceType,
-    TrackingStatus, TrackingEvent
+    TrackingEvent
 )
 
 
@@ -45,38 +45,42 @@ class FedExProvider(ShippingProvider):
 
     async def _get_token(self) -> str:
         """Get OAuth token for FedEx API access."""
-        if (self._token and self._token_expires and
-                self._token_expires > datetime.utcnow()):
-            return self._token
-
         settings = get_settings()
         auth_url = f"{self.base_url}/oauth/token"
         
+        if (
+            self._token and 
+            self._token_expires and
+            self._token_expires > datetime.utcnow()
+        ):
+            return self._token
+
         try:
+            auth_data = {
+                "grant_type": "client_credentials",
+                "client_id": settings.fedex_client_id,
+                "client_secret": settings.fedex_client_secret
+            }
             response = await self.client.post(
                 auth_url,
-                data={
-                    "grant_type": "client_credentials",
-                    "client_id": settings.fedex_client_id,
-                    "client_secret": settings.fedex_client_secret
-                },
-                headers={
-                    "Content-Type": "application/x-www-form-urlencoded"
-                }
+                data=auth_data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
             )
             response.raise_for_status()
             data = response.json()
-            
+
             self._token = data["access_token"]
             expires_in = data["expires_in"]
-            self._token_expires = datetime.utcnow() + timedelta(seconds=expires_in)
-            
+            self._token_expires = datetime.utcnow() + timedelta(
+                seconds=expires_in
+            )
+
             audit_shipping_operation(
                 operation="fedex_auth",
                 status="success",
                 metadata={"expires_in": expires_in}
             )
-            
+
             return self._token
         except Exception as e:
             audit_shipping_operation(
@@ -84,7 +88,8 @@ class FedExProvider(ShippingProvider):
                 status="error",
                 error=str(e)
             )
-            raise ShippingException(f"FedEx authentication failed: {str(e)}")
+            error_msg = f"FedEx authentication failed: {str(e)}"
+            raise ShippingException(error_msg)
 
     async def _make_request(
         self,
@@ -95,11 +100,12 @@ class FedExProvider(ShippingProvider):
     ) -> Dict:
         """Make authenticated request to FedEx API with retry logic."""
         if retry_count >= 3:
-            raise ShippingException("Max retries exceeded for FedEx API request")
+            msg = "Max retries exceeded for FedEx API request"
+            raise ShippingException(msg)
 
         token = await self._get_token()
         url = f"{self.base_url}/v1/{endpoint}"
-        
+
         try:
             response = await self.client.request(
                 method,
@@ -110,13 +116,13 @@ class FedExProvider(ShippingProvider):
                     "Content-Type": "application/json"
                 }
             )
-            
+
             if response.status_code == 401 and retry_count < 3:
                 self._token = None  # Force token refresh
                 return await self._make_request(
                     method, endpoint, data, retry_count + 1
                 )
-                
+
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
@@ -125,17 +131,21 @@ class FedExProvider(ShippingProvider):
                 return await self._make_request(
                     method, endpoint, data, retry_count + 1
                 )
-            raise ShippingException(f"FedEx API request failed: {str(e)}")
+            msg = f"FedEx API request failed: {str(e)}"
+            raise ShippingException(msg)
         except Exception as e:
-            raise ShippingException(f"FedEx API request failed: {str(e)}")
+            msg = f"FedEx API request failed: {str(e)}"
+            raise ShippingException(msg)
 
     def _format_address(self, address: Address) -> Dict:
         """Format address for FedEx API."""
+        street_lines = (
+            [address.street1, address.street2] 
+            if address.street2 
+            else [address.street1]
+        )
         return {
-            "streetLines": [
-                address.street1,
-                address.street2
-            ] if address.street2 else [address.street1],
+            "streetLines": street_lines,
             "city": address.city,
             "stateOrProvinceCode": address.state,
             "postalCode": address.postal_code,
@@ -147,17 +157,19 @@ class FedExProvider(ShippingProvider):
 
     def _format_package(self, package: Package) -> Dict:
         """Format package for FedEx API."""
+        sign_opt = (
+            "DIRECT_SIGNATURE"
+            if package.requires_signature
+            else "NO_SIGNATURE_REQUIRED"
+        )
+        
         package_data = {
             "weight": {
                 "value": package.weight,
                 "units": "LB"
             },
             "packageSpecialServices": {
-                "signatureOption": (
-                    "DIRECT_SIGNATURE"
-                    if package.requires_signature
-                    else "NO_SIGNATURE_REQUIRED"
-                )
+                "signatureOption": sign_opt
             }
         }
 
@@ -175,13 +187,15 @@ class FedExProvider(ShippingProvider):
                 "currency": "USD"
             }
 
-        if package.is_temperature_controlled and package.temperature_range:
+        if package.is_temperature_controlled:
+            temp_range = package.temperature_range or {}
+            temp_control = {
+                "minimum": temp_range.get("min"),
+                "maximum": temp_range.get("max"),
+                "units": "FAHRENHEIT"
+            }
             package_data["specialHandling"] = {
-                "temperatureControl": {
-                    "minimum": package.temperature_range.get("min"),
-                    "maximum": package.temperature_range.get("max"),
-                    "units": "FAHRENHEIT"
-                }
+                "temperatureControl": temp_control
             }
 
         return package_data
@@ -203,6 +217,7 @@ class FedExProvider(ShippingProvider):
 
             validation_result = result["output"][0]
             is_valid = validation_result["resolved"] == "YES"
+            normalized = validation_result.get("normalizedAddress", {})
 
             audit_shipping_operation(
                 operation="fedex_address_validation",
@@ -215,7 +230,7 @@ class FedExProvider(ShippingProvider):
 
             return {
                 "valid": is_valid,
-                "normalized_address": validation_result.get("normalizedAddress", {}),
+                "normalized_address": normalized,
                 "validation_details": validation_result
             }
         except Exception as e:
@@ -234,54 +249,56 @@ class FedExProvider(ShippingProvider):
         package: Package,
         service_type: Optional[ShippingServiceType] = None
     ) -> List[ShippingRate]:
-        """Get FedEx shipping rates."""
+        """Get shipping rates for a package."""
         try:
             data = {
-                "rateRequestControlParameters": {
-                    "returnTransitTimes": True,
-                    "servicesNeeded": [
-                        self.SERVICE_MAPPING[service_type]
-                    ] if service_type else None
+                "accountNumber": {
+                    "value": get_settings().fedex_account_number
                 },
                 "requestedShipment": {
-                    "shipper": self._format_address(from_address),
-                    "recipient": self._format_address(to_address),
+                    "shipper": {
+                        "address": self._format_address(from_address)
+                    },
+                    "recipient": {
+                        "address": self._format_address(to_address)
+                    },
+                    "pickupType": "DROPOFF_AT_FEDEX_LOCATION",
+                    "serviceType": (
+                        self.SERVICE_MAPPING[service_type]
+                        if service_type
+                        else None
+                    ),
+                    "rateRequestType": ["ACCOUNT", "LIST"],
                     "requestedPackageLineItems": [
                         self._format_package(package)
-                    ],
-                    "pickupType": "DROPOFF_AT_FEDEX_LOCATION",
-                    "shippingChargesPayment": {
-                        "paymentType": "SENDER"
-                    }
+                    ]
                 }
             }
 
-            result = await self._make_request(
-                "POST",
-                "rate",
-                data
-            )
+            result = await self._make_request("POST", "rate", data)
 
             rates = []
-            for rate_detail in result["output"]["rateReplyDetails"]:
+            rate_details = result["output"]["rateReplyDetails"]
+            for rate_detail in rate_details:
+                service = rate_detail["serviceType"]
+                mapping = self.SERVICE_MAPPING.items()
                 service_type = next(
-                    (k for k, v in self.SERVICE_MAPPING.items()
-                     if v == rate_detail["serviceType"]),
+                    (k for k, v in mapping if v == service),
                     None
                 )
                 if service_type:
+                    total_charge = rate_detail["ratedShipmentDetails"][0]
+                    total_charge = total_charge["totalNetCharge"]
+                    transit = rate_detail.get("transitTime", {})
+                    guaranteed = rate_detail.get("guaranteedDelivery", False)
+                    
                     rates.append(ShippingRate(
                         carrier="FEDEX",
                         service_type=service_type,
-                        rate=float(
-                            rate_detail["ratedShipmentDetails"][0]["totalNetCharge"]
-                        ),
+                        rate=float(total_charge),
                         currency=rate_detail["currency"],
-                        delivery_days=rate_detail.get("transitTime", {}).get("days"),
-                        guaranteed_delivery=rate_detail.get(
-                            "guaranteedDelivery",
-                            False
-                        ),
+                        delivery_days=transit.get("days"),
+                        guaranteed_delivery=guaranteed,
                         tracking_included=True
                     ))
 
@@ -316,46 +333,43 @@ class FedExProvider(ShippingProvider):
         service_type: ShippingServiceType,
         reference: Optional[str] = None
     ) -> ShippingLabel:
-        """Create FedEx shipping label."""
+        """Create shipping label through FedEx API."""
         try:
             data = {
+                "accountNumber": {
+                    "value": get_settings().fedex_account_number
+                },
                 "requestedShipment": {
-                    "shipper": self._format_address(from_address),
-                    "recipient": self._format_address(to_address),
+                    "shipper": {
+                        "address": self._format_address(from_address)
+                    },
+                    "recipient": {
+                        "address": self._format_address(to_address)
+                    },
                     "serviceType": self.SERVICE_MAPPING[service_type],
-                    "packagingType": "YOUR_PACKAGING",
-                    "requestedPackageLineItems": [
-                        self._format_package(package)
-                    ],
                     "labelSpecification": {
                         "imageType": "PDF",
                         "labelStockType": "PAPER_4X6"
                     },
-                    "shippingChargesPayment": {
-                        "paymentType": "SENDER",
-                        "payor": {
-                            "responsibleParty": {
-                                "accountNumber": get_settings().fedex_account_number
-                            }
-                        }
-                    },
-                    "customerReferences": [
-                        {
-                            "customerReferenceType": "CUSTOMER_REFERENCE",
-                            "value": reference or "Medical Supplies"
-                        }
-                    ] if reference else None
+                    "requestedPackageLineItems": [
+                        self._format_package(package)
+                    ]
                 }
             }
 
-            result = await self._make_request(
-                "POST",
-                "ship",
-                data
-            )
+            if reference:
+                data["requestedShipment"]["customerReferences"] = [{
+                    "customerReferenceType": "CUSTOMER_REFERENCE",
+                    "value": reference
+                }]
 
-            tracking_number = result["output"]["transactionShipments"][0]["masterTrackingNumber"]
-            label_data = result["output"]["transactionShipments"][0]["pieceResponses"][0]["labelDocuments"][0]["encodedLabel"]
+            result = await self._make_request("POST", "ship", data)
+
+            # Extract tracking and label data
+            shipment = result["output"]["transactionShipments"][0]
+            tracking_number = shipment["masterTrackingNumber"]
+            piece_response = shipment["pieceResponses"][0]
+            label_data = piece_response["labelDocuments"][0]["encodedLabel"]
 
             # Store label in S3 and get URL
             label_url = await self._store_label(label_data, tracking_number)
@@ -390,71 +404,55 @@ class FedExProvider(ShippingProvider):
             raise
 
     async def track_shipment(self, tracking_number: str) -> TrackingInfo:
-        """Track FedEx shipment."""
+        """Track shipment using FedEx API."""
         try:
-            data = {
-                "trackingInfo": [{
-                    "trackingNumberInfo": {
-                        "trackingNumber": tracking_number
-                    }
-                }]
+            tracking_info = {
+                "trackingNumberInfo": {
+                    "trackingNumber": tracking_number
+                }
             }
-
+            data = {"trackingInfo": [tracking_info]}
+            
             result = await self._make_request(
-                "POST",
-                "track",
+                "POST", 
+                "track/v1/trackingnumbers", 
                 data
             )
-
-            track_detail = result["output"]["completeTrackResults"][0]["trackResults"][0]
             
-            status_mapping = {
-                "IN_TRANSIT": TrackingStatus.IN_TRANSIT,
-                "DELIVERED": TrackingStatus.DELIVERED,
-                "EXCEPTION": TrackingStatus.EXCEPTION,
-                "PENDING": TrackingStatus.PENDING
-            }
+            if not result.get("output", {}).get("completeTrackResults", []):
+                raise ShippingException("No tracking data found")
+
+            track_results = result["output"]["completeTrackResults"][0]
+            tracking_details = track_results["trackResults"][0]
+            scan_events = tracking_details.get("scanEvents", [])
 
             events = []
-            for scan in track_detail.get("scanEvents", []):
-                events.append(TrackingEvent(
-                    timestamp=datetime.fromisoformat(scan["date"]),
-                    status=status_mapping.get(
-                        scan["eventType"],
-                        TrackingStatus.IN_TRANSIT
-                    ),
-                    location=scan.get("scanLocation", {}).get("city"),
-                    description=scan.get("eventDescription", ""),
-                    details=scan
-                ))
+            for scan in scan_events:
+                # Parse scan data
+                timestamp = scan["date"].replace("Z", "+00:00")
+                location = scan.get("scanLocation", "")
+                description = scan.get("eventDescription", "")
+                status = scan.get("derivedStatus", "")
+                
+                # Create tracking event
+                event = TrackingEvent(
+                    timestamp=datetime.fromisoformat(timestamp),
+                    location=location,
+                    description=description,
+                    status=self._map_tracking_status(status)
+                )
+                events.append(event)
 
-            audit_shipping_operation(
-                operation="fedex_tracking",
-                status="success",
-                metadata={
-                    "tracking_number": tracking_number,
-                    "current_status": track_detail["latestStatusDetail"]["code"]
-                }
-            )
-
+            # Get final status
+            status_detail = tracking_details.get("latestStatusDetail", {})
+            derived_status = status_detail.get("derivedStatus", "")
+            
             return TrackingInfo(
-                carrier="FEDEX",
                 tracking_number=tracking_number,
-                current_status=status_mapping.get(
-                    track_detail["latestStatusDetail"]["code"],
-                    TrackingStatus.IN_TRANSIT
-                ),
-                estimated_delivery=datetime.fromisoformat(
-                    track_detail["estimatedDeliveryTimeWindow"]["window"]["ends"]
-                ) if "estimatedDeliveryTimeWindow" in track_detail else None,
-                events=events,
-                last_updated=datetime.utcnow()
+                status=self._map_tracking_status(derived_status),
+                events=events
             )
+
         except Exception as e:
-            audit_shipping_operation(
-                operation="fedex_tracking",
-                status="error",
-                error=str(e),
-                metadata={"tracking_number": tracking_number}
-            )
-            raise 
+            error_msg = f"Failed to track shipment: {str(e)}"
+            raise ShippingException(error_msg)

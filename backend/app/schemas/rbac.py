@@ -76,4 +76,4 @@ class RoleInDB(RoleBase):
 
 class RoleResponse(RoleInDB):
     """Role response schema."""
-    assigned_permissions: List[PermissionResponse] 
+    assigned_permissions: List[PermissionResponse]
