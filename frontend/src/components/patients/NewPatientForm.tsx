@@ -15,9 +15,7 @@ import {
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
-import patientService from '../../services/patientService';
-import PhoneInput from '../shared/PhoneInput';
-import { toast } from 'react-hot-toast';
+import PatientService from '../../services/patientService';
 
 interface NewPatientFormProps {
   onClose: () => void;
@@ -77,10 +75,7 @@ interface FormData {
   zip: string;
   
   governmentIdType: string;
-  governmentId: {
-    file: File | null;
-    preview: string | null;
-  } | null;
+  governmentId: GovernmentId | null;
   
   primaryInsurance: {
     provider: string;
@@ -176,11 +171,13 @@ const documentTypes: DocumentType[] = [
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_FILE_TYPES = {
   'application/pdf': ['.pdf'],
-  'image/*': ['.jpg', '.jpeg', '.png']
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png']
 };
 
 const ACCEPTED_IMAGE_TYPES = {
-  'image/*': ['.jpg', '.jpeg', '.png']
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png']
 };
 
 interface UploadAreaProps {
@@ -209,8 +206,6 @@ const UploadArea: React.FC<UploadAreaProps> = ({
     isCapturing: false
   });
 
-  const [isDragActive, setIsDragActive] = useState(false);
-
   useEffect(() => {
     // Check if device has camera capability
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -225,31 +220,11 @@ const UploadArea: React.FC<UploadAreaProps> = ({
     }
   }, []);
 
-  const handleDragEnter = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragActive(true);
-  }, []);
-
-  const handleDragLeave = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragActive(false);
-  }, []);
-
-  const handleDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-  }, []);
-
-  const { getRootProps, getInputProps } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept,
     maxFiles: 1,
-    maxSize,
-    onDragEnter: handleDragEnter,
-    onDragLeave: handleDragLeave,
-    onDragOver: handleDragOver
+    maxSize
   });
 
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -264,8 +239,8 @@ const UploadArea: React.FC<UploadAreaProps> = ({
     <div className={className}>
       <div
         {...getRootProps()}
-        className={`relative rounded-lg border-2 border-dashed border-slate-300 p-6 transition-colors
-          ${isDragActive ? 'bg-slate-50 border-slate-400' : 'bg-transparent hover:bg-slate-50'}`}
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer bg-gray-50 
+          ${isDragActive ? 'border-[#4A6FA5] bg-blue-50' : 'border-gray-300 hover:border-[#4A6FA5]'}`}
       >
         <input {...getInputProps()} />
         {preview ? (
@@ -495,6 +470,8 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
     setIsSaving(true);
     
     try {
+      const patientService = PatientService.getInstance();
+      
       // Convert form data to match PatientFormData interface
       const patientFormData: PatientFormData = {
         firstName: formData.firstName,
@@ -523,23 +500,19 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
         }
       };
       
-      // Register the patient
-      const response = await patientService.registerPatient(patientFormData);
+      await patientService.registerPatient(patientFormData);
       
+      // Show success message
+      alert('Patient registered successfully');
+      navigate('/patients');
+
       // Call the onSave prop with the form data
       onSave(formData);
       
-      // Show success message
-      toast.success('Patient registered successfully');
-      
       // Close the form
       onClose();
-      
-      // Navigate to the patient list page
-      navigate('/patients/select');
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to register patient');
       setErrors(prev => ({
         ...prev,
         submit: error instanceof Error ? error.message : 'Failed to register patient'
@@ -585,6 +558,51 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
     setLastSaved(new Date());
   };
 
+  const formatPhoneNumber = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length === 0) return '';
+    if (numbers.length <= 3) return `(${numbers}`;
+    if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`;
+    return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const formatted = formatPhoneNumber(value);
+    
+    // Handle nested fields (e.g., primaryInsurance.payerPhone)
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...(prev[parent as keyof FormData] as Record<string, any>),
+          [child]: formatted
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: formatted
+      }));
+    }
+
+    // Validate the field if needed
+    const error = validateField(name.split('.')[0], formatted);
+    if (error) {
+      setErrors(prev => ({ ...prev, [name.split('.')[0]]: error }));
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name.split('.')[0]];
+        return newErrors;
+      });
+    }
+
+    // Update last saved timestamp
+    setLastSaved(new Date());
+  };
+
   const removeDocument = (index: number) => {
     setDocuments(prev => prev.filter((_, i) => i !== index));
   };
@@ -622,632 +640,705 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Form Sections */}
-      <div className="space-y-6">
-        {/* Patient Demographics */}
-        <div className="rounded-lg border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">Patient Demographics</h2>
-          <div className="grid grid-cols-3 gap-6 mt-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                First Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2 border ${
-                  errors.firstName ? 'border-red-300' : 'border-gray-200'
-                } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
-                required
-              />
-              {errors.firstName && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  {errors.firstName}
-                </p>
-              )}
-            </div>
+    <div className="fixed inset-0 overflow-y-auto">
+      <div className="flex min-h-screen items-center justify-center">
+        <Dialog
+          as="div"
+          className="fixed inset-0 z-10 overflow-y-auto"
+          onClose={handleClose}
+          open={true}
+        >
+          <div className="min-h-screen px-4 text-center">
+            <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Middle Name
-              </label>
-              <input
-                type="text"
-                name="middleName"
-                value={formData.middleName}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-              />
-            </div>
+            <div className="inline-block w-full max-w-4xl my-8 p-6 text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+              <Transition appear show={true} as={Fragment}>
+                <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2 border ${
-                  errors.lastName ? 'border-red-300' : 'border-gray-200'
-                } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
-                required
-              />
-              {errors.lastName && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  {errors.lastName}
-                </p>
-              )}
-            </div>
+                <span className="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date of Birth <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2 border ${
-                  errors.dateOfBirth ? 'border-red-300' : 'border-gray-200'
-                } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
-                required
-              />
-              {errors.dateOfBirth && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  {errors.dateOfBirth}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Gender <span className="text-red-500">*</span>
-              </label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2 border ${
-                  errors.gender ? 'border-red-300' : 'border-gray-200'
-                } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
-                required
-              >
-                <option value="">Select Gender</option>
-                {genderOptions.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-              {errors.gender && (
-                <p className="mt-1 text-sm text-red-600 flex items-center">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  {errors.gender}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Address */}
-        <div className="rounded-lg border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">Address</h2>
-          <div className="space-y-6 mt-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Street Address
-              </label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-              />
-            </div>
-
-            <div className="grid grid-cols-6 gap-6">
-              <div className="col-span-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  City
-                </label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-                />
-              </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  State
-                </label>
-                <select
-                  name="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
                 >
-                  <option value="">Select State</option>
-                  {states.map(state => (
-                    <option key={state} value={state}>{state}</option>
-                  ))}
-                </select>
-              </div>
+                  <div className="inline-block w-full max-w-[1000px] my-8 text-left align-middle transition-all transform bg-white rounded-xl shadow-2xl">
+                    {/* Header */}
+                    <div className="px-8 py-5 border-b border-gray-200 flex items-center justify-between bg-[#1E293B] text-white rounded-t-xl">
+                      <Dialog.Title as="h2" className="text-2xl font-semibold">
+                        Patient and Insurance Information
+                      </Dialog.Title>
+                      <button
+                        onClick={handleClose}
+                        className="p-1.5 hover:bg-gray-700 rounded-full transition-colors"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ZIP Code
-                </label>
-                <input
-                  type="text"
-                  name="zip"
-                  value={formData.zip}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-                  maxLength={5}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+                    {/* Form */}
+                    <form onSubmit={handleSubmit}>
+                      <div className="max-h-[calc(100vh-200px)] overflow-y-auto px-8 py-6">
+                        {/* Patient Information */}
+                        <div className="space-y-8">
+                          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
+                              Patient Information
+                            </h3>
+                            
+                            <div className="grid grid-cols-3 gap-6 mt-6">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  First Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  name="firstName"
+                                  value={formData.firstName}
+                                  onChange={handleInputChange}
+                                  className={`w-full px-4 py-2 border ${
+                                    errors.firstName ? 'border-red-300' : 'border-gray-200'
+                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
+                                  required
+                                />
+                                {errors.firstName && (
+                                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                    {errors.firstName}
+                                  </p>
+                                )}
+                              </div>
 
-        {/* Patient Identification */}
-        <div className="rounded-lg border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">Patient Identification</h2>
-          <div className="space-y-6 mt-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                ID Type
-              </label>
-              <select
-                name="governmentIdType"
-                value={formData.governmentIdType}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-              >
-                <option value="">Select ID Type</option>
-                {governmentIdTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Middle Name
+                                </label>
+                                <input
+                                  type="text"
+                                  name="middleName"
+                                  value={formData.middleName}
+                                  onChange={handleInputChange}
+                                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                />
+                              </div>
 
-            {/* Front of ID Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Front of ID
-              </label>
-              <UploadArea
-                onDrop={handleGovernmentIdDrop}
-                file={formData.governmentId?.file || null}
-                preview={formData.governmentId?.preview}
-                onRemove={removeGovernmentId}
-                title="Upload Front of ID"
-                accept={ACCEPTED_IMAGE_TYPES}
-              />
-            </div>
-          </div>
-        </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Last Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  name="lastName"
+                                  value={formData.lastName}
+                                  onChange={handleInputChange}
+                                  className={`w-full px-4 py-2 border ${
+                                    errors.lastName ? 'border-red-300' : 'border-gray-200'
+                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
+                                  required
+                                />
+                                {errors.lastName && (
+                                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                    {errors.lastName}
+                                  </p>
+                                )}
+                              </div>
 
-        {/* Skilled Nursing Questions */}
-        <div className="rounded-lg border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">Skilled Nursing Questions</h2>
-          <div className="space-y-6 mt-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Is the patient currently residing in a skilled nursing facility?
-              </label>
-              <div className="flex items-center space-x-6">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    checked={isInSkilledNursing}
-                    onChange={() => setIsInSkilledNursing(true)}
-                    className="w-4 h-4 text-[#4A6FA5] border-gray-300 focus:ring-[#4A6FA5]"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Yes</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    checked={!isInSkilledNursing}
-                    onChange={() => setIsInSkilledNursing(false)}
-                    className="w-4 h-4 text-[#4A6FA5] border-gray-300 focus:ring-[#4A6FA5]"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">No</span>
-                </label>
-              </div>
-            </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Date of Birth <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="date"
+                                  name="dateOfBirth"
+                                  value={formData.dateOfBirth}
+                                  onChange={handleInputChange}
+                                  className={`w-full px-4 py-2 border ${
+                                    errors.dateOfBirth ? 'border-red-300' : 'border-gray-200'
+                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
+                                  required
+                                />
+                                {errors.dateOfBirth && (
+                                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                    {errors.dateOfBirth}
+                                  </p>
+                                )}
+                              </div>
 
-            {isInSkilledNursing && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Is the patient covered under a Part A stay?
-                </label>
-                <div className="flex items-center space-x-6">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={isPartAStay}
-                      onChange={() => setIsPartAStay(true)}
-                      className="w-4 h-4 text-[#4A6FA5] border-gray-300 focus:ring-[#4A6FA5]"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Yes</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={!isPartAStay}
-                      onChange={() => setIsPartAStay(false)}
-                      className="w-4 h-4 text-[#4A6FA5] border-gray-300 focus:ring-[#4A6FA5]"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">No</span>
-                  </label>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Gender <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                  name="gender"
+                                  value={formData.gender}
+                                  onChange={handleInputChange}
+                                  className={`w-full px-4 py-2 border ${
+                                    errors.gender ? 'border-red-300' : 'border-gray-200'
+                                  } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
+                                  required
+                                >
+                                  <option value="">Select Gender</option>
+                                  {genderOptions.map(option => (
+                                    <option key={option} value={option}>{option}</option>
+                                  ))}
+                                </select>
+                                {errors.gender && (
+                                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                                    <AlertCircle className="w-4 h-4 mr-1" />
+                                    {errors.gender}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
 
-        {/* Insurance Information */}
-        <div className="rounded-lg border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">Insurance Information</h2>
-          <div className="space-y-6 mt-6">
-            <div className="grid grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Primary Insurance <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="primaryInsurance.provider"
-                  value={formData.primaryInsurance.provider}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-2 border ${
-                    errors.primaryInsurance ? 'border-red-300' : 'border-gray-200'
-                  } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
-                  required
-                >
-                  <option value="">Select Insurance</option>
-                  {insuranceProviders.map(provider => (
-                    <option key={provider} value={provider}>{provider}</option>
-                  ))}
-                </select>
-                {errors.primaryInsurance && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    {errors.primaryInsurance}
-                  </p>
-                )}
-              </div>
+                          {/* Address */}
+                          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
+                              Address
+                            </h3>
+                            
+                            <div className="space-y-6 mt-6">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Street Address
+                                </label>
+                                <input
+                                  type="text"
+                                  name="address"
+                                  value={formData.address}
+                                  onChange={handleInputChange}
+                                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                />
+                              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Policy Number
-                </label>
-                <input
-                  type="text"
-                  name="primaryInsurance.policyNumber"
-                  value={formData.primaryInsurance.policyNumber}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-                />
-              </div>
+                              <div className="grid grid-cols-6 gap-6">
+                                <div className="col-span-3">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    City
+                                  </label>
+                                  <input
+                                    type="text"
+                                    name="city"
+                                    value={formData.city}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                  />
+                                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Payer Phone
-                </label>
-                <PhoneInput
-                  value={formData.primaryInsurance.payerPhone}
-                  onChange={(value) => {
-                    setFormData((prev: FormData) => ({
-                      ...prev,
-                      primaryInsurance: {
-                        ...prev.primaryInsurance,
-                        payerPhone: value
-                      }
-                    }));
-                    setLastSaved(new Date());
-                  }}
-                  name="primaryInsurance.payerPhone"
-                  id="primaryInsurance.payerPhone"
-                />
-              </div>
-            </div>
+                                <div className="col-span-2">
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    State
+                                  </label>
+                                  <select
+                                    name="state"
+                                    value={formData.state}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                  >
+                                    <option value="">Select State</option>
+                                    {states.map(state => (
+                                      <option key={state} value={state}>{state}</option>
+                                    ))}
+                                  </select>
+                                </div>
 
-            <div className="grid grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Secondary Insurance
-                </label>
-                <select
-                  name="secondaryInsurance.provider"
-                  value={formData.secondaryInsurance.provider}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-                >
-                  <option value="">Select Insurance</option>
-                  {insuranceProviders.map(provider => (
-                    <option key={provider} value={provider}>{provider}</option>
-                  ))}
-                </select>
-              </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    ZIP Code
+                                  </label>
+                                  <input
+                                    type="text"
+                                    name="zip"
+                                    value={formData.zip}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                    maxLength={5}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Secondary Policy Number
-                </label>
-                <input
-                  type="text"
-                  name="secondaryInsurance.policyNumber"
-                  value={formData.secondaryInsurance.policyNumber}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-                />
-              </div>
+                          {/* Patient Identification */}
+                          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
+                              Patient Identification
+                            </h3>
+                            
+                            <div className="space-y-6 mt-6">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  ID Type
+                                </label>
+                                <select
+                                  name="governmentIdType"
+                                  value={formData.governmentIdType}
+                                  onChange={handleInputChange}
+                                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                >
+                                  <option value="">Select ID Type</option>
+                                  {governmentIdTypes.map(type => (
+                                    <option key={type} value={type}>{type}</option>
+                                  ))}
+                                </select>
+                              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Secondary Payer Phone
-                </label>
-                <PhoneInput
-                  value={formData.secondaryInsurance.payerPhone}
-                  onChange={(value) => {
-                    setFormData((prev: FormData) => ({
-                      ...prev,
-                      secondaryInsurance: {
-                        ...prev.secondaryInsurance,
-                        payerPhone: value
-                      }
-                    }));
-                    setLastSaved(new Date());
-                  }}
-                  name="secondaryInsurance.payerPhone"
-                  id="secondaryInsurance.payerPhone"
-                />
-              </div>
-            </div>
+                              {/* Front of ID Upload */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Front of ID
+                                </label>
+                                <UploadArea
+                                  onDrop={handleGovernmentIdDrop}
+                                  file={formData.governmentId?.file || null}
+                                  preview={formData.governmentId?.preview}
+                                  onRemove={removeGovernmentId}
+                                  title="Upload Front of ID"
+                                  accept={ACCEPTED_FILE_TYPES}
+                                />
+                              </div>
+                            </div>
+                          </div>
 
-            {/* Primary Insurance Card Uploads */}
-            <div className="grid grid-cols-2 gap-6 mt-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Insurance Card (Front)
-                </label>
-                <UploadArea
-                  onDrop={(files) => handleInsuranceCardDrop(files, 'primary', 'front')}
-                  file={formData.primaryInsurance.cardFront?.file || null}
-                  preview={formData.primaryInsurance.cardFront?.preview}
-                  onRemove={() => removeInsuranceCard('primary', 'front')}
-                  title="Upload Front of Card"
-                  accept={ACCEPTED_IMAGE_TYPES}
-                />
-              </div>
+                          {/* Skilled Nursing Questions */}
+                          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
+                              Skilled Nursing Questions
+                            </h3>
+                            
+                            <div className="space-y-6 mt-6">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Is the patient currently residing in a skilled nursing facility?
+                                </label>
+                                <div className="flex items-center space-x-6">
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      checked={isInSkilledNursing}
+                                      onChange={() => setIsInSkilledNursing(true)}
+                                      className="w-4 h-4 text-[#4A6FA5] border-gray-300 focus:ring-[#4A6FA5]"
+                                    />
+                                    <span className="ml-2 text-sm text-gray-700">Yes</span>
+                                  </label>
+                                  <label className="flex items-center">
+                                    <input
+                                      type="radio"
+                                      checked={!isInSkilledNursing}
+                                      onChange={() => setIsInSkilledNursing(false)}
+                                      className="w-4 h-4 text-[#4A6FA5] border-gray-300 focus:ring-[#4A6FA5]"
+                                    />
+                                    <span className="ml-2 text-sm text-gray-700">No</span>
+                                  </label>
+                                </div>
+                              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Insurance Card (Back)
-                </label>
-                <UploadArea
-                  onDrop={(files) => handleInsuranceCardDrop(files, 'primary', 'back')}
-                  file={formData.primaryInsurance.cardBack?.file || null}
-                  preview={formData.primaryInsurance.cardBack?.preview}
-                  onRemove={() => removeInsuranceCard('primary', 'back')}
-                  title="Upload Back of Card"
-                  accept={ACCEPTED_IMAGE_TYPES}
-                />
-              </div>
-            </div>
+                              {isInSkilledNursing && (
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Is the patient covered under a Part A stay?
+                                  </label>
+                                  <div className="flex items-center space-x-6">
+                                    <label className="flex items-center">
+                                      <input
+                                        type="radio"
+                                        checked={isPartAStay}
+                                        onChange={() => setIsPartAStay(true)}
+                                        className="w-4 h-4 text-[#4A6FA5] border-gray-300 focus:ring-[#4A6FA5]"
+                                      />
+                                      <span className="ml-2 text-sm text-gray-700">Yes</span>
+                                    </label>
+                                    <label className="flex items-center">
+                                      <input
+                                        type="radio"
+                                        checked={!isPartAStay}
+                                        onChange={() => setIsPartAStay(false)}
+                                        className="w-4 h-4 text-[#4A6FA5] border-gray-300 focus:ring-[#4A6FA5]"
+                                      />
+                                      <span className="ml-2 text-sm text-gray-700">No</span>
+                                    </label>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
 
-            {/* Secondary Insurance Card Uploads */}
-            {formData.secondaryInsurance.provider && (
-              <div className="grid grid-cols-2 gap-6 mt-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Secondary Insurance Card (Front)
-                  </label>
-                  <UploadArea
-                    onDrop={(files) => handleInsuranceCardDrop(files, 'secondary', 'front')}
-                    file={formData.secondaryInsurance.cardFront?.file || null}
-                    preview={formData.secondaryInsurance.cardFront?.preview}
-                    onRemove={() => removeInsuranceCard('secondary', 'front')}
-                    title="Upload Front of Card"
-                    accept={ACCEPTED_IMAGE_TYPES}
-                  />
-                </div>
+                          {/* Insurance Information */}
+                          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
+                              Insurance Information
+                            </h3>
+                            
+                            <div className="space-y-6 mt-6">
+                              <div className="grid grid-cols-3 gap-6">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Primary Insurance <span className="text-red-500">*</span>
+                                  </label>
+                                  <select
+                                    name="primaryInsurance.provider"
+                                    value={formData.primaryInsurance.provider}
+                                    onChange={handleInputChange}
+                                    className={`w-full px-4 py-2 border ${
+                                      errors.primaryInsurance ? 'border-red-300' : 'border-gray-200'
+                                    } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
+                                    required
+                                  >
+                                    <option value="">Select Insurance</option>
+                                    {insuranceProviders.map(provider => (
+                                      <option key={provider} value={provider}>{provider}</option>
+                                    ))}
+                                  </select>
+                                  {errors.primaryInsurance && (
+                                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                                      <AlertCircle className="w-4 h-4 mr-1" />
+                                      {errors.primaryInsurance}
+                                    </p>
+                                  )}
+                                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Secondary Insurance Card (Back)
-                  </label>
-                  <UploadArea
-                    onDrop={(files) => handleInsuranceCardDrop(files, 'secondary', 'back')}
-                    file={formData.secondaryInsurance.cardBack?.file || null}
-                    preview={formData.secondaryInsurance.cardBack?.preview}
-                    onRemove={() => removeInsuranceCard('secondary', 'back')}
-                    title="Upload Back of Card"
-                    accept={ACCEPTED_IMAGE_TYPES}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Policy Number
+                                  </label>
+                                  <input
+                                    type="text"
+                                    name="primaryInsurance.policyNumber"
+                                    value={formData.primaryInsurance.policyNumber}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                  />
+                                </div>
 
-        {/* Medical Notes */}
-        <div className="rounded-lg border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">Medical Notes</h2>
-          <div className="mt-6">
-            <div className="relative">
-              <textarea
-                name="medicalNotes"
-                value={medicalNotes}
-                onChange={handleMedicalNotesChange}
-                rows={6}
-                className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-                placeholder="Enter patient medical history, conditions, medications, allergies, or any relevant clinical notes..."
-              />
-              <div className="absolute bottom-2 right-2 flex items-center space-x-2 text-sm text-gray-500">
-                {isAutoSaving ? (
-                  <span className="flex items-center">
-                    <Save className="w-4 h-4 animate-spin mr-1" />
-                    Saving...
-                  </span>
-                ) : lastSaved && (
-                  <span className="flex items-center">
-                    <CheckCircle2 className="w-4 h-4 text-green-500 mr-1" />
-                    Saved {lastSaved.toLocaleTimeString()}
-                  </span>
-                )}
-                <span>|</span>
-                <span>{medicalNotes.length} characters</span>
-              </div>
-            </div>
-            <p className="mt-2 text-sm text-gray-500">
-              These notes will follow the patient throughout their care
-            </p>
-          </div>
-        </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Payer Phone
+                                  </label>
+                                  <input
+                                    type="tel"
+                                    name="primaryInsurance.payerPhone"
+                                    value={formData.primaryInsurance.payerPhone}
+                                    onChange={handlePhoneChange}
+                                    placeholder="(555) 555-5555"
+                                    className={`w-full px-4 py-2 border ${
+                                      errors.payerPhone ? 'border-red-300' : 'border-gray-200'
+                                    } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
+                                    pattern="\(\d{3}\) \d{3}-\d{4}"
+                                    maxLength={14}
+                                    inputMode="numeric"
+                                  />
+                                  {errors.payerPhone && (
+                                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                                      <AlertCircle className="w-4 h-4 mr-1" />
+                                      {errors.payerPhone}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
 
-        {/* Document Upload */}
-        <div className="rounded-lg border border-slate-200 p-6">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">Additional Documents</h2>
-          <div className="space-y-6 mt-6">
-            <UploadArea
-              onDrop={handleDocumentDrop}
-              file={null}
-              preview={undefined}
-              onRemove={() => {}}
-              title="Upload Additional Documents"
-              accept={ACCEPTED_FILE_TYPES}
-              className="mb-4"
-            />
+                              <div className="grid grid-cols-3 gap-6">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Secondary Insurance
+                                  </label>
+                                  <select
+                                    name="secondaryInsurance.provider"
+                                    value={formData.secondaryInsurance.provider}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                  >
+                                    <option value="">Select Insurance</option>
+                                    {insuranceProviders.map(provider => (
+                                      <option key={provider} value={provider}>{provider}</option>
+                                    ))}
+                                  </select>
+                                </div>
 
-            {documents.length > 0 && (
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700">
-                  Uploaded Documents ({documents.length})
-                </h4>
-                <div className="space-y-3">
-                  {documents.map((doc, index) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-start p-4 bg-white border border-gray-200 rounded-lg shadow-sm"
-                    >
-                      {doc.preview && doc.type.startsWith('image/') ? (
-                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                          <img
-                            src={doc.preview}
-                            alt={doc.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
-                          <FileText className="w-8 h-8 text-gray-400" />
-                        </div>
-                      )}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Secondary Policy Number
+                                  </label>
+                                  <input
+                                    type="text"
+                                    name="secondaryInsurance.policyNumber"
+                                    value={formData.secondaryInsurance.policyNumber}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                  />
+                                </div>
 
-                      <div className="ml-4 flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 mr-4">
-                            <input
-                              type="text"
-                              value={doc.title}
-                              onChange={(e) => {
-                                const newDocs = [...documents];
-                                newDocs[index].title = e.target.value;
-                                setDocuments(newDocs);
-                              }}
-                              className="w-full text-sm font-medium border-0 focus:ring-0 p-0 bg-transparent"
-                              placeholder="Document title"
-                            />
-                            <div className="flex items-center space-x-2 mt-1">
-                              <p className="text-xs text-gray-500">
-                                {(doc.file.size / (1024 * 1024)).toFixed(2)} MB
-                              </p>
-                              <span className="text-gray-300">•</span>
-                              <p className="text-xs text-gray-500">
-                                {doc.type.split('/')[1].toUpperCase()}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Secondary Payer Phone
+                                  </label>
+                                  <input
+                                    type="tel"
+                                    name="secondaryInsurance.payerPhone"
+                                    value={formData.secondaryInsurance.payerPhone}
+                                    onChange={handlePhoneChange}
+                                    placeholder="(555) 555-5555"
+                                    className={`w-full px-4 py-2 border ${
+                                      errors.payerPhone ? 'border-red-300' : 'border-gray-200'
+                                    } rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors`}
+                                    pattern="\(\d{3}\) \d{3}-\d{4}"
+                                    maxLength={14}
+                                    inputMode="numeric"
+                                  />
+                                  {errors.payerPhone && (
+                                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                                      <AlertCircle className="w-4 h-4 mr-1" />
+                                      {errors.payerPhone}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Primary Insurance Card Uploads */}
+                              <div className="grid grid-cols-2 gap-6 mt-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Insurance Card (Front)
+                                  </label>
+                                  <UploadArea
+                                    onDrop={(files) => handleInsuranceCardDrop(files, 'primary', 'front')}
+                                    file={formData.primaryInsurance.cardFront?.file || null}
+                                    preview={formData.primaryInsurance.cardFront?.preview}
+                                    onRemove={() => removeInsuranceCard('primary', 'front')}
+                                    title="Upload Front of Card"
+                                    accept={ACCEPTED_IMAGE_TYPES}
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Insurance Card (Back)
+                                  </label>
+                                  <UploadArea
+                                    onDrop={(files) => handleInsuranceCardDrop(files, 'primary', 'back')}
+                                    file={formData.primaryInsurance.cardBack?.file || null}
+                                    preview={formData.primaryInsurance.cardBack?.preview}
+                                    onRemove={() => removeInsuranceCard('primary', 'back')}
+                                    title="Upload Back of Card"
+                                    accept={ACCEPTED_IMAGE_TYPES}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Secondary Insurance Card Uploads */}
+                              {formData.secondaryInsurance.provider && (
+                                <div className="grid grid-cols-2 gap-6 mt-4">
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      Secondary Insurance Card (Front)
+                                    </label>
+                                    <UploadArea
+                                      onDrop={(files) => handleInsuranceCardDrop(files, 'secondary', 'front')}
+                                      file={formData.secondaryInsurance.cardFront?.file || null}
+                                      preview={formData.secondaryInsurance.cardFront?.preview}
+                                      onRemove={() => removeInsuranceCard('secondary', 'front')}
+                                      title="Upload Front of Card"
+                                      accept={ACCEPTED_IMAGE_TYPES}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                      Secondary Insurance Card (Back)
+                                    </label>
+                                    <UploadArea
+                                      onDrop={(files) => handleInsuranceCardDrop(files, 'secondary', 'back')}
+                                      file={formData.secondaryInsurance.cardBack?.file || null}
+                                      preview={formData.secondaryInsurance.cardBack?.preview}
+                                      onRemove={() => removeInsuranceCard('secondary', 'back')}
+                                      title="Upload Back of Card"
+                                      accept={ACCEPTED_IMAGE_TYPES}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Medical Notes */}
+                          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
+                              Medical Notes
+                            </h3>
+                            
+                            <div className="mt-6">
+                              <div className="relative">
+                                <textarea
+                                  name="medicalNotes"
+                                  value={medicalNotes}
+                                  onChange={handleMedicalNotesChange}
+                                  rows={6}
+                                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
+                                  placeholder="Enter patient medical history, conditions, medications, allergies, or any relevant clinical notes..."
+                                />
+                                <div className="absolute bottom-2 right-2 flex items-center space-x-2 text-sm text-gray-500">
+                                  {isAutoSaving ? (
+                                    <span className="flex items-center">
+                                      <Save className="w-4 h-4 animate-spin mr-1" />
+                                      Saving...
+                                    </span>
+                                  ) : lastSaved && (
+                                    <span className="flex items-center">
+                                      <CheckCircle2 className="w-4 h-4 text-green-500 mr-1" />
+                                      Saved {lastSaved.toLocaleTimeString()}
+                                    </span>
+                                  )}
+                                  <span>|</span>
+                                  <span>{medicalNotes.length} characters</span>
+                                </div>
+                              </div>
+                              <p className="mt-2 text-sm text-gray-500">
+                                These notes will follow the patient throughout their care
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            {doc.preview && doc.type.startsWith('image/') && (
-                              <button
-                                type="button"
-                                onClick={() => window.open(doc.preview)}
-                                className="text-gray-400 hover:text-[#4A6FA5] transition-colors"
-                                title="Preview"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
+
+                          {/* Document Upload */}
+                          <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                            <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
+                              Additional Documents
+                            </h3>
+                            
+                            <div className="space-y-6 mt-6">
+                              <UploadArea
+                                onDrop={handleDocumentDrop}
+                                file={null}
+                                preview={undefined}
+                                onRemove={() => {}}
+                                title="Upload Additional Documents"
+                                accept={ACCEPTED_FILE_TYPES}
+                                className="mb-4"
+                              />
+
+                              {documents.length > 0 && (
+                                <div className="space-y-4">
+                                  <h4 className="text-sm font-medium text-gray-700">
+                                    Uploaded Documents ({documents.length})
+                                  </h4>
+                                  <div className="space-y-3">
+                                    {documents.map((doc, index) => (
+                                      <div
+                                        key={doc.id}
+                                        className="flex items-start p-4 bg-white border border-gray-200 rounded-lg shadow-sm"
+                                      >
+                                        {doc.preview && doc.type.startsWith('image/') ? (
+                                          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                                            <img
+                                              src={doc.preview}
+                                              alt={doc.title}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          </div>
+                                        ) : (
+                                          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                                            <FileText className="w-8 h-8 text-gray-400" />
+                                          </div>
+                                        )}
+
+                                        <div className="ml-4 flex-1 min-w-0">
+                                          <div className="flex items-start justify-between">
+                                            <div className="flex-1 mr-4">
+                                              <input
+                                                type="text"
+                                                value={doc.title}
+                                                onChange={(e) => {
+                                                  const newDocs = [...documents];
+                                                  newDocs[index].title = e.target.value;
+                                                  setDocuments(newDocs);
+                                                }}
+                                                className="w-full text-sm font-medium border-0 focus:ring-0 p-0 bg-transparent"
+                                                placeholder="Document title"
+                                              />
+                                              <div className="flex items-center space-x-2 mt-1">
+                                                <p className="text-xs text-gray-500">
+                                                  {(doc.file.size / (1024 * 1024)).toFixed(2)} MB
+                                                </p>
+                                                <span className="text-gray-300">•</span>
+                                                <p className="text-xs text-gray-500">
+                                                  {doc.type.split('/')[1].toUpperCase()}
+                                                </p>
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                              {doc.preview && doc.type.startsWith('image/') && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => window.open(doc.preview)}
+                                                  className="text-gray-400 hover:text-[#4A6FA5] transition-colors"
+                                                  title="Preview"
+                                                >
+                                                  <Eye className="w-4 h-4" />
+                                                </button>
+                                              )}
+                                              <button
+                                                type="button"
+                                                onClick={() => removeDocument(index)}
+                                                className="text-gray-400 hover:text-red-500 transition-colors"
+                                                title="Remove"
+                                              >
+                                                <Trash2 className="w-4 h-4" />
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-8 py-5 border-t border-gray-200 bg-gray-50 rounded-b-xl flex items-center justify-between">
+                          <div className="flex items-center text-sm text-gray-500">
+                            {lastSaved && (
+                              <>
+                                <CheckCircle2 className="w-4 h-4 text-green-500 mr-1" />
+                                Last saved {lastSaved.toLocaleTimeString()}
+                              </>
                             )}
+                          </div>
+                          <div className="flex items-center space-x-3">
                             <button
-                              type="button"
-                              onClick={() => removeDocument(index)}
-                              className="text-gray-400 hover:text-red-500 transition-colors"
-                              title="Remove"
+                              type="submit"
+                              disabled={isSaving}
+                              className="px-4 py-2 bg-[#4A6FA5] text-white rounded-lg hover:bg-[#3e5d8c] transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {isSaving ? (
+                                <>
+                                  <Save className="w-5 h-5 mr-2 animate-spin" />
+                                  Saving...
+                                </>
+                              ) : (
+                                <>
+                                  <Save className="w-5 h-5 mr-2" />
+                                  Save Patient
+                                </>
+                              )}
                             </button>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                    </form>
+                  </div>
+                </Transition.Child>
+              </Transition>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Form Actions */}
-      <div className="border-t border-slate-200 pt-6">
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="text-slate-600 hover:text-slate-900"
-          >
-            Cancel
-          </button>
-          <div className="flex items-center space-x-4">
-            {lastSaved && (
-              <span className="text-sm text-slate-500">
-                Last saved {new Date(lastSaved).toLocaleTimeString()}
-              </span>
-            )}
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center"
-            >
-              {isSaving ? (
-                <>
-                  <RotateCcw className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Patient
-                </>
-              )}
-            </button>
-          </div>
-        </div>
+        </Dialog>
       </div>
     </div>
   );

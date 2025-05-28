@@ -14,10 +14,9 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onUpload }) => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'application/pdf': ['.pdf'],
-      'image/*': ['.jpeg', '.jpg', '.png']
-    },
-    maxSize: 10 * 1024 * 1024 // 10MB
+      'image/*': ['.jpeg', '.jpg', '.png'],
+      'application/pdf': ['.pdf']
+    }
   });
 
   // Check if the device has camera capabilities

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DocumentUpload from '../shared/DocumentUpload';
-import PhoneInput from '../shared/PhoneInput';
 
 interface PatientIntakeFormData {
   // Personal Information
@@ -99,12 +98,7 @@ const PatientIntakeForm: React.FC = () => {
     }
   };
 
-  const handleFileSelect = (type: keyof DocumentFiles, file: File | null) => {
-    if (!file) {
-      handleFileRemove(type);
-      return;
-    }
-
+  const handleFileSelect = (type: keyof DocumentFiles, file: File) => {
     const previewUrl = URL.createObjectURL(file);
     
     if (type === 'additionalDocs') {
@@ -155,11 +149,11 @@ const PatientIntakeForm: React.FC = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Personal Information Section */}
-      <div className="rounded-lg border border-slate-200 p-6">
-        <h2 className="text-lg font-medium text-slate-900 mb-4">Personal Information</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-slate-700">
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
               First Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -169,7 +163,7 @@ const PatientIntakeForm: React.FC = () => {
               required
               value={formData.firstName}
               onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
           </div>
           <div>
@@ -236,8 +230,8 @@ const PatientIntakeForm: React.FC = () => {
       </div>
 
       {/* Address Information Section */}
-      <div className="rounded-lg border border-slate-200 p-6">
-        <h2 className="text-lg font-medium text-slate-900 mb-4">Address Information</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Address Information</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label htmlFor="address" className="block text-sm font-medium text-gray-700">
@@ -295,8 +289,8 @@ const PatientIntakeForm: React.FC = () => {
       </div>
 
       {/* Skilled Nursing Facility Section */}
-      <div className="rounded-lg border border-slate-200 p-6">
-        <h2 className="text-lg font-medium text-slate-900 mb-4">Skilled Nursing Facility</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Skilled Nursing Facility</h2>
         <div className="space-y-4">
           <div className="flex items-center">
             <input
@@ -330,9 +324,9 @@ const PatientIntakeForm: React.FC = () => {
       </div>
 
       {/* Insurance Information Section */}
-      <div className="rounded-lg border border-slate-200 p-6">
-        <h2 className="text-lg font-medium text-slate-900 mb-4">Insurance Information</h2>
-        <div className="space-y-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Insurance Information</h2>
+        <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="primaryInsurance" className="block text-sm font-medium text-gray-700">
@@ -365,16 +359,13 @@ const PatientIntakeForm: React.FC = () => {
               <label htmlFor="primaryPayerPhone" className="block text-sm font-medium text-gray-700">
                 Payer Phone
               </label>
-              <PhoneInput
-                value={formData.primaryPayerPhone}
-                onChange={(value) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    primaryPayerPhone: value
-                  }));
-                }}
-                id="primaryPayerPhone"
+              <input
+                type="tel"
                 name="primaryPayerPhone"
+                id="primaryPayerPhone"
+                value={formData.primaryPayerPhone}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               />
             </div>
           </div>
@@ -410,76 +401,122 @@ const PatientIntakeForm: React.FC = () => {
               <label htmlFor="secondaryPayerPhone" className="block text-sm font-medium text-gray-700">
                 Payer Phone
               </label>
-              <PhoneInput
-                value={formData.secondaryPayerPhone}
-                onChange={(value) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    secondaryPayerPhone: value
-                  }));
-                }}
-                id="secondaryPayerPhone"
+              <input
+                type="tel"
                 name="secondaryPayerPhone"
+                id="secondaryPayerPhone"
+                value={formData.secondaryPayerPhone}
+                onChange={handleInputChange}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Document Upload */}
-      <div className="rounded-lg border border-slate-200 p-6">
-        <h2 className="text-lg font-medium text-slate-900 mb-4">Required Documents</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <DocumentUpload
-            label="Government ID"
-            description="Upload a valid government-issued ID"
-            required
-            value={documentFiles.identification.file}
-            onChange={(file: File | null) => handleFileSelect('identification', file)}
-            status="pending"
-            acceptedFileTypes={['.jpg', '.jpeg', '.png', '.pdf']}
-            maxSizeMB={10}
-            showCamera={true}
-          />
-          <DocumentUpload
-            label="Face Sheet"
-            description="Upload patient face sheet"
-            required
-            value={documentFiles.faceSheet.file}
-            onChange={(file: File | null) => handleFileSelect('faceSheet', file)}
-            status="pending"
-            acceptedFileTypes={['.jpg', '.jpeg', '.png', '.pdf']}
-            maxSizeMB={10}
-            showCamera={false}
-          />
-          <DocumentUpload
-            label="Insurance Card (Front)"
-            description="Upload the front side of insurance card"
-            required
-            value={documentFiles.insuranceFront.file}
-            onChange={(file: File | null) => handleFileSelect('insuranceFront', file)}
-            status="pending"
-            acceptedFileTypes={['.jpg', '.jpeg', '.png']}
-            maxSizeMB={10}
-            showCamera={true}
-          />
-          <DocumentUpload
-            label="Insurance Card (Back)"
-            description="Upload the back side of insurance card"
-            required
-            value={documentFiles.insuranceBack.file}
-            onChange={(file: File | null) => handleFileSelect('insuranceBack', file)}
-            status="pending"
-            acceptedFileTypes={['.jpg', '.jpeg', '.png']}
-            maxSizeMB={10}
-            showCamera={true}
-          />
+      {/* Document Upload Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Required Documents</h2>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <DocumentUpload
+                label="Patient Identification"
+                required
+                onFileSelect={(file) => handleFileSelect('identification', file)}
+                onFileRemove={() => handleFileRemove('identification')}
+                selectedFile={documentFiles.identification.file}
+                previewUrl={documentFiles.identification.previewUrl || undefined}
+              />
+              
+              <DocumentUpload
+                label="Face Sheet"
+                required
+                onFileSelect={(file) => handleFileSelect('faceSheet', file)}
+                onFileRemove={() => handleFileRemove('faceSheet')}
+                selectedFile={documentFiles.faceSheet.file}
+                previewUrl={documentFiles.faceSheet.previewUrl || undefined}
+              />
+            </div>
+            
+            <div className="space-y-6">
+              <DocumentUpload
+                label="Insurance Card Front"
+                required
+                onFileSelect={(file) => handleFileSelect('insuranceFront', file)}
+                onFileRemove={() => handleFileRemove('insuranceFront')}
+                selectedFile={documentFiles.insuranceFront.file}
+                previewUrl={documentFiles.insuranceFront.previewUrl || undefined}
+              />
+              
+              <DocumentUpload
+                label="Insurance Card Back"
+                required
+                onFileSelect={(file) => handleFileSelect('insuranceBack', file)}
+                onFileRemove={() => handleFileRemove('insuranceBack')}
+                selectedFile={documentFiles.insuranceBack.file}
+                previewUrl={documentFiles.insuranceBack.previewUrl || undefined}
+              />
+            </div>
+          </div>
+          
+          {documentFiles.additionalDocs.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-sm font-medium text-gray-900 mb-4">Additional Documents</h3>
+              <div className="space-y-4">
+                {documentFiles.additionalDocs.map((doc, index) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center space-x-4">
+                      <input
+                        type="text"
+                        placeholder="Document Name"
+                        value={doc.name || ''}
+                        onChange={(e) => {
+                          const newDocs = [...documentFiles.additionalDocs];
+                          newDocs[index] = { ...newDocs[index], name: e.target.value };
+                          setDocumentFiles(prev => ({
+                            ...prev,
+                            additionalDocs: newDocs
+                          }));
+                        }}
+                        className="block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleFileRemove('additionalDocs', index)}
+                        className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <DocumentUpload
+                      label={doc.name || `Additional Document ${index + 1}`}
+                      onFileSelect={(file) => handleFileSelect('additionalDocs', file)}
+                      onFileRemove={() => handleFileRemove('additionalDocs', index)}
+                      selectedFile={doc.file}
+                      previewUrl={doc.previewUrl || undefined}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {documentFiles.additionalDocs.length < 5 && (
+            <button
+              type="button"
+              onClick={() => handleFileSelect('additionalDocs', new File([], 'placeholder'))}
+              className="mt-4 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Add Additional Document
+            </button>
+          )}
         </div>
       </div>
 
       {/* Notes Section */}
-      <div className="rounded-lg border border-slate-200 p-6">
-        <h2 className="text-lg font-medium text-slate-900 mb-4">Additional Notes</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Additional Notes</h2>
         <div>
           <textarea
             name="notes"
@@ -494,23 +531,21 @@ const PatientIntakeForm: React.FC = () => {
       </div>
 
       {/* Form Actions */}
-      <div className="border-t border-slate-200 pt-6">
-        <div className="flex justify-end space-x-4">
-          <button
-            type="button"
-            onClick={() => navigate('/patients')}
-            className="px-4 py-2 text-slate-600 hover:text-slate-900"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg"
-          >
-            {isSubmitting ? 'Saving...' : 'Save Patient'}
-          </button>
-        </div>
+      <div className="flex justify-end space-x-4">
+        <button
+          type="button"
+          onClick={() => navigate('/patients')}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          {isSubmitting ? 'Saving...' : 'Save Patient'}
+        </button>
       </div>
     </form>
   );
