@@ -11,9 +11,12 @@
     "format": "cd frontend && npm run format"
   },
   "devDependencies": {
+    "@types/next": "^8.0.7",
     "concurrently": "^8.2.0"
   },
   "dependencies": {
+    "chart.js": "^4.4.9",
+    "react-chartjs-2": "^5.3.0",
     "react-hot-toast": "^2.5.2",
     "react-toastify": "^11.0.5"
   }

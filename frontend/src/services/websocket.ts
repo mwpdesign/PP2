@@ -4,6 +4,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import config from '../config';
 
 // WebSocket connection states
 export enum ConnectionState {
@@ -40,14 +41,14 @@ export interface WebSocketConfig {
   reconnectInterval?: number;
   maxReconnectAttempts?: number;
   pingInterval?: number;
-  baseUrl?: string;
+  baseUrl: string;
 }
 
 const defaultConfig: WebSocketConfig = {
-  reconnectInterval: 5000,
-  maxReconnectAttempts: 5,
-  pingInterval: 30000,
-  baseUrl: process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws'
+  reconnectInterval: config.WS_RECONNECT_INTERVAL,
+  maxReconnectAttempts: config.WS_MAX_RECONNECT_ATTEMPTS,
+  pingInterval: config.WS_PING_INTERVAL,
+  baseUrl: config.getWSEndpoint()
 };
 
 export interface WebSocketHook {
@@ -75,14 +76,16 @@ export class WebSocketService {
   private connectionState: ConnectionState = ConnectionState.DISCONNECTED;
   private stateChangeCallbacks: Set<(state: ConnectionState) => void> = new Set();
 
-  constructor(config: WebSocketConfig = defaultConfig) {
+  constructor(config: Partial<WebSocketConfig> = {}) {
     this.config = { ...defaultConfig, ...config };
     this.maxReconnectAttempts = this.config.maxReconnectAttempts || 5;
   }
 
   private setConnectionState(state: ConnectionState) {
-    this.connectionState = state;
-    this.stateChangeCallbacks.forEach(callback => callback(state));
+    if (this.connectionState !== state) {
+      this.connectionState = state;
+      this.stateChangeCallbacks.forEach(callback => callback(state));
+    }
   }
 
   onStateChange(callback: (state: ConnectionState) => void) {
@@ -108,7 +111,12 @@ export class WebSocketService {
 
     try {
       this.setConnectionState(ConnectionState.CONNECTING);
-      this.socket = new WebSocket(`${this.config.baseUrl}?token=${token}`);
+      
+      // Use the configured WebSocket URL
+      const wsUrl = new URL(this.config.baseUrl || defaultConfig.baseUrl);
+      wsUrl.searchParams.append('token', token);
+      
+      this.socket = new WebSocket(wsUrl.toString());
       
       this.socket.onopen = () => {
         console.log('WebSocket connected');
@@ -153,6 +161,11 @@ export class WebSocketService {
           // Handle authentication errors from server
           if (message.type === MessageType.AUTH_ERROR) {
             this.setConnectionState(ConnectionState.AUTHENTICATION_FAILED);
+            return;
+          }
+          
+          // Handle pong messages for connection health check
+          if (message.type === MessageType.PONG) {
             return;
           }
           
@@ -255,7 +268,7 @@ export class WebSocketService {
   }
 }
 
-// Create singleton instance
+// Create singleton instance with default config
 export const websocketService = new WebSocketService();
 
 // Hook for using WebSocket in components
@@ -275,6 +288,8 @@ export const useWebSocket = (config: WebSocketConfig = defaultConfig): WebSocket
     // Only connect if authenticated
     if (isAuthenticated) {
       ws.connect(getToken);
+    } else {
+      ws.disconnect();
     }
 
     // Subscribe to connection state changes

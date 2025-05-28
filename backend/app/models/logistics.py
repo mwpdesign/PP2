@@ -244,6 +244,11 @@ class QualityCheck(Base):
         ForeignKey("users.id"),
         nullable=True
     )
+    created_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
     status: Mapped[str] = mapped_column(
         Enum(
             "pending",
@@ -286,6 +291,11 @@ class QualityCheck(Base):
     inspector = relationship(
         "User",
         foreign_keys=[inspector_id],
+        back_populates="quality_checks"
+    )
+    created_by = relationship(
+        "User",
+        foreign_keys=[created_by_id],
         back_populates="quality_checks"
     )
 

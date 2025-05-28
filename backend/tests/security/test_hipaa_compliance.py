@@ -56,7 +56,7 @@ async def test_phi_access_logging(
         user_id=test_user.id,
         patient_id=test_order.patient_id,
         action="view",
-        territory_id=test_user.territory_id,
+        territory_id=test_user.primary_territory_id,
         resource_type="order",
         resource_id=test_order.id,
         accessed_fields=["medical_history", "medications"],
@@ -86,7 +86,7 @@ async def test_territory_based_access_control(
     order_data = {
         "patient_id": test_user.id,
         "provider_id": test_user.id,
-        "territory_id": test_user.territory_id,
+        "territory_id": test_user.primary_territory_id,
         "phi_data": {
             "diagnosis": "Test condition",
             "medications": ["Med A", "Med B"]
@@ -97,13 +97,13 @@ async def test_territory_based_access_control(
     response = client.post(
         "/api/v1/orders",
         json=order_data,
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 201
     order_id = response.json()["id"]
 
     # Try to access from wrong territory
-    wrong_territory = test_user.territory_id + 1
+    wrong_territory = test_user.primary_territory_id + 1
     response = client.get(
         f"/api/v1/orders/{order_id}",
         headers={"X-Territory-ID": str(wrong_territory)}
@@ -138,7 +138,7 @@ async def test_audit_trail_completeness(
             user_id=test_user.id,
             patient_id=test_order.patient_id,
             action=action,
-            territory_id=test_user.territory_id,
+            territory_id=test_user.primary_territory_id,
             resource_type="order",
             resource_id=test_order.id,
             accessed_fields=fields,
@@ -223,7 +223,7 @@ async def test_emergency_access_procedures(
             "reason": "Medical emergency",
             "provider_id": test_user.id
         },
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 200
 
@@ -248,7 +248,7 @@ async def test_emergency_access_procedures(
     response = client.get(
         f"/api/v1/orders/{test_order.id}/phi",
         headers={
-            "X-Territory-ID": str(test_user.territory_id),
+            "X-Territory-ID": str(test_user.primary_territory_id),
             "X-Emergency-Access-Token": "expired_token"
         }
     )

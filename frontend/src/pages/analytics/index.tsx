@@ -1,13 +1,8 @@
 import React from 'react';
-import PlaceholderPage from '../../components/shared/PlaceholderPage';
+import Analytics from '../../components/analytics/Analytics';
 
 const AnalyticsPage: React.FC = () => {
-  return (
-    <PlaceholderPage 
-      title="Analytics & Reports"
-      description="Performance metrics and reporting dashboard"
-    />
-  );
+  return <Analytics />;
 };
 
 export default AnalyticsPage; 

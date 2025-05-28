@@ -4,6 +4,8 @@ from uuid import UUID as PyUUID, uuid4
 from sqlalchemy import String, DateTime, Boolean, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+from typing import Optional
 
 from app.core.database import Base
 
@@ -19,7 +21,7 @@ class Organization(Base):
         default=uuid4
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str] = mapped_column(String(500))
+    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     settings: Mapped[dict] = mapped_column(
         JSON,
         nullable=False,
@@ -35,23 +37,26 @@ class Organization(Base):
         nullable=False,
         default=True
     )
+    status: Mapped[str] = mapped_column(String(50))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow
+        server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=True,
-        onupdate=datetime.utcnow
+        server_default=func.now(),
+        onupdate=func.now()
     )
 
     # Relationships
     users = relationship("User", back_populates="organization")
     facilities = relationship("Facility", back_populates="organization")
-    territories = relationship("Territory", back_populates="organization")
-    roles = relationship("Role", back_populates="organization")
+    providers = relationship("Provider", back_populates="organization")
     patients = relationship("Patient", back_populates="organization")
+    orders = relationship("Order", back_populates="organization")
+    audit_logs = relationship("AuditLog", back_populates="organization")
+    roles = relationship("Role", back_populates="organization")
+    patient_documents = relationship("PatientDocument", back_populates="organization")
 
     def __repr__(self):
         """String representation of the organization."""

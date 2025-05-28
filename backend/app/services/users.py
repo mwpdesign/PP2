@@ -63,8 +63,6 @@ class UserService:
             last_name=user_data.last_name,
             organization_id=user_data.organization_id,
             role_id=user_data.role_id,
-            primary_territory_id=user_data.primary_territory_id,
-            assigned_territories=user_data.assigned_territories,
             security_groups=user_data.security_groups,
             mfa_enabled=user_data.mfa_enabled,
             is_active=user_data.is_active,

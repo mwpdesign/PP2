@@ -1,13 +1,8 @@
 import React from 'react';
-import PlaceholderPage from '../../components/shared/PlaceholderPage';
+import OrderManagement from '../../components/orders/OrderManagement';
 
 const OrderManagementPage: React.FC = () => {
-  return (
-    <PlaceholderPage 
-      title="Order Management"
-      description="Process and track patient orders"
-    />
-  );
+  return <OrderManagement />;
 };
 
 export default OrderManagementPage; 

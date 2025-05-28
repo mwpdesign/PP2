@@ -20,10 +20,10 @@ class UserLogin(BaseModel):
 class TokenResponse(BaseModel):
     """Authentication token response model."""
     access_token: str
-    refresh_token: str
-    id_token: str
-    expires_in: int
-    token_type: str = "Bearer"
+    token_type: str = "bearer"
+    refresh_token: Optional[str] = None
+    id_token: Optional[str] = None
+    expires_in: Optional[int] = None
 
 
 class PasswordReset(BaseModel):

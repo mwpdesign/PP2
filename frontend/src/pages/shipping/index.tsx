@@ -1,13 +1,8 @@
 import React from 'react';
-import PlaceholderPage from '../../components/shared/PlaceholderPage';
+import LogisticsView from '../../components/orders/LogisticsView';
 
 const ShippingPage: React.FC = () => {
-  return (
-    <PlaceholderPage 
-      title="Shipping & Logistics"
-      description="Manage delivery and shipping operations"
-    />
-  );
+  return <LogisticsView />;
 };
 
 export default ShippingPage; 

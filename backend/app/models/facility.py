@@ -36,15 +36,10 @@ class Facility(Base):
     fax: Mapped[str] = mapped_column(String(20))
     email: Mapped[str] = mapped_column(String(255))
 
-    # Organization and Territory
+    # Organization
     organization_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('organizations.id'),
-        nullable=False
-    )
-    territory_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('territories.id'),
         nullable=False
     )
 
@@ -68,7 +63,6 @@ class Facility(Base):
     # Relationships
     patients = relationship("Patient", back_populates="facility")
     organization = relationship("Organization", back_populates="facilities")
-    territory = relationship("Territory", back_populates="facilities")
     ivr_requests = relationship(
         "IVRRequest",
         back_populates="facility",

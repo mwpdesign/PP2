@@ -18,6 +18,8 @@ export interface User {
   name: string;
   email: string;
   role: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface Patient {
@@ -46,7 +48,6 @@ export interface Provider {
   name: string;
   speciality: string;
   npi: string;
-  territory: string;
 }
 
 export interface IVRDocument {
@@ -103,6 +104,23 @@ export interface IVRReview {
   createdAt: string;
 }
 
+export interface IVRCommunicationMessage {
+  id: string;
+  author: User;
+  message: string;
+  createdAt: string;
+}
+
+export interface IVRReviewNote {
+  id: string;
+  ivrRequestId: string;
+  note: string;
+  author: User;
+  createdAt: string;
+  status: IVRStatus;
+  isInternal: boolean;
+}
+
 export interface IVRRequest {
   id: string;
   patient: Patient;
@@ -114,18 +132,18 @@ export interface IVRRequest {
   statusHistory: IVRStatusHistory[];
   approvals: IVRApproval[];
   escalations: IVREscalation[];
-  territoryId: string;
   facilityId: string;
   createdAt: string;
   updatedAt: string;
   
-  // Relationships
+  // Add new fields
+  reviewNotes: IVRReviewNote[];
+  communication: IVRCommunicationMessage[];
   currentReviewer?: User;
   reviews: IVRReview[];
 }
 
 export interface IVRQueueParams {
-  territoryId?: string;
   facilityId?: string;
   status?: IVRStatus;
   priority?: IVRPriority;

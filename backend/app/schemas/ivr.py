@@ -10,7 +10,6 @@ class IVRRequestBase(BaseModel):
     patient_id: UUID
     provider_id: UUID
     facility_id: UUID
-    territory_id: UUID
     service_type: str
     priority: str
     request_metadata: Optional[Dict[str, Any]] = None
@@ -38,11 +37,12 @@ class IVRRequestResponse(IVRRequestBase):
 
 class IVRSessionBase(BaseModel):
     """Base IVR session schema."""
-    patient_id: UUID
-    provider_id: UUID
-    territory_id: UUID
-    insurance_data: Optional[Dict[str, Any]] = None
-    session_metadata: Optional[Dict[str, Any]] = None
+    organization_id: UUID
+    patient_id: Optional[UUID] = None
+    provider_id: Optional[UUID] = None
+    status: str
+    session_type: str
+    metadata: Dict = {}
 
 
 class IVRSessionCreate(IVRSessionBase):
@@ -53,11 +53,8 @@ class IVRSessionCreate(IVRSessionBase):
 class IVRSessionResponse(IVRSessionBase):
     """Response IVR session schema."""
     id: UUID
-    status: str
     created_at: datetime
     updated_at: datetime
-    created_by: UUID
-    updated_by: UUID
 
     class Config:
         """Pydantic config."""
@@ -66,9 +63,10 @@ class IVRSessionResponse(IVRSessionBase):
 
 class IVRSessionUpdate(BaseModel):
     """Update IVR session schema."""
-    insurance_data: Optional[Dict[str, Any]] = None
-    session_metadata: Optional[Dict[str, Any]] = None
+    patient_id: Optional[UUID] = None
+    provider_id: Optional[UUID] = None
     status: Optional[str] = None
+    metadata: Optional[Dict] = None
 
 
 class IVRDocumentBase(BaseModel):

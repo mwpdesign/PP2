@@ -3,13 +3,12 @@
 import os
 import logging
 from typing import AsyncGenerator, Optional
-from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
     async_sessionmaker
 )
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, declared_attr
 from sqlalchemy import text
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
@@ -75,42 +74,28 @@ class DatabaseSettings(BaseSettings):
 db_settings = DatabaseSettings()
 
 
-# Create base class for models
 class Base(DeclarativeBase):
-    pass
+    """Base class for all models."""
+    
+    @declared_attr
+    def __tablename__(cls) -> str:
+        """Generate __tablename__ automatically."""
+        return cls.__name__.lower()
 
 
-# Global engines and session factories
-sync_engine = create_engine(
-    get_sync_url(),
+# Create async engine
+engine = create_async_engine(
+    db_settings.database_url,
     echo=db_settings.db_echo,
-    future=True
+    pool_pre_ping=True,
 )
 
-sync_session_factory = sessionmaker(
-    sync_engine,
-    expire_on_commit=False
+# Create async session factory
+async_session_factory = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
 )
-
-# Initialize async engine and session factory as None
-engine = None
-async_session_factory = None
-
-
-def init_async_engine():
-    """Initialize async engine and session factory."""
-    global engine, async_session_factory
-    if engine is None:
-        engine = create_async_engine(
-            get_async_url(),
-            echo=db_settings.db_echo,
-            future=True
-        )
-        async_session_factory = async_sessionmaker(
-            engine,
-            class_=AsyncSession,
-            expire_on_commit=False
-        )
 
 
 async def init_db() -> bool:
@@ -130,7 +115,17 @@ async def init_db() -> bool:
 
     try:
         # Initialize async engine if needed
-        init_async_engine()
+        if engine is None:
+            engine = create_async_engine(
+                db_settings.database_url,
+                echo=db_settings.db_echo,
+                pool_pre_ping=True,
+            )
+            async_session_factory = async_sessionmaker(
+                engine,
+                class_=AsyncSession,
+                expire_on_commit=False
+            )
 
         # Test connection
         async with engine.connect() as conn:
@@ -141,8 +136,8 @@ async def init_db() -> bool:
         if engine is not None:
             # Import models here to avoid circular imports
             from app.models import (  # noqa
-                organization, user, rbac, territory, sensitive_data,
-                patient, facility, order, product
+                organization, user, rbac, sensitive_data,
+                patient, facility, order, ivr, insurance, audit
             )
             from app.services.shipping_types import (  # noqa
                 ShippingServiceType, TrackingStatus, ShippingProvider,
@@ -201,4 +196,20 @@ AsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
     autoflush=False,
-) if engine else None
+)
+
+
+# Import all models to ensure they are registered with SQLAlchemy
+from app.models import (  # noqa: E402, F401
+    organization,
+    user,
+    rbac,
+    sensitive_data,
+    provider,
+    patient,
+    facility,
+    order,
+    ivr,
+    insurance,
+    audit,
+)

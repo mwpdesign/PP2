@@ -10,7 +10,7 @@ from uuid import UUID
 import logging
 
 from app.core.database import get_db
-from app.core.security import get_current_user, verify_territory_access
+from app.core.security import get_current_user
 from app.models.patient import Patient, PatientDocument
 from app.schemas.patient import (
     Patient as PatientSchema,
@@ -19,9 +19,7 @@ from app.schemas.patient import (
     PatientDocument as PatientDocumentSchema,
     PatientRegistration,
 )
-from app.services.encryption import encrypt_patient_data, decrypt_patient_data
-from app.services.s3_service import S3Service
-
+from app.schemas.token import TokenData
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -32,97 +30,49 @@ router = APIRouter()
 @router.get("", response_model=PatientSearchResults)
 async def search_patients(
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: TokenData = Depends(get_current_user),
     query: Optional[str] = None,
-    territory_id: Optional[UUID] = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100)
 ) -> PatientSearchResults:
     """Search patients with pagination"""
     try:
         logger.info("Starting patients search query...")
-        logger.info(
-            "Search parameters - "
-            f"query: {query}, territory_id: {territory_id}, "
-            f"skip: {skip}, limit: {limit}"
-        )
-        logger.info(f"Current user: {current_user}")
-
-        # Verify territory access
-        if territory_id:
-            await verify_territory_access(current_user, territory_id)
-        elif current_user.get("primary_territory_id"):
-            territory_id = current_user["primary_territory_id"]
-            await verify_territory_access(
-                current_user,
-                territory_id
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Territory ID is required"
-            )
-
-        # Base query
+        
+        # Base query - filter by organization
         query_filter = select(Patient).where(
-            Patient.territory_id == territory_id
+            Patient.organization_id == current_user.organization_id
         )
-        logger.debug("Base query created")
 
         # Apply search filter if query provided
         if query:
-            logger.debug(f"Applying search filter for query: {query}")
-            # Note: We can't do LIKE queries on encrypted fields
-            # This is a placeholder - we'll need a different search strategy
             query_filter = query_filter.where(
                 Patient.status == 'active'
             )
 
         # Get total count
-        logger.debug("Getting total count")
         count_query = select(func.count()).select_from(Patient).where(
-            Patient.territory_id == territory_id
+            Patient.organization_id == current_user.organization_id
         )
         if query:
             count_query = count_query.where(Patient.status == 'active')
 
         total = await db.scalar(count_query)
-        logger.info(f"Total patients found: {total}")
 
         # Apply pagination
-        logger.debug(f"Applying pagination - skip: {skip}, limit: {limit}")
         query_filter = query_filter.offset(skip).limit(limit)
 
         # Execute query
-        logger.debug("Executing main query")
         result = await db.execute(query_filter)
         patients = result.scalars().all()
-        logger.info(f"Retrieved {len(patients)} patients")
 
-        # Decrypt patient data
-        logger.debug("Starting patient data decryption")
-        decrypted_patients = []
-        for patient in patients:
-            try:
-                decrypted_patient = decrypt_patient_data(patient)
-                decrypted_patients.append(decrypted_patient)
-            except Exception as decrypt_err:
-                logger.error(
-                    f"Failed to decrypt patient {patient.id}: {str(decrypt_err)}"
-                )
-                logger.error(f"Decryption error type: {type(decrypt_err)}")
-                raise
-
-        logger.info("Patient search completed successfully")
         return PatientSearchResults(
-            total=total or 0,  # Default to 0 if None
-            patients=decrypted_patients
+            total=total or 0,
+            patients=patients
         )
 
     except Exception as e:
         logger.error(f"Patient search failed with error: {str(e)}")
-        logger.error(f"Error type: {type(e)}")
-        logger.error(f"Error details: {e.__dict__}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to search patients: {str(e)}"
@@ -133,26 +83,17 @@ async def search_patients(
 async def register_patient(
     patient_data: PatientRegistration,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user)
 ) -> PatientSchema:
     """Register a new patient."""
     try:
-        # Encrypt sensitive data
-        encrypted_data = encrypt_patient_data(patient_data.dict())
-
-        # Create patient instance with encrypted data
+        # Create patient instance with organization
         db_patient = Patient(
-            external_id=None,  # Will be set by business logic if needed
-            encrypted_first_name=encrypted_data['encrypted_first_name'],
-            encrypted_last_name=encrypted_data['encrypted_last_name'],
-            encrypted_email=encrypted_data['encrypted_email'],
-            encrypted_dob=encrypted_data['encrypted_dob'],
-            encrypted_phone=encrypted_data.get('encrypted_phone'),
-            encrypted_address=encrypted_data.get('encrypted_address'),
-            encrypted_ssn=encrypted_data.get('encrypted_ssn'),
+            **patient_data.dict(),
             status='active',
-            created_by_id=current_user["id"],
-            updated_by_id=current_user["id"]
+            organization_id=current_user.organization_id,
+            created_by_id=current_user.id,
+            updated_by_id=current_user.id
         )
 
         # Add to database
@@ -160,9 +101,7 @@ async def register_patient(
         await db.commit()
         await db.refresh(db_patient)
 
-        # Decrypt for response
-        decrypted_patient = decrypt_patient_data(db_patient)
-        return PatientSchema(**decrypted_patient)
+        return PatientSchema.from_orm(db_patient)
 
     except Exception as e:
         await db.rollback()
@@ -176,9 +115,9 @@ async def register_patient(
 async def get_patient(
     patient_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user)
 ) -> Patient:
-    """Get patient by ID with decrypted PHI"""
+    """Get patient by ID"""
     patient = await db.get(Patient, patient_id)
     if not patient:
         raise HTTPException(
@@ -186,9 +125,14 @@ async def get_patient(
             detail="Patient not found"
         )
 
-    # Decrypt data for response
-    decrypted_patient = decrypt_patient_data(patient)
-    return PatientSchema(**decrypted_patient)
+    # Check organization access
+    if patient.organization_id != current_user.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this patient"
+        )
+
+    return PatientSchema.from_orm(patient)
 
 
 @router.put("/{patient_id}", response_model=PatientSchema)
@@ -197,9 +141,9 @@ async def update_patient(
     db: AsyncSession = Depends(get_db),
     patient_id: UUID,
     patient_in: PatientUpdate,
-    current_user: dict = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user)
 ) -> Patient:
-    """Update patient information"""
+    """Update patient"""
     patient = await db.get(Patient, patient_id)
     if not patient:
         raise HTTPException(
@@ -207,41 +151,32 @@ async def update_patient(
             detail="Patient not found"
         )
 
-    try:
-        # Encrypt updated data
-        update_data = patient_in.dict(exclude_unset=True)
-        encrypted_data = encrypt_patient_data(update_data)
-
-        # Update patient with encrypted data
-        for field, value in encrypted_data.items():
-            if value is not None:  # Only update provided fields
-                setattr(patient, field, value)
-
-        # Update audit field
-        patient.updated_by_id = current_user["id"]
-
-        await db.commit()
-        await db.refresh(patient)
-
-        # Decrypt data for response
-        decrypted_patient = decrypt_patient_data(patient)
-        return PatientSchema(**decrypted_patient)
-
-    except Exception as e:
-        await db.rollback()
+    # Check organization access
+    if patient.organization_id != current_user.organization_id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this patient"
         )
+
+    # Update patient
+    patient_data = patient_in.dict(exclude_unset=True)
+    for field, value in patient_data.items():
+        setattr(patient, field, value)
+    
+    patient.updated_by_id = current_user.id
+    await db.commit()
+    await db.refresh(patient)
+
+    return PatientSchema.from_orm(patient)
 
 
 @router.delete("/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_patient(
     patient_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user)
 ):
-    """Delete a patient (soft delete by updating status)"""
+    """Delete patient"""
     patient = await db.get(Patient, patient_id)
     if not patient:
         raise HTTPException(
@@ -249,17 +184,15 @@ async def delete_patient(
             detail="Patient not found"
         )
 
-    try:
-        # Soft delete by updating status
-        patient.status = 'deleted'
-        patient.updated_by_id = current_user["id"]
-        await db.commit()
-    except Exception as e:
-        await db.rollback()
+    # Check organization access
+    if patient.organization_id != current_user.organization_id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this patient"
         )
+
+    await db.delete(patient)
+    await db.commit()
 
 
 @router.post("/{patient_id}/documents", response_model=PatientDocumentSchema)
@@ -270,49 +203,39 @@ async def upload_patient_document(
     document_category: str = Form(...),
     display_name: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-    s3_service: S3Service = Depends()
+    current_user: TokenData = Depends(get_current_user)
 ):
-    """Upload a document for a patient"""
-    try:
-        # Get patient to verify existence and access
-        patient = await db.get(Patient, patient_id)
-        if not patient:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Patient not found"
-            )
-
-        # Upload file
-        doc_path = await s3_service.upload_file(
-            document,
-            f"patients/{patient_id}/{document_category}/{document.filename}"
-        )
-
-        # Create document record
-        db_doc = PatientDocument(
-            patient_id=patient_id,
-            document_type=document_type,
-            file_name=document.filename,
-            file_path=doc_path["file_path"],
-            document_category=document_category,
-            document_metadata=(
-                {"display_name": display_name} if display_name else {}
-            ),
-            created_by_id=current_user.get("id"),
-            updated_by_id=current_user.get("id"),
-            territory_id=patient.territory_id
-        )
-
-        db.add(db_doc)
-        await db.commit()
-        await db.refresh(db_doc)
-
-        return db_doc
-
-    except Exception as e:
-        await db.rollback()
+    """Upload patient document"""
+    # Verify patient exists
+    patient = await db.get(Patient, patient_id)
+    if not patient:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
         )
+
+    # Check organization access
+    if patient.organization_id != current_user.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to upload documents for this patient"
+        )
+
+    # Create document
+    db_document = PatientDocument(
+        patient_id=patient_id,
+        document_type=document_type,
+        document_category=document_category,
+        file_name=document.filename,
+        display_name=display_name or document.filename,
+        organization_id=current_user.organization_id,
+        created_by_id=current_user.id,
+        updated_by_id=current_user.id
+    )
+
+    # Save document
+    db.add(db_document)
+    await db.commit()
+    await db.refresh(db_document)
+
+    return PatientDocumentSchema.from_orm(db_document)

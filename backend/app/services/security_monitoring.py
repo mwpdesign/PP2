@@ -556,7 +556,7 @@ class SecurityMonitoringService:
             )
 
             if territory_id:
-                query = query.filter(User.territory_id == territory_id)
+                query = query.filter(User.primary_territory_id == territory_id)
 
             return [user.id for user in query.all()]
 

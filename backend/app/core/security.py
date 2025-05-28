@@ -11,19 +11,20 @@ import base64
 import os
 import re
 import logging
+import bcrypt
 
 from jose import jwt, JWTError
-from fastapi import HTTPException, Security, status, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import HTTPException, status, Depends
+from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, TypeDecorator, LargeBinary
+from passlib.context import CryptContext
 
 from app.core.config import settings
-from app.core.password import verify_password
+from app.core.database import get_db
 from app.core.encryption import encrypt_field, decrypt_field
 from app.models.user import User
-from app.core.database import get_db
-from app.core.demo_users import DEMO_USERS, ROLE_PERMISSIONS
+from app.schemas.token import TokenData
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -45,8 +46,10 @@ __all__ = [
     "PasswordValidator",
     "encrypt_field",
     "decrypt_field",
-    "verify_territory_access",
-    "generate_uuid"
+    "generate_uuid",
+    "EncryptedString",
+    "verify_password",
+    "get_password_hash"
 ]
 
 # Security token settings
@@ -66,6 +69,12 @@ PHI_PATTERN: Pattern = re.compile(
 # Security middleware
 security = HTTPBearer()
 
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# OAuth2
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
 
 def generate_uuid() -> str:
     """Generate a new UUID string.
@@ -76,71 +85,21 @@ def generate_uuid() -> str:
     return str(UUID(bytes=os.urandom(16), version=4))
 
 
-async def verify_territory_access(user: dict, territory_id: UUID) -> bool:
-    """Verify if a user has access to a specific territory.
-
-    Args:
-        user: User dictionary containing territory access information
-        territory_id: UUID of the territory to check access for
-
-    Returns:
-        bool: True if user has access, False otherwise
-
-    Raises:
-        HTTPException: If user doesn't have access to the territory
-    """
-    # Check if user is superuser
-    if user.get('is_superuser'):
-        return True
-
-    # Check if territory is user's primary territory
-    if str(territory_id) == str(user.get('primary_territory_id')):
-        return True
-
-    # Check if territory is in user's assigned territories
-    assigned_territories = user.get('assigned_territories', [])
-    if str(territory_id) in [str(t) for t in assigned_territories]:
-        return True
-
-    logger.warning(
-        f"Territory access denied: "
-        f"User {user.get('id')} -> Territory {territory_id}"
-    )
-    return False
-
-
 def create_access_token(
-    data: dict,
+    data: Dict,
     expires_delta: Optional[timedelta] = None
 ) -> str:
-    """Create a new access token.
-
-    Args:
-        data: Data to encode in the token
-        expires_delta: Optional expiration time delta
-
-    Returns:
-        str: Encoded JWT token
-    """
+    """Create JWT access token."""
     to_encode = data.copy()
-
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
-
-    to_encode.update({
-        "exp": expire,
-        "iat": datetime.utcnow(),
-        "type": "access"
-    })
-
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
         to_encode,
         settings.SECRET_KEY,
-        algorithm=ALGORITHM
+        algorithm=settings.ALGORITHM
     )
     return encoded_jwt
 
@@ -161,7 +120,7 @@ def verify_token(token: str) -> Dict[str, Any]:
         decoded_token = jwt.decode(
             token,
             settings.SECRET_KEY,
-            algorithms=[ALGORITHM]
+            algorithms=[settings.ALGORITHM]
         )
         return decoded_token
     except JWTError as e:
@@ -172,150 +131,45 @@ def verify_token(token: str) -> Dict[str, Any]:
         )
 
 
-def verify_development_token(token: str) -> dict:
-    """Verify development mode JWT token.
-
-    Args:
-        token: JWT token
-
-    Returns:
-        Dict containing user information
-
-    Raises:
-        HTTPException: If token is invalid
-    """
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> TokenData:
+    """Get current user from JWT token."""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     try:
-        # In development mode, return a test user without verifying the token
-        if IS_DEVELOPMENT:
-            return {
-                "username": "test-user",
-                "attributes": {
-                    "email": "test@example.com",
-                    "given_name": "Test",
-                    "family_name": "User",
-                    "email_verified": "true",
-                    "sub": "test-user",
-                    "role": "admin",
-                    "is_superuser": True
-                }
-            }
-
-        # In non-development mode, verify the token
         payload = jwt.decode(
             token,
             settings.SECRET_KEY,
-            algorithms=[ALGORITHM]
+            algorithms=[settings.ALGORITHM]
         )
-
-        # Extract user info from payload
-        user_info = {
-            "username": payload.get("sub"),
-            "attributes": {
-                "email": payload.get("email"),
-                "given_name": payload.get("given_name"),
-                "family_name": payload.get("family_name"),
-                "email_verified": "true",
-                "sub": payload.get("sub"),
-                "role": payload.get("role"),
-                "is_superuser": payload.get("is_superuser", False)
-            }
-        }
-
-        return user_info
-
-    except JWTError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        
+        # Get user from database
+        result = await db.execute(
+            select(User).where(User.email == email)
         )
-
-
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Security(security),
-    db: AsyncSession = Depends(get_db)
-) -> Dict[str, Any]:
-    """Get current authenticated user from token.
-
-    Args:
-        credentials: HTTP Authorization credentials
-        db: Database session
-
-    Returns:
-        Dict[str, Any]: User data
-
-    Raises:
-        HTTPException: If token is invalid or user not found
-    """
-    try:
-        token = credentials.credentials
-        payload = verify_token(token)
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-            )
-
-        # In development mode, return demo user
-        if settings.ENVIRONMENT == "development":
-            # Find user by ID in demo users
-            user_data = next(
-                (u for u in DEMO_USERS.values() if str(u["id"]) == user_id),
-                None
-            )
-            if user_data:
-                return user_data
-
-            # If not found, return first demo user (for testing)
-            return next(iter(DEMO_USERS.values()))
-
-        # In production, get user from database
-        user = await db.get(User, UUID(user_id))
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found",
-            )
-
-        # Check if user is active
-        if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User is inactive",
-            )
-
-        # Convert user model to dict
-        user_dict = {
-            "id": str(user.id),
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "is_active": user.is_active,
-            "is_superuser": user.is_superuser,
-            "organization_id": str(user.organization_id),
-            "primary_territory_id": (
-                str(user.primary_territory_id)
-                if user.primary_territory_id else None
-            ),
-            "mfa_enabled": user.mfa_enabled
-        }
-
-        return user_dict
-
-    except JWTError as e:
-        logger.error(f"Token verification failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
+        user = result.scalar_one_or_none()
+        if user is None:
+            raise credentials_exception
+            
+        # Create TokenData with all required fields
+        token_data = TokenData(
+            email=email,
+            id=user.id,
+            organization_id=user.organization_id,
+            permissions=user.permissions,
+            role=user.role
         )
-    except Exception as e:
-        logger.error(f"Error getting current user: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Error getting current user",
-        )
+        return token_data
+    except JWTError:
+        raise credentials_exception
 
 
 def encrypt_phi(value: str) -> str:
@@ -424,70 +278,44 @@ async def authenticate_user(
     username: str,
     password: str
 ) -> Optional[Dict[str, Any]]:
-    """Authenticate a user.
+    """Authenticate a user with email and password.
 
     Args:
         db: Database session
-        username: Username or email
-        password: Password
+        username: User's email
+        password: User's password
 
     Returns:
-        Optional[Dict[str, Any]]: User data if authenticated, None otherwise
+        Optional[Dict[str, Any]]: User data if authentication successful
     """
     try:
-        # In development mode, use demo users
-        if settings.ENVIRONMENT == "development":
-            # Check if username/email exists in demo users
-            user_data = DEMO_USERS.get(username)
-            if not user_data:
-                # Try finding by username
-                user_data = next(
-                    (u for u in DEMO_USERS.values() if u["username"] == username),
-                    None
-                )
-
-            if user_data and user_data["password"] == password:
-                return user_data
-            return None
-
-        # In production, use database
-        query = select(User).where(
-            or_(
-                User.email == username,
-                User.username == username
-            )
-        )
+        # Query the user
+        query = select(User).where(User.email == username)
         result = await db.execute(query)
         user = result.scalar_one_or_none()
 
         if not user:
             return None
 
+        # Verify password
         if not verify_password(password, user.encrypted_password):
-            # Increment failed login attempts
-            user.increment_failed_login()
-            await db.commit()
             return None
 
-        # Convert user model to dict
-        user_dict = {
+        # Update last login
+        user.last_login = datetime.utcnow()
+        await db.commit()
+
+        # Return user data
+        return {
             "id": str(user.id),
-            "username": user.username,
             "email": user.email,
-            "role": user.role,
             "first_name": user.first_name,
             "last_name": user.last_name,
-            "is_active": user.is_active,
-            "is_superuser": user.is_superuser,
+            "role_id": str(user.role_id),
             "organization_id": str(user.organization_id),
-            "primary_territory_id": (
-                str(user.primary_territory_id)
-                if user.primary_territory_id else None
-            ),
-            "mfa_enabled": user.mfa_enabled
+            "is_active": user.is_active,
+            "is_superuser": user.is_superuser
         }
-
-        return user_dict
 
     except Exception as e:
         logger.error(f"Authentication error: {str(e)}")
@@ -572,11 +400,13 @@ def require_permissions(required_permissions: list[str]):
             if current_user.get('is_superuser'):
                 return await func(*args, **kwargs)
 
-            # Get role permissions
-            role_perms = ROLE_PERMISSIONS.get(user_role, [])
+            # Get role permissions from settings
+            role_perms = settings.ROLE_PERMISSIONS.get(user_role, [])
 
             # Check if user has all required permissions
-            has_perms = all(perm in role_perms for perm in required_permissions)
+            has_perms = all(
+                perm in role_perms for perm in required_permissions
+            )
             if not has_perms:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -625,3 +455,45 @@ class PasswordValidator:
 
 # Global instance
 password_validator = PasswordValidator()
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a stored password against a provided password."""
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode(),
+            hashed_password.encode()
+        )
+    except Exception as e:
+        logger.error(f"Password verification error: {str(e)}")
+        return False
+
+
+def get_password_hash(password: str) -> str:
+    """Generate password hash."""
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(12)).decode()
+
+
+class EncryptedString(TypeDecorator):
+    """Custom type for encrypted string fields."""
+    impl = LargeBinary
+
+    def process_bind_param(
+        self,
+        value: Optional[str],
+        dialect
+    ) -> Optional[bytes]:
+        """Encrypt string value before storing."""
+        if value is not None:
+            return encrypt_field(value)
+        return None
+
+    def process_result_value(
+        self,
+        value: Optional[bytes],
+        dialect
+    ) -> Optional[str]:
+        """Decrypt bytes value when retrieving."""
+        if value is not None:
+            return decrypt_field(value)
+        return None

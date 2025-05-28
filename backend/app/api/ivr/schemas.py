@@ -1,7 +1,7 @@
 """IVR request and session schemas."""
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 from datetime import datetime
-from pydantic import BaseModel, constr, Field
+from pydantic import BaseModel, Field
 from app.api.ivr.models import IVRStatus, IVRPriority
 from uuid import UUID
 
@@ -11,7 +11,6 @@ class IVRRequestBase(BaseModel):
     patient_id: UUID
     provider_id: UUID
     facility_id: UUID
-    territory_id: UUID
     service_type: str = Field(..., max_length=100)
     priority: IVRPriority = Field(default=IVRPriority.MEDIUM)
     metadata: Optional[Dict] = Field(default_factory=dict)
@@ -134,7 +133,6 @@ class IVRRequestResponse(IVRRequestBase):
 
 # Queue and Search Schemas
 class IVRQueueParams(BaseModel):
-    territory_id: Optional[str] = None
     facility_id: Optional[str] = None
     status: Optional[IVRStatus] = None
     priority: Optional[IVRPriority] = None
@@ -184,7 +182,6 @@ class IVRSessionBase(BaseModel):
     """Base schema for IVR sessions."""
     patient_id: UUID
     provider_id: UUID
-    territory_id: UUID
     status: str = Field(default="pending", max_length=20)
     insurance_data: Optional[Dict] = Field(default_factory=dict)
     metadata: Optional[Dict] = Field(default_factory=dict)

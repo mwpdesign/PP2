@@ -2,11 +2,14 @@ import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { PrivateRoute } from './components/auth/PrivateRoute';
+import { AdminRoute } from './components/auth/AdminRoute';
+import { TestLogin } from './components/auth/TestLogin';
 
 // Import components
 const LoginPage = React.lazy(() => import('./pages/login'));
 const TestPage = React.lazy(() => import('./pages/TestPage'));
 const WoundCareDashboard = React.lazy(() => import('./pages/dashboard/WoundCareDashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/dashboard/AdminDashboard'));
 const PatientIntakePage = React.lazy(() => import('./pages/patients/intake'));
 const PatientSelectionPage = React.lazy(() => import('./pages/patients/select'));
 const PatientDetailPage = React.lazy(() => import('./pages/patients/[id]'));
@@ -18,6 +21,7 @@ const ShippingPage = React.lazy(() => import('./pages/shipping'));
 const AnalyticsPage = React.lazy(() => import('./pages/analytics'));
 const SettingsPage = React.lazy(() => import('./pages/settings'));
 const MainLayout = React.lazy(() => import('./components/shared/layout/Layout'));
+const AdminLayout = React.lazy(() => import('./components/shared/layout/AdminLayout'));
 
 const App = () => {
   console.log('App component rendering');
@@ -34,7 +38,18 @@ const App = () => {
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/test" element={<TestPage />} />
+            <Route path="/test-login" element={<TestLogin />} />
             
+            {/* Admin Routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+            </Route>
+
             {/* Protected Routes */}
             <Route element={<PrivateRoute />}>
               {/* Main Layout with Dashboard */}

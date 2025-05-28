@@ -91,7 +91,11 @@ async def async_client(async_session_maker):
 
 
 @pytest.fixture
-async def test_user(async_session: AsyncSession) -> User:
+async def test_user(
+    async_session: AsyncSession,
+    test_organization: Organization,
+    test_territory: Territory
+) -> User:
     """Create a test user."""
     user = User(
         username="testuser",
@@ -99,8 +103,9 @@ async def test_user(async_session: AsyncSession) -> User:
         encrypted_password="hashedpassword",
         first_name="Test",
         last_name="User",
-        organization_id=uuid4(),
-        role_id=uuid4()
+        organization_id=test_organization.id,
+        role_id=uuid4(),
+        primary_territory_id=test_territory.id
     )
     async_session.add(user)
     await async_session.flush()

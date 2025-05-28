@@ -1,119 +1,64 @@
-"""Demo users for development environment."""
-from typing import Dict, Any
+"""Demo user data for development and testing."""
 from uuid import uuid4
 
-# Role constants
-ROLE_ADMIN = "Admin"
-ROLE_DOCTOR = "Doctor"
-ROLE_IVR_COMPANY = "IVRCompany"
-ROLE_LOGISTICS = "Logistics"
-ROLE_SALES_REP = "SalesRep"
-
-# Demo organization and territory IDs
+# Demo organization ID
 DEMO_ORG_ID = str(uuid4())
-DEMO_TERRITORY_ID = str(uuid4())
 
-# Demo users for development
-DEMO_USERS: Dict[str, Dict[str, Any]] = {
-    "doctor@test.com": {
+# Demo user data
+DEMO_USERS = [
+    {
         "id": str(uuid4()),
-        "password": "demo123",
-        "role": ROLE_DOCTOR,
-        "name": "Dr. Smith",
-        "username": "dr.smith",
-        "first_name": "John",
-        "last_name": "Smith",
-        "is_active": True,
-        "is_superuser": False,
-        "organization_id": DEMO_ORG_ID,
-        "primary_territory_id": DEMO_TERRITORY_ID,
-        "mfa_enabled": False
-    },
-    "admin@test.com": {
-        "id": str(uuid4()),
-        "password": "demo123",
-        "role": ROLE_ADMIN,
-        "name": "Admin User",
-        "username": "admin",
+        "email": "admin@example.com",
+        "password": "admin123",
         "first_name": "Admin",
         "last_name": "User",
         "is_active": True,
         "is_superuser": True,
         "organization_id": DEMO_ORG_ID,
-        "primary_territory_id": DEMO_TERRITORY_ID,
-        "mfa_enabled": False
+        "metadata": {"role": "admin"},
     },
-    "ivr@test.com": {
+    {
         "id": str(uuid4()),
-        "password": "demo123",
-        "role": ROLE_IVR_COMPANY,
-        "name": "IVR Rep",
-        "username": "ivr.rep",
-        "first_name": "IVR",
-        "last_name": "Representative",
+        "email": "provider@example.com",
+        "password": "provider123",
+        "first_name": "Provider",
+        "last_name": "User",
         "is_active": True,
         "is_superuser": False,
         "organization_id": DEMO_ORG_ID,
-        "primary_territory_id": DEMO_TERRITORY_ID,
-        "mfa_enabled": False
+        "metadata": {"role": "provider"},
     },
-    "logistics@test.com": {
+    {
         "id": str(uuid4()),
-        "password": "demo123",
-        "role": ROLE_LOGISTICS,
-        "name": "Logistics Manager",
-        "username": "logistics",
-        "first_name": "Logistics",
-        "last_name": "Manager",
+        "email": "staff@example.com",
+        "password": "staff123",
+        "first_name": "Staff",
+        "last_name": "User",
         "is_active": True,
         "is_superuser": False,
         "organization_id": DEMO_ORG_ID,
-        "primary_territory_id": DEMO_TERRITORY_ID,
-        "mfa_enabled": False
+        "metadata": {"role": "staff"},
     },
-    "sales@test.com": {
+    {
         "id": str(uuid4()),
-        "password": "demo123",
-        "role": ROLE_SALES_REP,
-        "name": "Sales Rep",
-        "username": "sales.rep",
-        "first_name": "Sales",
-        "last_name": "Representative",
+        "email": "nurse@example.com",
+        "password": "nurse123",
+        "first_name": "Nurse",
+        "last_name": "User",
         "is_active": True,
         "is_superuser": False,
         "organization_id": DEMO_ORG_ID,
-        "primary_territory_id": DEMO_TERRITORY_ID,
-        "mfa_enabled": False
-    }
-}
-
-# Role permissions mapping
-ROLE_PERMISSIONS = {
-    ROLE_ADMIN: [
-        "all:*",  # Full access to everything
-    ],
-    ROLE_DOCTOR: [
-        "patients:read",
-        "patients:write",
-        "orders:read",
-        "orders:write",
-        "ivr:read",
-        "ivr:write"
-    ],
-    ROLE_IVR_COMPANY: [
-        "ivr:read",
-        "ivr:write",
-        "patients:read"
-    ],
-    ROLE_LOGISTICS: [
-        "orders:read",
-        "orders:write",
-        "shipping:read",
-        "shipping:write"
-    ],
-    ROLE_SALES_REP: [
-        "patients:read",
-        "orders:read",
-        "analytics:read"
-    ]
-}
+        "metadata": {"role": "nurse"},
+    },
+    {
+        "id": str(uuid4()),
+        "email": "support@example.com",
+        "password": "support123",
+        "first_name": "Support",
+        "last_name": "User",
+        "is_active": True,
+        "is_superuser": False,
+        "organization_id": DEMO_ORG_ID,
+        "metadata": {"role": "support"},
+    },
+]

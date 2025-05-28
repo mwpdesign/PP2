@@ -1,7 +1,7 @@
 """Real-time WebSocket API endpoints."""
 
-from typing import Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from typing import Optional, Dict, Any
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -14,7 +14,7 @@ manager = ConnectionManager()
 queue_service = QueueService()
 
 
-@router.websocket("/ws/{token}")
+@router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
     token: str,
@@ -136,29 +136,23 @@ async def send_notification(
 
 @router.post("/broadcast")
 async def broadcast_message(
-    message: dict,
-    territory: Optional[str] = None,
+    message: str,
+    organization_id: Optional[str] = None,
     current_user = Depends(get_current_user)
-):
-    """Broadcast message to all users in territory."""
-    try:
-        # Queue message for delivery
-        await queue_service.send_message(
-            message=message,
-            user_id="broadcast",
-            territory=territory
+) -> Dict[str, Any]:
+    """Broadcast message to all users in organization."""
+    if not message:
+        raise HTTPException(
+            status_code=400,
+            detail="Message is required"
         )
 
-        # Attempt immediate broadcast
-        await manager.broadcast(message, territory)
+    await manager.broadcast(
+        message,
+        organization_id=organization_id
+    )
 
-        return {
-            "status": "success",
-            "territory": territory
-        }
-
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+    return {
+        "message": message,
+        "organization_id": organization_id
+    }

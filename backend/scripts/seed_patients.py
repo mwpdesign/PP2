@@ -8,7 +8,6 @@ from app.core.encryption import encrypt_field
 from app.models import (
     Patient,
     Organization,
-    Territory,
     Facility,
     Provider,
     User
@@ -38,12 +37,6 @@ async def create_seed_patients():
                 "No organization found. Please run organization setup first."
             )
 
-        territory = await get_first_entity(db, Territory)
-        if not territory:
-            raise ValueError(
-                "No territory found. Please run territory setup first."
-            )
-
         facility = await get_first_entity(db, Facility)
         if not facility:
             raise ValueError(
@@ -62,14 +55,14 @@ async def create_seed_patients():
                 "No user found. Please run user setup first."
             )
 
-        # Sample patient data
+        # Create sample patients
         patients = [
             {
                 "id": uuid4(),
                 "external_id": "PAT001",
                 "encrypted_first_name": encrypt_field("John"),
                 "encrypted_last_name": encrypt_field("Smith"),
-                "encrypted_dob": encrypt_field("1985-03-15"),
+                "encrypted_dob": encrypt_field("1990-01-01"),
                 "encrypted_ssn": encrypt_field("123-45-6789"),
                 "encrypted_phone": encrypt_field("(555) 123-4567"),
                 "encrypted_email": encrypt_field("john.smith@example.com"),
@@ -78,7 +71,6 @@ async def create_seed_patients():
                 ),
                 "status": "active",
                 "organization_id": organization.id,
-                "territory_id": territory.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
                 "created_by_id": user.id
@@ -86,18 +78,17 @@ async def create_seed_patients():
             {
                 "id": uuid4(),
                 "external_id": "PAT002",
-                "encrypted_first_name": encrypt_field("Sarah"),
-                "encrypted_last_name": encrypt_field("Johnson"),
-                "encrypted_dob": encrypt_field("1990-07-22"),
+                "encrypted_first_name": encrypt_field("Jane"),
+                "encrypted_last_name": encrypt_field("Doe"),
+                "encrypted_dob": encrypt_field("1985-06-15"),
                 "encrypted_ssn": encrypt_field("987-65-4321"),
                 "encrypted_phone": encrypt_field("(555) 987-6543"),
-                "encrypted_email": encrypt_field("sarah.johnson@example.com"),
+                "encrypted_email": encrypt_field("jane.doe@example.com"),
                 "encrypted_address": encrypt_field(
-                    "456 Oak Ave, Town, ST 67890"
+                    "456 Oak St, Town, ST 67890"
                 ),
                 "status": "active",
                 "organization_id": organization.id,
-                "territory_id": territory.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
                 "created_by_id": user.id
@@ -116,7 +107,6 @@ async def create_seed_patients():
                 ),
                 "status": "active",
                 "organization_id": organization.id,
-                "territory_id": territory.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
                 "created_by_id": user.id
@@ -135,7 +125,6 @@ async def create_seed_patients():
                 ),
                 "status": "active",
                 "organization_id": organization.id,
-                "territory_id": territory.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
                 "created_by_id": user.id
@@ -154,7 +143,6 @@ async def create_seed_patients():
                 ),
                 "status": "active",
                 "organization_id": organization.id,
-                "territory_id": territory.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
                 "created_by_id": user.id

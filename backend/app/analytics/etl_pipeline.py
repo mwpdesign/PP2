@@ -1,15 +1,21 @@
 """ETL pipeline for analytics data warehouse with data quality validation."""
 
-from datetime import datetime
-from typing import Dict, List, Tuple
+from datetime import datetime, timedelta
+from typing import Dict, List, Tuple, Optional
+from uuid import UUID
 
-from sqlalchemy import text
+from sqlalchemy import text, func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.analytics.models import (
     CallFact,
     PatientSatisfactionDimension,
+    VerificationPerformanceDimension,
+    DailyMetrics,
+    GeographicMetrics,
+    HourlyMetrics,
     VerificationPerformanceDimension
 )
 from app.services.redis_cache import RedisCache

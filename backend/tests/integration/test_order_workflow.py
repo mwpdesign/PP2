@@ -24,7 +24,7 @@ async def test_complete_order_workflow(
     order_data = {
         "patient_id": test_user.id,
         "provider_id": test_user.id,
-        "territory_id": test_user.territory_id,
+        "territory_id": test_user.primary_territory_id,
         "items": [
             {
                 "product_id": 1,
@@ -37,7 +37,7 @@ async def test_complete_order_workflow(
     response = client.post(
         "/api/v1/orders",
         json=order_data,
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 201
     order_id = response.json()["id"]
@@ -50,7 +50,7 @@ async def test_complete_order_workflow(
     # Submit order for verification
     response = client.post(
         f"/api/v1/orders/{order_id}/submit",
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 200
     assert response.json()["status"] == "PENDING_VERIFICATION"
@@ -58,7 +58,7 @@ async def test_complete_order_workflow(
     # Verify insurance
     response = client.post(
         f"/api/v1/orders/{order_id}/verify",
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 200
     assert response.json()["status"] == "VERIFIED"
@@ -66,7 +66,7 @@ async def test_complete_order_workflow(
     # Start processing
     response = client.post(
         f"/api/v1/orders/{order_id}/process",
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 200
     assert response.json()["status"] == "PROCESSING"
@@ -74,7 +74,7 @@ async def test_complete_order_workflow(
     # Mark ready to ship
     response = client.post(
         f"/api/v1/orders/{order_id}/ready",
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 200
     assert response.json()["status"] == "READY_TO_SHIP"
@@ -83,7 +83,7 @@ async def test_complete_order_workflow(
     response = client.post(
         f"/api/v1/orders/{order_id}/ship",
         json={"tracking_number": "1234567890"},
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 200
     assert response.json()["status"] == "SHIPPED"
@@ -91,7 +91,7 @@ async def test_complete_order_workflow(
     # Mark delivered
     response = client.post(
         f"/api/v1/orders/{order_id}/deliver",
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 200
     assert response.json()["status"] == "DELIVERED"
@@ -99,7 +99,7 @@ async def test_complete_order_workflow(
     # Complete order
     response = client.post(
         f"/api/v1/orders/{order_id}/complete",
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 200
     assert response.json()["status"] == "COMPLETED"
@@ -125,7 +125,7 @@ async def test_order_territory_isolation(
     order_data = {
         "patient_id": test_user.id,
         "provider_id": test_user.id,
-        "territory_id": test_user.territory_id,
+        "territory_id": test_user.primary_territory_id,
         "items": [
             {
                 "product_id": 1,
@@ -137,13 +137,13 @@ async def test_order_territory_isolation(
     response = client.post(
         "/api/v1/orders",
         json=order_data,
-        headers={"X-Territory-ID": str(test_user.territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
     )
     assert response.status_code == 201
     order_id = response.json()["id"]
 
     # Try to access from different territory
-    wrong_territory = test_user.territory_id + 1
+    wrong_territory = test_user.primary_territory_id + 1
     response = client.get(
         f"/api/v1/orders/{order_id}",
         headers={"X-Territory-ID": str(wrong_territory)}
@@ -171,7 +171,7 @@ async def test_concurrent_order_processing(
         order_data = {
             "patient_id": test_user.id,
             "provider_id": test_user.id,
-            "territory_id": test_user.territory_id,
+            "territory_id": test_user.primary_territory_id,
             "items": [
                 {
                     "product_id": 1,
@@ -182,7 +182,7 @@ async def test_concurrent_order_processing(
         response = client.post(
             "/api/v1/orders",
             json=order_data,
-            headers={"X-Territory-ID": str(test_user.territory_id)}
+            headers={"X-Territory-ID": str(test_user.primary_territory_id)}
         )
         assert response.status_code == 201
         order_ids.append(response.json()["id"])
@@ -191,7 +191,7 @@ async def test_concurrent_order_processing(
     for order_id in order_ids:
         response = client.post(
             f"/api/v1/orders/{order_id}/submit",
-            headers={"X-Territory-ID": str(test_user.territory_id)}
+            headers={"X-Territory-ID": str(test_user.primary_territory_id)}
         )
         assert response.status_code == 200
 

@@ -2,12 +2,14 @@
 Analytics models for the healthcare IVR platform.
 """
 from datetime import datetime
-from typing import Optional
+from typing import Dict, List, Optional
+from uuid import UUID, uuid4
 from sqlalchemy import (
-    Boolean, DateTime, Float, ForeignKey, Index, Integer, JSON, String
+    Boolean, DateTime, Float, ForeignKey, Index, Integer, JSON, String, Text
 )
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID as PyUUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 from app.core.database import Base
 
@@ -62,7 +64,11 @@ class DimOrganization(Base):
     __tablename__ = "dim_organization"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    org_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
+    org_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     # hospital, clinic, pharmacy, etc.
     type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -415,237 +421,199 @@ class FactNotification(Base):
 
 # Aggregation Tables
 
-class DailyMetrics(Base):
-    """Pre-calculated daily metrics for fast dashboard access."""
-    __tablename__ = "agg_daily_metrics"
+class GeographicMetrics(Base):
+    """Geographic metrics model."""
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    date: Mapped[DateTime] = mapped_column(DateTime, nullable=False)
-    organization_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey('dim_organization.id'),
-        nullable=False
-    )
-    territory_id: Mapped[str] = mapped_column(
-        String(36),
-        nullable=False
-    )
+    __tablename__ = "geographic_metrics"
 
-    # Call metrics
-    total_calls: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        default=0
+    id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
     )
-    avg_call_duration: Mapped[float] = mapped_column(
-        Float,
+    organization_id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
         nullable=False,
-        default=0
     )
-    call_success_rate: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
+    state: Mapped[str] = mapped_column(String(2))
+    region: Mapped[str] = mapped_column(String(50))
+    total_orders: Mapped[int] = mapped_column(default=0)
+    total_patients: Mapped[int] = mapped_column(default=0)
+    total_providers: Mapped[int] = mapped_column(default=0)
+    event_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
-    # Order metrics
-    total_orders: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        default=0
-    )
-    total_revenue: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-    avg_order_value: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-    sla_compliance_rate: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-
-    # Notification metrics
-    notification_success_rate: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-    avg_delivery_time: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-
-    # System metrics
-    error_rate: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-    system_latency: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-
-    # Insurance provider metrics
-    verification_success_rate: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-    avg_verification_time: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-    approval_rate_by_provider: Mapped[JSONB] = mapped_column(
-        JSONB,
-        nullable=False,
-        default={}
-    )
-
-    # Fulfillment metrics
-    avg_fulfillment_time: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-    fulfillment_sla_compliance: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-
-    # Territory metrics
-    territory_approval_rates: Mapped[JSONB] = mapped_column(
-        JSONB,
-        nullable=False,
-        default={}
-    )
-    territory_response_times: Mapped[JSONB] = mapped_column(
-        JSONB,
-        nullable=False,
-        default={}
-    )
-
-    # Additional satisfaction metrics
-    satisfaction_by_category: Mapped[JSONB] = mapped_column(
-        JSONB,
-        nullable=False,
-        default={}
-    )
-    sentiment_trend: Mapped[JSONB] = mapped_column(
-        JSONB,
-        nullable=False,
-        default={}
-    )
-    feedback_categories: Mapped[JSONB] = mapped_column(
-        JSONB,
-        nullable=False,
-        default={}
-    )
-
-    # Additional verification metrics
-    verification_by_type: Mapped[JSONB] = mapped_column(
-        JSONB,
-        nullable=False,
-        default={}
-    )
-    sla_performance: Mapped[JSONB] = mapped_column(
-        JSONB,
-        nullable=False,
-        default={}
-    )
-    error_distribution: Mapped[JSONB] = mapped_column(
-        JSONB,
-        nullable=False,
-        default={}
-    )
-
+    # Indexes
     __table_args__ = (
-        Index('idx_daily_metrics_date', 'date'),
-        Index('idx_daily_metrics_org', 'organization_id'),
-        Index(
-            'idx_daily_metrics_territory',
-            'territory_id'
-        )
+        Index("idx_geography_org", "organization_id"),
+        Index("idx_geography_state", "state"),
+        Index("idx_geographic_metrics_region", "region"),
+    )
+
+
+class OrganizationMetrics(Base):
+    """Organization metrics model."""
+
+    __tablename__ = "organization_metrics"
+
+    id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    organization_id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    total_orders: Mapped[int] = mapped_column(default=0)
+    total_patients: Mapped[int] = mapped_column(default=0)
+    total_providers: Mapped[int] = mapped_column(default=0)
+    total_facilities: Mapped[int] = mapped_column(default=0)
+    total_users: Mapped[int] = mapped_column(default=0)
+    event_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    # Indexes
+    __table_args__ = (Index("idx_org_metrics", "organization_id"),)
+
+
+class DailyMetrics(Base):
+    """Daily metrics model."""
+
+    __tablename__ = "daily_metrics"
+
+    id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+    )
+    organization_id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    total_orders: Mapped[int] = mapped_column(default=0)
+    total_patients: Mapped[int] = mapped_column(default=0)
+    total_providers: Mapped[int] = mapped_column(default=0)
+    total_facilities: Mapped[int] = mapped_column(default=0)
+    total_users: Mapped[int] = mapped_column(default=0)
+    active_users: Mapped[int] = mapped_column(default=0)
+    new_orders: Mapped[int] = mapped_column(default=0)
+    completed_orders: Mapped[int] = mapped_column(default=0)
+    cancelled_orders: Mapped[int] = mapped_column(default=0)
+    new_patients: Mapped[int] = mapped_column(default=0)
+    new_providers: Mapped[int] = mapped_column(default=0)
+    provider_metrics: Mapped[dict] = mapped_column(JSONB, default=dict)
+    patient_metrics: Mapped[dict] = mapped_column(JSONB, default=dict)
+    order_metrics: Mapped[dict] = mapped_column(JSONB, default=dict)
+    event_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    # Indexes
+    __table_args__ = (
+        Index("idx_daily_metrics_org", "organization_id"),
+        Index("idx_daily_metrics_date", "date"),
     )
 
 
 class HourlyMetrics(Base):
-    """Pre-calculated hourly metrics for real-time analytics."""
-    __tablename__ = "agg_hourly_metrics"
+    """Hourly metrics model."""
 
-    id: Mapped[int] = mapped_column(
-        Integer,
-        primary_key=True
-    )
-    hour: Mapped[DateTime] = mapped_column(
-        DateTime,
-        nullable=False
-    )
-    organization_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey('dim_organization.id'),
-        nullable=False
-    )
-    territory_id: Mapped[str] = mapped_column(
-        String(36),
-        nullable=False
-    )
+    __tablename__ = "hourly_metrics"
 
-    # Real-time metrics
-    active_calls: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        default=0
+    id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
     )
-    active_orders: Mapped[int] = mapped_column(
-        Integer,
+    organization_id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
         nullable=False,
-        default=0
     )
-    pending_notifications: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        default=0
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    total_orders: Mapped[int] = mapped_column(default=0)
+    total_patients: Mapped[int] = mapped_column(default=0)
+    total_providers: Mapped[int] = mapped_column(default=0)
+    total_facilities: Mapped[int] = mapped_column(default=0)
+    total_users: Mapped[int] = mapped_column(default=0)
+    active_users: Mapped[int] = mapped_column(default=0)
+    new_orders: Mapped[int] = mapped_column(default=0)
+    completed_orders: Mapped[int] = mapped_column(default=0)
+    cancelled_orders: Mapped[int] = mapped_column(default=0)
+    new_patients: Mapped[int] = mapped_column(default=0)
+    new_providers: Mapped[int] = mapped_column(default=0)
+    provider_metrics: Mapped[dict] = mapped_column(JSONB, default=dict)
+    patient_metrics: Mapped[dict] = mapped_column(JSONB, default=dict)
+    order_metrics: Mapped[dict] = mapped_column(JSONB, default=dict)
+    event_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
     )
-    system_health_score: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=100
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
-    # Performance metrics
-    avg_response_time: Mapped[float] = mapped_column(
-        Float,
-        nullable=False,
-        default=0
-    )
-    error_count: Mapped[int] = mapped_column(
-        Integer,
-        nullable=False,
-        default=0
-    )
-
+    # Indexes
     __table_args__ = (
-        Index(
-            'idx_hourly_metrics_hour',
-            'hour'
-        ),
-        Index(
-            'idx_hourly_metrics_org',
-            'organization_id'
-        ),
-        Index(
-            'idx_hourly_metrics_territory',
-            'territory_id'
-        )
+        Index("idx_hourly_metrics_org", "organization_id"),
+        Index("idx_hourly_metrics_timestamp", "timestamp"),
+    )
+
+
+class AnalyticsEvent(Base):
+    """Analytics event model."""
+    __tablename__ = "analytics_events"
+
+    id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    event_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    event_source: Mapped[str] = mapped_column(String(50), nullable=False)
+    event_data: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+    user_id: Mapped[Optional[UUID]] = mapped_column(
+        PyUUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True
+    )
+    organization_id: Mapped[UUID] = mapped_column(
+        PyUUID(as_uuid=True),
+        ForeignKey("organizations.id"),
+        nullable=False
     )

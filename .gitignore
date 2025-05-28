@@ -5,10 +5,16 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# Environment
+# Environment files - ignore all .env files except examples
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
+
+# But explicitly allow .env.example files anywhere
+!**/.env.example
+!.env.example
 
 # Build
 dist/
@@ -46,13 +52,6 @@ terraform.rc
 
 # Docker
 .docker/
-
-# Environment files
-.env.local
-.env.production
-.env.development
-# But allow .env.example files
-!.env.example
 
 # Project specific
 fix_formatting.py

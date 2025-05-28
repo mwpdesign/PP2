@@ -20,7 +20,6 @@ interface IVRSubmissionForm {
   patientId: string;
   providerId: string;
   facilityId: string;
-  territoryId: string;
   serviceType: string;
   priority: IVRPriority;
   notes?: string;
@@ -31,7 +30,6 @@ const schema = yup.object().shape({
   patientId: yup.string().required('Patient is required'),
   providerId: yup.string().required('Provider is required'),
   facilityId: yup.string().required('Facility is required'),
-  territoryId: yup.string().required('Territory is required'),
   serviceType: yup.string().required('Service type is required'),
   priority: yup.string().required('Priority is required'),
   notes: yup.string().optional(),

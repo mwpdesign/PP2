@@ -1,14 +1,19 @@
 """HIPAA compliance framework for PHI access logging and audit trail generation."""
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import logging
 from enum import Enum
 import json
 import uuid
+from uuid import UUID
 
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
+
+from app.core.config import settings
+from app.models.audit import AuditLog
 
 class PHIAccessType(Enum):
     VIEW = "view"
@@ -129,3 +134,45 @@ class ComplianceService:
         """Start automated incident response procedures."""
         # TODO: Implement automated incident response
         pass
+
+async def log_phi_access(
+    session: AsyncSession,
+    user_id: UUID,
+    organization_id: UUID,
+    action: str,
+    resource_type: str,
+    resource_id: str,
+    details: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Log PHI access for HIPAA compliance."""
+    try:
+        audit_log = AuditLog(
+            user_id=user_id,
+            organization_id=organization_id,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            details=details or {},
+            timestamp=datetime.utcnow(),
+        )
+        session.add(audit_log)
+        await session.commit()
+
+        if settings.DEBUG:
+            logger.debug(
+                "PHI access logged: %s",
+                json.dumps(
+                    {
+                        "user_id": str(user_id),
+                        "organization_id": str(organization_id),
+                        "action": action,
+                        "resource_type": resource_type,
+                        "resource_id": resource_id,
+                        "details": details,
+                    }
+                ),
+            )
+    except Exception as e:
+        logger.error("Failed to log PHI access: %s", str(e))
+        # Don't re-raise the exception to avoid disrupting the main flow
+        # but make sure it's logged for investigation

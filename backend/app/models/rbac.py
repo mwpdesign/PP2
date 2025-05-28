@@ -1,41 +1,37 @@
 """Role-Based Access Control models for the healthcare IVR platform."""
 from datetime import datetime
+from typing import Optional
 from uuid import UUID as PyUUID, uuid4
-from sqlalchemy import String, DateTime, ForeignKey, Table, JSON, Column
+from sqlalchemy import String, DateTime, ForeignKey, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
 
 
-# Association table for role-permission relationship
-role_permissions = Table(
-    'role_permissions',
-    Base.metadata,
-    Column(
-        'role_id',
+class RolePermission(Base):
+    """Association model for role-permission relationship."""
+    __tablename__ = 'role_permissions'
+
+    role_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('roles.id'),
         primary_key=True
-    ),
-    Column(
-        'permission_id',
+    )
+    permission_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('permissions.id'),
         primary_key=True
-    ),
-    Column(
-        'granted_at',
+    )
+    granted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         default=datetime.utcnow
-    ),
-    Column(
-        'granted_by',
+    )
+    granted_by: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('users.id')
     )
-)
 
 
 class Role(Base):
@@ -52,11 +48,13 @@ class Role(Base):
     description: Mapped[str] = mapped_column(String(255))
     organization_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey('organizations.id')
+        ForeignKey('organizations.id'),
+        nullable=False
     )
-    parent_role_id: Mapped[PyUUID] = mapped_column(
+    parent_role_id: Mapped[Optional[PyUUID]] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey('roles.id')
+        ForeignKey('roles.id'),
+        nullable=True
     )
     permissions: Mapped[dict] = mapped_column(
         JSON,
@@ -70,6 +68,8 @@ class Role(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow,
         onupdate=datetime.utcnow
     )
 
@@ -79,13 +79,8 @@ class Role(Base):
     users = relationship("User", back_populates="role")
     assigned_permissions = relationship(
         "Permission",
-        secondary=role_permissions,
+        secondary="role_permissions",
         back_populates="roles"
-    )
-    accessible_territories = relationship(
-        "Territory",
-        secondary="territory_role_access",
-        back_populates="allowed_roles"
     )
 
     def __repr__(self):
@@ -104,7 +99,7 @@ class Permission(Base):
         default=uuid4
     )
     name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
-    description: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
     resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
     action: Mapped[str] = mapped_column(String(50), nullable=False)
     conditions: Mapped[dict] = mapped_column(
@@ -121,7 +116,7 @@ class Permission(Base):
     # Relationships
     roles = relationship(
         "Role",
-        secondary=role_permissions,
+        secondary="role_permissions",
         back_populates="assigned_permissions"
     )
 

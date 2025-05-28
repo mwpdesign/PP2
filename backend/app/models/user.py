@@ -1,7 +1,7 @@
 """User model for the healthcare IVR platform."""
 from datetime import datetime, timedelta
 from sqlalchemy import (
-    String, Boolean, DateTime, Integer, ForeignKey, ARRAY, Column
+    String, Boolean, DateTime, Integer, ForeignKey, Column
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING
 
 from app.core.database import Base
 from app.core.password import get_password_hash, verify_password
-from app.models.associations import user_territories
 
 if TYPE_CHECKING:
     from .provider import Provider  # noqa: F401
     from .logistics import QualityCheck  # noqa: F401
+    from .ivr import IVRReview  # noqa: F401
 
 
 class User(Base):
@@ -78,38 +78,68 @@ class User(Base):
         back_populates="users"
     )
 
-    # Territory management
-    primary_territory_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey('territories.id'),
-        nullable=True
-    )
-    primary_territory = relationship(
-        "Territory",
-        foreign_keys=[primary_territory_id],
-        back_populates="users"
-    )
-    assigned_territories = Column(
-        ARRAY(UUID(as_uuid=True)),
-        nullable=True
-    )
-    security_groups = Column(
-        ARRAY(String(50)),
-        nullable=True
-    )
-
-    # Territory relationships
-    accessible_territories = relationship(
-        "Territory",
-        secondary=user_territories,
-        back_populates="authorized_users"
-    )
-
     # Sensitive data relationship
     sensitive_data = relationship(
         "SensitiveData",
         back_populates="user",
         uselist=False
+    )
+
+    # IVR relationships
+    current_ivr_reviews = relationship(
+        "IVRRequest",
+        foreign_keys="IVRRequest.current_reviewer_id",
+        back_populates="current_reviewer"
+    )
+    ivr_status_changes = relationship(
+        "IVRStatusHistory",
+        foreign_keys="IVRStatusHistory.changed_by_id",
+        back_populates="changed_by"
+    )
+    ivr_approvals = relationship(
+        "IVRApproval",
+        foreign_keys="IVRApproval.approver_id",
+        back_populates="approver"
+    )
+    ivr_escalations_created = relationship(
+        "IVREscalation",
+        foreign_keys="IVREscalation.escalated_by_id",
+        back_populates="escalated_by"
+    )
+    ivr_escalations_received = relationship(
+        "IVREscalation",
+        foreign_keys="IVREscalation.escalated_to_id",
+        back_populates="escalated_to"
+    )
+    ivr_escalations_assigned = relationship(
+        "IVREscalation",
+        foreign_keys="IVREscalation.escalated_to_id",
+        back_populates="escalated_to",
+        overlaps="ivr_escalations_received"
+    )
+    ivr_reviews = relationship(
+        "IVRReview",
+        foreign_keys="IVRReview.reviewer_id",
+        back_populates="reviewer"
+    )
+    uploaded_documents = relationship(
+        "IVRDocument",
+        foreign_keys="IVRDocument.uploaded_by_id",
+        back_populates="uploaded_by"
+    )
+
+    # Provider relationship
+    providers = relationship(
+        "Provider",
+        foreign_keys="Provider.created_by_id",
+        back_populates="created_by"
+    )
+
+    # Quality checks relationship
+    quality_checks = relationship(
+        "QualityCheck",
+        foreign_keys="QualityCheck.created_by_id",
+        back_populates="created_by"
     )
 
     # Patient relationships
@@ -142,68 +172,6 @@ class User(Base):
         "SecondaryInsurance",
         foreign_keys="SecondaryInsurance.created_by_id",
         back_populates="created_by"
-    )
-    documents = relationship(
-        "PatientDocument",
-        foreign_keys="PatientDocument.created_by_id",
-        back_populates="created_by"
-    )
-    created_documents = relationship(
-        "PatientDocument",
-        foreign_keys="PatientDocument.created_by_id",
-        back_populates="created_by",
-        overlaps="documents"
-    )
-    updated_documents = relationship(
-        "PatientDocument",
-        foreign_keys="PatientDocument.updated_by_id",
-        back_populates="updated_by"
-    )
-    providers = relationship(
-        "Provider",
-        back_populates="created_by"
-    )
-
-    # IVR relationships
-    current_ivr_reviews = relationship(
-        "IVRRequest",
-        foreign_keys="IVRRequest.current_reviewer_id",
-        back_populates="current_reviewer"
-    )
-    ivr_reviews = relationship(
-        "IVRReview",
-        foreign_keys="IVRReview.reviewer_id",
-        back_populates="reviewer"
-    )
-    ivr_status_changes = relationship(
-        "IVRStatusHistory",
-        foreign_keys="IVRStatusHistory.changed_by_id",
-        back_populates="changed_by"
-    )
-    ivr_approvals = relationship(
-        "IVRApproval",
-        foreign_keys="IVRApproval.approver_id",
-        back_populates="approver"
-    )
-    ivr_escalations_created = relationship(
-        "IVREscalation",
-        foreign_keys="IVREscalation.escalated_by_id",
-        back_populates="escalated_by"
-    )
-    ivr_escalations_assigned = relationship(
-        "IVREscalation",
-        foreign_keys="IVREscalation.escalated_to_id",
-        back_populates="escalated_to"
-    )
-    uploaded_documents = relationship(
-        "IVRDocument",
-        foreign_keys="IVRDocument.uploaded_by_id",
-        back_populates="uploaded_by"
-    )
-    quality_checks = relationship(
-        "QualityCheck",
-        foreign_keys="QualityCheck.inspector_id",
-        back_populates="inspector"
     )
     phi_access_logs = relationship(
         "PHIAccess",
@@ -266,6 +234,16 @@ class User(Base):
         foreign_keys="Order.updated_by_id",
         back_populates="updated_by",
         overlaps="updated_orders"
+    )
+    created_documents = relationship(
+        "PatientDocument",
+        foreign_keys="PatientDocument.created_by_id",
+        back_populates="created_by"
+    )
+    updated_documents = relationship(
+        "PatientDocument",
+        foreign_keys="PatientDocument.updated_by_id",
+        back_populates="updated_by"
     )
 
     def __repr__(self) -> str:

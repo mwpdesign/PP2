@@ -47,9 +47,9 @@ class FedExProvider(ShippingProvider):
         """Get OAuth token for FedEx API access."""
         settings = get_settings()
         auth_url = f"{self.base_url}/oauth/token"
-        
+
         if (
-            self._token and 
+            self._token and
             self._token_expires and
             self._token_expires > datetime.utcnow()
         ):
@@ -71,8 +71,9 @@ class FedExProvider(ShippingProvider):
 
             self._token = data["access_token"]
             expires_in = data["expires_in"]
-            self._token_expires = datetime.utcnow() + timedelta(
-                seconds=expires_in
+            self._token_expires = (
+                datetime.utcnow() +
+                timedelta(seconds=expires_in)
             )
 
             audit_shipping_operation(
@@ -140,8 +141,8 @@ class FedExProvider(ShippingProvider):
     def _format_address(self, address: Address) -> Dict:
         """Format address for FedEx API."""
         street_lines = (
-            [address.street1, address.street2] 
-            if address.street2 
+            [address.street1, address.street2]
+            if address.street2
             else [address.street1]
         )
         return {
@@ -162,7 +163,7 @@ class FedExProvider(ShippingProvider):
             if package.requires_signature
             else "NO_SIGNATURE_REQUIRED"
         )
-        
+
         package_data = {
             "weight": {
                 "value": package.weight,
@@ -291,7 +292,7 @@ class FedExProvider(ShippingProvider):
                     total_charge = total_charge["totalNetCharge"]
                     transit = rate_detail.get("transitTime", {})
                     guaranteed = rate_detail.get("guaranteedDelivery", False)
-                    
+
                     rates.append(ShippingRate(
                         carrier="FEDEX",
                         service_type=service_type,
@@ -412,13 +413,13 @@ class FedExProvider(ShippingProvider):
                 }
             }
             data = {"trackingInfo": [tracking_info]}
-            
+
             result = await self._make_request(
-                "POST", 
-                "track/v1/trackingnumbers", 
+                "POST",
+                "track/v1/trackingnumbers",
                 data
             )
-            
+
             if not result.get("output", {}).get("completeTrackResults", []):
                 raise ShippingException("No tracking data found")
 
@@ -433,7 +434,7 @@ class FedExProvider(ShippingProvider):
                 location = scan.get("scanLocation", "")
                 description = scan.get("eventDescription", "")
                 status = scan.get("derivedStatus", "")
-                
+
                 # Create tracking event
                 event = TrackingEvent(
                     timestamp=datetime.fromisoformat(timestamp),
@@ -446,7 +447,7 @@ class FedExProvider(ShippingProvider):
             # Get final status
             status_detail = tracking_details.get("latestStatusDetail", {})
             derived_status = status_detail.get("derivedStatus", "")
-            
+
             return TrackingInfo(
                 tracking_number=tracking_number,
                 status=self._map_tracking_status(derived_status),

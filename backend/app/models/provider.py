@@ -20,6 +20,12 @@ class Provider(Base):
         unique=True,
         nullable=False
     )
+    # Organization
+    organization_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id"),
+        nullable=False
+    )
     # Basic Information
     name: Mapped[str] = mapped_column(
         String(255),
@@ -115,6 +121,7 @@ class Provider(Base):
     )
 
     # Relationships
+    organization = relationship("Organization", back_populates="providers")
     created_by = relationship("User", back_populates="providers")
     patients = relationship(
         "Patient",

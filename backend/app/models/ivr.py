@@ -1,127 +1,445 @@
-"""IVR models for the application."""
+"""IVR models for the healthcare platform."""
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, JSON
+from uuid import UUID as PyUUID, uuid4
+from sqlalchemy import String, DateTime, ForeignKey, JSON, Enum, Integer
 from sqlalchemy.dialects.postgresql import UUID
-from uuid import uuid4
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base
+from app.core.database import Base
+from app.core.enums import IVRPriority, IVRStatus
 
 
 class IVRRequest(Base):
-    """IVR request model."""
     __tablename__ = "ivr_requests"
-    __table_args__ = {'extend_existing': True}
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    patient_id = Column(
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    patient_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("patients.id"),
         nullable=False
     )
-    provider_id = Column(
+    provider_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("providers.id"),
         nullable=False
     )
-    facility_id = Column(
+    facility_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("facilities.id"),
         nullable=False
     )
-    territory_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("territories.id"),
-        nullable=False
+
+    # Request Details
+    service_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    priority: Mapped[IVRPriority] = mapped_column(
+        Enum(IVRPriority),
+        default=IVRPriority.MEDIUM
     )
-    service_type = Column(String, nullable=False)
-    priority = Column(String, nullable=False)
-    status = Column(String, nullable=False, default="pending")
-    request_metadata = Column(JSON, nullable=True)
-    notes = Column(String, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime,
-        nullable=False,
+    status: Mapped[IVRStatus] = mapped_column(
+        Enum(IVRStatus),
+        default=IVRStatus.SUBMITTED
+    )
+    current_reviewer_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    # Metadata
+    request_metadata: Mapped[dict] = mapped_column(JSON, default={})
+    notes: Mapped[str] = mapped_column(String(1000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
-    )
-    created_by = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
         nullable=False
     )
-    updated_by = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
-        nullable=False
-    )
-
-
-class IVRSession(Base):
-    """IVR session model."""
-    __tablename__ = "ivr_sessions"
-    __table_args__ = {'extend_existing': True}
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    patient_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("patients.id"),
-        nullable=False
-    )
-    provider_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("providers.id"),
-        nullable=False
-    )
-    territory_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("territories.id"),
-        nullable=False
-    )
-    status = Column(String, nullable=False, default="active")
-    insurance_data = Column(JSON, nullable=True)
-    session_metadata = Column(JSON, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime,
-        nullable=False,
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
-    )
-    created_by = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
-        nullable=False
-    )
-    updated_by = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        onupdate=datetime.utcnow,
         nullable=False
     )
 
+    # Relationships
+    patient = relationship("Patient", back_populates="ivr_requests")
+    provider = relationship("Provider", back_populates="ivr_requests")
+    facility = relationship("Facility", back_populates="ivr_requests")
+    current_reviewer = relationship(
+        "User",
+        foreign_keys=[current_reviewer_id],
+        back_populates="current_ivr_reviews"
+    )
+    status_history = relationship(
+        "IVRStatusHistory",
+        back_populates="ivr_request"
+    )
+    approvals = relationship(
+        "IVRApproval",
+        back_populates="ivr_request"
+    )
+    escalations = relationship(
+        "IVREscalation",
+        back_populates="ivr_request"
+    )
+    reviews = relationship(
+        "IVRReview",
+        back_populates="ivr_request"
+    )
+    documents = relationship(
+        "IVRDocument",
+        back_populates="ivr_request"
+    )
 
-class IVRDocument(Base):
-    """IVR document model."""
-    __tablename__ = "ivr_documents"
-    __table_args__ = {'extend_existing': True}
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    ivr_request_id = Column(
+class IVRStatusHistory(Base):
+    __tablename__ = "ivr_status_history"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    ivr_request_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("ivr_requests.id"),
         nullable=False
     )
-    document_type = Column(String, nullable=False)
-    document_key = Column(String, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime,
-        nullable=False,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+    from_status: Mapped[IVRStatus] = mapped_column(
+        Enum(IVRStatus),
+        nullable=True
     )
-    uploaded_by_id = Column(
+    to_status: Mapped[IVRStatus] = mapped_column(
+        Enum(IVRStatus),
+        nullable=False
+    )
+    changed_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
         nullable=False
     )
+    reason: Mapped[str] = mapped_column(
+        String(500),
+        nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    # Relationships
+    ivr_request = relationship("IVRRequest", back_populates="status_history")
+    changed_by = relationship("User", back_populates="ivr_status_changes")
+
+
+class IVRApproval(Base):
+    __tablename__ = "ivr_approvals"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    ivr_request_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ivr_requests.id"),
+        nullable=False
+    )
+    approver_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
+    approval_level: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        nullable=False
+    )
+    decision: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False
+    )
+    reason: Mapped[str] = mapped_column(
+        String(500),
+        nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    # Relationships
+    ivr_request = relationship("IVRRequest", back_populates="approvals")
+    approver = relationship("User", back_populates="ivr_approvals")
+
+
+class IVREscalation(Base):
+    __tablename__ = "ivr_escalations"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    ivr_request_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ivr_requests.id"),
+        nullable=False
+    )
+    escalated_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
+    escalated_to_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
+    reason: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )
+    resolved: Mapped[str] = mapped_column(
+        String(10),
+        default="pending",
+        nullable=False
+    )
+    resolution_notes: Mapped[str] = mapped_column(
+        String(500),
+        nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+    resolved_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    # Relationships
+    ivr_request = relationship("IVRRequest", back_populates="escalations")
+    escalated_by = relationship(
+        "User",
+        foreign_keys=[escalated_by_id],
+        back_populates="ivr_escalations_created"
+    )
+    escalated_to = relationship(
+        "User",
+        foreign_keys=[escalated_to_id],
+        back_populates="ivr_escalations_assigned"
+    )
+
+
+class IVRReview(Base):
+    __tablename__ = "ivr_reviews"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    ivr_request_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ivr_requests.id"),
+        nullable=False
+    )
+    reviewer_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="assigned",
+        nullable=False
+    )
+    notes: Mapped[str] = mapped_column(
+        String(1000),
+        nullable=True
+    )
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+    completed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    # Relationships
+    ivr_request = relationship("IVRRequest", back_populates="reviews")
+    reviewer = relationship("User", back_populates="ivr_reviews")
+
+
+class IVRDocument(Base):
+    __tablename__ = "ivr_documents"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    ivr_request_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ivr_requests.id"),
+        nullable=False
+    )
+    document_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False
+    )
+    document_key: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False
+    )
+    uploaded_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="pending",
+        nullable=False
+    )
+    verification_notes: Mapped[str] = mapped_column(
+        String(500),
+        nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    # Relationships
+    ivr_request = relationship("IVRRequest", back_populates="documents")
+    uploaded_by = relationship("User", back_populates="uploaded_documents")
+
+
+class IVRSession(Base):
+    """IVR session model."""
+
+    __tablename__ = "ivr_sessions"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    patient_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("patients.id"),
+        nullable=False
+    )
+    provider_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("providers.id"),
+        nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default='pending'
+    )
+    insurance_data: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=True
+    )
+    session_metadata: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    patient = relationship(
+        "Patient",
+        back_populates="ivr_sessions"
+    )
+    provider = relationship(
+        "Provider",
+        back_populates="ivr_sessions"
+    )
+    items = relationship(
+        "IVRSessionItem",
+        back_populates="session"
+    )
+
+
+class IVRSessionItem(Base):
+    """IVR session item model."""
+
+    __tablename__ = "ivr_session_items"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4
+    )
+    session_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ivr_sessions.id"),
+        nullable=False
+    )
+    product_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("products.id"),
+        nullable=False
+    )
+    quantity: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False
+    )
+    notes: Mapped[str] = mapped_column(
+        String(1000),
+        nullable=True
+    )
+    insurance_coverage: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    session = relationship("IVRSession", back_populates="items")
+    product = relationship("Product")

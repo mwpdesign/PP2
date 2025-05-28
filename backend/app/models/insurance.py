@@ -56,11 +56,6 @@ class SecondaryInsurance(Base):
         JSON,
         nullable=True
     )
-    territory_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("territories.id"),
-        nullable=False
-    )
     created_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
@@ -79,7 +74,6 @@ class SecondaryInsurance(Base):
 
     # Relationships
     patient = relationship("Patient", back_populates="secondary_insurance")
-    territory = relationship("Territory", back_populates="secondary_insurance")
     created_by = relationship(
         "User",
         foreign_keys=[created_by_id],

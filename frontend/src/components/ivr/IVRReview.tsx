@@ -21,9 +21,7 @@ import {
 import ivrService from '../../services/ivrService';
 import { useWebSocket, MessageType } from '../../services/websocket';
 
-interface IVRReviewProps {
-  territoryId?: string;
-}
+interface IVRReviewProps {}
 
 interface TableStateWithSelection extends TableState<IVRRequest> {
   selectedRowIds: Record<string, boolean>;
@@ -40,13 +38,12 @@ interface HeaderGroupWithSort extends HeaderGroup<IVRRequest> {
   isSortedDesc: boolean;
 }
 
-const IVRReview: React.FC<IVRReviewProps> = ({ territoryId }) => {
+const IVRReview: React.FC<IVRReviewProps> = () => {
   // State
   const [requests, setRequests] = useState<IVRRequest[]>([]);
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [queueParams, setQueueParams] = useState<IVRQueueParams>({
-    territoryId,
     page: 1,
     size: 20,
   });

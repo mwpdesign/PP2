@@ -1,24 +1,18 @@
 """
-Role management API endpoints with territory-based access control.
+Role management API endpoints.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Optional
-from datetime import datetime
+from typing import List
+from uuid import UUID
 
 from ...core.database import get_db
 from ...core.security import get_current_user
-from .models import User, Role, Permission, Territory
+from .models import User, Role
 from .schemas import (
     RoleCreate,
     RoleUpdate,
     RoleResponse,
-    PermissionCreate,
-    PermissionUpdate,
-    PermissionResponse,
-    TerritoryCreate,
-    TerritoryUpdate,
-    TerritoryResponse,
     UserRoleAssign
 )
 
@@ -57,7 +51,7 @@ async def list_roles(
 
 @router.get("/roles/{role_id}", response_model=RoleResponse)
 async def get_role(
-    role_id: int,
+    role_id: UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -73,7 +67,7 @@ async def get_role(
 
 @router.put("/roles/{role_id}", response_model=RoleResponse)
 async def update_role(
-    role_id: int,
+    role_id: UUID,
     role_update: RoleUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -102,7 +96,7 @@ async def update_role(
 
 @router.delete("/roles/{role_id}")
 async def delete_role(
-    role_id: int,
+    role_id: UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -133,8 +127,8 @@ async def delete_role(
 
 @router.post("/roles/{role_id}/permissions")
 async def assign_permissions(
-    role_id: int,
-    permission_ids: List[int],
+    role_id: UUID,
+    permissions: List[str],
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -152,10 +146,6 @@ async def assign_permissions(
             detail="Role not found"
         )
 
-    permissions = await db.query(Permission).filter(
-        Permission.id.in_(permission_ids)
-    ).all()
-
     db_role.permissions = permissions
     await db.commit()
     return {"message": "Permissions assigned successfully"}
@@ -163,8 +153,8 @@ async def assign_permissions(
 
 @router.post("/roles/{role_id}/hierarchy")
 async def set_role_hierarchy(
-    role_id: int,
-    parent_role_ids: List[int],
+    role_id: UUID,
+    parent_role_ids: List[UUID],
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -193,13 +183,15 @@ async def set_role_hierarchy(
 
 @router.post("/users/{user_id}/roles")
 async def assign_user_roles(
-    user_id: int,
+    user_id: UUID,
     role_assignments: List[UserRoleAssign],
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Assign roles and territories to a user."""
-    if not current_user.is_superuser and not current_user.has_permission('assign_roles'):
+    """Assign roles to a user."""
+    if not current_user.is_superuser and not current_user.has_permission(
+        'assign_roles'
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient permissions"
@@ -212,38 +204,24 @@ async def assign_user_roles(
             detail="User not found"
         )
 
-    # Verify roles and territories exist
+    # Verify roles exist
     for assignment in role_assignments:
-        role = await db.query(Role).filter(Role.id == assignment.role_id).first()
+        role = await db.query(Role).filter(
+            Role.id == assignment.role_id
+        ).first()
         if not role:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Role {assignment.role_id} not found"
             )
 
-        if assignment.territory_id:
-            territory = await db.query(Territory).filter(
-                Territory.id == assignment.territory_id
-            ).first()
-            if not territory:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Territory {assignment.territory_id} not found"
-                )
-
-    # Update user roles and territories
+    # Update user roles
     db_user.roles = []
-    db_user.territories = []
-
     for assignment in role_assignments:
-        role = await db.query(Role).filter(Role.id == assignment.role_id).first()
+        role = await db.query(Role).filter(
+            Role.id == assignment.role_id
+        ).first()
         db_user.roles.append(role)
 
-        if assignment.territory_id:
-            territory = await db.query(Territory).filter(
-                Territory.id == assignment.territory_id
-            ).first()
-            db_user.territories.append(territory)
-
     await db.commit()
-    return {"message": "User roles and territories assigned successfully"}
+    return {"message": "User roles assigned successfully"}

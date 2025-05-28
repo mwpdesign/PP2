@@ -35,11 +35,6 @@ class PHIAccess(Base, AuditMixin):
     )
     # view, create, update, delete
     action: Mapped[str] = mapped_column(String(50), nullable=False)
-    territory_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('territories.id'),
-        nullable=False
-    )
     created_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('users.id'),
@@ -67,36 +62,28 @@ class PHIAccess(Base, AuditMixin):
 
     # Request Context
     ip_address: Mapped[str] = mapped_column(String(50))
-    user_agent: Mapped[str] = mapped_column(String(255))
+    user_agent: Mapped[str] = mapped_column(String(500))
     request_id: Mapped[str] = mapped_column(String(100))
-    correlation_id: Mapped[str] = mapped_column(String(100))
     session_id: Mapped[str] = mapped_column(String(100))
-    access_reason: Mapped[str] = mapped_column(String(255))
-    access_location: Mapped[str] = mapped_column(String(100))
-
-    # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=datetime.utcnow
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        onupdate=datetime.utcnow
+    )
 
     # Relationships
-    user = relationship(
-        'User',
-        foreign_keys=[user_id],
-        back_populates='phi_access_logs'
-    )
-    patient = relationship('Patient', back_populates='phi_access_logs')
-    territory = relationship('Territory', back_populates='phi_access_logs')
+    user = relationship('User', foreign_keys=[user_id])
+    patient = relationship('Patient')
     created_by = relationship(
         'User',
-        foreign_keys=[created_by_id],
-        back_populates='created_phi_access_logs'
+        foreign_keys=[created_by_id]
     )
     updated_by = relationship(
         'User',
-        foreign_keys=[updated_by_id],
-        back_populates='updated_phi_access_logs'
+        foreign_keys=[updated_by_id]
     )
 
 
@@ -109,6 +96,12 @@ class AuditLog(Base, AuditMixin):
         primary_key=True,
         default=uuid4
     )
+    # Organization
+    organization_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('organizations.id'),
+        nullable=False
+    )
     user_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('users.id'),
@@ -118,11 +111,6 @@ class AuditLog(Base, AuditMixin):
     resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
     resource_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
-        nullable=False
-    )
-    territory_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('territories.id'),
         nullable=False
     )
     details: Mapped[dict] = mapped_column(JSONB)
@@ -142,12 +130,12 @@ class AuditLog(Base, AuditMixin):
     )
 
     # Relationships
+    organization = relationship("Organization", back_populates="audit_logs")
     user = relationship(
         'User',
         foreign_keys=[user_id],
         back_populates='audit_logs'
     )
-    territory = relationship('Territory', back_populates='audit_logs')
     created_by = relationship(
         'User',
         foreign_keys=[created_by_id],
@@ -170,11 +158,6 @@ class ComplianceCheck(Base, AuditMixin):
         default=uuid4
     )
     check_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    territory_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('territories.id'),
-        nullable=True
-    )
     # pending, completed, failed
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     results: Mapped[dict] = mapped_column(JSONB, nullable=False)
@@ -198,7 +181,6 @@ class ComplianceCheck(Base, AuditMixin):
     )
 
     # Relationships
-    territory = relationship('Territory', back_populates='compliance_checks')
     created_by = relationship(
         'User',
         foreign_keys=[created_by_id],
@@ -221,11 +203,6 @@ class AuditReport(Base, AuditMixin):
         default=uuid4
     )
     report_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    territory_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('territories.id'),
-        nullable=True
-    )
     start_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False
@@ -251,7 +228,6 @@ class AuditReport(Base, AuditMixin):
     )
 
     # Relationships
-    territory = relationship('Territory', back_populates='audit_reports')
     created_by = relationship(
         'User',
         foreign_keys=[created_by_id],

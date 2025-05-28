@@ -22,6 +22,12 @@ class Order(Base, AuditMixin):
         primary_key=True,
         default=uuid4
     )
+    # Organization
+    organization_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey('organizations.id'),
+        nullable=False
+    )
     order_number: Mapped[str] = mapped_column(
         String(50),
         unique=True,
@@ -35,11 +41,6 @@ class Order(Base, AuditMixin):
     provider_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey('providers.id'),
-        nullable=False
-    )
-    territory_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('territories.id'),
         nullable=False
     )
     created_by_id: Mapped[PyUUID] = mapped_column(
@@ -103,6 +104,7 @@ class Order(Base, AuditMixin):
     )
 
     # Relationships
+    organization = relationship("Organization", back_populates="orders")
     patient = relationship(
         "Patient",
         foreign_keys=[patient_id],
@@ -111,11 +113,6 @@ class Order(Base, AuditMixin):
     provider = relationship(
         "Provider",
         foreign_keys=[provider_id],
-        back_populates="orders"
-    )
-    territory = relationship(
-        "Territory",
-        foreign_keys=[territory_id],
         back_populates="orders"
     )
     created_by = relationship(

@@ -150,3 +150,18 @@ You are building a HIPAA-compliant Healthcare IVR Platform. Follow these rules:
 - Keep configuration in appropriate files
 - Use proper file naming conventions
 
+## Color Standards
+- Primary Blue: #2E86AB (Use this instead of Tailwind's default blue)
+- Hover Blue: #247297
+- Focus Ring Blue: #2E86AB
+
+### Usage Examples:
+```tsx
+// Button Example
+className="bg-[#2E86AB] hover:bg-[#247297] focus:ring-[#2E86AB]"
+
+// DO NOT USE
+// ❌ className="bg-blue-600 hover:bg-blue-700"
+// ❌ className="bg-blue-500"
+```
+

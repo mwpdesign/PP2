@@ -1,9 +1,7 @@
 """Models package initialization."""
-from app.models.associations import user_territories, territory_role_access
 from app.models.organization import Organization
 from app.models.user import User
 from app.models.rbac import Role, Permission
-from app.models.territory import Territory
 from app.models.sensitive_data import SensitiveData
 from app.models.facility import Facility
 from app.models.patient import Patient
@@ -21,13 +19,10 @@ from app.models.ivr import (
 )
 
 __all__ = [
-    'user_territories',
-    'territory_role_access',
     'Organization',
     'User',
     'Role',
     'Permission',
-    'Territory',
     'SensitiveData',
     'Facility',
     'Patient',

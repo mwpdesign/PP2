@@ -1,10 +1,14 @@
 """Patient data models with field-level encryption for PHI."""
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID, uuid4
-from sqlalchemy import String, DateTime, ForeignKey, Text, JSON, LargeBinary
+from sqlalchemy import (
+    String, DateTime, ForeignKey, Text, JSON,
+    LargeBinary, ARRAY
+)
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 from app.core.database import Base
 from app.models.user import User
@@ -17,7 +21,7 @@ class Patient(Base):
     id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
         primary_key=True,
-        default=uuid4
+        default=uuid4,
     )
     external_id: Mapped[Optional[str]] = mapped_column(
         String(100),
@@ -57,15 +61,17 @@ class Patient(Base):
         nullable=False,
         default='active'
     )
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    patient_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    tags: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow
+        server_default=func.now(),
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=True,
-        onupdate=datetime.utcnow
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
     # Audit fields
@@ -80,16 +86,11 @@ class Patient(Base):
         nullable=True
     )
 
-    # Organization and Territory
+    # Organization
     organization_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("organizations.id"),
-        nullable=False
-    )
-    territory_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("territories.id"),
-        nullable=False
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     # Facility and Provider
@@ -117,10 +118,6 @@ class Patient(Base):
     )
     organization = relationship(
         "Organization",
-        back_populates="patients"
-    )
-    territory = relationship(
-        "Territory",
         back_populates="patients"
     )
     facility = relationship(
@@ -175,10 +172,6 @@ class PatientDocument(Base):
     file_path: Mapped[str] = mapped_column(Text)
     document_category: Mapped[str] = mapped_column(String(50))
     document_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
-    territory_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("territories.id")
-    )
 
     # Add timestamp fields directly
     created_at: Mapped[datetime] = mapped_column(
@@ -203,6 +196,13 @@ class PatientDocument(Base):
         nullable=True
     )
 
+    # Organization field for access control
+    organization_id: Mapped[UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
     # Relationships
     patient: Mapped["Patient"] = relationship(
         "Patient",
@@ -217,6 +217,10 @@ class PatientDocument(Base):
         "User",
         foreign_keys=[updated_by_id],
         back_populates="updated_documents"
+    )
+    organization = relationship(
+        "Organization",
+        back_populates="patient_documents"
     )
 
     @property

@@ -1,0 +1,1 @@
+import asyncio; from app.core.database import get_db; from sqlalchemy import text; async def check_patients(): async for db in get_db(): result = await db.execute(text("SELECT COUNT(*) FROM patients")); count = result.scalar(); print(f"Current patients in database: {count}"); break; asyncio.run(check_patients())

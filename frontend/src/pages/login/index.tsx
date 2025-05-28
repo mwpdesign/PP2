@@ -20,7 +20,7 @@ export default function LoginPage() {
       navigate(destination, { replace: true });
     } catch (error) {
       console.error('Login failed:', error);
-      setError('Invalid credentials. Use doctor@example.com / password');
+      setError('Invalid credentials. Use doctor@test.com / password');
     } finally {
       setIsLoading(false);
     }

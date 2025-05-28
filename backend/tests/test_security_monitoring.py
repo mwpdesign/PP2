@@ -62,7 +62,7 @@ async def test_detect_suspicious_patterns(
     for _ in range(101):  # Exceed phi_access_rate threshold
         await service.detect_suspicious_patterns(
             user_id=test_user.id,
-            territory_id=test_user.territory_id,
+            territory_id=test_user.primary_territory_id,
             action="view",
             resource_type="patient"
         )
@@ -92,13 +92,13 @@ async def test_security_metrics(
             event_type="failed_authentication",
             severity="medium",
             user_id=test_user.id,
-            territory_id=test_user.territory_id
+            territory_id=test_user.primary_territory_id
         ),
         SecurityEvent(
             event_type="unauthorized_access",
             severity="high",
             user_id=test_user.id,
-            territory_id=test_user.territory_id
+            territory_id=test_user.primary_territory_id
         )
     ]
     db.add_all(events)
@@ -110,7 +110,7 @@ async def test_security_metrics(
     metrics = await service.get_security_metrics(
         start_date=start_date,
         end_date=end_date,
-        territory_id=test_user.territory_id
+        territory_id=test_user.primary_territory_id
     )
 
     assert metrics["total_events"] == 2
@@ -136,7 +136,7 @@ async def test_evaluate_security_rule(
             event_type="failed_authentication",
             severity="high",
             user_id=test_user.id,
-            territory_id=test_user.territory_id,
+            territory_id=test_user.primary_territory_id,
             created_at=datetime.utcnow()
         )
         events.append(event)
@@ -169,7 +169,7 @@ async def test_create_security_alert(
         alert_type="test_alert",
         severity="high",
         user_id=test_user.id,
-        territory_id=test_user.territory_id,
+        territory_id=test_user.primary_territory_id,
         details={"test": "data"}
     )
 

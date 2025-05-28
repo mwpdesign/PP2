@@ -1,5 +1,6 @@
 import { AxiosError } from 'axios';
 import api from './api';
+import config from '../config';
 import {
   IVRRequest,
   IVRQueueParams,
@@ -12,8 +13,6 @@ import {
   Provider,
   DocumentAnnotation,
 } from '../types/ivr';
-
-const IVR_ENDPOINT = `/api/v1/ivr`;
 
 // Error handling types
 interface APIError {
@@ -43,7 +42,53 @@ class IVRService {
 
   async getQueue(params: IVRQueueParams): Promise<IVRQueueResponse> {
     try {
-      const response = await api.get<IVRQueueResponse>(IVR_ENDPOINT, { params });
+      const response = await api.get<IVRQueueResponse>(config.getAPIEndpoint('/api/v1/ivr/queue'), { params });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getReviewQueue(params: IVRQueueParams): Promise<IVRQueueResponse> {
+    try {
+      const response = await api.get<IVRQueueResponse>(config.getAPIEndpoint('/api/v1/ivr/review-queue'), { params });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async createIVRRequest(request: IVRRequest): Promise<IVRRequest> {
+    try {
+      const response = await api.post<IVRRequest>(config.getAPIEndpoint('/api/v1/ivr/requests'), request);
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async approveIVRRequest(id: string, approval: IVRApproval): Promise<void> {
+    try {
+      await api.post(config.getAPIEndpoint(`/api/v1/ivr/requests/${id}/approve`), approval);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async rejectIVRRequest(id: string, rejection: IVRApproval): Promise<void> {
+    try {
+      await api.post(config.getAPIEndpoint(`/api/v1/ivr/requests/${id}/reject`), rejection);
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async processBatch(action: IVRBatchAction): Promise<IVRBatchResult> {
+    try {
+      const response = await api.post<IVRBatchResult>(
+        config.getAPIEndpoint('/api/v1/ivr/batch'),
+        action
+      );
       return response.data;
     } catch (error) {
       this.handleError(error);
@@ -52,7 +97,7 @@ class IVRService {
 
   async submitRequest(request: IVRRequest): Promise<void> {
     try {
-      await api.post(`${IVR_ENDPOINT}/submit`, request);
+      await api.post(config.getAPIEndpoint('/api/v1/ivr/submit'), request);
     } catch (error) {
       this.handleError(error);
     }
@@ -61,7 +106,7 @@ class IVRService {
   async batchAction(action: IVRBatchAction): Promise<IVRBatchResult> {
     try {
       const response = await api.post<IVRBatchResult>(
-        `${IVR_ENDPOINT}/batch`,
+        config.getAPIEndpoint('/api/v1/ivr/batch'),
         action
       );
       return response.data;
@@ -72,7 +117,7 @@ class IVRService {
 
   async approve(approval: IVRApproval): Promise<void> {
     try {
-      await api.post(`${IVR_ENDPOINT}/approve`, approval);
+      await api.post(config.getAPIEndpoint('/api/v1/ivr/approve'), approval);
     } catch (error) {
       this.handleError(error);
     }
@@ -80,7 +125,7 @@ class IVRService {
 
   async escalate(escalation: IVREscalation): Promise<void> {
     try {
-      await api.post(`${IVR_ENDPOINT}/escalate`, escalation);
+      await api.post(config.getAPIEndpoint('/api/v1/ivr/escalate'), escalation);
     } catch (error) {
       this.handleError(error);
     }
@@ -88,7 +133,7 @@ class IVRService {
 
   async searchPatients(query: string): Promise<Patient[]> {
     try {
-      const response = await api.get<Patient[]>(`/api/v1/patients/search`, {
+      const response = await api.get<Patient[]>(config.getAPIEndpoint('/api/v1/patients/search'), {
         params: { query },
       });
       return response.data;
@@ -99,7 +144,7 @@ class IVRService {
 
   async searchProviders(query: string): Promise<Provider[]> {
     try {
-      const response = await api.get<Provider[]>(`/api/v1/providers/search`, {
+      const response = await api.get<Provider[]>(config.getAPIEndpoint('/api/v1/providers/search'), {
         params: { query },
       });
       return response.data;
@@ -110,7 +155,7 @@ class IVRService {
 
   async getMetrics(dateRange: '7d' | '30d' | '90d'): Promise<any> {
     try {
-      const response = await api.get(`${IVR_ENDPOINT}/metrics`, {
+      const response = await api.get(config.getAPIEndpoint('/api/v1/ivr/metrics'), {
         params: { range: dateRange },
       });
       return response.data;
@@ -130,7 +175,7 @@ class IVRService {
       formData.append('documentType', documentType);
 
       const response = await api.post<IVRRequest>(
-        `${IVR_ENDPOINT}/${ivrId}/documents`,
+        config.getAPIEndpoint(`/api/v1/ivr/${ivrId}/documents`),
         formData,
         {
           headers: {
@@ -147,7 +192,7 @@ class IVRService {
   async getDocumentUrl(ivrId: string, documentId: string): Promise<string> {
     try {
       const response = await api.get<{ url: string }>(
-        `${IVR_ENDPOINT}/${ivrId}/documents/${documentId}/url`
+        config.getAPIEndpoint(`/api/v1/ivr/${ivrId}/documents/${documentId}/url`)
       );
       return response.data.url;
     } catch (error) {
@@ -158,7 +203,7 @@ class IVRService {
   async getDocumentAnnotations(documentId: string): Promise<DocumentAnnotation[]> {
     try {
       const response = await api.get<DocumentAnnotation[]>(
-        `${IVR_ENDPOINT}/documents/${documentId}/annotations`
+        config.getAPIEndpoint(`/api/v1/ivr/documents/${documentId}/annotations`)
       );
       return response.data;
     } catch (error) {
@@ -173,7 +218,7 @@ class IVRService {
   ): Promise<void> {
     try {
       await api.put(
-        `${IVR_ENDPOINT}/documents/${documentId}/annotations/${annotationId}`,
+        config.getAPIEndpoint(`/api/v1/ivr/documents/${documentId}/annotations/${annotationId}`),
         data
       );
     } catch (error) {

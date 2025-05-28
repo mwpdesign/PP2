@@ -1,5 +1,6 @@
 """Authentication schemas."""
-from typing import Optional
+from typing import Dict, Optional
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, validator
 from app.core.security import PasswordValidator
 
@@ -17,7 +18,6 @@ class UserCreate(UserBase):
     """User creation schema."""
     password: str = Field(..., min_length=8, max_length=100)
     organization_id: str
-    primary_territory_id: Optional[str] = None
 
     @validator("password")
     def validate_password(cls, v):
@@ -36,10 +36,37 @@ class UserLogin(BaseModel):
 
 
 class Token(BaseModel):
-    """Token response schema."""
+    """Token schema."""
     access_token: str
-    refresh_token: str
     token_type: str
+
+
+class TokenData(BaseModel):
+    """Token data schema."""
+    email: Optional[str] = None
+
+
+class Login(BaseModel):
+    """Login schema."""
+    email: EmailStr
+    password: str
+
+
+class UserAuth(BaseModel):
+    """User authentication schema."""
+    id: UUID
+    email: str
+    organization_id: UUID
+    is_active: bool = True
+    is_superuser: bool = False
+    metadata: Dict = {}
+
+
+class AuthResponse(BaseModel):
+    """Authentication response schema."""
+    access_token: str
+    token_type: str
+    user: UserAuth
 
 
 class RefreshToken(BaseModel):
@@ -53,7 +80,6 @@ class TokenPayload(BaseModel):
     exp: Optional[int] = None
     role: Optional[str] = None
     organization_id: Optional[str] = None
-    primary_territory_id: Optional[str] = None
 
 
 class UserResponse(UserBase):
@@ -63,7 +89,6 @@ class UserResponse(UserBase):
     is_superuser: bool = False
     role: str
     organization_id: str
-    primary_territory_id: Optional[str] = None
     mfa_enabled: bool = False
     force_password_change: bool = False
     last_login: Optional[str] = None

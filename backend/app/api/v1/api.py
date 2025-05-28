@@ -2,72 +2,38 @@
 API router configuration.
 """
 from fastapi import APIRouter
-
 from app.api.v1.endpoints import (
-    patients,
-    ivr,
-    auth,
     users,
-    providers,
     orders,
-    shipping,
-    organizations,
-    rbac
+    patients,
+    providers,
 )
+from app.api.auth.routes import router as auth_router
 
 api_router = APIRouter()
 
-# Include routers
-api_router.include_router(
-    auth.router,
-    prefix="/auth",
-    tags=["Authentication"]
-)
+# Include auth router - handles both local and Cognito auth
+# Router already has its own prefix
+api_router.include_router(auth_router)
 
+# Always include core v1 endpoints
 api_router.include_router(
     users.router,
     prefix="/users",
-    tags=["Users"]
+    tags=["users"]
 )
-
-api_router.include_router(
-    patients.router,
-    prefix="/patients",
-    tags=["Patients"]
-)
-
-api_router.include_router(
-    providers.router,
-    prefix="/providers",
-    tags=["Providers"]
-)
-
 api_router.include_router(
     orders.router,
     prefix="/orders",
-    tags=["Orders"]
+    tags=["orders"]
 )
-
 api_router.include_router(
-    shipping.router,
-    prefix="/shipping",
-    tags=["Shipping"]
+    patients.router,
+    prefix="/patients",
+    tags=["patients"]
 )
-
 api_router.include_router(
-    organizations.router,
-    prefix="/organizations",
-    tags=["Organizations"]
-)
-
-api_router.include_router(
-    rbac.router,
-    prefix="/rbac",
-    tags=["RBAC"]
-)
-
-api_router.include_router(
-    ivr.router,
-    prefix="/ivr",
-    tags=["IVR"]
+    providers.router,
+    prefix="/providers",
+    tags=["providers"]
 )

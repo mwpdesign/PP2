@@ -41,6 +41,7 @@ ORGANIZATIONS = [
         "settings": json.dumps({}),
         "security_policy": json.dumps({}),
         "is_active": True,
+        "status": "ACTIVE",
         "created_at": utc_now(),
         "updated_at": utc_now()
     },
@@ -51,33 +52,41 @@ ORGANIZATIONS = [
         "settings": json.dumps({}),
         "security_policy": json.dumps({}),
         "is_active": True,
+        "status": "ACTIVE",
         "created_at": utc_now(),
         "updated_at": utc_now()
     }
 ]
 
 
-# Create root role first
-ROOT_ROLE = {
-    "id": uuid4(),
-    "name": "Root",
-    "description": "Root role",
-    "organization_id": ORGANIZATIONS[0]["id"],
-    "parent_role_id": None,  # Root role has no parent
-    "permissions": json.dumps(["*"]),
-    "created_at": utc_now(),
-    "updated_at": utc_now()
-}
-
-
+# Create roles with proper organization IDs
 ROLES = [
+    {
+        "id": uuid4(),
+        "name": "Root",
+        "description": "Root role",
+        "organization_id": ORGANIZATIONS[0]["id"],  # Assign to first organization
+        "parent_role_id": None,  # Root role has no parent
+        "permissions": json.dumps(["*"]),
+        "created_at": utc_now(),
+        "updated_at": utc_now()
+    },
     {
         "id": uuid4(),
         "name": "Admin",
         "description": "Administrator role",
-        "organization_id": ORGANIZATIONS[0]["id"],
-        "parent_role_id": ROOT_ROLE["id"],
-        "permissions": json.dumps(["*"]),
+        "organization_id": ORGANIZATIONS[0]["id"],  # Assign to first organization
+        "parent_role_id": None,  # Will be set to root role's ID
+        "permissions": json.dumps([
+            "create_users",
+            "update_users",
+            "delete_users",
+            "view_users",
+            "create_roles",
+            "update_roles",
+            "delete_roles",
+            "view_roles"
+        ]),
         "created_at": utc_now(),
         "updated_at": utc_now()
     },
@@ -86,79 +95,35 @@ ROLES = [
         "name": "Operator",
         "description": "IVR Operator role",
         "organization_id": ORGANIZATIONS[1]["id"],
-        "parent_role_id": ROOT_ROLE["id"],
+        "parent_role_id": None,  # Will be set to root role's ID
         "permissions": json.dumps(["ivr.*", "patients.read"]),
         "created_at": utc_now(),
         "updated_at": utc_now()
     }
 ]
 
+# Update parent role IDs
+ROLES[1]["parent_role_id"] = ROLES[0]["id"]  # Admin role's parent is Root
+ROLES[2]["parent_role_id"] = ROLES[0]["id"]  # Operator role's parent is Root
 
-TERRITORIES = [
-    {
-        "id": uuid4(),
-        "organization_id": ORGANIZATIONS[0]["id"],
-        "name": "Northeast Region",
-        "code": "NE",
-        "description": "Coverage for northeastern states",
-        "latitude": 42.3601,
-        "longitude": -71.0589,
-        "radius_miles": 500.0,
-        "boundaries": json.dumps({
-            "type": "Polygon",
-            "coordinates": [[
-                [-75.0, 40.0],
-                [-70.0, 40.0],
-                [-70.0, 45.0],
-                [-75.0, 45.0],
-                [-75.0, 40.0]
-            ]]
-        }),
-        "settings": json.dumps({}),
-        "created_at": utc_now(),
-        "updated_at": utc_now()
-    },
-    {
-        "id": uuid4(),
-        "organization_id": ORGANIZATIONS[0]["id"],
-        "name": "Southwest Region",
-        "code": "SW",
-        "description": "Coverage for southwestern states",
-        "latitude": 33.4484,
-        "longitude": -112.0740,
-        "radius_miles": 600.0,
-        "boundaries": json.dumps({
-            "type": "Polygon",
-            "coordinates": [[
-                [-115.0, 30.0],
-                [-110.0, 30.0],
-                [-110.0, 35.0],
-                [-115.0, 35.0],
-                [-115.0, 30.0]
-            ]]
-        }),
-        "settings": json.dumps({}),
-        "created_at": utc_now(),
-        "updated_at": utc_now()
-    }
-]
-
-
+# Create users with proper organization IDs
 USERS = [
     {
         "id": uuid4(),
         "organization_id": ORGANIZATIONS[0]["id"],
-        "email": "admin@healthcareprovider.com",
+        "email": "admin@demo.com",
         "username": "admin",
-        "encrypted_password": pwd_context.hash("Admin123!"),
+        "encrypted_password": pwd_context.hash("demo123"),
         "first_name": "Admin",
         "last_name": "User",
         "is_active": True,
         "is_superuser": True,
-        "role_id": None,  # Will be set after creating roles
+        "role_id": None,  # Will be set to Admin role's ID
         "mfa_enabled": False,
         "force_password_change": False,
-        "failed_login_attempts": 0
+        "failed_login_attempts": 0,
+        "created_at": utc_now(),
+        "updated_at": utc_now()
     },
     {
         "id": uuid4(),
@@ -170,12 +135,18 @@ USERS = [
         "last_name": "Operator",
         "is_active": True,
         "is_superuser": False,
-        "role_id": None,  # Will be set after creating roles
+        "role_id": None,  # Will be set to Operator role's ID
         "mfa_enabled": False,
         "force_password_change": False,
-        "failed_login_attempts": 0
+        "failed_login_attempts": 0,
+        "created_at": utc_now(),
+        "updated_at": utc_now()
     }
 ]
+
+# Update user role IDs
+USERS[0]["role_id"] = ROLES[1]["id"]  # Admin user gets Admin role
+USERS[1]["role_id"] = ROLES[2]["id"]  # Operator user gets Operator role
 
 
 FACILITIES = [
@@ -185,7 +156,7 @@ FACILITIES = [
         "facility_type": "hospital",
         "npi": "1234567890",
         "address_line1": "123 Medical Drive",
-        "address_line2": None,
+        "address_line2": "",
         "city": "Boston",
         "state": "MA",
         "zip_code": "02115",
@@ -193,7 +164,6 @@ FACILITIES = [
         "fax": "617-555-0101",
         "email": "info@nemedicenter.com",
         "organization_id": ORGANIZATIONS[0]["id"],
-        "territory_id": TERRITORIES[0]["id"],
         "is_active": True,
         "created_at": utc_now(),
         "updated_at": utc_now()
@@ -204,7 +174,7 @@ FACILITIES = [
         "facility_type": "clinic",
         "npi": "0987654321",
         "address_line1": "456 Health Parkway",
-        "address_line2": None,
+        "address_line2": "",
         "city": "Phoenix",
         "state": "AZ",
         "zip_code": "85001",
@@ -212,7 +182,6 @@ FACILITIES = [
         "fax": "602-555-0201",
         "email": "info@swclinic.com",
         "organization_id": ORGANIZATIONS[0]["id"],
-        "territory_id": TERRITORIES[1]["id"],
         "is_active": True,
         "created_at": utc_now(),
         "updated_at": utc_now()
@@ -224,7 +193,6 @@ PROVIDERS = [
     {
         "id": uuid4(),
         "organization_id": ORGANIZATIONS[0]["id"],
-        "territory_id": TERRITORIES[0]["id"],
         "name": "Northeast Medical Center",
         "npi": "1234567890",
         "tax_id": "12-3456789",
@@ -243,14 +211,13 @@ PROVIDERS = [
             "Sat": "9:00-13:00"
         }),
         "is_active": True,
-        "created_by_id": USERS[0]["id"],  # Admin user
+        "created_by_id": None,  # Will be set after creating users
         "created_at": utc_now(),
         "updated_at": utc_now()
     },
     {
         "id": uuid4(),
         "organization_id": ORGANIZATIONS[0]["id"],
-        "territory_id": TERRITORIES[1]["id"],
         "name": "Southwest Clinic Group",
         "npi": "0987654321",
         "tax_id": "98-7654321",
@@ -269,7 +236,7 @@ PROVIDERS = [
             "Sat": "10:00-14:00"
         }),
         "is_active": True,
-        "created_by_id": USERS[0]["id"],  # Admin user
+        "created_by_id": None,  # Will be set after creating users
         "created_at": utc_now(),
         "updated_at": utc_now()
     }
@@ -277,21 +244,24 @@ PROVIDERS = [
 
 
 async def insert_data(session) -> None:
-    """Insert sample data into database."""
+    """Insert sample data into the database."""
+    print("Inserting sample data...")
+    
     # Insert organizations
     for org in ORGANIZATIONS:
         await session.execute(
             text("""
                 INSERT INTO organizations (
                     id, name, description, settings,
-                    security_policy, is_active, created_at,
+                    security_policy, is_active, status, created_at,
                     updated_at
                 )
                 VALUES (
                     :id, :name, :description, :settings,
-                    :security_policy, :is_active, :created_at,
+                    :security_policy, :is_active, :status, :created_at,
                     :updated_at
                 )
+                ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": org["id"],
@@ -300,37 +270,12 @@ async def insert_data(session) -> None:
                 "settings": org["settings"],
                 "security_policy": org["security_policy"],
                 "is_active": org["is_active"],
+                "status": org["status"],
                 "created_at": org["created_at"],
                 "updated_at": org["updated_at"]
             }
         )
-
-    # Insert root role first
-    await session.execute(
-        text("""
-            INSERT INTO roles (
-                id, name, description, organization_id,
-                parent_role_id, permissions, created_at,
-                updated_at
-            )
-            VALUES (
-                :id, :name, :description, :organization_id,
-                :parent_role_id, :permissions, :created_at,
-                :updated_at
-            )
-        """),
-        {
-            "id": ROOT_ROLE["id"],
-            "name": ROOT_ROLE["name"],
-            "description": ROOT_ROLE["description"],
-            "organization_id": ROOT_ROLE["organization_id"],
-            "parent_role_id": None,  # Root role has no parent
-            "permissions": ROOT_ROLE["permissions"],
-            "created_at": ROOT_ROLE["created_at"],
-            "updated_at": ROOT_ROLE["updated_at"]
-        }
-    )
-
+    
     # Insert roles
     for role in ROLES:
         await session.execute(
@@ -345,6 +290,7 @@ async def insert_data(session) -> None:
                     :parent_role_id, :permissions, :created_at,
                     :updated_at
                 )
+                ON CONFLICT (id) DO NOTHING
             """),
             {
                 "id": role["id"],
@@ -357,11 +303,7 @@ async def insert_data(session) -> None:
                 "updated_at": role["updated_at"]
             }
         )
-
-    # Update users with role IDs
-    USERS[0]["role_id"] = ROLES[0]["id"]  # Admin role
-    USERS[1]["role_id"] = ROLES[1]["id"]  # Operator role
-
+    
     # Insert users
     for user in USERS:
         await session.execute(
@@ -371,121 +313,38 @@ async def insert_data(session) -> None:
                     encrypted_password, first_name, last_name,
                     is_active, is_superuser, role_id,
                     mfa_enabled, force_password_change,
-                    failed_login_attempts
+                    failed_login_attempts, created_at, updated_at
                 )
                 VALUES (
                     :id, :organization_id, :email, :username,
                     :encrypted_password, :first_name, :last_name,
                     :is_active, :is_superuser, :role_id,
                     :mfa_enabled, :force_password_change,
-                    :failed_login_attempts
+                    :failed_login_attempts, :created_at, :updated_at
                 )
+                ON CONFLICT (email) DO NOTHING
             """),
-            user
+            {
+                "id": user["id"],
+                "organization_id": user["organization_id"],
+                "email": user["email"],
+                "username": user["username"],
+                "encrypted_password": user["encrypted_password"],
+                "first_name": user["first_name"],
+                "last_name": user["last_name"],
+                "is_active": user["is_active"],
+                "is_superuser": user["is_superuser"],
+                "role_id": user["role_id"],
+                "mfa_enabled": user["mfa_enabled"],
+                "force_password_change": user["force_password_change"],
+                "failed_login_attempts": user["failed_login_attempts"],
+                "created_at": user["created_at"],
+                "updated_at": user["updated_at"]
+            }
         )
-
-    # Insert territories
-    for territory in TERRITORIES:
-        await session.execute(
-            text("""
-                INSERT INTO territories (
-                    id, organization_id, name, code,
-                    description, latitude, longitude,
-                    radius_miles, boundaries, settings,
-                    created_at, updated_at
-                )
-                VALUES (
-                    :id, :organization_id, :name, :code,
-                    :description, :latitude, :longitude,
-                    :radius_miles, :boundaries, :settings,
-                    :created_at, :updated_at
-                )
-            """),
-            territory
-        )
-
-    # Insert facilities
-    for facility in FACILITIES:
-        await session.execute(
-            text("""
-                INSERT INTO facilities (
-                    id, name, facility_type, npi,
-                    address_line1, address_line2, city,
-                    state, zip_code, phone, fax, email,
-                    organization_id, territory_id, is_active,
-                    created_at, updated_at
-                )
-                VALUES (
-                    :id, :name, :facility_type, :npi,
-                    :address_line1, :address_line2, :city,
-                    :state, :zip_code, :phone, :fax, :email,
-                    :organization_id, :territory_id, :is_active,
-                    :created_at, :updated_at
-                )
-            """),
-            facility
-        )
-
-    # Insert providers
-    for provider in PROVIDERS:
-        await session.execute(
-            text("""
-                INSERT INTO providers (
-                    id, organization_id, territory_id, name,
-                    npi, tax_id, email, phone, fax,
-                    address_line1, city, state, zip_code,
-                    specialty, accepting_new_patients,
-                    insurance_networks, office_hours,
-                    is_active, created_by_id, created_at,
-                    updated_at
-                )
-                VALUES (
-                    :id, :organization_id, :territory_id, :name,
-                    :npi, :tax_id, :email, :phone, :fax,
-                    :address_line1, :city, :state, :zip_code,
-                    :specialty, :accepting_new_patients,
-                    :insurance_networks, :office_hours,
-                    :is_active, :created_by_id, :created_at,
-                    :updated_at
-                )
-            """),
-            provider
-        )
-
-    # Assign users to territories
-    for user in USERS:
-        if user["organization_id"] == ORGANIZATIONS[0]["id"]:
-            for territory in TERRITORIES:
-                await session.execute(
-                    text("""
-                        INSERT INTO user_territories (user_id, territory_id)
-                        VALUES (:user_id, :territory_id)
-                    """),
-                    {
-                        "user_id": user["id"],
-                        "territory_id": territory["id"]
-                    }
-                )
-
-    # Assign territory access to roles
-    for role in [ROOT_ROLE] + ROLES:
-        for territory in TERRITORIES:
-            if role["organization_id"] == territory["organization_id"]:
-                await session.execute(
-                    text("""
-                        INSERT INTO territory_role_access (
-                            territory_id, role_id, access_level
-                        )
-                        VALUES (
-                            :territory_id, :role_id, :access_level
-                        )
-                    """),
-                    {
-                        "territory_id": territory["id"],
-                        "role_id": role["id"],
-                        "access_level": "full"
-                    }
-                )
+    
+    await session.commit()
+    print("Sample data inserted successfully.")
 
 
 async def main():

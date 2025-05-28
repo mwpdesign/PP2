@@ -1,8 +1,6 @@
 """IVR workflow service."""
-from typing import List, Dict, Any, Optional
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
-from datetime import datetime, timedelta
+from typing import Dict, Any, Optional
+from datetime import datetime
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,26 +11,20 @@ from app.api.ivr.models import (
     IVRApproval,
     IVREscalation,
     IVRReview,
-    IVRDocument,
-    IVRPriority,
 )
 from app.api.ivr.schemas import (
     IVRRequestCreate,
     IVRApprovalCreate,
     IVREscalationCreate,
-    IVRReviewCreate,
-    IVRDocumentCreate,
     IVRQueueParams,
     IVRBatchAction,
 )
-from app.core.security import verify_territory_access
 from app.services.notification_service import NotificationService
 from app.core.exceptions import (
     NotFoundException,
     ValidationError,
-    UnauthorizedError,
 )
-from app.models.ivr import IVRSession
+
 
 class IVRWorkflowService:
     """Service for managing IVR workflows."""
@@ -57,21 +49,11 @@ class IVRWorkflowService:
         current_user: Dict[str, Any]
     ) -> IVRRequest:
         """Create a new IVR request."""
-        # Verify territory access
-        if not verify_territory_access(
-            current_user,
-            request_data["territory_id"]
-        ):
-            raise UnauthorizedError(
-                "No access to specified territory"
-            )
-
         # Create request
         request = IVRRequest(
             patient_id=request_data["patient_id"],
             provider_id=request_data["provider_id"],
             facility_id=request_data["facility_id"],
-            territory_id=request_data["territory_id"],
             service_type=request_data["service_type"],
             priority=request_data["priority"],
             status="pending",
@@ -102,15 +84,6 @@ class IVRWorkflowService:
         """Update an existing IVR request."""
         # Get request
         request = await self.get_request(request_id)
-
-        # Verify territory access
-        if not verify_territory_access(
-            current_user,
-            request.territory_id
-        ):
-            raise UnauthorizedError(
-                "No access to request's territory"
-            )
 
         # Validate status transition
         if request_data.get("status"):
@@ -158,12 +131,11 @@ class IVRWorkflowService:
                 f"{request.status} to {new_status}"
             )
 
-    def create_ivr_request(self, request_data: IVRRequestCreate) -> IVRRequest:
+    def create_ivr_request(
+        self,
+        request_data: IVRRequestCreate
+    ) -> IVRRequest:
         """Create a new IVR request with initial validation."""
-        # Verify territory access
-        if not verify_territory_access(self.current_user, request_data.territory_id):
-            raise UnauthorizedError("No access to specified territory")
-
         # Create IVR request
         ivr_request = IVRRequest(**request_data.dict())
         self.db.add(ivr_request)
@@ -184,7 +156,10 @@ class IVRWorkflowService:
         return ivr_request
 
     def update_ivr_status(
-        self, request_id: str, new_status: IVRStatus, reason: Optional[str] = None
+        self,
+        request_id: str,
+        new_status: IVRStatus,
+        reason: Optional[str] = None
     ) -> IVRRequest:
         """Update IVR request status with history tracking."""
         ivr_request = self._get_ivr_request(request_id)
@@ -261,7 +236,9 @@ class IVRWorkflowService:
         return ivr_request
 
     def escalate_request(
-        self, request_id: str, escalation_data: IVREscalationCreate
+        self,
+        request_id: str,
+        escalation_data: IVREscalationCreate
     ) -> IVRRequest:
         """Escalate an IVR request to a higher authority."""
         ivr_request = self._get_ivr_request(request_id)
@@ -286,28 +263,32 @@ class IVRWorkflowService:
         return ivr_request
 
     def get_review_queue(
-        self, queue_params: IVRQueueParams, page: int = 1, size: int = 20
+        self,
+        queue_params: IVRQueueParams,
+        page: int = 1,
+        size: int = 20
     ) -> Dict:
         """Get IVR requests queue with filtering and pagination."""
         query = self.db.query(IVRRequest)
 
         # Apply filters
-        if queue_params.territory_id:
-            if not verify_territory_access(self.current_user, queue_params.territory_id):
-                raise UnauthorizedError("No access to specified territory")
-            query = query.filter(IVRRequest.territory_id == queue_params.territory_id)
-
         if queue_params.facility_id:
-            query = query.filter(IVRRequest.facility_id == queue_params.facility_id)
+            query = query.filter(
+                IVRRequest.facility_id == queue_params.facility_id
+            )
 
         if queue_params.status:
             query = query.filter(IVRRequest.status == queue_params.status)
 
         if queue_params.priority:
-            query = query.filter(IVRRequest.priority == queue_params.priority)
+            query = query.filter(
+                IVRRequest.priority == queue_params.priority
+            )
 
         if queue_params.reviewer_id:
-            query = query.filter(IVRRequest.current_reviewer_id == queue_params.reviewer_id)
+            query = query.filter(
+                IVRRequest.current_reviewer_id == queue_params.reviewer_id
+            )
 
         # Apply pagination
         total = query.count()
@@ -320,7 +301,10 @@ class IVRWorkflowService:
             "size": size,
         }
 
-    def process_batch_action(self, batch_action: IVRBatchAction) -> Dict:
+    def process_batch_action(
+        self,
+        batch_action: IVRBatchAction
+    ) -> Dict:
         """Process batch actions on multiple IVR requests."""
         success = []
         failed = {}
@@ -328,22 +312,25 @@ class IVRWorkflowService:
         for request_id in batch_action.request_ids:
             try:
                 if batch_action.action == "assign":
-                    self.assign_reviewer(request_id, batch_action.reviewer_id)
+                    self.assign_reviewer(
+                        request_id,
+                        batch_action.reviewer_id
+                    )
                 elif batch_action.action == "approve":
                     self.approve_request(
                         request_id,
                         IVRApprovalCreate(
                             decision="approved",
-                            reason=batch_action.notes,
-                        ),
+                            reason=batch_action.notes
+                        )
                     )
                 elif batch_action.action == "reject":
                     self.approve_request(
                         request_id,
                         IVRApprovalCreate(
                             decision="rejected",
-                            reason=batch_action.notes,
-                        ),
+                            reason=batch_action.notes
+                        )
                     )
                 success.append(request_id)
             except Exception as e:
@@ -352,21 +339,30 @@ class IVRWorkflowService:
         return {
             "success": success,
             "failed": failed,
-            "total_processed": len(batch_action.request_ids),
+            "total_processed": len(
+                batch_action.request_ids
+            )
         }
 
-    def _get_ivr_request(self, request_id: str) -> IVRRequest:
-        """Get IVR request with territory access verification."""
-        ivr_request = self.db.query(IVRRequest).filter_by(id=request_id).first()
+    def _get_ivr_request(
+        self,
+        request_id: str
+    ) -> IVRRequest:
+        """Get IVR request."""
+        ivr_request = (
+            self.db.query(IVRRequest)
+            .filter_by(id=request_id)
+            .first()
+        )
         if not ivr_request:
             raise NotFoundException("IVR request not found")
 
-        if not verify_territory_access(self.current_user, ivr_request.territory_id):
-            raise UnauthorizedError("No access to this IVR request's territory")
-
         return ivr_request
 
-    def _notify_submission(self, ivr_request: IVRRequest):
+    def _notify_submission(
+        self,
+        ivr_request: IVRRequest
+    ):
         """Send notifications for new IVR submission."""
         self.notification_service.notify_new_ivr(ivr_request)
 
