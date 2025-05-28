@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Button from '../components/ui/Button';
-import { showNotification } from '../components/ui/Notification';
-import ConfirmationDialog from '../components/ui/ConfirmationDialog';
+import Button from '../ui/Button';
+import { showNotification } from '../ui/Notification';
+import ConfirmationDialog from '../ui/ConfirmationDialog';
 
 interface Patient {
   id: string;
