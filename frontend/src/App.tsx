@@ -18,6 +18,15 @@ const SettingsPage = React.lazy(() => import('./pages/admin/settings'));
 const MainLayout = React.lazy(() => import('./components/shared/layout/Layout'));
 const AdminLayout = React.lazy(() => import('./components/admin/AdminLayout'));
 
+// Doctor Dashboard Components - Using Advanced Versions
+const PatientsPage = React.lazy(() => import('./pages/patients/PatientsPage'));
+const NewPatientPage = React.lazy(() => import('./pages/patients/new'));
+const WoundAssessmentPage = React.lazy(() => import('./pages/patients/assessment'));
+const IVRSubmissionPage = React.lazy(() => import('./pages/ivr/submit'));
+const IVRDashboardPage = React.lazy(() => import('./pages/ivr/dashboard'));
+const OrderManagementPage = React.lazy(() => import('./pages/orders/OrderManagementPage'));
+const ShippingPage = React.lazy(() => import('./pages/shipping'));
+
 const App = () => {
   return (
     <ErrorBoundary>
@@ -74,6 +83,15 @@ const App = () => {
               <Route path="/" element={<MainLayout />}>
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<WoundCareDashboard />} />
+                
+                {/* Doctor Dashboard Routes - Using Advanced Components */}
+                <Route path="patients" element={<PatientsPage />} />
+                <Route path="patients/new" element={<NewPatientPage />} />
+                <Route path="patients/assessment" element={<WoundAssessmentPage />} />
+                <Route path="ivr-submissions" element={<IVRSubmissionPage />} />
+                <Route path="ivr-management" element={<IVRDashboardPage />} />
+                <Route path="order-management" element={<OrderManagementPage />} />
+                <Route path="shipping" element={<ShippingPage />} />
               </Route>
             </Route>
 
