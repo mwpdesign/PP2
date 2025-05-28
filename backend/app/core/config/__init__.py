@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = Field(
-        "postgresql://postgres:password@db:5432/healthcare_ivr",
+        "postgresql+asyncpg://postgres:password@db:5432/healthcare_ivr",
         env='DATABASE_URL'
     )
 

@@ -14,13 +14,30 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
     
+    const form = e.target as HTMLFormElement;
+    const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+    const password = (form.elements.namedItem('password') as HTMLInputElement).value;
+    
     try {
-      await login('doctor@example.com', 'password');
+      await login({ email, password });
       const destination = location.state?.from?.pathname || '/dashboard';
       navigate(destination, { replace: true });
     } catch (error) {
       console.error('Login failed:', error);
-      setError('Invalid credentials. Use doctor@test.com / password');
+      setError('Invalid credentials. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await login({ email: 'admin@test.com', password: 'demo123' });
+    } catch (error) {
+      console.error('Admin login failed:', error);
+      setError('Admin login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +50,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <img
             className="mx-auto h-20 w-auto mb-4"
-            src="/logo.png"
+            src="/logo2.png"
             alt="Healthcare IVR Platform"
           />
           <h2 className="text-2xl font-bold text-[#375788] mb-1">
@@ -92,7 +109,6 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 required
-                defaultValue="doctor@example.com"
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-[#375788] focus:border-[#375788] text-sm"
                 placeholder="Enter your email"
               />
@@ -107,14 +123,13 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                defaultValue="password"
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-[#375788] focus:border-[#375788] text-sm"
                 placeholder="Enter your password"
               />
             </div>
           </div>
 
-          <div>
+          <div className="space-y-3">
             <button
               type="submit"
               disabled={isLoading || authLoading}
@@ -127,6 +142,23 @@ export default function LoginPage() {
                 </div>
               ) : (
                 'Sign in to Portal'
+              )}
+            </button>
+
+            {/* Quick Admin Access Button */}
+            <button
+              type="button"
+              onClick={handleAdminLogin}
+              disabled={isLoading || authLoading}
+              className="w-full flex justify-center py-2.5 px-4 border-2 border-[#375788] rounded-md shadow-sm text-sm font-medium text-[#375788] bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#375788] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              {isLoading || authLoading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#375788] mr-2"></div>
+                  Accessing Admin...
+                </div>
+              ) : (
+                'Continue as Admin'
               )}
             </button>
           </div>

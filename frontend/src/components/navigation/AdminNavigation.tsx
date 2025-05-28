@@ -51,7 +51,7 @@ export const AdminNavigation: React.FC = () => {
             <div className="flex-shrink-0">
               <img
                 className="h-8 w-8"
-                src="/logo.svg"
+                src="/logo2.png"
                 alt="Healthcare IVR"
               />
             </div>

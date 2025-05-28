@@ -1,259 +1,173 @@
-# Healthcare IVR Platform - UI/UX Design Brief
-
-## Overview
-This design brief outlines the user interface and experience specifications for the Healthcare IVR Platform, focusing on creating an intuitive, HIPAA-compliant, and role-based digital healthcare solution.
-
-[The rest of the content remains the same as the original document, with the title and initial overview modified]
-
-### Design Principles
-- HIPAA Compliance
-- Role-Based Access
-- Medical-Grade User Experience
-- Accessibility and Responsiveness
-- Secure and Intuitive Interactions
-
-## Specific Customizations for Healthcare IVR Platform
-- Emphasis on IVR workflow interfaces
-- Insurance verification user journeys
-- Multi-role dashboard designs
-- Secure patient and provider interactions
-
-# **Wound Care Management Portal \- Design Brief**
-
-## **User Authentication & Role Assignment**
-
-### **Login Screen**
-
-#### **Initial State**
-
-* Clean, medical-grade aesthetic with prominent logo and trust indicators  
-* Single-field progressive disclosure: email first, then password on validation  
-* Subtle loading states with medical cross animations during authentication  
-* MFA prompt slides in smoothly with clear instructions and backup options  
-* Error states use gentle red accents with constructive messaging  
-* "Remember this device" option with clear 30-day expiration notice
-
-#### **Post-Authentication Routing State**
-
-* Seamless transition with role-appropriate welcome animation  
-* Brief loading state showing "Personalizing your dashboard..." with progress indicator  
-* Smooth fade-in to role-specific dashboard with breadcrumb establishment  
-* First-time user gets contextual onboarding overlay highlighting key navigation areas
-
-## **Hierarchy Management**
-
-### **Admin Dashboard \- User Creation**
-
-#### **User Creation Modal State**
-
-* Slide-in modal with hierarchical role selector as primary CTA  
-* Smart form fields that adapt based on selected role (conditional field revelation)  
-* Territory/organization assignment with visual mapping component  
-* Real-time validation with green checkmarks for completed sections  
-* Preview card showing hierarchy placement before final creation  
-* Bulk upload option with drag-and-drop CSV interface and field mapping
-
-#### **User Management Grid State**
-
-* Filterable table with role-based color coding and clear hierarchy indicators  
-* Expandable rows revealing sub-users with indented visual hierarchy  
-* Quick action buttons (edit, deactivate, message) on hover with smooth scaling  
-* Search with autocomplete and recently viewed user suggestions  
-* Export functionality with role-based data filtering options
-
-## **Provider Network Building**
-
-### **Sales Rep Dashboard \- Add Provider**
-
-#### **Provider Search & Selection State**
-
-* Unified search interface checking existing facilities/doctors first  
-* Progressive disclosure: basic info → credentials → territory assignment  
-* Map integration showing service areas and existing provider density  
-* Drag-and-drop document upload with real-time validation status  
-* Relationship mapping showing connection to distributor hierarchy
-
-#### **Provider Profile Creation State**
-
-* Multi-step wizard with clear progress indication and save-draft capability  
-* Auto-completion for common medical credentials and specialties  
-* Territory boundary drawing on interactive map with overlap warnings  
-* Integration testing panel for external systems (insurance, EMR)  
-* Preview mode showing how profile appears to different user roles
-
-## **Patient Registration**
-
-### **Doctor Dashboard \- Add Patient**
-
-#### **Patient Information Form State**
-
-* HIPAA-compliant progressive form with clear section dividers  
-* Smart field validation with medical format checking (insurance numbers, dates)  
-* Insurance card photo capture with OCR auto-population and manual override  
-* Medical history timeline builder with drag-and-drop condition addition  
-* Auto-save with encryption status indicators and last-saved timestamp  
-* Quick templates for common patient types/conditions
-
-#### **Patient Search & Duplicate Prevention State**
-
-* Real-time duplicate detection as user types with similarity scoring  
-* Side-by-side comparison view for potential matches  
-* Merge functionality with field-by-field selection and audit trail  
-* Recently added patients quick-access panel with visit status indicators
-
-## **IVR Submission**
-
-### **Doctor Dashboard \- Create IVR**
-
-#### **Auto-Population State**
-
-* Seamless data transfer with field-by-field animation showing source  
-* Editable preview with highlight indicators for auto-filled vs. manual fields  
-* Missing information alerts with quick-add modal overlays  
-* Insurance eligibility quick-check with real-time API validation  
-* Supporting document checklist with upload progress and requirements
-
-#### **IVR Review & Submit State**
-
-* Final review interface with expandable sections and completeness indicators  
-* Digital signature capture with timestamp and audit trail  
-* Submission confirmation with tracking number and expected timeline  
-* Automatic stakeholder notification preview before sending
-
-### **IVR Company Dashboard \- Review Submissions**
-
-#### **IVR Queue Management State**
-
-* Kanban-style board with drag-and-drop status updates  
-* Priority scoring with color-coded urgency indicators  
-* Batch processing tools for common actions (approve multiple, request documents)  
-* Detailed review panel with expandable sections and annotation tools  
-* Communication thread with doctors integrated into review interface
-
-#### **Status Update & Communication State**
-
-* Status change interface with required reasoning fields and notification preview  
-* Document request forms with specific requirement templates  
-* Approval workflow with electronic signature and timestamp  
-* Automated notification dispatch with delivery confirmation tracking
-
-## **Order Processing**
-
-### **Doctor Dashboard \- Place Order**
-
-#### **Product Selection State**
-
-* Catalog interface with medical imagery and detailed specifications  
-* Quantity calculator based on patient needs and treatment duration  
-* Insurance coverage indicator with copay/deductible estimates  
-* Order summary with shipping timeline and approval dependencies  
-* Save-for-later functionality with automated reorder suggestions
-
-#### **Order Confirmation & Tracking State**
-
-* Order timeline visualization with real-time status updates  
-* Integration with logistics tracking showing package movement  
-* Delivery scheduling with patient coordination tools  
-* Order modification interface (when permitted) with approval workflows
-
-## **Logistics Management**
-
-### **Logistics Dashboard \- Order Fulfillment**
-
-#### **Order Processing Queue State**
-
-* Priority-based order list with shipping deadline indicators  
-* Batch processing tools for multiple orders with similar destinations  
-* Inventory check integration with backorder management  
-* Shipping method optimization with cost/speed comparison  
-* Custom packaging requirements notation with special handling flags
-
-#### **Shipping Documentation State**
-
-* Automated document generation with template customization  
-* Shipping label creation with carrier integration and rate shopping  
-* Tracking number assignment with immediate system update  
-* Proof of shipment capture with photograph/signature integration  
-* Delivery confirmation workflow with patient signature requirements
-
-## **Notification System**
-
-### **Universal Notification Center**
-
-#### **Real-time Notification State**
-
-* Slide-in notifications with role-appropriate icons and color coding  
-* Notification grouping by type with expandable detail views  
-* Mark-as-read functionality with bulk actions for similar notifications  
-* Priority filtering with urgent notifications getting special treatment  
-* Historical notification log with search and filter capabilities
-
-#### **Notification Preferences State**
-
-* Granular control panel for notification types and delivery methods  
-* Quiet hours setting with emergency override options  
-* Escalation preferences with backup contact integration  
-* Notification preview with sample messages for each setting combination
-
-## **Analytics & Reporting**
-
-### **Role-Specific Dashboard**
-
-#### **KPI Overview State**
-
-* Real-time metric cards with trend indicators and comparative data  
-* Customizable dashboard layout with drag-and-drop widget arrangement  
-* Time period selectors with preset ranges and custom date picking  
-* Drill-down capability with progressive disclosure of detailed data  
-* Export functionality with scheduled report generation options
-
-#### **Detailed Analytics State**
-
-* Interactive charts with hover states and click-through functionality  
-* Filter panels with smart suggestions based on user behavior  
-* Comparative analysis tools with benchmark data integration  
-* Predictive analytics visualization with confidence intervals  
-* Report sharing with role-based data filtering and permissions
-
-### **Visual Design System**
-
-#### **Color Strategy**
-
-* Primary medical blue (\#2E86AB) for trust and professionalism  
-* Secondary green (\#A8DADC) for success states and positive actions  
-* Alert amber (\#F77F00) for attention-required items without alarm  
-* Error red (\#C1121F) reserved for critical issues only  
-* Neutral grays (\#F1FAEE, \#457B9D) for backgrounds and supporting text
-
-#### **Typography Hierarchy**
-
-* Headers: Inter Bold 24/32/20px with medical authority  
-* Body: Inter Regular 16px for optimal readability across devices  
-* Captions: Inter Medium 14px for metadata and supporting information  
-* Monospace: JetBrains Mono for tracking numbers and technical data
-
-#### **Motion Design**
-
-* Subtle easing (cubic-bezier(0.4, 0, 0.2, 1)) for professional feel  
-* Page transitions with 300ms duration and slight scale effects  
-* Loading states use gentle pulse animations with medical cross icons  
-* Success confirmations with brief scale and fade effects  
-* Error states with gentle shake animation (2px displacement max)
-
-#### **Accessibility Considerations**
-
-* WCAG AA compliance with 4.5:1 contrast ratios minimum  
-* Keyboard navigation with visible focus indicators  
-* Screen reader optimization with semantic HTML and ARIA labels  
-* High contrast mode support with alternative color schemes  
-* Reduced motion respect for users with vestibular disorders
-
-#### **Responsive Breakpoints**
-
-* Desktop: 1200px+ with full sidebar navigation and multi-column layouts  
-* Tablet: 768-1199px with collapsible sidebar and adapted card layouts  
-* Mobile: 320-767px with bottom navigation and single-column design  
-* Touch targets minimum 44px with adequate spacing for medical glove use
-
-This design brief prioritizes the complex hierarchical relationships while maintaining HIPAA compliance and medical-grade reliability throughout the user experience.
-
+# **Healthcare IVR Platform - Design Brief**
+
+## **Updated Visual Design System**
+
+### **Professional Color Strategy**
+
+**Primary Sophisticated Palette:**
+* Primary Medical Slate: `#475569` (slate-600) - Primary buttons, navigation, branding
+* Primary Hover: `#334155` (slate-700) - Hover states and active elements
+* Secondary Slate: `#64748B` (slate-500) - Secondary buttons and accents
+* Light Slate: `#94A3B8` (slate-400) - Subtle accents and borders
+
+**Professional Action Colors:**
+* Success: `#059669` (emerald-600) - Muted green for positive actions
+* Warning: `#D97706` (amber-600) - Muted amber for caution (not bright)
+* Danger: `#DC2626` (red-600) - Muted red for critical actions (not bright)
+* Neutral: `#6B7280` (gray-500) - Professional gray for secondary actions
+
+**Status & UI Colors:**
+* Active Status: `#10B981` (emerald-500) - Soft green for active states
+* Inactive Status: `#6B7280` (gray-500) - Professional gray for inactive
+* Archived Status: `#F59E0B` (amber-500) - Muted amber for archived items
+* Background: `#F8FAFC` (slate-50) - Clean, professional backgrounds
+* Card Backgrounds: `#FFFFFF` with subtle shadows
+* Text Primary: `#1E293B` (slate-800) - High contrast for readability
+* Text Secondary: `#64748B` (slate-500) - Supporting text and metadata
+
+### **Enterprise Button Standards**
+
+**Primary Actions:**
+```css
+background: #475569 (slate-600)
+hover: #334155 (slate-700)
+text: white
+```
+
+**Secondary Actions:**
+```css
+background: #64748B (slate-500) 
+hover: #475569 (slate-600)
+text: white
+```
+
+**Success Actions:**
+```css
+background: #059669 (emerald-600)
+hover: #047857 (emerald-700)
+text: white
+```
+
+**Warning Actions:**
+```css
+background: #D97706 (amber-600)
+hover: #B45309 (amber-700)
+text: white
+```
+
+**Danger Actions:**
+```css
+background: #DC2626 (red-600)
+hover: #B91C1C (red-700)
+text: white
+```
+
+### **Typography Hierarchy**
+
+* **Headers:** Inter Bold 24/32/20px - Professional medical authority
+* **Body Text:** Inter Regular 16px - Optimal readability for long sessions
+* **Captions:** Inter Medium 14px - Metadata and supporting information
+* **Monospace:** JetBrains Mono - Technical data, tracking numbers, IDs
+* **Small Text:** Inter Regular 12px - Fine print, timestamps
+
+### **Professional Design Principles**
+
+**Enterprise-Grade Aesthetics:**
+* Sophisticated, muted color palette that conveys professionalism
+* Clean, medical-grade interfaces with subtle sophistication
+* Colors designed to work harmoniously together
+* Easy on eyes for extended healthcare professional use
+* Premium software appearance worth $100,000+
+
+**Visual Hierarchy:**
+* Clear distinction between primary and secondary actions
+* Consistent spacing and proportions throughout
+* Professional shadows and borders for depth
+* Subtle animations that enhance rather than distract
+
+### **Component Standards**
+
+**Cards & Containers:**
+```css
+background: white
+border: 1px solid #E2E8F0 (slate-200)
+border-radius: 8px
+box-shadow: 0 1px 3px rgba(0,0,0,0.1)
+```
+
+**Status Badges:**
+```css
+Active: bg-emerald-100 text-emerald-700 border-emerald-200
+Inactive: bg-gray-100 text-gray-700 border-gray-200  
+Archived: bg-amber-100 text-amber-700 border-amber-200
+```
+
+**Form Elements:**
+```css
+Input: border-slate-300 focus:border-slate-500 focus:ring-slate-500
+Select: Same as input with dropdown styling
+Checkbox/Radio: slate-600 accent color
+```
+
+### **Motion Design**
+
+* **Easing:** cubic-bezier(0.4, 0, 0.2, 1) for professional, smooth transitions
+* **Duration:** 200-300ms for UI interactions
+* **Loading States:** Subtle pulse animations in slate tones
+* **Success States:** Brief scale effect with emerald accent
+* **Error States:** Gentle shake (2px max) with muted red accent
+
+### **Accessibility & Compliance**
+
+* **WCAG AA Compliance:** 4.5:1 contrast ratios minimum
+* **HIPAA Visual Standards:** Professional, trustworthy appearance
+* **Keyboard Navigation:** Clear focus indicators in slate-500
+* **Screen Reader:** Semantic HTML with proper ARIA labels
+* **High Contrast Mode:** Alternative color schemes available
+* **Medical Glove Friendly:** 44px minimum touch targets
+
+### **Responsive Design Standards**
+
+* **Desktop (1200px+):** Full sidebar navigation, multi-column layouts
+* **Tablet (768-1199px):** Collapsible sidebar, adapted layouts
+* **Mobile (320-767px):** Bottom navigation, single-column design
+* **Touch Targets:** Minimum 44px for medical environment use
+
+## **User Interface Patterns**
+
+### **Admin Dashboard Standards**
+
+**User Management:**
+* Professional table/card hybrid layout for scalability
+* Muted action buttons: Edit (slate), Reset (slate-500), Archive (amber), Deactivate (gray)
+* HIPAA-compliant archive functionality (no permanent deletion)
+* Bulk selection with sophisticated controls
+
+**Navigation:**
+* Dark slate sidebar (`#334155`) with professional hierarchy
+* Clean white content areas with subtle shadows
+* Consistent iconography using Lucide React icons
+* Role-based navigation with clear visual distinction
+
+**Forms & Modals:**
+* Clean, professional form styling with proper validation
+* Modal overlays with subtle backdrop blur
+* Progressive disclosure for complex workflows
+* Clear success/error states with appropriate muted colors
+
+### **Professional Standards**
+
+**Enterprise Appearance:**
+* Every interface should look like premium medical software
+* Sophisticated color choices that work harmoniously
+* Professional spacing and typography throughout
+* Subtle visual effects that enhance usability
+* Consistent branding and color application
+
+**Medical-Grade Quality:**
+* HIPAA compliance visual indicators where appropriate
+* Professional trust-building design elements
+* Clean, clinical aesthetic without being sterile
+* Attention to detail in every interaction
+
+This updated design brief ensures consistent, professional, sophisticated appearance throughout the Healthcare IVR Platform, moving away from bright, amateur colors to a mature, enterprise-grade medical software aesthetic.

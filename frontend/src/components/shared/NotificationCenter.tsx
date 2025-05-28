@@ -1,256 +1,154 @@
-import React, { useState } from 'react';
-import {
-  Drawer,
-  Box,
-  Typography,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
-  Button,
-  useTheme,
-} from '@mui/material';
-import {
-  Close as CloseIcon,
-  Circle as CircleIcon,
-  Info as InfoIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
-import { UserRole, Notification } from '../../types/auth';
-import { HIPAAIndicator } from '../ui/HIPAAIndicator';
+import React from 'react';
+import { Bell, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
+import { formatDate } from '@/utils/format';
+
+interface Notification {
+  id: string;
+  type: 'alert' | 'warning' | 'info' | 'success';
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+}
 
 interface NotificationCenterProps {
   open: boolean;
   onClose: () => void;
-  userRole: UserRole;
+  userRole: string;
 }
 
-// Mock notifications - replace with actual data
 const mockNotifications: Notification[] = [
   {
     id: '1',
-    title: 'New Patient Registration',
-    message: 'A new patient has been registered and requires review.',
-    type: 'info',
-    isRead: false,
-    createdAt: new Date().toISOString(),
-    roles: ['doctor', 'admin'],
-    containsPHI: true,
+    type: 'alert',
+    title: 'System Alert',
+    message: 'High CPU usage detected on primary server',
+    timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(),
+    read: false,
   },
   {
     id: '2',
-    title: 'IVR Submission Approved',
-    message: 'Your IVR submission has been approved and is ready for processing.',
-    type: 'success',
-    isRead: false,
-    createdAt: new Date().toISOString(),
-    roles: ['doctor'],
-    containsPHI: false,
+    type: 'warning',
+    title: 'Security Warning',
+    message: 'Multiple failed login attempts detected',
+    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    read: false,
   },
   {
     id: '3',
-    title: 'System Maintenance',
-    message: 'Scheduled maintenance will occur tonight at 2 AM EST.',
-    type: 'warning',
-    isRead: true,
-    createdAt: new Date().toISOString(),
-    roles: ['admin', 'doctor', 'ivr_company', 'logistics'],
-    containsPHI: false,
+    type: 'success',
+    title: 'Backup Complete',
+    message: 'Daily system backup completed successfully',
+    timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    read: true,
+  },
+  {
+    id: '4',
+    type: 'info',
+    title: 'System Update',
+    message: 'New security patches available for installation',
+    timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+    read: true,
   },
 ];
+
+const getNotificationIcon = (type: Notification['type']) => {
+  switch (type) {
+    case 'alert':
+      return <AlertTriangle className="h-5 w-5 text-red-600" />;
+    case 'warning':
+      return <AlertTriangle className="h-5 w-5 text-amber-600" />;
+    case 'success':
+      return <CheckCircle className="h-5 w-5 text-emerald-600" />;
+    case 'info':
+      return <Info className="h-5 w-5 text-blue-600" />;
+    default:
+      return <Bell className="h-5 w-5 text-gray-600" />;
+  }
+};
+
+const getNotificationColor = (type: Notification['type']) => {
+  switch (type) {
+    case 'alert':
+      return 'bg-red-50 border-red-100';
+    case 'warning':
+      return 'bg-amber-50 border-amber-100';
+    case 'success':
+      return 'bg-emerald-50 border-emerald-100';
+    case 'info':
+      return 'bg-blue-50 border-blue-100';
+    default:
+      return 'bg-gray-50 border-gray-100';
+  }
+};
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   open,
   onClose,
   userRole,
 }) => {
-  const theme = useTheme();
-  const [notifications, setNotifications] = useState(mockNotifications);
-
-  const getNotificationIcon = (type: Notification['type']) => {
-    switch (type) {
-      case 'info':
-        return <InfoIcon sx={{ color: theme.palette.info.main }} />;
-      case 'success':
-        return <CheckCircleIcon sx={{ color: theme.palette.success.main }} />;
-      case 'warning':
-        return <WarningIcon sx={{ color: theme.palette.warning.main }} />;
-      case 'error':
-        return <ErrorIcon sx={{ color: theme.palette.error.main }} />;
-      default:
-        return <CircleIcon />;
-    }
-  };
-
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, isRead: true }))
-    );
-  };
-
-  const handleMarkAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id ? { ...notification, isRead: true } : notification
-      )
-    );
-  };
-
-  const filteredNotifications = notifications.filter(notification =>
-    notification.roles.includes(userRole)
-  );
-
-  const unreadCount = filteredNotifications.filter(n => !n.isRead).length;
-
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      sx={{
-        '& .MuiDrawer-paper': {
-          width: { xs: '100%', sm: 400 },
-          bgcolor: 'background.paper',
-        },
-      }}
-    >
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* Header */}
-        <Box
-          sx={{
-            p: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <Bell className="h-5 w-5 text-gray-500 mr-2" />
+          <span className="text-sm font-medium text-gray-900">
+            Recent Notifications
+          </span>
+        </div>
+        <button
+          className="text-xs text-slate-600 hover:text-slate-800 transition-colors"
+          onClick={() => {/* Mark all as read */}}
         >
-          <Typography variant="h6" component="h2">
-            Notifications
-            {unreadCount > 0 && (
-              <Typography
-                component="span"
-                sx={{
-                  ml: 1,
-                  px: 1,
-                  py: 0.5,
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  borderRadius: 1,
-                  fontSize: '0.75rem',
-                }}
-              >
-                {unreadCount} New
-              </Typography>
-            )}
-          </Typography>
-          <IconButton onClick={onClose} size="small">
-            <CloseIcon />
-          </IconButton>
-        </Box>
+          Mark all as read
+        </button>
+      </div>
 
-        {/* Actions */}
-        <Box
-          sx={{
-            p: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Button
-            size="small"
-            onClick={handleMarkAllAsRead}
-            disabled={unreadCount === 0}
+      <div className="space-y-3">
+        {mockNotifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`relative p-4 rounded-lg border ${getNotificationColor(
+              notification.type
+            )} ${notification.read ? 'opacity-75' : ''}`}
           >
-            Mark all as read
-          </Button>
-          <HIPAAIndicator
-            type="section"
-            message="Some notifications may contain Protected Health Information (PHI)"
-          />
-        </Box>
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                {getNotificationIcon(notification.type)}
+              </div>
+              <div className="ml-3 flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-gray-900">
+                    {notification.title}
+                  </p>
+                  <button
+                    onClick={() => {/* Dismiss notification */}}
+                    className="ml-2 text-gray-400 hover:text-gray-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="mt-1 text-sm text-gray-600">
+                  {notification.message}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  {formatDate(notification.timestamp)}
+                </p>
+              </div>
+            </div>
+            {!notification.read && (
+              <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-blue-600" />
+            )}
+          </div>
+        ))}
+      </div>
 
-        {/* Notifications List */}
-        <List sx={{ flex: 1, overflow: 'auto', px: 2 }}>
-          {filteredNotifications.length === 0 ? (
-            <Box
-              sx={{
-                p: 4,
-                textAlign: 'center',
-                color: 'text.secondary',
-              }}
-            >
-              <Typography>No notifications</Typography>
-            </Box>
-          ) : (
-            filteredNotifications.map((notification, index) => (
-              <React.Fragment key={notification.id}>
-                <ListItem
-                  sx={{
-                    bgcolor: notification.isRead
-                      ? 'transparent'
-                      : 'rgba(46, 134, 171, 0.04)',
-                    borderRadius: 1,
-                    mb: 1,
-                  }}
-                >
-                  <ListItemIcon>{getNotificationIcon(notification.type)}</ListItemIcon>
-                  <ListItemText
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography
-                          variant="subtitle2"
-                          sx={{
-                            fontWeight: notification.isRead ? 400 : 600,
-                            color: 'text.primary',
-                          }}
-                        >
-                          {notification.title}
-                        </Typography>
-                        {notification.containsPHI && (
-                          <HIPAAIndicator type="field" encrypted={false} />
-                        )}
-                      </Box>
-                    }
-                    secondary={
-                      <>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 1 }}
-                        >
-                          {notification.message}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(notification.createdAt).toLocaleString()}
-                        </Typography>
-                      </>
-                    }
-                  />
-                  {!notification.isRead && (
-                    <Button
-                      size="small"
-                      onClick={() => handleMarkAsRead(notification.id)}
-                      sx={{ ml: 2 }}
-                    >
-                      Mark as read
-                    </Button>
-                  )}
-                </ListItem>
-                {index < filteredNotifications.length - 1 && <Divider />}
-              </React.Fragment>
-            ))
-          )}
-        </List>
-      </Box>
-    </Drawer>
+      <button
+        className="w-full mt-4 text-sm text-slate-600 hover:text-slate-800 transition-colors"
+        onClick={() => {/* View all notifications */}}
+      >
+        View All Notifications
+      </button>
+    </div>
   );
 }; 

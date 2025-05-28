@@ -8,7 +8,8 @@ import {
   DocumentTextIcon,
   ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Mock data for IVR processing trends
 const ivrTrendData = [
@@ -113,10 +114,30 @@ const quickActions = [
 ];
 
 const WoundCareDashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
   const urgentNotifications = 2; // Number of new urgent items
 
+  // Add temporary admin access button
+  const AdminAccessButton = () => {
+    if (user?.role === 'Admin' || user?.is_superuser) {
+      return (
+        <div className="fixed bottom-4 right-4">
+          <button
+            onClick={() => navigate('/admin/dashboard')}
+            className="bg-[#375788] text-white px-4 py-2 rounded-md shadow-md hover:bg-[#2c466d] transition-colors"
+          >
+            Go to Admin Dashboard
+          </button>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="p-8">
         {/* Key Performance Indicators */}
         <div className="mb-8">
@@ -317,6 +338,9 @@ const WoundCareDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Add the admin access button */}
+      <AdminAccessButton />
     </div>
   );
 };

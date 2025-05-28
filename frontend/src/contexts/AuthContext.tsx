@@ -19,6 +19,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,12 +30,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
+  const [error, setError] = useState<string | null>(null);
 
   const login = async (credentials: { email: string; password: string }) => {
+    setError(null);
     // Simulate different roles based on email
     let userData: User;
     
-    if (credentials?.email?.includes('doctor')) {
+    if (credentials.email === 'admin@test.com' || credentials.email.includes('admin')) {
+      userData = {
+        id: 'admin-123',
+        email: 'admin@test.com',
+        role: 'Admin',
+        firstName: 'Admin',
+        lastName: 'User',
+        organization_id: 'org-123',
+        is_superuser: true,
+        permissions: ['all']
+      };
+      navigate('/admin/dashboard');
+    } else if (credentials.email.includes('doctor')) {
       userData = {
         id: 'doctor-123',
         email: 'doctor@demo.com',
@@ -46,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         permissions: ['manage_patients', 'submit_ivr', 'place_orders']
       };
       navigate('/dashboard');
-    } else if (credentials?.email?.includes('ivr')) {
+    } else if (credentials.email.includes('ivr')) {
       userData = {
         id: 'ivr-123',
         email: 'ivr@demo.com',
@@ -60,16 +75,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       navigate('/dashboard');
     } else {
       userData = {
-        id: 'admin-123',
-        email: 'admin@demo.com',
-        role: 'Admin',
-        firstName: 'Admin',
+        id: 'user-123',
+        email: credentials.email,
+        role: 'Doctor', // Default to Doctor role
+        firstName: 'Default',
         lastName: 'User',
         organization_id: 'org-123',
-        is_superuser: true,
-        permissions: ['all']
+        is_superuser: false,
+        permissions: ['manage_patients', 'submit_ivr', 'place_orders']
       };
-      navigate('/admin/dashboard');
+      navigate('/dashboard');
     }
     
     setUser(userData);
@@ -80,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setUser(null);
+    setError(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/login');
@@ -90,7 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     isAuthenticated: !!user,
-    isLoading: false
+    isLoading: false,
+    error
   };
 
   return (

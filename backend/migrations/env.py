@@ -23,6 +23,9 @@ from app.models.organization import Organization  # noqa
 # access to the values within the .ini file in use.
 config = context.config
 
+# Override sqlalchemy.url with our sync URL
+config.set_main_option("sqlalchemy.url", get_sync_url())
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:

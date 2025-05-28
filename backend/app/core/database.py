@@ -39,17 +39,8 @@ def get_async_url():
 
 def get_sync_url():
     """Get sync database URL."""
-    return os.getenv(
-        "DATABASE_URL",
-        (
-            f"postgresql://"
-            f"{os.getenv('DB_USER', 'postgres')}:"
-            f"{os.getenv('DB_PASSWORD', 'postgres')}@"
-            f"{os.getenv('DB_HOST', 'localhost')}:"
-            f"{os.getenv('DB_PORT', '5432')}/"
-            f"{os.getenv('DB_NAME', 'healthcare_ivr')}"
-        )
-    ).replace("+asyncpg", "")
+    # Always return the async URL since we're using asyncpg
+    return get_async_url()
 
 
 # These are kept for backward compatibility but not used in URL construction
@@ -195,7 +186,6 @@ AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
     expire_on_commit=False,
-    autoflush=False,
 )
 
 
