@@ -5,9 +5,11 @@ import {
   UsersIcon, 
   CogIcon, 
   ShieldCheckIcon,
-  HomeIcon
+  HomeIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { classNames } from '../../utils/styles';
+import { useAuth } from '../../contexts/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
@@ -20,6 +22,16 @@ const navigation = [
 const AdminLayout: React.FC = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -55,6 +67,13 @@ const AdminLayout: React.FC = () => {
                 </Link>
               );
             })}
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center px-4 py-3 text-sm font-medium text-[rgba(255,255,255,0.9)] hover:bg-[rgba(255,255,255,0.1)] hover:text-white rounded-lg transition-colors"
+            >
+              <ArrowRightOnRectangleIcon className="mr-4 h-5 w-5" />
+              Sign Out
+            </button>
           </nav>
 
           {/* Admin Profile */}
