@@ -10,7 +10,7 @@ import { Menu, Transition } from '@headlessui/react';
 import Logo from './Logo';
 
 const Header: React.FC = () => {
-  const { user, logout, clearAuth } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -19,11 +19,6 @@ const Header: React.FC = () => {
     } catch (error) {
       console.error('Logout failed:', error);
     }
-  };
-
-  const handleForceLogout = () => {
-    clearAuth();
-    window.location.href = '/login';
   };
 
   return (
@@ -62,6 +57,7 @@ const Header: React.FC = () => {
             </Menu.Button>
 
             <Transition
+              as="div"
               enter="transition ease-out duration-100"
               enterFrom="transform opacity-0 scale-95"
               enterTo="transform opacity-100 scale-100"
@@ -81,19 +77,6 @@ const Header: React.FC = () => {
                       >
                         <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
                         Sign Out
-                      </button>
-                    )}
-                  </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={handleForceLogout}
-                        className={`${
-                          active ? 'bg-gray-100' : ''
-                        } flex w-full items-center px-4 py-2 text-sm text-red-600`}
-                      >
-                        <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
-                        Force Sign Out
                       </button>
                     )}
                   </Menu.Item>
