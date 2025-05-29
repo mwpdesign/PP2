@@ -1,8 +1,8 @@
 import React from 'react';
-import OrderManagement from '../../components/orders/OrderManagement';
+import DoctorOrderManagement from '../../components/orders/DoctorOrderManagement';
 
 const OrderManagementPage: React.FC = () => {
-  return <OrderManagement />;
+  return <DoctorOrderManagement />;
 };
 
 export default OrderManagementPage; 
