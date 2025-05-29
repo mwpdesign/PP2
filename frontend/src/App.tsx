@@ -4,12 +4,17 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 import { AdminRoute } from './components/auth/AdminRoute';
 import { TestLogin } from './components/auth/TestLogin';
+import { ConfigProvider } from './contexts/ConfigContext';
 
 // Import components
 const LoginPage = React.lazy(() => import('./pages/login'));
 const TestPage = React.lazy(() => import('./pages/TestPage'));
 const WoundCareDashboard = React.lazy(() => import('./pages/dashboard/WoundCareDashboard'));
-const AdminDashboard = React.lazy(() => import('./pages/dashboard/AdminDashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/admin/dashboard/index'));
+const IVRReviewQueue = React.lazy(() => import('./components/admin/IVRReviewQueue'));
+const ProviderNetwork = React.lazy(() => import('./components/admin/ProviderNetwork'));
+const UserManagement = React.lazy(() => import('./components/admin/UserManagement'));
+const AuditLogs = React.lazy(() => import('./components/admin/AuditLogs'));
 const PatientIntakePage = React.lazy(() => import('./pages/patients/intake'));
 const PatientSelectionPage = React.lazy(() => import('./pages/patients/select'));
 const PatientDetailPage = React.lazy(() => import('./pages/patients/[id]'));
@@ -22,73 +27,80 @@ const AnalyticsPage = React.lazy(() => import('./pages/analytics'));
 const SettingsPage = React.lazy(() => import('./pages/settings'));
 const MainLayout = React.lazy(() => import('./components/shared/layout/Layout'));
 const AdminLayout = React.lazy(() => import('./components/admin/layout/AdminLayout'));
+const SystemSettings = React.lazy(() => import('./components/admin/SystemSettings'));
 
 const App = () => {
   console.log('App component rendering');
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50">
-        <Suspense fallback={
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-gray-600">Loading...</div>
-          </div>
-        }>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/test" element={<TestPage />} />
-            <Route path="/test-login" element={<TestLogin />} />
-            
-            {/* Admin Routes */}
-            <Route element={<AdminRoute />}>
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="analytics" element={<AnalyticsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-              </Route>
-            </Route>
-
-            {/* Protected Routes */}
-            <Route element={<PrivateRoute />}>
-              {/* Main Layout with Dashboard */}
-              <Route path="/" element={<MainLayout />}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<WoundCareDashboard />} />
-                
-                {/* Patient Routes */}
-                <Route path="patients">
-                  <Route index element={<Navigate to="/patients/select" replace />} />
-                  <Route path="select" element={<PatientSelectionPage />} />
-                  <Route path="intake" element={<PatientIntakePage />} />
-                  <Route path=":id" element={<PatientDetailPage />} />
+    <ConfigProvider>
+      <ErrorBoundary>
+        <div className="min-h-screen bg-gray-50">
+          <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen">
+              <div className="text-gray-600">Loading...</div>
+            </div>
+          }>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/test" element={<TestPage />} />
+              <Route path="/test-login" element={<TestLogin />} />
+              
+              {/* Admin Routes */}
+              <Route element={<AdminRoute />}>
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="ivr-review" element={<IVRReviewQueue />} />
+                  <Route path="providers" element={<ProviderNetwork />} />
+                  <Route path="users" element={<UserManagement />} />
+                  <Route path="audit-logs" element={<AuditLogs />} />
+                  <Route path="analytics" element={<AnalyticsPage />} />
+                  <Route path="settings" element={<SystemSettings />} />
                 </Route>
-                
-                {/* IVR Routes */}
-                <Route path="ivr">
-                  <Route index element={<IVRManagementPage />} />
-                  <Route path="submit">
+              </Route>
+
+              {/* Protected Routes */}
+              <Route element={<PrivateRoute />}>
+                {/* Main Layout with Dashboard */}
+                <Route path="/" element={<MainLayout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<WoundCareDashboard />} />
+                  
+                  {/* Patient Routes */}
+                  <Route path="patients">
                     <Route index element={<Navigate to="/patients/select" replace />} />
-                    <Route path="test/:patientId" element={<TestIVRPage />} />
-                    <Route path=":patientId" element={<IVRSubmissionPage />} />
+                    <Route path="select" element={<PatientSelectionPage />} />
+                    <Route path="intake" element={<PatientIntakePage />} />
+                    <Route path=":id" element={<PatientDetailPage />} />
                   </Route>
+                  
+                  {/* IVR Routes */}
+                  <Route path="ivr">
+                    <Route index element={<IVRManagementPage />} />
+                    <Route path="submit">
+                      <Route index element={<Navigate to="/patients/select" replace />} />
+                      <Route path="test/:patientId" element={<TestIVRPage />} />
+                      <Route path=":patientId" element={<IVRSubmissionPage />} />
+                    </Route>
+                  </Route>
+                  
+                  {/* Other Routes */}
+                  <Route path="orders" element={<OrderManagementPage />} />
+                  <Route path="shipping" element={<ShippingPage />} />
+                  <Route path="analytics" element={<AnalyticsPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
                 </Route>
-                
-                {/* Other Routes */}
-                <Route path="orders" element={<OrderManagementPage />} />
-                <Route path="shipping" element={<ShippingPage />} />
-                <Route path="analytics" element={<AnalyticsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
               </Route>
-            </Route>
 
-            {/* Catch all route */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </Suspense>
-      </div>
-    </ErrorBoundary>
+              {/* Catch all route */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </Suspense>
+        </div>
+      </ErrorBoundary>
+    </ConfigProvider>
   );
 };
 
