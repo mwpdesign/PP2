@@ -260,17 +260,17 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Document Type and Name Input */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-bold text-slate-700 mb-3">
+          <label className="block text-sm font-bold text-slate-700 mb-2">
             Document Type
           </label>
           <select
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value)}
-            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
           >
             <option value="">Auto-detect from file</option>
             {documentTypes.map((type) => (
@@ -279,7 +279,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-bold text-slate-700 mb-3">
+          <label className="block text-sm font-bold text-slate-700 mb-2">
             Custom Document Name (Optional)
           </label>
           <input
@@ -287,22 +287,22 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
             value={customName}
             onChange={(e) => setCustomName(e.target.value)}
             placeholder="Enter custom name for uploaded files"
-            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
           />
         </div>
       </div>
 
       {/* Special Notice for Skin Graph Bar Codes */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <div className="flex items-start space-x-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
-            <svg className="w-6 h-6 text-blue-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div>
-            <h4 className="text-base font-bold text-blue-800 mb-2">Skin Graph Bar Codes - Critical Requirement</h4>
-            <p className="text-sm text-blue-700">
+            <h4 className="text-sm font-bold text-blue-800 mb-1 leading-tight">Skin Graph Bar Codes - Critical Requirement</h4>
+            <p className="text-xs text-blue-700 leading-normal">
               Please upload clear, high-resolution images of all skin graph bar codes. These are critical for patient safety and tracking. 
               Use the camera feature for best quality when capturing barcodes on mobile devices.
             </p>
@@ -311,19 +311,19 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
       </div>
 
       {/* Mobile-Optimized Upload Options */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Camera Capture (Mobile Priority) */}
         {hasCamera() && (
           <button
             onClick={startCamera}
-            className="border-2 border-green-600 text-green-600 bg-white hover:bg-green-50 font-bold py-6 px-4 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md flex flex-col items-center space-y-3"
+            className="border-2 border-green-600 text-green-600 bg-white hover:bg-green-50 font-bold py-4 px-3 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md flex flex-col items-center space-y-2"
           >
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <div className="text-center">
-              <div className="font-bold">Use Camera</div>
+              <div className="font-bold text-sm">Use Camera</div>
               <div className="text-xs">Capture photos</div>
             </div>
           </button>
@@ -332,25 +332,25 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
         {/* File Selection */}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-slate-600 text-slate-600 bg-white hover:bg-slate-50 font-bold py-6 px-4 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md flex flex-col items-center space-y-3"
+          className="border-2 border-slate-600 text-slate-600 bg-white hover:bg-slate-50 font-bold py-4 px-3 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md flex flex-col items-center space-y-2"
         >
-          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 12l2 2 4-4" />
           </svg>
           <div className="text-center">
-            <div className="font-bold">Choose Files</div>
+            <div className="font-bold text-sm">Choose Files</div>
             <div className="text-xs">Browse device</div>
           </div>
         </button>
 
         {/* Camera Upload Input (Alternative for older browsers) */}
         {isMobile && (
-          <label className="border-2 border-blue-600 text-blue-600 bg-white hover:bg-blue-50 font-bold py-6 px-4 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md flex flex-col items-center space-y-3 cursor-pointer">
-            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <label className="border-2 border-blue-600 text-blue-600 bg-white hover:bg-blue-50 font-bold py-4 px-3 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md flex flex-col items-center space-y-2 cursor-pointer">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <div className="text-center">
-              <div className="font-bold">Take Photo</div>
+              <div className="font-bold text-sm">Take Photo</div>
               <div className="text-xs">Quick capture</div>
             </div>
             <input
@@ -368,7 +368,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
       {/* Traditional Drag & Drop Area */}
       <div
-        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
+        className={`border-2 border-dashed rounded-xl p-6 text-center transition-all duration-200 ${
           isDragOver
             ? 'border-slate-500 bg-slate-50'
             : 'border-slate-300 hover:border-slate-400'
@@ -386,15 +386,15 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
         />
         
-        <div className="space-y-4">
-          <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="space-y-3">
+          <div className="mx-auto w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+            <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
           </div>
           
           <div>
-            <h3 className="text-lg font-bold text-slate-800 mb-2">Drag & Drop Files</h3>
+            <h3 className="text-base font-bold text-slate-800 mb-1 leading-tight">Drag & Drop Files</h3>
             <p className="text-slate-600 text-sm">
               Or use the buttons above for mobile-optimized upload options
             </p>
@@ -408,12 +408,12 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
       {/* Uploading Progress */}
       {uploadingFiles.length > 0 && (
-        <div className="space-y-4">
-          <h4 className="text-lg font-bold text-slate-800">Uploading...</h4>
+        <div className="space-y-3">
+          <h4 className="text-base font-bold text-slate-800 leading-tight">Uploading...</h4>
           {uploadingFiles.map((fileId) => (
-            <div key={fileId} className="flex items-center space-x-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-slate-600"></div>
-              <span className="text-base font-medium text-slate-700">Uploading file...</span>
+            <div key={fileId} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-600"></div>
+              <span className="text-sm font-medium text-slate-700">Uploading file...</span>
             </div>
           ))}
         </div>
@@ -421,27 +421,27 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
       {/* Existing Documents */}
       {existingDocuments.length > 0 && (
-        <div className="space-y-6">
-          <h4 className="text-lg font-bold text-slate-800">Uploaded Documents</h4>
-          <div className="space-y-4">
+        <div className="space-y-4">
+          <h4 className="text-base font-bold text-slate-800 leading-tight">Uploaded Documents</h4>
+          <div className="space-y-3">
             {existingDocuments.map((doc) => (
-              <div key={doc.id} className="flex items-center justify-between p-6 bg-slate-50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-200">
-                <div className="flex items-center space-x-4">
+              <div key={doc.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-200">
+                <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
                     {doc.type.includes('Image') || doc.type.includes('Photo') || doc.name.match(/\.(jpg|jpeg|png)$/i) ? (
-                      <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     ) : (
-                      <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     )}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <p className="text-base font-bold text-slate-800 truncate">{doc.name}</p>
-                    <div className="flex items-center space-x-4 text-sm text-slate-500 mt-1">
+                    <p className="text-sm font-bold text-slate-800 truncate leading-tight">{doc.name}</p>
+                    <div className="flex items-center space-x-3 text-xs text-slate-500 mt-1">
                       <span className="font-medium">{doc.type}</span>
                       {doc.size && <span>{formatFileSize(doc.size)}</span>}
                       <span>{formatDate(doc.uploadedAt)}</span>
@@ -449,16 +449,16 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-3 flex-shrink-0">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   <button
                     onClick={() => window.open(doc.url, '_blank')}
-                    className="border-2 border-slate-600 text-slate-600 bg-white hover:bg-slate-50 font-semibold py-2 px-4 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-sm"
+                    className="border-2 border-slate-600 text-slate-600 bg-white hover:bg-slate-50 font-semibold py-1 px-3 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-xs"
                   >
                     Preview
                   </button>
                   <button
                     onClick={() => handleRemoveDocument(doc.id)}
-                    className="border-2 border-red-300 text-red-600 bg-white hover:bg-red-50 font-semibold py-2 px-4 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-sm"
+                    className="border-2 border-red-300 text-red-600 bg-white hover:bg-red-50 font-semibold py-1 px-3 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-xs"
                   >
                     Remove
                   </button>
@@ -470,9 +470,9 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
       )}
 
       {/* Quick Actions for Common Documents */}
-      <div className="border-t border-slate-200 pt-8">
-        <h4 className="text-lg font-bold text-slate-800 mb-4">Quick Actions</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="border-t border-slate-200 pt-4">
+        <h4 className="text-base font-bold text-slate-800 mb-3 leading-tight">Quick Actions</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {['Skin Graph Bar Codes', 'Shipping Label', 'Packing Slip', 'Temperature Log'].map((type) => (
             <button
               key={type}
@@ -484,7 +484,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   fileInputRef.current?.click();
                 }
               }}
-              className="text-sm px-4 py-3 border-2 border-slate-600 text-slate-600 bg-white hover:bg-slate-50 font-semibold rounded-lg transition-all duration-200 ease-in-out hover:shadow-md"
+              className="text-xs px-3 py-2 border-2 border-slate-600 text-slate-600 bg-white hover:bg-slate-50 font-semibold rounded-lg transition-all duration-200 ease-in-out hover:shadow-md"
             >
               {type === 'Skin Graph Bar Codes' && hasCamera() ? '📷 ' : ''}
               {type}

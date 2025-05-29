@@ -197,16 +197,16 @@ const OrderQueue: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Header Section */}
-      <div className="pt-2 pb-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="pt-1 pb-3">
+        <div className="flex justify-between items-center mb-3">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Order Queue</h1>
-            <p className="text-slate-600 mt-2 text-lg">Active workflow management for processed orders</p>
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight leading-tight">Order Queue</h1>
+            <p className="text-slate-600 mt-1 text-lg leading-normal">Active workflow management for processed orders</p>
           </div>
-          <div className="flex items-center space-x-6">
-            <div className="bg-white rounded-xl shadow-sm px-6 py-3 border border-slate-200">
+          <div className="flex items-center space-x-4">
+            <div className="bg-white rounded-xl shadow-sm px-4 py-2 border border-slate-200">
               <span className="text-sm font-medium text-slate-600">Active Orders: </span>
               <span className="text-xl font-bold text-slate-900">{activeOrders.length}</span>
             </div>
@@ -214,23 +214,23 @@ const OrderQueue: React.FC = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-            <div className="text-3xl font-bold text-blue-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-blue-700 leading-tight">
               {orders.filter(o => o.status === 'Processed').length}
             </div>
-            <div className="text-sm font-medium text-blue-600 mt-2">Processed - Ready for Packaging</div>
+            <div className="text-xs font-medium text-blue-600 mt-1">Processed - Ready for Packaging</div>
           </div>
-          <div className="bg-purple-50 border border-purple-200 rounded-xl p-6 text-center">
-            <div className="text-3xl font-bold text-purple-700">
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-purple-700 leading-tight">
               {orders.filter(o => o.status === 'Ready to Ship').length}
             </div>
-            <div className="text-sm font-medium text-purple-600 mt-2">Ready to Ship - Awaiting Carrier</div>
+            <div className="text-xs font-medium text-purple-600 mt-1">Ready to Ship - Awaiting Carrier</div>
           </div>
         </div>
 
         {/* Filter Controls */}
-        <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-6">
+        <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <label className="flex items-center space-x-2">
@@ -251,20 +251,20 @@ const OrderQueue: React.FC = () => {
       </div>
 
       {/* Active Orders List */}
-      <div className="space-y-6">
+      <div className="space-y-3">
         {activeOrders.map((order) => (
           <Card key={order.id} className="bg-white border border-slate-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out">
             {/* Order Header */}
-            <div className="px-8 py-6 border-b border-slate-200">
+            <div className="px-4 py-3 border-b border-slate-200">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <h3 className="text-xl font-bold text-slate-800">{order.orderNumber}</h3>
+                <div className="flex items-center space-x-3">
+                  <h3 className="text-lg font-bold text-slate-800 leading-tight">{order.orderNumber}</h3>
                   <span className={getStatusBadge(order.status)}>{order.status}</span>
                   <span className={getPriorityBadge(order.priority)}>{order.priority}</span>
                 </div>
                 {getActionButton(order)}
               </div>
-              <div className="mt-3 flex items-center space-x-6 text-sm text-slate-600">
+              <div className="mt-2 flex items-center space-x-4 text-sm text-slate-600">
                 <span className="font-medium">Ordered: {order.date} at {order.time}</span>
                 {order.processedDate && (
                   <span className="font-medium">Processed: {order.processedDate}</span>
@@ -276,28 +276,28 @@ const OrderQueue: React.FC = () => {
             </div>
 
             {/* Order Content */}
-            <div className="px-8 py-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="px-4 py-3">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Doctor & Facility */}
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Healthcare Provider</h4>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Healthcare Provider</h4>
                   <div className="space-y-1">
-                    <p className="text-lg font-semibold text-slate-800">{order.doctor.name}</p>
-                    <p className="text-base text-slate-600">{order.doctor.facility}</p>
-                    <p className="text-sm text-slate-500">{order.shippingAddress.city}, {order.shippingAddress.state}</p>
+                    <p className="text-base font-semibold text-slate-800 leading-tight">{order.doctor.name}</p>
+                    <p className="text-sm text-slate-600">{order.doctor.facility}</p>
+                    <p className="text-xs text-slate-500">{order.shippingAddress.city}, {order.shippingAddress.state}</p>
                   </div>
                 </div>
 
                 {/* Products */}
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Products</h4>
-                  <div className="space-y-2">
-                    <p className="text-base font-semibold text-slate-800">
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Products</h4>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-800">
                       {order.totalItems} item{order.totalItems !== 1 ? 's' : ''}
                     </p>
                     <div className="space-y-1">
                       {order.products.map(product => (
-                        <div key={product.id} className="text-sm text-slate-600">
+                        <div key={product.id} className="text-xs text-slate-600">
                           <span className="font-medium">{product.name}</span>
                           <span className="text-slate-500 ml-2">× {product.quantity}</span>
                           {product.specialHandling && (
@@ -316,15 +316,15 @@ const OrderQueue: React.FC = () => {
 
                 {/* Patient & IVR */}
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Order Info</h4>
-                  <div className="space-y-2">
-                    <p className="text-sm text-slate-600">
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Order Info</h4>
+                  <div className="space-y-1">
+                    <p className="text-xs text-slate-600">
                       <span className="font-medium">Patient:</span> {order.patient.initials} ({order.patient.patientId})
                     </p>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-xs text-slate-600">
                       <span className="font-medium">IVR Reference:</span> {order.ivrReference}
                     </p>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-xs text-slate-600">
                       <span className="font-medium">Ship to:</span> {order.shippingAddress.attention}
                     </p>
                   </div>
@@ -335,14 +335,14 @@ const OrderQueue: React.FC = () => {
         ))}
 
         {activeOrders.length === 0 && (
-          <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-16 text-center">
-            <div className="mx-auto w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-12 text-center">
+            <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-slate-800 mb-3">No Active Orders</h3>
-            <p className="text-slate-600 text-lg">All orders are either pending or have been shipped</p>
+            <h3 className="text-xl font-bold text-slate-800 mb-2 leading-tight">No Active Orders</h3>
+            <p className="text-slate-600 text-base">All orders are either pending or have been shipped</p>
           </Card>
         )}
       </div>

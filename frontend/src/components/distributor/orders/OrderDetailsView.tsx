@@ -226,27 +226,27 @@ The doctor can now track the shipment and will be notified of any delivery issue
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="pt-2 pb-6">
-        <div className="flex items-center space-x-6">
+      <div className="pt-1 pb-3">
+        <div className="flex items-center space-x-4">
           <button
             onClick={onBack}
-            className="p-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all duration-200"
+            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all duration-200"
           >
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Order Details</h1>
-            <p className="text-slate-600 mt-2 text-lg">{currentOrder.orderNumber} - Process and ship order</p>
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight leading-tight">Order Details</h1>
+            <p className="text-slate-600 mt-1 text-lg leading-normal">{currentOrder.orderNumber} - Process and ship order</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <span className={getStatusBadge(currentOrder.status)}>{currentOrder.status}</span>
             <span className={getPriorityBadge(currentOrder.priority)}>{currentOrder.priority}</span>
             {currentOrder.isOverdue && (
-              <span className="px-3 py-1 rounded-full text-sm font-medium border bg-red-100 text-red-700 border-red-300">
+              <span className="px-2 py-1 rounded-full text-xs font-medium border bg-red-100 text-red-700 border-red-300">
                 OVERDUE
               </span>
             )}
@@ -254,31 +254,31 @@ The doctor can now track the shipment and will be notified of any delivery issue
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* Left Column - Order Summary */}
-        <div className="space-y-8">
+        <div className="space-y-4">
           {/* Order Information */}
           <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-xl font-bold text-slate-800">Order Summary</h3>
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800 leading-tight">Order Summary</h3>
             </div>
-            <div className="p-8">
-              <div className="grid grid-cols-2 gap-6">
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Order Number</label>
-                  <p className="text-lg font-bold text-slate-800 mt-1">{currentOrder.orderNumber}</p>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Order Number</label>
+                  <p className="text-base font-bold text-slate-800 mt-1 leading-tight">{currentOrder.orderNumber}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Order Date</label>
-                  <p className="text-lg font-semibold text-slate-800 mt-1">{currentOrder.date} at {currentOrder.time}</p>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Order Date</label>
+                  <p className="text-base font-semibold text-slate-800 mt-1 leading-tight">{currentOrder.date} at {currentOrder.time}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">IVR Reference</label>
-                  <p className="text-lg font-semibold text-slate-800 mt-1">{currentOrder.ivrReference}</p>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">IVR Reference</label>
+                  <p className="text-base font-semibold text-slate-800 mt-1 leading-tight">{currentOrder.ivrReference}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Total Items</label>
-                  <p className="text-lg font-bold text-slate-800 mt-1">{currentOrder.totalItems}</p>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Items</label>
+                  <p className="text-base font-bold text-slate-800 mt-1 leading-tight">{currentOrder.totalItems}</p>
                 </div>
               </div>
             </div>
@@ -286,45 +286,45 @@ The doctor can now track the shipment and will be notified of any delivery issue
 
           {/* Workflow Timeline */}
           <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-xl font-bold text-slate-800">Workflow Timeline</h3>
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800 leading-tight">Workflow Timeline</h3>
             </div>
-            <div className="p-8">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className={`w-4 h-4 rounded-full ${currentOrder.status !== 'Pending Fulfillment' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+            <div className="p-4">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className={`w-3 h-3 rounded-full ${currentOrder.status !== 'Pending Fulfillment' ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
                   <div className="flex-1">
-                    <span className="font-semibold text-slate-800">Order Placed</span>
-                    <p className="text-sm text-slate-600">{currentOrder.date} at {currentOrder.time}</p>
+                    <span className="font-semibold text-slate-800 text-sm">Order Placed</span>
+                    <p className="text-xs text-slate-600">{currentOrder.date} at {currentOrder.time}</p>
                   </div>
                 </div>
                 
                 {currentOrder.processedDate && (
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-4 h-4 rounded-full ${['Processed', 'Ready to Ship', 'Shipped', 'Delivered'].includes(currentOrder.status) ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3 h-3 rounded-full ${['Processed', 'Ready to Ship', 'Shipped', 'Delivered'].includes(currentOrder.status) ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
                     <div className="flex-1">
-                      <span className="font-semibold text-slate-800">Processed</span>
-                      <p className="text-sm text-slate-600">{currentOrder.processedDate}</p>
+                      <span className="font-semibold text-slate-800 text-sm">Processed</span>
+                      <p className="text-xs text-slate-600">{currentOrder.processedDate}</p>
                     </div>
                   </div>
                 )}
                 
                 {currentOrder.readyToShipDate && (
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-4 h-4 rounded-full ${['Ready to Ship', 'Shipped', 'Delivered'].includes(currentOrder.status) ? 'bg-purple-500' : 'bg-slate-300'}`}></div>
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3 h-3 rounded-full ${['Ready to Ship', 'Shipped', 'Delivered'].includes(currentOrder.status) ? 'bg-purple-500' : 'bg-slate-300'}`}></div>
                     <div className="flex-1">
-                      <span className="font-semibold text-slate-800">Ready to Ship</span>
-                      <p className="text-sm text-slate-600">{currentOrder.readyToShipDate}</p>
+                      <span className="font-semibold text-slate-800 text-sm">Ready to Ship</span>
+                      <p className="text-xs text-slate-600">{currentOrder.readyToShipDate}</p>
                     </div>
                   </div>
                 )}
                 
                 {currentOrder.shipDate && (
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-4 h-4 rounded-full ${['Shipped', 'Delivered'].includes(currentOrder.status) ? 'bg-green-500' : 'bg-slate-300'}`}></div>
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-3 h-3 rounded-full ${['Shipped', 'Delivered'].includes(currentOrder.status) ? 'bg-green-500' : 'bg-slate-300'}`}></div>
                     <div className="flex-1">
-                      <span className="font-semibold text-slate-800">Shipped</span>
-                      <p className="text-sm text-slate-600">{currentOrder.shipDate}</p>
+                      <span className="font-semibold text-slate-800 text-sm">Shipped</span>
+                      <p className="text-xs text-slate-600">{currentOrder.shipDate}</p>
                       {currentOrder.trackingNumber && (
                         <p className="text-xs text-slate-500 font-mono">{currentOrder.carrier}: {currentOrder.trackingNumber}</p>
                       )}
@@ -333,11 +333,11 @@ The doctor can now track the shipment and will be notified of any delivery issue
                 )}
                 
                 {currentOrder.deliveredDate && (
-                  <div className="flex items-center space-x-4">
-                    <div className="w-4 h-4 rounded-full bg-emerald-500"></div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
                     <div className="flex-1">
-                      <span className="font-semibold text-slate-800">Delivered</span>
-                      <p className="text-sm text-slate-600">{currentOrder.deliveredDate}</p>
+                      <span className="font-semibold text-slate-800 text-sm">Delivered</span>
+                      <p className="text-xs text-slate-600">{currentOrder.deliveredDate}</p>
                     </div>
                   </div>
                 )}
@@ -347,25 +347,25 @@ The doctor can now track the shipment and will be notified of any delivery issue
 
           {/* Doctor Information */}
           <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-xl font-bold text-slate-800">Healthcare Provider</h3>
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800 leading-tight">Healthcare Provider</h3>
             </div>
-            <div className="p-8 space-y-6">
+            <div className="p-4 space-y-3">
               <div>
-                <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Doctor</label>
-                <p className="text-lg font-bold text-slate-800 mt-1">{currentOrder.doctor.name}</p>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Doctor</label>
+                <p className="text-base font-bold text-slate-800 mt-1 leading-tight">{currentOrder.doctor.name}</p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Facility</label>
-                <p className="text-lg font-semibold text-slate-800 mt-1">{currentOrder.doctor.facility}</p>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Facility</label>
+                <p className="text-base font-semibold text-slate-800 mt-1 leading-tight">{currentOrder.doctor.facility}</p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Email</label>
-                <p className="text-base text-slate-600 mt-1">{currentOrder.doctor.email}</p>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email</label>
+                <p className="text-sm text-slate-600 mt-1">{currentOrder.doctor.email}</p>
               </div>
               <div>
-                <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Patient</label>
-                <p className="text-lg font-semibold text-slate-800 mt-1">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Patient</label>
+                <p className="text-base font-semibold text-slate-800 mt-1 leading-tight">
                   {currentOrder.patient.initials} 
                   <span className="text-slate-500 ml-2">({currentOrder.patient.patientId})</span>
                 </p>
@@ -375,17 +375,17 @@ The doctor can now track the shipment and will be notified of any delivery issue
 
           {/* Shipping Address */}
           <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-xl font-bold text-slate-800">Shipping Address</h3>
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800 leading-tight">Shipping Address</h3>
             </div>
-            <div className="p-8">
-              <div className="space-y-3">
-                <p className="text-lg font-bold text-slate-800">{currentOrder.shippingAddress.facility}</p>
+            <div className="p-4">
+              <div className="space-y-2">
+                <p className="text-base font-bold text-slate-800 leading-tight">{currentOrder.shippingAddress.facility}</p>
                 {currentOrder.shippingAddress.attention && (
-                  <p className="text-base font-semibold text-slate-700">Attn: {currentOrder.shippingAddress.attention}</p>
+                  <p className="text-sm font-semibold text-slate-700">Attn: {currentOrder.shippingAddress.attention}</p>
                 )}
-                <p className="text-base text-slate-600">{currentOrder.shippingAddress.address}</p>
-                <p className="text-base text-slate-600">
+                <p className="text-sm text-slate-600">{currentOrder.shippingAddress.address}</p>
+                <p className="text-sm text-slate-600">
                   {currentOrder.shippingAddress.city}, {currentOrder.shippingAddress.state} {currentOrder.shippingAddress.zipCode}
                 </p>
               </div>
@@ -394,26 +394,26 @@ The doctor can now track the shipment and will be notified of any delivery issue
 
           {/* Products */}
           <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-xl font-bold text-slate-800">Products Ordered</h3>
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800 leading-tight">Products Ordered</h3>
             </div>
-            <div className="p-8">
+            <div className="p-4">
               <ProductDisplay products={currentOrder.products} />
             </div>
           </Card>
         </div>
 
         {/* Right Column - Fulfillment Actions */}
-        <div className="space-y-8">
+        <div className="space-y-4">
           {/* Status Actions */}
           <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-xl font-bold text-slate-800">Order Status Management</h3>
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800 leading-tight">Order Status Management</h3>
             </div>
-            <div className="p-8">
-              <div className="space-y-6">
+            <div className="p-4">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Current Status</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Current Status</span>
                   <span className={getStatusBadge(currentOrder.status)}>{currentOrder.status}</span>
                 </div>
                 
@@ -422,7 +422,7 @@ The doctor can now track the shipment and will be notified of any delivery issue
                 {currentOrder.status === 'Shipped' && (
                   <button
                     onClick={handleReportDeliveryIssue}
-                    className="w-full border-2 border-orange-600 text-orange-600 bg-white hover:bg-orange-50 font-bold py-3 px-6 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md"
+                    className="w-full border-2 border-orange-600 text-orange-600 bg-white hover:bg-orange-50 font-bold py-3 px-4 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md"
                   >
                     Report Delivery Issue
                   </button>
@@ -434,33 +434,33 @@ The doctor can now track the shipment and will be notified of any delivery issue
           {/* Shipping Fulfillment Form */}
           {currentOrder.status === 'Ready to Ship' && (
             <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-              <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
-                <h3 className="text-xl font-bold text-slate-800">Shipping Fulfillment</h3>
+              <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                <h3 className="text-lg font-bold text-slate-800 leading-tight">Shipping Fulfillment</h3>
               </div>
-              <div className="p-8">
-                <form onSubmit={handleShippingSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4">
+                <form onSubmit={handleShippingSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-3">
+                      <label className="block text-sm font-bold text-slate-700 mb-2">
                         Tracking Number *
                       </label>
                       <input
                         type="text"
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
                         placeholder="Enter tracking number"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-3">
+                      <label className="block text-sm font-bold text-slate-700 mb-2">
                         Carrier *
                       </label>
                       <select
                         value={carrier}
                         onChange={(e) => setCarrier(e.target.value)}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
                         required
                       >
                         <option value="">Select carrier</option>
@@ -472,39 +472,39 @@ The doctor can now track the shipment and will be notified of any delivery issue
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-3">
+                      <label className="block text-sm font-bold text-slate-700 mb-2">
                         Ship Date *
                       </label>
                       <input
                         type="date"
                         value={shipDate}
                         onChange={(e) => setShipDate(e.target.value)}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-3">
+                      <label className="block text-sm font-bold text-slate-700 mb-2">
                         Estimated Delivery
                       </label>
                       <input
                         type="date"
                         value={estimatedDelivery}
                         onChange={(e) => setEstimatedDelivery(e.target.value)}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-3">
+                    <label className="block text-sm font-bold text-slate-700 mb-2">
                       Notes & Special Instructions
                     </label>
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      rows={4}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
                       placeholder="Add any special handling notes or instructions"
                     />
                   </div>
@@ -512,7 +512,7 @@ The doctor can now track the shipment and will be notified of any delivery issue
                   <button
                     type="submit"
                     disabled={!canProgressToNextStage()}
-                    className="w-full border-2 border-emerald-600 text-emerald-600 bg-white hover:bg-emerald-50 disabled:border-slate-300 disabled:text-slate-400 disabled:bg-slate-50 font-bold py-4 px-6 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md disabled:cursor-not-allowed"
+                    className="w-full border-2 border-emerald-600 text-emerald-600 bg-white hover:bg-emerald-50 disabled:border-slate-300 disabled:text-slate-400 disabled:bg-slate-50 font-bold py-3 px-4 rounded-xl transition-all duration-200 ease-in-out hover:shadow-md disabled:cursor-not-allowed"
                   >
                     Ship Order & Notify Doctor
                   </button>
@@ -523,10 +523,10 @@ The doctor can now track the shipment and will be notified of any delivery issue
 
           {/* Document Upload */}
           <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
-              <h3 className="text-xl font-bold text-slate-800">Document Upload</h3>
+            <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800 leading-tight">Document Upload</h3>
             </div>
-            <div className="p-8">
+            <div className="p-4">
               <DocumentUpload 
                 orderId={currentOrder.id}
                 onDocumentUpload={handleDocumentUpload}
@@ -538,43 +538,43 @@ The doctor can now track the shipment and will be notified of any delivery issue
           {/* Shipping Information (if shipped) */}
           {['Shipped', 'Delivered'].includes(currentOrder.status) && (
             <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-              <div className="px-8 py-6 border-b border-slate-200 bg-slate-50">
-                <h3 className="text-xl font-bold text-slate-800">Shipping Information</h3>
+              <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+                <h3 className="text-lg font-bold text-slate-800 leading-tight">Shipping Information</h3>
               </div>
-              <div className="p-8 space-y-6">
-                <div className="grid grid-cols-2 gap-6">
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Tracking Number</label>
-                    <p className="text-lg font-bold text-slate-800 font-mono mt-1">{currentOrder.trackingNumber}</p>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Tracking Number</label>
+                    <p className="text-base font-bold text-slate-800 font-mono mt-1 leading-tight">{currentOrder.trackingNumber}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Carrier</label>
-                    <p className="text-lg font-semibold text-slate-800 mt-1">{currentOrder.carrier}</p>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Carrier</label>
+                    <p className="text-base font-semibold text-slate-800 mt-1 leading-tight">{currentOrder.carrier}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Ship Date</label>
-                    <p className="text-lg font-semibold text-slate-800 mt-1">{currentOrder.shipDate}</p>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Ship Date</label>
+                    <p className="text-base font-semibold text-slate-800 mt-1 leading-tight">{currentOrder.shipDate}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Estimated Delivery</label>
-                    <p className="text-lg font-semibold text-slate-800 mt-1">{currentOrder.estimatedDelivery}</p>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Estimated Delivery</label>
+                    <p className="text-base font-semibold text-slate-800 mt-1 leading-tight">{currentOrder.estimatedDelivery}</p>
                   </div>
                 </div>
                 {currentOrder.deliveredDate && (
-                  <div className="pt-4 border-t border-slate-200">
-                    <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Delivered Date</label>
-                    <p className="text-lg font-semibold text-emerald-600 mt-1">{currentOrder.deliveredDate}</p>
+                  <div className="pt-3 border-t border-slate-200">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Delivered Date</label>
+                    <p className="text-base font-semibold text-emerald-600 mt-1 leading-tight">{currentOrder.deliveredDate}</p>
                   </div>
                 )}
                 {currentOrder.notes && (
-                  <div className="pt-4 border-t border-slate-200">
-                    <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Notes</label>
-                    <p className="text-base text-slate-600 mt-1">{currentOrder.notes}</p>
+                  <div className="pt-3 border-t border-slate-200">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Notes</label>
+                    <p className="text-sm text-slate-600 mt-1">{currentOrder.notes}</p>
                   </div>
                 )}
                 {currentOrder.deliveryIssues && (
-                  <div className="pt-4 border-t border-slate-200">
-                    <label className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Delivery Issues</label>
+                  <div className="pt-3 border-t border-slate-200">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Delivery Issues</label>
                     <div className="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                       <p className="text-sm text-orange-800">{currentOrder.deliveryIssues}</p>
                     </div>

@@ -282,22 +282,22 @@ const ShippingLogistics: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Header Section */}
-      <div className="pt-2 pb-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="pt-1 pb-3">
+        <div className="flex justify-between items-center mb-3">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Shipping & Logistics</h1>
-            <p className="text-slate-600 mt-2 text-lg">Monitor shipped orders and delivery performance</p>
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight leading-tight">Shipping & Logistics</h1>
+            <p className="text-slate-600 mt-1 text-lg leading-normal">Monitor shipped orders and delivery performance</p>
           </div>
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-4">
             {deliveryMetrics.overdue > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-xl shadow-sm px-4 py-3">
+              <div className="bg-red-50 border border-red-200 rounded-xl shadow-sm px-3 py-2">
                 <span className="text-sm font-medium text-red-600">Overdue: </span>
                 <span className="text-xl font-bold text-red-700">{deliveryMetrics.overdue}</span>
               </div>
             )}
-            <div className="bg-white rounded-xl shadow-sm px-6 py-3 border border-slate-200">
+            <div className="bg-white rounded-xl shadow-sm px-4 py-2 border border-slate-200">
               <span className="text-sm font-medium text-slate-600">In Transit: </span>
               <span className="text-xl font-bold text-slate-900">{deliveryMetrics.inTransit}</span>
             </div>
@@ -305,44 +305,44 @@ const ShippingLogistics: React.FC = () => {
         </div>
 
         {/* Delivery Performance Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-            <div className="text-3xl font-bold text-blue-700">{deliveryMetrics.totalShipped}</div>
-            <div className="text-sm font-medium text-blue-600 mt-2">Total Shipped</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
+            <div className="text-2xl font-bold text-blue-700 leading-tight">{deliveryMetrics.totalShipped}</div>
+            <div className="text-xs font-medium text-blue-600 mt-1">Total Shipped</div>
           </div>
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center">
-            <div className="text-3xl font-bold text-emerald-700">{deliveryMetrics.delivered}</div>
-            <div className="text-sm font-medium text-emerald-600 mt-2">Delivered</div>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+            <div className="text-2xl font-bold text-emerald-700 leading-tight">{deliveryMetrics.delivered}</div>
+            <div className="text-xs font-medium text-emerald-600 mt-1">Delivered</div>
           </div>
-          <div className="bg-purple-50 border border-purple-200 rounded-xl p-6 text-center">
-            <div className="text-3xl font-bold text-purple-700">{deliveryMetrics.avgDeliveryTime}</div>
-            <div className="text-sm font-medium text-purple-600 mt-2">Avg Days</div>
+          <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-center">
+            <div className="text-2xl font-bold text-purple-700 leading-tight">{deliveryMetrics.avgDeliveryTime}</div>
+            <div className="text-xs font-medium text-purple-600 mt-1">Avg Days</div>
           </div>
-          <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-            <div className="text-3xl font-bold text-green-700">{deliveryMetrics.deliveryRate}%</div>
-            <div className="text-sm font-medium text-green-600 mt-2">Success Rate</div>
+          <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
+            <div className="text-2xl font-bold text-green-700 leading-tight">{deliveryMetrics.deliveryRate}%</div>
+            <div className="text-xs font-medium text-green-600 mt-1">Success Rate</div>
           </div>
         </div>
 
         {/* Filter Controls */}
-        <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-3">Search Orders</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Search Orders</label>
               <input
                 type="text"
                 placeholder="Search by order, tracking number, doctor..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-3">Carrier Filter</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Carrier Filter</label>
               <select
                 value={carrierFilter}
                 onChange={(e) => setCarrierFilter(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
               >
                 <option value="All">All Carriers</option>
                 <option value="UPS">UPS</option>
@@ -367,20 +367,20 @@ const ShippingLogistics: React.FC = () => {
       </div>
 
       {/* Shipping Orders List */}
-      <div className="space-y-6">
+      <div className="space-y-3">
         {shippingOrders.map((order) => (
           <Card key={order.id} className={`bg-white border rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out ${
             order.isOverdue ? 'border-red-300 bg-red-50' : 'border-slate-200'
           }`}>
             {/* Order Header */}
-            <div className="px-8 py-6 border-b border-slate-200">
+            <div className="px-4 py-3 border-b border-slate-200">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <h3 className="text-xl font-bold text-slate-800">{order.orderNumber}</h3>
+                <div className="flex items-center space-x-3">
+                  <h3 className="text-lg font-bold text-slate-800 leading-tight">{order.orderNumber}</h3>
                   <span className={getStatusBadge(order.status)}>{order.status}</span>
                   <span className={getPriorityBadge(order.priority)}>{order.priority}</span>
                   {order.isOverdue && (
-                    <span className="px-3 py-1 rounded-full text-sm font-medium border bg-red-100 text-red-700 border-red-300">
+                    <span className="px-2 py-1 rounded-full text-xs font-medium border bg-red-100 text-red-700 border-red-300">
                       OVERDUE
                     </span>
                   )}
@@ -388,7 +388,7 @@ const ShippingLogistics: React.FC = () => {
                 {order.status === 'Shipped' && (
                   <button
                     onClick={() => handleReportIssue(order.id)}
-                    className="border-2 border-orange-500 text-orange-600 bg-white hover:bg-orange-50 font-semibold py-2 px-4 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-sm"
+                    className="border-2 border-orange-500 text-orange-600 bg-white hover:bg-orange-50 font-semibold py-2 px-3 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-sm"
                   >
                     Report Issue
                   </button>
@@ -396,7 +396,7 @@ const ShippingLogistics: React.FC = () => {
               </div>
               
               {/* Tracking Information */}
-              <div className="mt-4 flex items-center space-x-6">
+              <div className="mt-2 flex items-center space-x-4">
                 {getCarrierIcon(order.carrier || '')}
                 <div className="flex-1">
                   <div className="flex items-center space-x-4 text-sm">
@@ -423,28 +423,28 @@ const ShippingLogistics: React.FC = () => {
             </div>
 
             {/* Order Details */}
-            <div className="px-8 py-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="px-4 py-3">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Doctor & Facility */}
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Healthcare Provider</h4>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Healthcare Provider</h4>
                   <div className="space-y-1">
-                    <p className="text-lg font-semibold text-slate-800">{order.doctor.name}</p>
-                    <p className="text-base text-slate-600">{order.doctor.facility}</p>
-                    <p className="text-sm text-slate-500">{order.shippingAddress.city}, {order.shippingAddress.state}</p>
+                    <p className="text-base font-semibold text-slate-800 leading-tight">{order.doctor.name}</p>
+                    <p className="text-sm text-slate-600">{order.doctor.facility}</p>
+                    <p className="text-xs text-slate-500">{order.shippingAddress.city}, {order.shippingAddress.state}</p>
                   </div>
                 </div>
 
                 {/* Products */}
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Products</h4>
-                  <div className="space-y-2">
-                    <p className="text-base font-semibold text-slate-800">
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Products</h4>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-800">
                       {order.totalItems} item{order.totalItems !== 1 ? 's' : ''}
                     </p>
                     <div className="space-y-1">
                       {order.products.map(product => (
-                        <div key={product.id} className="text-sm text-slate-600">
+                        <div key={product.id} className="text-xs text-slate-600">
                           <span className="font-medium">{product.name}</span>
                           <span className="text-slate-500 ml-2">× {product.quantity}</span>
                         </div>
@@ -455,12 +455,12 @@ const ShippingLogistics: React.FC = () => {
 
                 {/* Delivery Status */}
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Delivery Status</h4>
-                  <div className="space-y-2">
-                    <p className="text-sm text-slate-600">
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Delivery Status</h4>
+                  <div className="space-y-1">
+                    <p className="text-xs text-slate-600">
                       <span className="font-medium">Patient:</span> {order.patient.initials} ({order.patient.patientId})
                     </p>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-xs text-slate-600">
                       <span className="font-medium">Ship to:</span> {order.shippingAddress.attention}
                     </p>
                     {order.deliveryIssues && (
@@ -477,14 +477,14 @@ const ShippingLogistics: React.FC = () => {
         ))}
 
         {shippingOrders.length === 0 && (
-          <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-16 text-center">
-            <div className="mx-auto w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-              <svg className="w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-12 text-center">
+            <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+              <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-slate-800 mb-3">No Shipped Orders</h3>
-            <p className="text-slate-600 text-lg">No orders match your current filter criteria</p>
+            <h3 className="text-xl font-bold text-slate-800 mb-2 leading-tight">No Shipped Orders</h3>
+            <p className="text-slate-600 text-base">No orders match your current filter criteria</p>
           </Card>
         )}
       </div>
