@@ -1,10 +1,19 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Link, useLocation, Outlet } from 'react-router-dom';
+import {
+  HomeIcon,
+  DocumentTextIcon,
+  ArchiveBoxIcon,
+  TruckIcon,
+  UsersIcon,
+  ChartBarIcon,
+  Cog6ToothIcon,
+  ArrowRightOnRectangleIcon
+} from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
-import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/solid';
-import { format } from 'date-fns';
 
 const DistributorLayout: React.FC = () => {
+  const location = useLocation();
   const { user, logout } = useAuth();
 
   const handleSignOut = async () => {
@@ -16,59 +25,75 @@ const DistributorLayout: React.FC = () => {
     }
   };
 
+  const navigation = [
+    { name: 'Dashboard', href: '/distributor/dashboard', icon: HomeIcon },
+    { name: 'IVR Management', href: '/distributor/ivr/management', icon: DocumentTextIcon },
+    { name: 'Order Processing', href: '/distributor/orders/management', icon: ArchiveBoxIcon },
+    { name: 'Shipping & Logistics', href: '/distributor/orders/shipping', icon: TruckIcon },
+    { name: 'Manage Network', href: '/distributor/network', icon: UsersIcon },
+    { name: 'Analytics & Reports', href: '/distributor/analytics', icon: ChartBarIcon },
+    { name: 'Settings', href: '/distributor/settings', icon: Cog6ToothIcon },
+    { 
+      name: 'Sign Out', 
+      href: '#', 
+      icon: ArrowRightOnRectangleIcon,
+      onClick: handleSignOut 
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 w-[280px] bg-[#2C3E50] text-white">
+      <div className="fixed inset-y-0 left-0 w-[280px] bg-[#334155] text-white">
         <div className="flex flex-col h-full">
-          {/* Logo Section */}
-          <div className="flex items-center justify-start p-6 border-b border-[rgba(255,255,255,0.1)]">
+          <div className="flex items-center justify-start p-6 border-b border-slate-700">
             <img 
               src="/logo2.png" 
-              alt="Healthcare IVR" 
+              alt="Healthcare IVR Platform" 
               className="h-24 w-auto"
-              onError={(e) => {
-                const target = e.target as HTMLElement;
+              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                const target = e.currentTarget;
                 target.style.display = 'none';
                 const parent = target.parentElement;
                 if (parent) {
-                  parent.innerHTML = '<span class="text-white text-2xl font-semibold">Healthcare IVR</span>';
+                  parent.innerHTML = '<span class="text-white text-2xl font-semibold">Healthcare IVR Platform</span>';
                 }
               }}
             />
           </div>
-
-          {/* Navigation Links */}
-          <nav className="flex-1 px-7 pt-4 space-y-2">
-            <NavLink href="/distributor/dashboard" label="Dashboard" />
-            <NavLink href="/distributor/ivr/management" label="IVR Management" />
-            <NavLink href="/distributor/orders/management" label="Order Management" />
-            <NavLink href="/distributor/orders/shipping" label="Shipping & Logistics" />
-            <NavLink href="/distributor/network" label="Manage Network" />
-            <NavLink href="/distributor/analytics" label="Analytics & Reports" />
-            <NavLink href="/distributor/settings" label="Settings" />
+          <nav className="flex-1 px-6 pt-4 space-y-1">
+            {navigation.map((item) => {
+              const isActive = item.href !== '#' && location.pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  onClick={item.onClick}
+                  className={`
+                    flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
+                    focus:outline-none focus:ring-2 focus:ring-[#375788] focus:ring-offset-2 focus:ring-offset-slate-900
+                    ${isActive 
+                      ? 'bg-[#375788] text-white' 
+                      : 'text-slate-300 hover:bg-slate-600 hover:text-white'}
+                  `}
+                >
+                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                  {item.name}
+                </Link>
+              );
+            })}
           </nav>
-
-          {/* User Info and Sign Out */}
-          <div className="mt-auto px-7 pb-4">
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center px-4 py-3 text-sm font-medium text-[rgba(255,255,255,0.9)] hover:text-white hover:bg-[rgba(255,255,255,0.1)] rounded-lg transition-colors mb-4"
-            >
-              <ArrowRightOnRectangleIcon className="mr-4 h-5 w-5" />
-              Sign Out
-            </button>
-            
-            <div className="border-t border-[rgba(255,255,255,0.1)] pt-4">
+          <div className="px-6 pb-4">
+            <div className="border-t border-slate-700 pt-4 mt-4">
               <div className="flex items-center px-4">
-                <div className="h-10 w-10 rounded-full bg-[#375788] flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-slate-600 flex items-center justify-center">
                   <span className="text-white font-medium text-lg">
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    {user?.firstName?.[0]}{user?.lastName?.[0] || 'MD'}
                   </span>
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-white">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-[rgba(255,255,255,0.7)]">Master Distributor</p>
+                  <p className="text-xs text-slate-400">Master Distributor</p>
                 </div>
               </div>
             </div>
@@ -99,25 +124,6 @@ const DistributorLayout: React.FC = () => {
         </main>
       </div>
     </div>
-  );
-};
-
-// Helper component for navigation links
-const NavLink: React.FC<{ href: string; label: string }> = ({ href, label }) => {
-  const isActive = window.location.pathname === href;
-  
-  return (
-    <a
-      href={href}
-      className={`
-        flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
-        ${isActive 
-          ? 'bg-[#375788] text-white' 
-          : 'text-[rgba(255,255,255,0.9)] hover:bg-[rgba(255,255,255,0.1)] hover:text-white'}
-      `}
-    >
-      <span className="text-sm font-medium">{label}</span>
-    </a>
   );
 };
 
