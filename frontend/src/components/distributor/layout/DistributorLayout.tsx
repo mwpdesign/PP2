@@ -44,7 +44,7 @@ const DistributorLayout: React.FC = () => {
             <NavLink href="/distributor/ivr/management" label="IVR Management" />
             <NavLink href="/distributor/orders/fulfillment" label="Order Processing" />
             <NavLink href="/distributor/orders/queue" label="Order Queue" />
-            <NavLink href="/distributor/logistics/shipments" label="Shipping & Logistics" />
+            <NavLink href="/distributor/orders/shipping" label="Shipping & Logistics" />
             <NavLink href="/distributor/network" label="Manage Network" />
             <NavLink href="/distributor/analytics" label="Analytics & Reports" />
             <NavLink href="/distributor/settings" label="Settings" />
