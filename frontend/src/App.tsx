@@ -21,7 +21,7 @@ const ShippingPage = React.lazy(() => import('./pages/shipping'));
 const AnalyticsPage = React.lazy(() => import('./pages/analytics'));
 const SettingsPage = React.lazy(() => import('./pages/settings'));
 const MainLayout = React.lazy(() => import('./components/shared/layout/Layout'));
-const AdminLayout = React.lazy(() => import('./components/shared/layout/AdminLayout'));
+const AdminLayout = React.lazy(() => import('./components/admin/layout/AdminLayout'));
 
 const App = () => {
   console.log('App component rendering');
