@@ -5,10 +5,9 @@ import {
   DocumentTextIcon,
   ArchiveBoxIcon,
   TruckIcon,
-  UsersIcon,
   ChartBarIcon,
-  Cog6ToothIcon,
   ArrowRightOnRectangleIcon
+  // TODO: Restore for post-demo - UsersIcon, Cog6ToothIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -25,14 +24,16 @@ const DistributorLayout: React.FC = () => {
     }
   };
 
+  // TODO: Demo configuration - Manage Network and Settings temporarily removed
+  // To restore post-demo, uncomment the following lines:
+  // { name: 'Manage Network', href: '/distributor/network', icon: UsersIcon },
+  // { name: 'Settings', href: '/distributor/settings', icon: Cog6ToothIcon },
   const navigation = [
     { name: 'Dashboard', href: '/distributor/dashboard', icon: HomeIcon },
     { name: 'IVR Management', href: '/distributor/ivr/management', icon: DocumentTextIcon },
     { name: 'Order Processing', href: '/distributor/orders/management', icon: ArchiveBoxIcon },
     { name: 'Shipping & Logistics', href: '/distributor/orders/shipping', icon: TruckIcon },
-    { name: 'Manage Network', href: '/distributor/network', icon: UsersIcon },
     { name: 'Analytics & Reports', href: '/distributor/analytics', icon: ChartBarIcon },
-    { name: 'Settings', href: '/distributor/settings', icon: Cog6ToothIcon },
     { 
       name: 'Sign Out', 
       href: '#', 
