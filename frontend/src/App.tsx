@@ -87,6 +87,44 @@ const App = () => {
 
               {/* Doctor Routes */}
               <Route element={<PrivateRoute />}>
+                {/* Direct dashboard route for doctor dashboard */}
+                <Route path="/dashboard" element={<MainLayout />}>
+                  <Route index element={<WoundCareDashboard />} />
+                </Route>
+                
+                {/* Other doctor standalone routes */}
+                <Route path="/patients" element={<MainLayout />}>
+                  <Route index element={<PatientSelectionPage />} />
+                  <Route path="select" element={<PatientSelectionPage />} />
+                  <Route path="intake" element={<PatientIntakePage />} />
+                  <Route path=":id" element={<PatientDetailPage />} />
+                </Route>
+                
+                <Route path="/ivr" element={<MainLayout />}>
+                  <Route index element={<IVRManagementPage />} />
+                  <Route path="submit">
+                    <Route index element={<Navigate to="/patients/select" replace />} />
+                    <Route path="test/:patientId" element={<TestIVRPage />} />
+                    <Route path=":patientId" element={<IVRSubmissionPage />} />
+                  </Route>
+                </Route>
+                
+                <Route path="/orders" element={<MainLayout />}>
+                  <Route index element={<OrderManagementPage />} />
+                </Route>
+                
+                <Route path="/shipping" element={<MainLayout />}>
+                  <Route index element={<ShippingPage />} />
+                </Route>
+                
+                <Route path="/analytics" element={<MainLayout />}>
+                  <Route index element={<AnalyticsPage />} />
+                </Route>
+                
+                <Route path="/settings" element={<MainLayout />}>
+                  <Route index element={<SettingsPage />} />
+                </Route>
+
                 <Route path="/doctor" element={<MainLayout />}>
                   <Route index element={<Navigate to="/doctor/dashboard" replace />} />
                   <Route path="dashboard" element={<WoundCareDashboard />} />
