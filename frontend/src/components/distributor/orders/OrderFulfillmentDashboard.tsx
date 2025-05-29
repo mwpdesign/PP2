@@ -341,13 +341,7 @@ const OrderFulfillmentDashboard: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [priorityFilter, setPriorityFilter] = useState<string>('All');
 
-  // Filter orders for pre-ship workflow (Pending, Preparing, recent Shipped)
-  const preShipOrders = orders.filter(order => 
-    order.status === 'Pending Fulfillment' || 
-    order.status === 'Preparing for Ship' ||
-    (order.status === 'Shipped' && isRecentlyShipped(order))
-  );
-
+  // Define isRecentlyShipped function BEFORE using it
   const isRecentlyShipped = (order: Order): boolean => {
     if (!order.shipDate) return false;
     const shipDate = new Date(order.shipDate);
@@ -355,6 +349,13 @@ const OrderFulfillmentDashboard: React.FC = () => {
     const hoursSinceShipped = (now.getTime() - shipDate.getTime()) / (1000 * 60 * 60);
     return hoursSinceShipped <= 24; // Show for 24 hours after shipping
   };
+
+  // Filter orders for pre-ship workflow (Pending, Preparing, recent Shipped)
+  const preShipOrders = orders.filter(order => 
+    order.status === 'Pending Fulfillment' || 
+    order.status === 'Preparing for Ship' ||
+    (order.status === 'Shipped' && isRecentlyShipped(order))
+  );
 
   // Filter orders based on search and filters
   const filteredOrders = preShipOrders.filter(order => {
