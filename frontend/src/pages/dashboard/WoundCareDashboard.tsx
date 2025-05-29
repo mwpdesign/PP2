@@ -101,7 +101,7 @@ const quickActions = [
   {
     name: 'Track Orders',
     description: 'View and manage patient orders',
-    href: '/patients/select?redirect=/orders',
+    href: '/orders',
     icon: ShoppingCartIcon,
   },
   {
