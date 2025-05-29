@@ -1,12 +1,15 @@
 import React from 'react';
 import { format } from 'date-fns';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const SystemHeader: React.FC = () => {
+  const { user } = useAuth();
+
   return (
     <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
       <div>
         <h1 className="text-lg font-medium text-gray-900">
-          {format(new Date(), 'EEEE, MMMM d, yyyy')}
+          Welcome, {user?.firstName} {user?.lastName}
         </h1>
       </div>
       <div className="flex items-center gap-4">

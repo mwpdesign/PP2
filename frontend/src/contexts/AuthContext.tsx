@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         is_superuser: false,
         permissions: ['manage_patients', 'submit_ivr', 'place_orders']
       };
-      navigate('/dashboard');
+      navigate('/doctor/dashboard');
     } else if (credentials?.email?.includes('ivr')) {
       userData = {
         id: 'ivr-123',
@@ -57,7 +57,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         is_superuser: false,
         permissions: ['review_ivr', 'approve_requests']
       };
-      navigate('/dashboard');
+      navigate('/ivr/dashboard');
+    } else if (credentials?.email?.includes('distributor')) {
+      userData = {
+        id: 'distributor-123',
+        email: 'distributor@demo.com',
+        role: 'Distributor',
+        firstName: 'Master',
+        lastName: 'Distributor',
+        organization_id: 'org-123',
+        is_superuser: false,
+        permissions: ['manage_orders', 'manage_logistics', 'manage_ivr']
+      };
+      navigate('/distributor/dashboard');
     } else {
       userData = {
         id: 'admin-123',

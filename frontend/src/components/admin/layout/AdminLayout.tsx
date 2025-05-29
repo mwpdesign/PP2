@@ -4,6 +4,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import AdminSidebar from './AdminSidebar';
 
 const AdminLayout: React.FC = () => {
+  const { user } = useAuth();
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Left Sidebar */}
@@ -15,12 +17,7 @@ const AdminLayout: React.FC = () => {
         <div className="bg-white border-b border-gray-200">
           <div className="flex items-center justify-between px-8 py-4">
             <h1 className="text-lg font-medium text-gray-900">
-              {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
+              Welcome, {user?.firstName} {user?.lastName}
             </h1>
             <div className="flex items-center gap-4">
               <div className="flex items-center">

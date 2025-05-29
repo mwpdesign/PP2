@@ -28,6 +28,12 @@ const SettingsPage = React.lazy(() => import('./pages/settings'));
 const MainLayout = React.lazy(() => import('./components/shared/layout/Layout'));
 const AdminLayout = React.lazy(() => import('./components/admin/layout/AdminLayout'));
 const SystemSettings = React.lazy(() => import('./components/admin/SystemSettings'));
+const MasterDistributorDashboard = React.lazy(() => import('./pages/distributor/MasterDistributorDashboard'));
+const DistributorLayout = React.lazy(() => import('./components/distributor/layout/DistributorLayout'));
+const SegmentedIVRManagement = React.lazy(() => import('./components/distributor/ivr/SegmentedIVRManagement'));
+const NetworkManagement = React.lazy(() => import('./components/distributor/network/NetworkManagement'));
+const DistributorAnalytics = React.lazy(() => import('./components/distributor/analytics/DistributorAnalytics'));
+const OrderFulfillmentDashboard = React.lazy(() => import('./components/distributor/orders/OrderFulfillmentDashboard'));
 
 const App = () => {
   console.log('App component rendering');
@@ -61,16 +67,31 @@ const App = () => {
                 </Route>
               </Route>
 
-              {/* Protected Routes */}
+              {/* Distributor Routes */}
               <Route element={<PrivateRoute />}>
-                {/* Main Layout with Dashboard */}
-                <Route path="/" element={<MainLayout />}>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="/distributor" element={<DistributorLayout />}>
+                  <Route index element={<Navigate to="/distributor/dashboard" replace />} />
+                  <Route path="dashboard" element={<MasterDistributorDashboard />} />
+                  <Route path="ivr/management" element={<SegmentedIVRManagement />} />
+                  <Route path="network" element={<NetworkManagement />} />
+                  <Route path="orders/fulfillment" element={<OrderFulfillmentDashboard />} />
+                  <Route path="orders/*" element={<OrderManagementPage />} />
+                  <Route path="shipping/*" element={<ShippingPage />} />
+                  <Route path="logistics/*" element={<ShippingPage />} />
+                  <Route path="analytics" element={<DistributorAnalytics />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                </Route>
+              </Route>
+
+              {/* Doctor Routes */}
+              <Route element={<PrivateRoute />}>
+                <Route path="/doctor" element={<MainLayout />}>
+                  <Route index element={<Navigate to="/doctor/dashboard" replace />} />
                   <Route path="dashboard" element={<WoundCareDashboard />} />
                   
                   {/* Patient Routes */}
                   <Route path="patients">
-                    <Route index element={<Navigate to="/patients/select" replace />} />
+                    <Route index element={<Navigate to="/doctor/patients/select" replace />} />
                     <Route path="select" element={<PatientSelectionPage />} />
                     <Route path="intake" element={<PatientIntakePage />} />
                     <Route path=":id" element={<PatientDetailPage />} />
@@ -80,7 +101,7 @@ const App = () => {
                   <Route path="ivr">
                     <Route index element={<IVRManagementPage />} />
                     <Route path="submit">
-                      <Route index element={<Navigate to="/patients/select" replace />} />
+                      <Route index element={<Navigate to="/doctor/patients/select" replace />} />
                       <Route path="test/:patientId" element={<TestIVRPage />} />
                       <Route path=":patientId" element={<IVRSubmissionPage />} />
                     </Route>
@@ -88,12 +109,14 @@ const App = () => {
                   
                   {/* Other Routes */}
                   <Route path="orders" element={<OrderManagementPage />} />
-                  <Route path="shipping" element={<ShippingPage />} />
                   <Route path="analytics" element={<AnalyticsPage />} />
                   <Route path="settings" element={<SettingsPage />} />
                 </Route>
               </Route>
 
+              {/* Root Redirect */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              
               {/* Catch all route */}
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
