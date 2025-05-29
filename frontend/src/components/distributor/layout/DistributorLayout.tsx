@@ -42,8 +42,7 @@ const DistributorLayout: React.FC = () => {
           <nav className="flex-1 px-7 pt-4 space-y-2">
             <NavLink href="/distributor/dashboard" label="Dashboard" />
             <NavLink href="/distributor/ivr/management" label="IVR Management" />
-            <NavLink href="/distributor/orders/fulfillment" label="Order Processing" />
-            <NavLink href="/distributor/orders/queue" label="Order Queue" />
+            <NavLink href="/distributor/orders/management" label="Order Management" />
             <NavLink href="/distributor/orders/shipping" label="Shipping & Logistics" />
             <NavLink href="/distributor/network" label="Manage Network" />
             <NavLink href="/distributor/analytics" label="Analytics & Reports" />

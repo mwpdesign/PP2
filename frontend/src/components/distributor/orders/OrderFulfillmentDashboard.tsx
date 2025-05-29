@@ -13,7 +13,7 @@ interface Order {
     email: string;
   };
   patient: {
-    initials: string; // HIPAA-compliant display
+    initials: string;
     patientId: string;
   };
   ivrReference: string;
@@ -34,15 +34,14 @@ interface Order {
     attention?: string;
   };
   priority: 'Standard' | 'Urgent' | 'Rush';
-  status: 'Pending Fulfillment' | 'Processed' | 'Ready to Ship' | 'Shipped' | 'Delivered';
+  status: 'Pending Fulfillment' | 'Preparing for Ship' | 'Shipped' | 'Delivered';
   totalItems: number;
   trackingNumber?: string;
   carrier?: string;
   shipDate?: string;
   estimatedDelivery?: string;
   deliveredDate?: string;
-  processedDate?: string;
-  readyToShipDate?: string;
+  preparingDate?: string;
   isOverdue?: boolean;
   deliveryIssues?: string;
   documents?: Array<{
@@ -55,7 +54,15 @@ interface Order {
   notes?: string;
 }
 
-// Mock data for orders with enhanced status workflow
+interface ShippingFormData {
+  carrier: string;
+  trackingNumber: string;
+  estimatedDelivery: string;
+  notes: string;
+  documents: File[];
+}
+
+// Mock data with updated workflow statuses
 const mockOrders: Order[] = [
   {
     id: 'ORD-2024-001',
@@ -135,51 +142,9 @@ const mockOrders: Order[] = [
       attention: 'Dr. Michael Rodriguez - Surgery Department'
     },
     priority: 'Standard',
-    status: 'Processed',
-    processedDate: '2024-12-19',
+    status: 'Preparing for Ship',
+    preparingDate: '2024-12-19',
     totalItems: 1
-  },
-  {
-    id: 'ORD-2024-003',
-    orderNumber: 'ORD-2024-003',
-    date: '2024-12-18',
-    time: '02:45 PM',
-    doctor: {
-      name: 'Dr. Lisa Park',
-      facility: 'Austin Regional Medical',
-      email: 'lisa.park@austinregional.com'
-    },
-    patient: {
-      initials: 'R.T.',
-      patientId: 'PT-667234'
-    },
-    ivrReference: 'IVR-2024-0891',
-    products: [
-      {
-        id: 'SKIN-004',
-        name: 'Hydrogel Wound Patches',
-        description: 'Advanced hydrogel technology for optimal healing environment',
-        quantity: 4,
-        image: '/api/placeholder/80/80'
-      }
-    ],
-    shippingAddress: {
-      facility: 'Austin Regional Medical',
-      address: '1301 Barbara Jordan Blvd',
-      city: 'Austin',
-      state: 'TX',
-      zipCode: '78723',
-      attention: 'Dr. Lisa Park - Dermatology'
-    },
-    priority: 'Rush',
-    status: 'Shipped',
-    processedDate: '2024-12-18',
-    readyToShipDate: '2024-12-18',
-    shipDate: '2024-12-18',
-    estimatedDelivery: '2024-12-20',
-    trackingNumber: 'UPS123456789',
-    carrier: 'UPS',
-    totalItems: 4
   },
   {
     id: 'ORD-2024-004',
@@ -213,99 +178,186 @@ const mockOrders: Order[] = [
       zipCode: '78731',
       attention: 'Dr. James Wilson - Wound Care'
     },
-    priority: 'Standard',
-    status: 'Ready to Ship',
-    processedDate: '2024-12-17',
-    readyToShipDate: '2024-12-18',
+    priority: 'Rush',
+    status: 'Shipped',
+    preparingDate: '2024-12-17',
+    shipDate: '2024-12-18',
+    estimatedDelivery: '2024-12-20',
+    trackingNumber: 'UPS789456123',
+    carrier: 'UPS',
     totalItems: 3
-  },
-  {
-    id: 'ORD-2024-005',
-    orderNumber: 'ORD-2024-005',
-    date: '2024-12-15',
-    time: '03:30 PM',
-    doctor: {
-      name: 'Dr. Emma Davis',
-      facility: 'North Austin Clinic',
-      email: 'emma.davis@northaustin.com'
-    },
-    patient: {
-      initials: 'K.L.',
-      patientId: 'PT-889456'
-    },
-    ivrReference: 'IVR-2024-0888',
-    products: [
-      {
-        id: 'SKIN-006',
-        name: 'Advanced Healing Matrix',
-        description: 'Bioengineered tissue matrix for accelerated healing',
-        quantity: 1,
-        image: '/api/placeholder/80/80',
-        specialHandling: 'Keep refrigerated until use'
-      }
-    ],
-    shippingAddress: {
-      facility: 'North Austin Clinic',
-      address: '12000 Research Blvd',
-      city: 'Austin',
-      state: 'TX',
-      zipCode: '78759',
-      attention: 'Dr. Emma Davis - Dermatology'
-    },
-    priority: 'Standard',
-    status: 'Delivered',
-    processedDate: '2024-12-15',
-    readyToShipDate: '2024-12-16',
-    shipDate: '2024-12-16',
-    estimatedDelivery: '2024-12-18',
-    deliveredDate: '2024-12-18',
-    trackingNumber: 'FEDEX987654321',
-    carrier: 'FedEx',
-    totalItems: 1
   }
 ];
+
+// Shipping Form Component
+const ShippingForm: React.FC<{
+  order: Order;
+  onSubmit: (order: Order, shippingData: ShippingFormData) => void;
+  onCancel: () => void;
+}> = ({ order, onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState<ShippingFormData>({
+    carrier: '',
+    trackingNumber: '',
+    estimatedDelivery: '',
+    notes: '',
+    documents: []
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(order, formData);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setFormData(prev => ({ ...prev, documents: [...prev.documents, ...files] }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h2 className="text-xl font-bold text-slate-800">Ship Order: {order.orderNumber}</h2>
+          <p className="text-sm text-slate-600 mt-1">Complete shipping information to mark order as shipped</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Carrier Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Carrier *</label>
+              <select
+                value={formData.carrier}
+                onChange={(e) => setFormData(prev => ({ ...prev, carrier: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] focus:border-[#2E86AB]"
+                required
+              >
+                <option value="">Select Carrier</option>
+                <option value="UPS">UPS</option>
+                <option value="FedEx">FedEx</option>
+                <option value="USPS">USPS</option>
+                <option value="DHL">DHL</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Tracking Number *</label>
+              <input
+                type="text"
+                value={formData.trackingNumber}
+                onChange={(e) => setFormData(prev => ({ ...prev, trackingNumber: e.target.value }))}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] focus:border-[#2E86AB]"
+                placeholder="Enter tracking number"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Expected Delivery Date */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Expected Delivery Date *</label>
+            <input
+              type="date"
+              value={formData.estimatedDelivery}
+              onChange={(e) => setFormData(prev => ({ ...prev, estimatedDelivery: e.target.value }))}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] focus:border-[#2E86AB]"
+              min={new Date().toISOString().split('T')[0]}
+              required
+            />
+          </div>
+
+          {/* Document Upload */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Shipping Documents</label>
+            <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.png,.jpg,.jpeg"
+                onChange={handleFileUpload}
+                className="hidden"
+                id="document-upload"
+              />
+              <label htmlFor="document-upload" className="cursor-pointer">
+                <div className="flex flex-col items-center">
+                  <svg className="w-8 h-8 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span className="text-sm font-medium text-slate-700">Click to upload or drag and drop</span>
+                  <span className="text-xs text-slate-500">PDF, PNG, JPG up to 10MB</span>
+                </div>
+              </label>
+              {formData.documents.length > 0 && (
+                <div className="mt-3 text-left">
+                  <p className="text-sm font-medium text-slate-700 mb-1">Selected files:</p>
+                  {formData.documents.map((file, index) => (
+                    <p key={index} className="text-xs text-slate-600">• {file.name}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Shipping Notes</label>
+            <textarea
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] focus:border-[#2E86AB]"
+              rows={3}
+              placeholder="Additional notes or special instructions..."
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-[#2E86AB] text-white rounded-lg hover:bg-[#247297] font-medium transition-colors"
+            >
+              Ship Order
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const OrderFulfillmentDashboard: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [shippingOrder, setShippingOrder] = useState<Order | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [priorityFilter, setPriorityFilter] = useState<string>('All');
 
-  // Auto-delivery system - check for overdue deliveries
-  useEffect(() => {
-    const checkOverdueDeliveries = () => {
-      const now = new Date();
-      setOrders(prevOrders => 
-        prevOrders.map(order => {
-          if (order.status === 'Shipped' && order.estimatedDelivery) {
-            const deliveryDate = new Date(order.estimatedDelivery);
-            const daysPastDue = Math.floor((now.getTime() - deliveryDate.getTime()) / (1000 * 60 * 60 * 24));
-            
-            if (daysPastDue >= 2) {
-              return { ...order, isOverdue: true };
-            } else if (daysPastDue >= 0 && !order.deliveryIssues) {
-              // Auto-mark as delivered if past delivery date with no issues reported
-              return { 
-                ...order, 
-                status: 'Delivered' as const,
-                deliveredDate: order.estimatedDelivery
-              };
-            }
-          }
-          return order;
-        })
-      );
-    };
+  // Filter orders for pre-ship workflow (Pending, Preparing, recent Shipped)
+  const preShipOrders = orders.filter(order => 
+    order.status === 'Pending Fulfillment' || 
+    order.status === 'Preparing for Ship' ||
+    (order.status === 'Shipped' && isRecentlyShipped(order))
+  );
 
-    // Check immediately and then every hour
-    checkOverdueDeliveries();
-    const interval = setInterval(checkOverdueDeliveries, 60 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const isRecentlyShipped = (order: Order): boolean => {
+    if (!order.shipDate) return false;
+    const shipDate = new Date(order.shipDate);
+    const now = new Date();
+    const hoursSinceShipped = (now.getTime() - shipDate.getTime()) / (1000 * 60 * 60);
+    return hoursSinceShipped <= 24; // Show for 24 hours after shipping
+  };
 
   // Filter orders based on search and filters
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = preShipOrders.filter(order => {
     const matchesSearch = searchTerm === '' || 
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -323,10 +375,8 @@ const OrderFulfillmentDashboard: React.FC = () => {
     switch (status) {
       case 'Pending Fulfillment':
         return `${baseClasses} bg-amber-50 text-amber-700 border-amber-200`;
-      case 'Processed':
+      case 'Preparing for Ship':
         return `${baseClasses} bg-blue-50 text-blue-700 border-blue-200`;
-      case 'Ready to Ship':
-        return `${baseClasses} bg-purple-50 text-purple-700 border-purple-200`;
       case 'Shipped':
         return `${baseClasses} bg-green-50 text-green-700 border-green-200`;
       case 'Delivered':
@@ -363,23 +413,8 @@ const OrderFulfillmentDashboard: React.FC = () => {
       if (order.id === orderId) {
         const updates: Partial<Order> = { status: newStatus };
         
-        switch (newStatus) {
-          case 'Processed':
-            updates.processedDate = now;
-            break;
-          case 'Ready to Ship':
-            updates.readyToShipDate = now;
-            break;
-          case 'Shipped':
-            updates.shipDate = now;
-            // Auto-calculate estimated delivery (2 days from ship date)
-            const shipDate = new Date();
-            shipDate.setDate(shipDate.getDate() + 2);
-            updates.estimatedDelivery = shipDate.toISOString().split('T')[0];
-            break;
-          case 'Delivered':
-            updates.deliveredDate = now;
-            break;
+        if (newStatus === 'Preparing for Ship') {
+          updates.preparingDate = now;
         }
         
         return { ...order, ...updates };
@@ -388,34 +423,52 @@ const OrderFulfillmentDashboard: React.FC = () => {
     }));
   };
 
-  const getQuickActionButton = (order: Order) => {
+  const handleShipOrder = (order: Order, shippingData: ShippingFormData) => {
+    const now = new Date().toISOString().split('T')[0];
+    
+    setOrders(orders.map(o => {
+      if (o.id === order.id) {
+        return {
+          ...o,
+          status: 'Shipped' as const,
+          shipDate: now,
+          trackingNumber: shippingData.trackingNumber,
+          carrier: shippingData.carrier,
+          estimatedDelivery: shippingData.estimatedDelivery,
+          notes: shippingData.notes
+        };
+      }
+      return o;
+    }));
+    
+    setShippingOrder(null);
+  };
+
+  const getOneClickActionButton = (order: Order) => {
     switch (order.status) {
       case 'Pending Fulfillment':
         return (
           <button
-            onClick={() => handleQuickStatusUpdate(order.id, 'Processed')}
-            className="border-2 border-blue-600 text-blue-600 bg-white hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-sm"
+            onClick={() => handleQuickStatusUpdate(order.id, 'Preparing for Ship')}
+            className="bg-[#2E86AB] hover:bg-[#247297] text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md"
           >
-            Mark as Processed
+            Mark Ready for Ship
           </button>
         );
-      case 'Processed':
+      case 'Preparing for Ship':
         return (
           <button
-            onClick={() => handleQuickStatusUpdate(order.id, 'Ready to Ship')}
-            className="border-2 border-purple-600 text-purple-600 bg-white hover:bg-purple-50 font-semibold py-2 px-4 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-sm"
+            onClick={() => setShippingOrder(order)}
+            className="bg-[#2E86AB] hover:bg-[#247297] text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md"
           >
-            Mark Ready to Ship
+            Mark as Shipped
           </button>
         );
-      case 'Ready to Ship':
+      case 'Shipped':
         return (
-          <button
-            onClick={() => setSelectedOrder(order)}
-            className="border-2 border-green-600 text-green-600 bg-white hover:bg-green-50 font-semibold py-2 px-4 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-sm"
-          >
-            Ship Order
-          </button>
+          <span className="text-sm text-green-600 font-medium">
+            Recently Shipped
+          </span>
         );
       default:
         return (
@@ -432,11 +485,9 @@ const OrderFulfillmentDashboard: React.FC = () => {
   // Calculate workflow metrics
   const workflowMetrics = {
     pendingFulfillment: orders.filter(o => o.status === 'Pending Fulfillment').length,
-    processed: orders.filter(o => o.status === 'Processed').length,
-    readyToShip: orders.filter(o => o.status === 'Ready to Ship').length,
-    shipped: orders.filter(o => o.status === 'Shipped').length,
-    delivered: orders.filter(o => o.status === 'Delivered').length,
-    overdue: orders.filter(o => o.isOverdue).length
+    preparing: orders.filter(o => o.status === 'Preparing for Ship').length,
+    recentlyShipped: orders.filter(o => o.status === 'Shipped' && isRecentlyShipped(o)).length,
+    totalActive: preShipOrders.length
   };
 
   if (selectedOrder) {
@@ -451,62 +502,60 @@ const OrderFulfillmentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-4">
+      {/* Shipping Form Modal */}
+      {shippingOrder && (
+        <ShippingForm
+          order={shippingOrder}
+          onSubmit={handleShipOrder}
+          onCancel={() => setShippingOrder(null)}
+        />
+      )}
+
       {/* Header Section */}
       <div className="pt-1 pb-3">
         <div className="flex justify-between items-center mb-3">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 tracking-tight leading-tight">Order Fulfillment</h1>
-            <p className="text-slate-600 mt-1 text-lg leading-normal">Complete order processing and shipping workflow</p>
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight leading-tight">Order Management</h1>
+            <p className="text-slate-600 mt-1 text-lg leading-normal">Complete pre-ship workflow with one-click status progression</p>
           </div>
           <div className="flex items-center space-x-4">
-            {workflowMetrics.overdue > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-xl shadow-sm px-3 py-2">
-                <span className="text-sm font-medium text-red-600">Overdue Deliveries: </span>
-                <span className="text-xl font-bold text-red-700">{workflowMetrics.overdue}</span>
-              </div>
-            )}
             <div className="bg-white rounded-xl shadow-sm px-4 py-2 border border-slate-200">
               <span className="text-sm font-medium text-slate-600">Active Orders: </span>
-              <span className="text-xl font-bold text-slate-900">{filteredOrders.length}</span>
+              <span className="text-xl font-bold text-slate-900">{workflowMetrics.totalActive}</span>
             </div>
           </div>
         </div>
 
         {/* Workflow Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-center">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-amber-700 leading-tight">{workflowMetrics.pendingFulfillment}</div>
-            <div className="text-xs font-medium text-amber-600 mt-1">Pending</div>
+            <div className="text-sm font-medium text-amber-600 mt-1">Pending Fulfillment</div>
+            <div className="text-xs text-amber-500 mt-1">New orders from doctors</div>
           </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-blue-700 leading-tight">{workflowMetrics.processed}</div>
-            <div className="text-xs font-medium text-blue-600 mt-1">Processed</div>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-blue-700 leading-tight">{workflowMetrics.preparing}</div>
+            <div className="text-sm font-medium text-blue-600 mt-1">Preparing for Ship</div>
+            <div className="text-xs text-blue-500 mt-1">Getting ready for carrier</div>
           </div>
-          <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-purple-700 leading-tight">{workflowMetrics.readyToShip}</div>
-            <div className="text-xs font-medium text-purple-600 mt-1">Ready to Ship</div>
-          </div>
-          <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-green-700 leading-tight">{workflowMetrics.shipped}</div>
-            <div className="text-xs font-medium text-green-600 mt-1">Shipped</div>
-          </div>
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
-            <div className="text-2xl font-bold text-emerald-700 leading-tight">{workflowMetrics.delivered}</div>
-            <div className="text-xs font-medium text-emerald-600 mt-1">Delivered</div>
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-green-700 leading-tight">{workflowMetrics.recentlyShipped}</div>
+            <div className="text-sm font-medium text-green-600 mt-1">Recently Shipped</div>
+            <div className="text-xs text-green-500 mt-1">Shipped in last 24 hours</div>
           </div>
         </div>
 
-        {/* Search and Filters Section */}
+        {/* Search and Filters */}
         <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Search Orders</label>
               <input
                 type="text"
-                placeholder="Search by order number, doctor, facility..."
+                placeholder="Search by order, doctor, facility..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] focus:border-[#2E86AB]"
               />
             </div>
             <div>
@@ -514,14 +563,12 @@ const OrderFulfillmentDashboard: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] focus:border-[#2E86AB]"
               >
                 <option value="All">All Statuses</option>
                 <option value="Pending Fulfillment">Pending Fulfillment</option>
-                <option value="Processed">Processed</option>
-                <option value="Ready to Ship">Ready to Ship</option>
-                <option value="Shipped">Shipped</option>
-                <option value="Delivered">Delivered</option>
+                <option value="Preparing for Ship">Preparing for Ship</option>
+                <option value="Shipped">Recently Shipped</option>
               </select>
             </div>
             <div>
@@ -529,7 +576,7 @@ const OrderFulfillmentDashboard: React.FC = () => {
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] focus:border-[#2E86AB]"
               >
                 <option value="All">All Priorities</option>
                 <option value="Rush">Rush</option>
@@ -544,9 +591,7 @@ const OrderFulfillmentDashboard: React.FC = () => {
       {/* Orders List */}
       <div className="space-y-3">
         {filteredOrders.map((order) => (
-          <Card key={order.id} className={`bg-white border rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out ${
-            order.isOverdue ? 'border-red-300 bg-red-50' : 'border-slate-200'
-          }`}>
+          <Card key={order.id} className="bg-white border border-slate-200 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 ease-in-out">
             {/* Order Header */}
             <div className="px-4 py-3 border-b border-slate-200">
               <div className="flex items-center justify-between">
@@ -554,27 +599,27 @@ const OrderFulfillmentDashboard: React.FC = () => {
                   <h3 className="text-lg font-bold text-slate-800 leading-tight">{order.orderNumber}</h3>
                   <span className={getStatusBadge(order.status)}>{order.status}</span>
                   <span className={getPriorityBadge(order.priority)}>{order.priority}</span>
-                  {order.isOverdue && (
-                    <span className="px-2 py-1 rounded-full text-xs font-medium border bg-red-100 text-red-700 border-red-300">
-                      OVERDUE
-                    </span>
-                  )}
                 </div>
-                {getQuickActionButton(order)}
+                {getOneClickActionButton(order)}
               </div>
               <div className="mt-2 flex items-center space-x-4 text-sm text-slate-600">
-                <span className="font-medium">{order.date} at {order.time}</span>
+                <span className="font-medium">Ordered: {order.date} at {order.time}</span>
+                {order.preparingDate && (
+                  <span className="font-medium">Preparing: {order.preparingDate}</span>
+                )}
+                {order.shipDate && (
+                  <span className="font-medium">Shipped: {order.shipDate}</span>
+                )}
                 {order.trackingNumber && (
-                  <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">
-                    {order.carrier}: {order.trackingNumber}
-                  </span>
+                  <span className="font-medium text-green-600">Tracking: {order.trackingNumber}</span>
                 )}
               </div>
             </div>
 
-            {/* Doctor & Facility */}
-            <div className="px-4 py-3 border-b border-slate-100">
+            {/* Order Content */}
+            <div className="px-4 py-3">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {/* Doctor & Facility */}
                 <div>
                   <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Healthcare Provider</h4>
                   <div className="space-y-1">
@@ -584,54 +629,45 @@ const OrderFulfillmentDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Order Details */}
+                {/* Products */}
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Order Details</h4>
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Products</h4>
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-slate-800">
-                      {order.totalItems} item{order.totalItems !== 1 ? 's' : ''}: 
-                      <span className="font-normal text-slate-600 ml-2">
-                        {order.products.map(p => p.name).join(', ')}
-                      </span>
+                      {order.totalItems} item{order.totalItems !== 1 ? 's' : ''}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      <span className="font-medium">IVR:</span> {order.ivrReference}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      <span className="font-medium">Patient:</span> {order.patient.initials} ({order.patient.patientId})
-                    </p>
+                    <div className="space-y-1">
+                      {order.products.map(product => (
+                        <div key={product.id} className="text-xs text-slate-600">
+                          <span className="font-medium">{product.name}</span>
+                          <span className="text-slate-500 ml-2">× {product.quantity}</span>
+                          {product.specialHandling && (
+                            <div className="text-xs text-amber-600 mt-1 flex items-center">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                              </svg>
+                              {product.specialHandling}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                
-                {/* Status Timeline */}
+
+                {/* Patient & IVR */}
                 <div>
-                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Timeline</h4>
-                  <div className="space-y-1 text-xs">
-                    {order.processedDate && (
-                      <p className="text-slate-600">
-                        <span className="font-medium text-blue-600">Processed:</span> {order.processedDate}
-                      </p>
-                    )}
-                    {order.readyToShipDate && (
-                      <p className="text-slate-600">
-                        <span className="font-medium text-purple-600">Ready:</span> {order.readyToShipDate}
-                      </p>
-                    )}
-                    {order.shipDate && (
-                      <p className="text-slate-600">
-                        <span className="font-medium text-green-600">Shipped:</span> {order.shipDate}
-                      </p>
-                    )}
-                    {order.estimatedDelivery && (
-                      <p className="text-slate-600">
-                        <span className="font-medium text-slate-700">Est. Delivery:</span> {order.estimatedDelivery}
-                      </p>
-                    )}
-                    {order.deliveredDate && (
-                      <p className="text-slate-600">
-                        <span className="font-medium text-emerald-600">Delivered:</span> {order.deliveredDate}
-                      </p>
-                    )}
+                  <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Order Info</h4>
+                  <div className="space-y-1">
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">Patient:</span> {order.patient.initials} ({order.patient.patientId})
+                    </p>
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">IVR Reference:</span> {order.ivrReference}
+                    </p>
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">Ship to:</span> {order.shippingAddress.attention}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -643,11 +679,11 @@ const OrderFulfillmentDashboard: React.FC = () => {
           <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-12 text-center">
             <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
               <svg className="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-5M4 13h5m6 0h5" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
             <h3 className="text-xl font-bold text-slate-800 mb-2 leading-tight">No Orders Found</h3>
-            <p className="text-slate-600 text-base">No orders match your current search and filter criteria</p>
+            <p className="text-slate-600 text-base">No orders match your current filter criteria</p>
           </Card>
         )}
       </div>

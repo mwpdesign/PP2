@@ -34,7 +34,6 @@ const SegmentedIVRManagement = React.lazy(() => import('./components/distributor
 const NetworkManagement = React.lazy(() => import('./components/distributor/network/NetworkManagement'));
 const DistributorAnalytics = React.lazy(() => import('./components/distributor/analytics/DistributorAnalytics'));
 const OrderFulfillmentDashboard = React.lazy(() => import('./components/distributor/orders/OrderFulfillmentDashboard'));
-const OrderQueue = React.lazy(() => import('./components/distributor/orders/OrderQueue'));
 const ShippingLogistics = React.lazy(() => import('./components/distributor/orders/ShippingLogistics'));
 
 const App = () => {
@@ -76,8 +75,7 @@ const App = () => {
                   <Route path="dashboard" element={<MasterDistributorDashboard />} />
                   <Route path="ivr/management" element={<SegmentedIVRManagement />} />
                   <Route path="network" element={<NetworkManagement />} />
-                  <Route path="orders/fulfillment" element={<OrderFulfillmentDashboard />} />
-                  <Route path="orders/queue" element={<OrderQueue />} />
+                  <Route path="orders/management" element={<OrderFulfillmentDashboard />} />
                   <Route path="orders/shipping" element={<ShippingLogistics />} />
                   <Route path="orders/*" element={<OrderManagementPage />} />
                   <Route path="shipping/*" element={<ShippingPage />} />
