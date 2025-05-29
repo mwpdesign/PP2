@@ -16,6 +16,14 @@ import {
   ChartTypeRegistry,
 } from 'chart.js';
 
+// Destroy any existing chart instances before registering new ones
+Object.keys(ChartJS.instances || {}).forEach((key) => {
+  const instance = ChartJS.instances[key];
+  if (instance) {
+    instance.destroy();
+  }
+});
+
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -33,51 +41,8 @@ ChartJS.register(
 // Configure defaults
 ChartJS.defaults.responsive = true;
 ChartJS.defaults.maintainAspectRatio = false;
-
-// Set default font family and colors
 ChartJS.defaults.font.family = "'Inter', 'system-ui', '-apple-system', sans-serif";
 ChartJS.defaults.color = '#6B7280';
-
-// Configure default tooltips
-const tooltipDefaults: TooltipOptions<keyof ChartTypeRegistry> = {
-  enabled: true,
-  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-  titleColor: '#111827',
-  bodyColor: '#4B5563',
-  borderColor: '#E5E7EB',
-  borderWidth: 1,
-  padding: 12,
-  boxPadding: 4,
-  usePointStyle: true,
-  bodyFont: {
-    size: 13
-  },
-  titleFont: {
-    size: 14,
-    weight: 600
-  }
-};
-
-ChartJS.defaults.plugins.tooltip = tooltipDefaults;
-
-// Configure default legend
-const legendDefaults: LegendOptions<keyof ChartTypeRegistry> = {
-  display: true,
-  position: 'top',
-  labels: {
-    padding: 16,
-    usePointStyle: true,
-    pointStyle: 'circle',
-    boxWidth: 6,
-    boxHeight: 6,
-    color: '#6B7280',
-    font: {
-      size: 12
-    }
-  }
-};
-
-ChartJS.defaults.plugins.legend = legendDefaults;
 
 // Export the configured Chart instance
 export { ChartJS };
@@ -88,15 +53,20 @@ export const defaultOptions: ChartOptions<keyof ChartTypeRegistry> = {
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: 'top',
+      position: 'top' as const,
     },
+    tooltip: {
+      enabled: true,
+      mode: 'index' as const,
+      intersect: false,
+    }
   },
   scales: {
     y: {
       beginAtZero: true,
       grid: {
         color: '#F3F4F6',
-        borderWidth: 0
+        display: true
       },
       ticks: {
         padding: 8

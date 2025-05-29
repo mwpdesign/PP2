@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { chartColors } from '../ChartConfig';
@@ -9,6 +9,18 @@ interface OrderMetricsProps {
 }
 
 const OrderMetrics: React.FC<OrderMetricsProps> = ({ dateRange, doctorId }) => {
+  const chartRef = useRef<any>(null);
+
+  useEffect(() => {
+    console.log('OrderMetrics component mounting');
+    return () => {
+      console.log('OrderMetrics component unmounting - cleaning up chart');
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, []);
+
   const data: ChartData<'line'> = {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [
@@ -70,7 +82,7 @@ const OrderMetrics: React.FC<OrderMetricsProps> = ({ dateRange, doctorId }) => {
       </div>
 
       <div className="h-64">
-        <Line data={data} options={options} />
+        <Line ref={chartRef} data={data} options={options} />
       </div>
 
       {/* Key Metrics */}

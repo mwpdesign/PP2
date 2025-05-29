@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChartJS } from './ChartConfig';
 import DoctorDashboard from './DoctorDashboard';
 
@@ -8,6 +8,14 @@ if (!ChartJS.defaults.responsive) {
 }
 
 const Analytics: React.FC = () => {
+  useEffect(() => {
+    return () => {
+      // Cleanup all chart instances when Analytics unmounts
+      const charts = Object.values(ChartJS.instances);
+      charts.forEach(chart => chart?.destroy());
+    };
+  }, []);
+
   // TODO: Get actual doctor ID from auth context
   const mockDoctorId = 'DOC123';
 

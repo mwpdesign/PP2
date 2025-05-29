@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import OrderMetrics from './metrics/OrderMetrics';
 import PatientInsights from './metrics/PatientInsights';
 import IVRPerformance from './metrics/IVRPerformance';
 import ComplianceMetrics from './metrics/ComplianceMetrics';
 import { format } from 'date-fns';
+import { ChartJS } from './ChartConfig';
 
 interface DoctorDashboardProps {
   doctorId: string;
@@ -12,6 +13,22 @@ interface DoctorDashboardProps {
 const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ doctorId }) => {
   const [dateRange, setDateRange] = React.useState<'week' | 'month' | 'quarter'>('week');
   const [isLoading, setIsLoading] = React.useState(false);
+
+  useEffect(() => {
+    // Cleanup function to destroy all charts when dashboard unmounts or updates
+    const cleanup = () => {
+      console.log('DoctorDashboard cleanup - destroying all charts');
+      Object.values(ChartJS.instances).forEach(chart => {
+        if (chart) {
+          console.log('Destroying chart instance:', chart.id);
+          chart.destroy();
+        }
+      });
+    };
+
+    // Run cleanup when component unmounts or when dateRange changes
+    return cleanup;
+  }, [dateRange]);
 
   return (
     <div className="space-y-8">

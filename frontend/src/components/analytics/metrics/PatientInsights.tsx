@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Bar } from 'react-chartjs-2';
 
 interface PatientInsightsProps {
@@ -7,6 +7,18 @@ interface PatientInsightsProps {
 }
 
 const PatientInsights: React.FC<PatientInsightsProps> = ({ dateRange, doctorId }) => {
+  const chartRef = useRef<any>(null);
+
+  useEffect(() => {
+    console.log('PatientInsights component mounting');
+    return () => {
+      console.log('PatientInsights component unmounting - cleaning up chart');
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, []);
+
   // Mock data - replace with real API call
   const data = {
     labels: ['New Patients', 'Returning', 'Referred', 'High Priority'],
@@ -55,7 +67,7 @@ const PatientInsights: React.FC<PatientInsightsProps> = ({ dateRange, doctorId }
       </div>
 
       <div className="h-64">
-        <Bar data={data} options={options} />
+        <Bar ref={chartRef} data={data} options={options} />
       </div>
 
       {/* Key Metrics */}

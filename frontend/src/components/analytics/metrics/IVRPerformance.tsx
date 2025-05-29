@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 
 interface IVRPerformanceProps {
@@ -7,6 +7,18 @@ interface IVRPerformanceProps {
 }
 
 const IVRPerformance: React.FC<IVRPerformanceProps> = ({ dateRange, doctorId }) => {
+  const chartRef = useRef<any>(null);
+
+  useEffect(() => {
+    console.log('IVRPerformance component mounting');
+    return () => {
+      console.log('IVRPerformance component unmounting - cleaning up chart');
+      if (chartRef.current) {
+        chartRef.current.destroy();
+      }
+    };
+  }, []);
+
   // Mock data - replace with real API call
   const data = {
     labels: ['Successful', 'Needs Review', 'Failed'],
@@ -48,7 +60,7 @@ const IVRPerformance: React.FC<IVRPerformanceProps> = ({ dateRange, doctorId }) 
       </div>
 
       <div className="h-64 flex items-center justify-center relative">
-        <Doughnut data={data} options={options} />
+        <Doughnut ref={chartRef} data={data} options={options} />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
             <p className="text-3xl font-bold text-gray-900">75%</p>
