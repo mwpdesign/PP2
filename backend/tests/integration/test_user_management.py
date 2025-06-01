@@ -1,4 +1,5 @@
 """Integration tests for user management endpoints."""
+
 import pytest
 from uuid import uuid4
 from fastapi.testclient import TestClient
@@ -17,7 +18,7 @@ def test_organization(db: Session) -> Organization:
         name="Test Organization",
         description="Test organization for integration tests",
         settings={},
-        security_policy={}
+        security_policy={},
     )
     db.add(org)
     db.commit()
@@ -33,13 +34,13 @@ def test_role(db: Session, test_organization: Organization) -> Role:
         name="view_users",
         description="Can view users",
         resource_type="user",
-        action="read"
+        action="read",
     )
     create_users = Permission(
         name="create_users",
         description="Can create users",
         resource_type="user",
-        action="create"
+        action="create",
     )
     db.add_all([view_users, create_users])
     db.commit()
@@ -49,10 +50,7 @@ def test_role(db: Session, test_organization: Organization) -> Role:
         name="TEST_ROLE",
         description="Test role for integration tests",
         organization_id=test_organization.id,
-        permissions={
-            "view_users": True,
-            "create_users": True
-        }
+        permissions={"view_users": True, "create_users": True},
     )
     role.assigned_permissions.extend([view_users, create_users])
     db.add(role)
@@ -79,8 +77,8 @@ def admin_user(db: Session, test_organization: Organization) -> User:
             "create_roles": True,
             "update_roles": True,
             "view_all_roles": True,
-            "manage_all_organizations": True
-        }
+            "manage_all_organizations": True,
+        },
     )
     db.add(admin_role)
     db.commit()
@@ -94,7 +92,7 @@ def admin_user(db: Session, test_organization: Organization) -> User:
         role_id=admin_role.id,
         is_active=True,
         first_name="Admin",
-        last_name="User"
+        last_name="User",
     )
     db.add(admin)
     db.commit()
@@ -113,7 +111,7 @@ def test_create_user(
     db: Session,
     admin_token: str,
     test_organization: Organization,
-    test_role: Role
+    test_role: Role,
 ):
     """Test user creation endpoint."""
     response = client.post(
@@ -126,9 +124,9 @@ def test_create_user(
             "role_id": str(test_role.id),
             "first_name": "Test",
             "last_name": "User",
-            "mfa_enabled": False
+            "mfa_enabled": False,
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 201
@@ -141,10 +139,7 @@ def test_create_user(
 
 
 def test_user_login(
-    client: TestClient,
-    db: Session,
-    test_organization: Organization,
-    test_role: Role
+    client: TestClient, db: Session, test_organization: Organization, test_role: Role
 ):
     """Test user login endpoint."""
     # Create test user
@@ -155,18 +150,14 @@ def test_user_login(
         encrypted_password=get_password_hash(password),
         organization_id=test_organization.id,
         role_id=test_role.id,
-        is_active=True
+        is_active=True,
     )
     db.add(test_user)
     db.commit()
 
     # Test login
     response = client.post(
-        "/api/v1/users/login",
-        json={
-            "username": "login_test",
-            "password": password
-        }
+        "/api/v1/users/login", json={"username": "login_test", "password": password}
     )
 
     assert response.status_code == 200
@@ -183,7 +174,7 @@ def test_update_user(
     db: Session,
     admin_token: str,
     test_organization: Organization,
-    test_role: Role
+    test_role: Role,
 ):
     """Test user update endpoint."""
     # Create test user
@@ -193,7 +184,7 @@ def test_update_user(
         encrypted_password=get_password_hash("UpdatePassword123!"),
         organization_id=test_organization.id,
         role_id=test_role.id,
-        is_active=True
+        is_active=True,
     )
     db.add(test_user)
     db.commit()
@@ -205,9 +196,9 @@ def test_update_user(
         json={
             "email": "updated@example.com",
             "first_name": "Updated",
-            "last_name": "User"
+            "last_name": "User",
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 200
@@ -218,15 +209,11 @@ def test_update_user(
 
 
 def test_get_current_user(
-    client: TestClient,
-    db: Session,
-    admin_user: User,
-    admin_token: str
+    client: TestClient, db: Session, admin_user: User, admin_token: str
 ):
     """Test get current user endpoint."""
     response = client.get(
-        "/api/v1/users/me",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        "/api/v1/users/me", headers={"Authorization": f"Bearer {admin_token}"}
     )
 
     assert response.status_code == 200
@@ -241,7 +228,7 @@ def test_get_user_by_id(
     db: Session,
     admin_token: str,
     test_organization: Organization,
-    test_role: Role
+    test_role: Role,
 ):
     """Test get user by ID endpoint."""
     # Create test user
@@ -251,7 +238,7 @@ def test_get_user_by_id(
         encrypted_password=get_password_hash("GetPassword123!"),
         organization_id=test_organization.id,
         role_id=test_role.id,
-        is_active=True
+        is_active=True,
     )
     db.add(test_user)
     db.commit()
@@ -260,7 +247,7 @@ def test_get_user_by_id(
     # Test get user
     response = client.get(
         f"/api/v1/users/{test_user.id}",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 200
@@ -271,10 +258,7 @@ def test_get_user_by_id(
 
 
 def test_unauthorized_access(
-    client: TestClient,
-    db: Session,
-    test_organization: Organization,
-    test_role: Role
+    client: TestClient, db: Session, test_organization: Organization, test_role: Role
 ):
     """Test unauthorized access to protected endpoints."""
     # Try to create user without token
@@ -285,8 +269,8 @@ def test_unauthorized_access(
             "email": "unauthorized@example.com",
             "password": "Password123!",
             "organization_id": str(test_organization.id),
-            "role_id": str(test_role.id)
-        }
+            "role_id": str(test_role.id),
+        },
     )
     assert response.status_code == 401
 
@@ -295,7 +279,7 @@ def test_unauthorized_access(
         name="REGULAR",
         description="Regular user role",
         organization_id=test_organization.id,
-        permissions={"view_users": True}
+        permissions={"view_users": True},
     )
     db.add(regular_role)
     db.commit()
@@ -306,7 +290,7 @@ def test_unauthorized_access(
         encrypted_password=get_password_hash("RegularPassword123!"),
         organization_id=test_organization.id,
         role_id=regular_role.id,
-        is_active=True
+        is_active=True,
     )
     db.add(regular_user)
     db.commit()
@@ -322,9 +306,9 @@ def test_unauthorized_access(
             "email": "unauthorized@example.com",
             "password": "Password123!",
             "organization_id": str(test_organization.id),
-            "role_id": str(test_role.id)
+            "role_id": str(test_role.id),
         },
-        headers={"Authorization": f"Bearer {regular_token}"}
+        headers={"Authorization": f"Bearer {regular_token}"},
     )
     assert response.status_code == 403
 
@@ -333,7 +317,7 @@ def test_invalid_input(
     client: TestClient,
     admin_token: str,
     test_organization: Organization,
-    test_role: Role
+    test_role: Role,
 ):
     """Test input validation."""
     # Test invalid email
@@ -344,9 +328,9 @@ def test_invalid_input(
             "email": "not_an_email",
             "password": "Password123!",
             "organization_id": str(test_organization.id),
-            "role_id": str(test_role.id)
+            "role_id": str(test_role.id),
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 422
 
@@ -358,9 +342,9 @@ def test_invalid_input(
             "email": "invalid@example.com",
             "password": "weak",
             "organization_id": str(test_organization.id),
-            "role_id": str(test_role.id)
+            "role_id": str(test_role.id),
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 400
 
@@ -372,8 +356,8 @@ def test_invalid_input(
             "email": "invalid@example.com",
             "password": "Password123!",
             "organization_id": "not-a-uuid",
-            "role_id": str(test_role.id)
+            "role_id": str(test_role.id),
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 422

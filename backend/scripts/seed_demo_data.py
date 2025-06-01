@@ -17,6 +17,7 @@ from app.models.patient import Patient
 from app.models.provider import Provider
 from app.models.user import User
 
+
 def create_demo_users(session):
     """Create demo users with different roles"""
     users = [
@@ -25,22 +26,22 @@ def create_demo_users(session):
             "password": "admin123",
             "role": "admin",
             "first_name": "Admin",
-            "last_name": "User"
+            "last_name": "User",
         },
         {
             "email": "provider@example.com",
             "password": "provider123",
             "role": "provider",
             "first_name": "Doctor",
-            "last_name": "Smith"
+            "last_name": "Smith",
         },
         {
             "email": "patient@example.com",
             "password": "patient123",
             "role": "patient",
             "first_name": "John",
-            "last_name": "Doe"
-        }
+            "last_name": "Doe",
+        },
     ]
 
     created_users = {}
@@ -55,13 +56,14 @@ def create_demo_users(session):
             role=user_data["role"],
             first_name=user_data["first_name"],
             last_name=user_data["last_name"],
-            is_active=True
+            is_active=True,
         )
         session.add(user)
         session.flush()
         created_users[user_data["role"]] = user
 
     return created_users
+
 
 def create_demo_provider(session, provider_user):
     """Create a demo provider"""
@@ -74,10 +76,11 @@ def create_demo_provider(session, provider_user):
         city="San Francisco",
         state="CA",
         zip_code="94143",
-        phone="(415) 555-0123"
+        phone="(415) 555-0123",
     )
     session.add(provider)
     return provider
+
 
 def create_demo_patient(session, patient_user, provider):
     """Create a demo patient"""
@@ -93,10 +96,11 @@ def create_demo_patient(session, patient_user, provider):
         zip_code="94110",
         phone="(415) 555-0456",
         emergency_contact="Jane Doe",
-        emergency_phone="(415) 555-0789"
+        emergency_phone="(415) 555-0789",
     )
     session.add(patient)
     return patient
+
 
 def create_demo_orders(session, patient, provider):
     """Create demo orders"""
@@ -104,19 +108,20 @@ def create_demo_orders(session, patient, provider):
     orders = []
 
     for i, status in enumerate(statuses):
-        order_date = datetime.now() - timedelta(days=i*2)
+        order_date = datetime.now() - timedelta(days=i * 2)
         order = Order(
             patient_id=patient.id,
             provider_id=provider.id,
             status=status,
             prescription_details=f"Demo Prescription #{i+1}",
             created_at=order_date,
-            updated_at=order_date
+            updated_at=order_date,
         )
         session.add(order)
         orders.append(order)
 
     return orders
+
 
 def create_demo_ivr_calls(session, patient, orders):
     """Create demo IVR calls"""
@@ -130,14 +135,17 @@ def create_demo_ivr_calls(session, patient, orders):
             duration=120,
             recording_url=f"https://demo-recordings.example.com/call_{i+1}.mp3",
             created_at=call_date,
-            updated_at=call_date
+            updated_at=call_date,
         )
         session.add(call)
+
 
 def main():
     """Main function to seed demo data"""
     # Get database URL from environment or use default
-    database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/healthcare_ivr")
+    database_url = os.getenv(
+        "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/healthcare_ivr"
+    )
 
     # Create database engine and session
     engine = create_engine(database_url)
@@ -169,6 +177,7 @@ def main():
         raise
     finally:
         session.close()
+
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,7 @@
 """
 Order management service with HIPAA-compliant processing.
 """
+
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 from uuid import UUID, uuid4
@@ -8,22 +9,23 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from fastapi import HTTPException
 
-from app.api.orders.models import (
-    Order, OrderItem, OrderStatus, OrderApproval
-)
+from app.api.orders.models import Order, OrderItem, OrderStatus, OrderApproval
 from app.api.orders.schemas import (
-    OrderCreate, OrderUpdate, OrderItemCreate, OrderItemUpdate,
-    OrderStatusCreate, OrderApprovalCreate, OrderApprovalUpdate,
-    OrderSearchParams
+    OrderCreate,
+    OrderUpdate,
+    OrderItemCreate,
+    OrderItemUpdate,
+    OrderStatusCreate,
+    OrderApprovalCreate,
+    OrderApprovalUpdate,
+    OrderSearchParams,
 )
 from app.services.insurance_verification import InsuranceVerificationService
 from app.services.inventory_service import InventoryService
 from app.services.shipping_service import ShippingService, Package, Address
 from app.services.ivr_service import IVRService
 from app.core.security import verify_territory_access
-from app.core.exceptions import (
-    NotFoundException, ValidationError, UnauthorizedError
-)
+from app.core.exceptions import NotFoundException, ValidationError, UnauthorizedError
 
 
 class OrderService:
@@ -45,10 +47,8 @@ class OrderService:
         if not ivr_session:
             raise NotFoundException("IVR session not found")
 
-        if ivr_session.status != 'approved':
-            raise ValidationError(
-                "Cannot create order from unapproved IVR session"
-            )
+        if ivr_session.status != "approved":
+            raise ValidationError("Cannot create order from unapproved IVR session")
 
         # Create order data from IVR session
         order_data = OrderCreate(
@@ -63,9 +63,10 @@ class OrderService:
                     product_id=item.product_id,
                     quantity=item.quantity,
                     notes=item.notes,
-                    insurance_coverage=item.insurance_coverage
-                ) for item in ivr_session.items
-            ]
+                    insurance_coverage=item.insurance_coverage,
+                )
+                for item in ivr_session.items
+            ],
         )
 
         # Create the order
@@ -74,18 +75,12 @@ class OrderService:
     async def create_order(self, order_data: OrderCreate) -> Order:
         """Create a new order with items."""
         # Verify territory access
-        if not verify_territory_access(
-            self.current_user,
-            order_data.territory_id
-        ):
-            raise UnauthorizedError(
-                "No access to specified territory"
-            )
+        if not verify_territory_access(self.current_user, order_data.territory_id):
+            raise UnauthorizedError("No access to specified territory")
 
         # Generate unique order number
         order_number = (
-            f"ORD-{datetime.utcnow().strftime('%Y%m%d')}-"
-            f"{uuid4().hex[:8]}"
+            f"ORD-{datetime.utcnow().strftime('%Y%m%d')}-" f"{uuid4().hex[:8]}"
         )
 
         # Create order
@@ -98,7 +93,7 @@ class OrderService:
             notes=order_data.notes,
             insurance_data=order_data.insurance_data,
             payment_info=order_data.payment_info,
-            delivery_info=order_data.delivery_info
+            delivery_info=order_data.delivery_info,
         )
         self.db.add(order)
 
@@ -107,9 +102,7 @@ class OrderService:
         for item_data in order_data.items:
             # Verify product availability
             if not await self.inventory_service.check_availability(
-                item_data.product_id,
-                order_data.territory_id,
-                item_data.quantity
+                item_data.product_id, order_data.territory_id, item_data.quantity
             ):
                 raise ValidationError(
                     f"Product {item_data.product_id} not available "
@@ -118,8 +111,7 @@ class OrderService:
 
             # Get product pricing
             product_price = await self.inventory_service.get_product_price(
-                item_data.product_id,
-                order_data.territory_id
+                item_data.product_id, order_data.territory_id
             )
 
             # Create order item
@@ -130,7 +122,7 @@ class OrderService:
                 unit_price=product_price,
                 total_price=product_price * item_data.quantity,
                 insurance_coverage=item_data.insurance_coverage,
-                notes=item_data.notes
+                notes=item_data.notes,
             )
             self.db.add(item)
             total_amount += item.total_price
@@ -141,10 +133,10 @@ class OrderService:
         # Create initial status
         status = OrderStatus(
             order=order,
-            status='pending',
-            changed_by=self.current_user['id'],
+            status="pending",
+            changed_by=self.current_user["id"],
             reason="Order created",
-            metadata={'created_by': self.current_user['id']}
+            metadata={"created_by": self.current_user["id"]},
         )
         self.db.add(status)
 
@@ -153,13 +145,13 @@ class OrderService:
             OrderApproval(
                 order=order,
                 approver_id=order_data.provider_id,
-                approval_type='provider'
+                approval_type="provider",
             ),
             OrderApproval(
                 order=order,
-                approver_id=self.current_user['id'],
-                approval_type='pharmacy'
-            )
+                approver_id=self.current_user["id"],
+                approval_type="pharmacy",
+            ),
         ]
         self.db.add_all(approvals)
 
@@ -171,15 +163,10 @@ class OrderService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to create order: {str(e)}"
+                status_code=500, detail=f"Failed to create order: {str(e)}"
             )
 
-    async def update_order(
-        self,
-        order_id: UUID,
-        order_data: OrderUpdate
-    ) -> Order:
+    async def update_order(self, order_id: UUID, order_data: OrderUpdate) -> Order:
         """Update an existing order."""
         # Get order
         order = self.db.query(Order).filter(Order.id == order_id).first()
@@ -187,10 +174,7 @@ class OrderService:
             raise NotFoundException("Order not found")
 
         # Verify territory access
-        if not verify_territory_access(
-            self.current_user,
-            order.territory_id
-        ):
+        if not verify_territory_access(self.current_user, order.territory_id):
             raise UnauthorizedError("No access to order's territory")
 
         # Update fields
@@ -208,9 +192,8 @@ class OrderService:
             await self.update_order_status(
                 order_id,
                 OrderStatusCreate(
-                    status=order_data.status,
-                    reason="Status updated via order update"
-                )
+                    status=order_data.status, reason="Status updated via order update"
+                ),
             )
 
         # Commit changes
@@ -221,14 +204,11 @@ class OrderService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to update order: {str(e)}"
+                status_code=500, detail=f"Failed to update order: {str(e)}"
             )
 
     async def update_order_status(
-        self,
-        order_id: UUID,
-        status_data: OrderStatusCreate
+        self, order_id: UUID, status_data: OrderStatusCreate
     ) -> OrderStatus:
         """Update order status with audit trail."""
         # Get order
@@ -237,10 +217,7 @@ class OrderService:
             raise NotFoundException("Order not found")
 
         # Verify territory access
-        if not verify_territory_access(
-            self.current_user,
-            order.territory_id
-        ):
+        if not verify_territory_access(self.current_user, order.territory_id):
             raise UnauthorizedError("No access to order's territory")
 
         # Validate status transition
@@ -250,9 +227,9 @@ class OrderService:
         status = OrderStatus(
             order=order,
             status=status_data.status,
-            changed_by=self.current_user['id'],
+            changed_by=self.current_user["id"],
             reason=status_data.reason,
-            metadata=status_data.metadata
+            metadata=status_data.metadata,
         )
         self.db.add(status)
 
@@ -270,42 +247,34 @@ class OrderService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to update order status: {str(e)}"
+                status_code=500, detail=f"Failed to update order status: {str(e)}"
             )
 
     async def update_order_approval(
-        self,
-        order_id: UUID,
-        approval_id: UUID,
-        approval_data: OrderApprovalUpdate
+        self, order_id: UUID, approval_id: UUID, approval_data: OrderApprovalUpdate
     ) -> OrderApproval:
         """Update order approval status."""
         # Get approval
-        approval = self.db.query(OrderApproval).filter(
-            and_(
-                OrderApproval.id == approval_id,
-                OrderApproval.order_id == order_id
+        approval = (
+            self.db.query(OrderApproval)
+            .filter(
+                and_(
+                    OrderApproval.id == approval_id, OrderApproval.order_id == order_id
+                )
             )
-        ).first()
+            .first()
+        )
         if not approval:
             raise NotFoundException("Approval not found")
 
         # Verify territory access
         order = approval.order
-        if not verify_territory_access(
-            self.current_user,
-            order.territory_id
-        ):
-            raise UnauthorizedError(
-                "No access to order's territory"
-            )
+        if not verify_territory_access(self.current_user, order.territory_id):
+            raise UnauthorizedError("No access to order's territory")
 
         # Verify approver
-        if approval.approver_id != self.current_user['id']:
-            raise UnauthorizedError(
-                "Not authorized to approve/reject"
-            )
+        if approval.approver_id != self.current_user["id"]:
+            raise UnauthorizedError("Not authorized to approve/reject")
 
         # Update approval
         approval.status = approval_data.status
@@ -313,7 +282,7 @@ class OrderService:
         approval.metadata = approval_data.metadata
 
         # Check if all approvals are complete
-        if approval_data.status == 'approved':
+        if approval_data.status == "approved":
             await self._check_all_approvals(order)
 
         # Commit changes
@@ -324,14 +293,10 @@ class OrderService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to update approval: {str(e)}"
+                status_code=500, detail=f"Failed to update approval: {str(e)}"
             )
 
-    async def search_orders(
-        self,
-        search_params: OrderSearchParams
-    ) -> Dict[str, Any]:
+    async def search_orders(self, search_params: OrderSearchParams) -> Dict[str, Any]:
         """Search orders with filtering and pagination."""
         # Base query
         query = self.db.query(Order)
@@ -339,8 +304,7 @@ class OrderService:
         # Apply territory access filter
         if search_params.territory_id:
             if not verify_territory_access(
-                self.current_user,
-                search_params.territory_id
+                self.current_user, search_params.territory_id
             ):
                 raise UnauthorizedError("No access to specified territory")
             query = query.filter(Order.territory_id == search_params.territory_id)
@@ -365,14 +329,10 @@ class OrderService:
         total = query.count()
 
         # Apply sorting
-        if search_params.sort_order == 'desc':
-            query = query.order_by(
-                getattr(Order, search_params.sort_by).desc()
-            )
+        if search_params.sort_order == "desc":
+            query = query.order_by(getattr(Order, search_params.sort_by).desc())
         else:
-            query = query.order_by(
-                getattr(Order, search_params.sort_by).asc()
-            )
+            query = query.order_by(getattr(Order, search_params.sort_by).asc())
 
         # Apply pagination
         query = query.offset(search_params.skip).limit(search_params.limit)
@@ -381,25 +341,21 @@ class OrderService:
         orders = query.all()
 
         return {
-            'items': orders,
-            'total': total,
-            'skip': search_params.skip,
-            'limit': search_params.limit
+            "items": orders,
+            "total": total,
+            "skip": search_params.skip,
+            "limit": search_params.limit,
         }
 
-    async def _validate_status_transition(
-        self,
-        order: Order,
-        new_status: str
-    ) -> None:
+    async def _validate_status_transition(self, order: Order, new_status: str) -> None:
         """Validate if status transition is allowed."""
         valid_transitions = {
-            'pending': ['verified', 'cancelled'],
-            'verified': ['approved', 'cancelled'],
-            'approved': ['processing', 'cancelled'],
-            'processing': ['completed', 'cancelled'],
-            'completed': [],
-            'cancelled': []
+            "pending": ["verified", "cancelled"],
+            "verified": ["approved", "cancelled"],
+            "approved": ["processing", "cancelled"],
+            "processing": ["completed", "cancelled"],
+            "completed": [],
+            "cancelled": [],
         }
 
         if new_status not in valid_transitions.get(order.status, []):
@@ -407,23 +363,19 @@ class OrderService:
                 f"Invalid status transition from {order.status} to {new_status}"
             )
 
-    async def _handle_status_change(
-        self,
-        order: Order,
-        new_status: str
-    ) -> None:
+    async def _handle_status_change(self, order: Order, new_status: str) -> None:
         """Handle side effects of status changes."""
-        if new_status == 'verified':
+        if new_status == "verified":
             # Verify insurance coverage
             await self._verify_insurance(order)
-        elif new_status == 'approved':
+        elif new_status == "approved":
             # Reserve inventory and create shipping label
             await self._reserve_inventory(order)
             await self._create_shipping_label(order)
-        elif new_status == 'completed':
+        elif new_status == "completed":
             # Update inventory and mark completion
             await self._complete_order(order)
-        elif new_status == 'cancelled':
+        elif new_status == "cancelled":
             # Release inventory and handle cancellation
             await self._cancel_order(order)
 
@@ -438,28 +390,25 @@ class OrderService:
                 order.insurance_data,
                 item.product_id,
                 item.quantity,
-                self.current_user['id'],
-                order.territory_id
+                self.current_user["id"],
+                order.territory_id,
             )
 
-            if verification['status'] != 'verified':
-                error_msg = verification.get('error', 'Unknown error')
+            if verification["status"] != "verified":
+                error_msg = verification.get("error", "Unknown error")
                 raise ValidationError(
                     f"Insurance verification failed for item "
                     f"{item.product_id}: {error_msg}"
                 )
 
             # Update item with coverage details
-            item.insurance_coverage = verification['coverage']
+            item.insurance_coverage = verification["coverage"]
 
     async def _reserve_inventory(self, order: Order) -> None:
         """Reserve inventory for order items."""
         for item in order.items:
             success = await self.inventory_service.reserve_inventory(
-                item.product_id,
-                order.territory_id,
-                item.quantity,
-                order.id
+                item.product_id, order.territory_id, item.quantity, order.id
             )
             if not success:
                 raise ValidationError(
@@ -471,10 +420,7 @@ class OrderService:
         # Update inventory
         for item in order.items:
             await self.inventory_service.complete_reservation(
-                item.product_id,
-                order.territory_id,
-                item.quantity,
-                order.id
+                item.product_id, order.territory_id, item.quantity, order.id
             )
 
         # Set completion date
@@ -485,26 +431,20 @@ class OrderService:
         # Release reserved inventory
         for item in order.items:
             await self.inventory_service.release_reservation(
-                item.product_id,
-                order.territory_id,
-                item.quantity,
-                order.id
+                item.product_id, order.territory_id, item.quantity, order.id
             )
 
     async def _check_all_approvals(self, order: Order) -> None:
         """Check if all approvals are complete and update order status."""
-        pending_approvals = [
-            a for a in order.approvals if a.status == 'pending'
-        ]
+        pending_approvals = [a for a in order.approvals if a.status == "pending"]
 
         if not pending_approvals:
             # All approvals complete, move to processing
             await self.update_order_status(
                 order.id,
                 OrderStatusCreate(
-                    status='processing',
-                    reason="All approvals completed"
-                )
+                    status="processing", reason="All approvals completed"
+                ),
             )
 
     async def _create_shipping_label(self, order: Order) -> None:
@@ -515,25 +455,20 @@ class OrderService:
         try:
             # Create package information
             package = Package(
-                type='box',
+                type="box",
                 # Estimated weight
                 weight=sum(item.quantity * 0.5 for item in order.items),
                 requires_signature=True,
                 is_temperature_controlled=any(
-                    item.product.requires_temperature_control
-                    for item in order.items
-                )
+                    item.product.requires_temperature_control for item in order.items
+                ),
             )
 
             # Get shipping rates
             rates = await self.shipping_service.get_rates(
-                from_address=Address(
-                    **order.delivery_info['from_address']
-                ),
-                to_address=Address(
-                    **order.delivery_info['to_address']
-                ),
-                package=package
+                from_address=Address(**order.delivery_info["from_address"]),
+                to_address=Address(**order.delivery_info["to_address"]),
+                package=package,
             )
 
             # Select best rate
@@ -541,28 +476,22 @@ class OrderService:
 
             # Create shipping label
             label = await self.shipping_service.create_label(
-                from_address=Address(
-                    **order.delivery_info['from_address']
-                ),
-                to_address=Address(
-                    **order.delivery_info['to_address']
-                ),
+                from_address=Address(**order.delivery_info["from_address"]),
+                to_address=Address(**order.delivery_info["to_address"]),
                 package=package,
                 service_type=best_rate.service_type,
                 carrier=best_rate.carrier,
-                reference=order.order_number
+                reference=order.order_number,
             )
 
             # Update order with shipping information
             order.shipping_info = {
-                'carrier': label.carrier,
-                'tracking_number': label.tracking_number,
-                'label_url': label.label_url,
-                'rate': best_rate.rate,
-                'service_type': best_rate.service_type
+                "carrier": label.carrier,
+                "tracking_number": label.tracking_number,
+                "label_url": label.label_url,
+                "rate": best_rate.rate,
+                "service_type": best_rate.service_type,
             }
 
         except Exception as e:
-            raise ValidationError(
-                f"Failed to create shipping label: {str(e)}"
-            )
+            raise ValidationError(f"Failed to create shipping label: {str(e)}")

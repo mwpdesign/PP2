@@ -15,19 +15,24 @@ from app.schemas.notification import NotificationCreate, NotificationStatus
 
 logger = logging.getLogger(__name__)
 
+
 class NotificationChannel(str, Enum):
     """Supported notification channels."""
+
     EMAIL = "email"
     SMS = "sms"
     IN_APP = "in_app"
     PUSH = "push"
 
+
 class NotificationPriority(str, Enum):
     """Notification priority levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     URGENT = "urgent"
+
 
 class NotificationService:
     """HIPAA-compliant multi-channel notification service."""
@@ -40,7 +45,7 @@ class NotificationService:
 
         # Initialize channel-specific services
         self.email_service = None  # Will be initialized on demand
-        self.sms_service = None    # Will be initialized on demand
+        self.sms_service = None  # Will be initialized on demand
 
         # PHI filtering patterns - regularly updated from configuration
         self.phi_patterns = self._load_phi_patterns()
@@ -54,16 +59,14 @@ class NotificationService:
         return {
             "patient_identifiers": [
                 r"\b\d{3}-\d{2}-\d{4}\b",  # SSN
-                r"\b\d{10}\b",             # MRN
-                r"\b[A-Z]{2}\d{6}\b"       # Insurance ID
+                r"\b\d{10}\b",  # MRN
+                r"\b[A-Z]{2}\d{6}\b",  # Insurance ID
             ],
             "contact_info": [
                 r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",  # Phone numbers
-                r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"  # Email
+                r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",  # Email
             ],
-            "dates": [
-                r"\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b"  # Dates
-            ]
+            "dates": [r"\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b"],  # Dates
         }
 
     def filter_phi(self, content: str) -> str:
@@ -79,6 +82,7 @@ class NotificationService:
     def _redact_pattern(self, content: str, pattern: str) -> str:
         """Redact specific pattern from content."""
         import re
+
         return re.sub(pattern, "[REDACTED]", content)
 
     async def send_notification(
@@ -87,7 +91,7 @@ class NotificationService:
         channel: NotificationChannel,
         priority: NotificationPriority = NotificationPriority.MEDIUM,
         recipient_id: str = None,
-        metadata: Dict = None
+        metadata: Dict = None,
     ) -> NotificationModel:
         """Send notification through specified channel."""
         try:
@@ -96,10 +100,9 @@ class NotificationService:
 
             # Encrypt sensitive content
             encrypted_content = self.encryption_service.encrypt(
-                json.dumps({
-                    "original": notification.content,
-                    "filtered": filtered_content
-                })
+                json.dumps(
+                    {"original": notification.content, "filtered": filtered_content}
+                )
             )
 
             # Create notification record
@@ -110,7 +113,7 @@ class NotificationService:
                 content_encrypted=encrypted_content,
                 status=NotificationStatus.PENDING,
                 metadata=metadata,
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow(),
             )
 
             # Save to database
@@ -119,10 +122,7 @@ class NotificationService:
 
             # Send through appropriate channel
             success = await self._send_through_channel(
-                channel,
-                filtered_content,
-                recipient_id,
-                metadata
+                channel, filtered_content, recipient_id, metadata
             )
 
             if success:
@@ -145,18 +145,20 @@ class NotificationService:
         channel: NotificationChannel,
         content: str,
         recipient_id: str,
-        metadata: Dict
+        metadata: Dict,
     ) -> bool:
         """Send notification through specific channel."""
         if channel == NotificationChannel.EMAIL:
             if not self.email_service:
                 from app.services.ses_service import SESService
+
                 self.email_service = SESService()
             return await self.email_service.send_email(recipient_id, content, metadata)
 
         elif channel == NotificationChannel.SMS:
             if not self.sms_service:
                 from app.services.sms_service import SMSService
+
                 self.sms_service = SMSService()
             return await self.sms_service.send_sms(recipient_id, content, metadata)
 
@@ -186,9 +188,11 @@ class NotificationService:
 
     async def get_notification_status(self, notification_id: str) -> NotificationStatus:
         """Get current status of a notification."""
-        notification = self.db.query(NotificationModel).filter(
-            NotificationModel.id == notification_id
-        ).first()
+        notification = (
+            self.db.query(NotificationModel)
+            .filter(NotificationModel.id == notification_id)
+            .first()
+        )
 
         if not notification:
             raise ValueError(f"Notification {notification_id} not found")
@@ -196,15 +200,14 @@ class NotificationService:
         return notification.status
 
     async def update_delivery_status(
-        self,
-        notification_id: str,
-        status: NotificationStatus,
-        metadata: Dict = None
+        self, notification_id: str, status: NotificationStatus, metadata: Dict = None
     ):
         """Update delivery status of a notification."""
-        notification = self.db.query(NotificationModel).filter(
-            NotificationModel.id == notification_id
-        ).first()
+        notification = (
+            self.db.query(NotificationModel)
+            .filter(NotificationModel.id == notification_id)
+            .first()
+        )
 
         if not notification:
             raise ValueError(f"Notification {notification_id} not found")
@@ -224,7 +227,7 @@ class NotificationService:
         channel: Optional[NotificationChannel] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        status: Optional[NotificationStatus] = None
+        status: Optional[NotificationStatus] = None,
     ) -> List[NotificationModel]:
         """Get notification history for a recipient."""
         query = self.db.query(NotificationModel).filter(

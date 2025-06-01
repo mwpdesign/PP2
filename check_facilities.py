@@ -1,1 +1,0 @@
-import asyncio; from app.core.database import get_db; from sqlalchemy import select; from app.models.facility import Facility; async def check_facilities(): async for db in get_db(): result = await db.execute(select(Facility)); facilities = result.scalars().all(); for f in facilities: print(f"ID: {f.id}, Name: {f.name}, NPI: {f.npi}"); break; asyncio.run(check_facilities())

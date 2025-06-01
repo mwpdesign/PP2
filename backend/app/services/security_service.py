@@ -1,6 +1,7 @@
 """
 Security service for handling authentication and authorization.
 """
+
 from typing import Dict, Optional, Any
 from datetime import datetime, timedelta
 import logging
@@ -26,9 +27,7 @@ class SecurityService:
         self.secret_key = settings.SECRET_KEY
 
     def create_access_token(
-        self,
-        data: Dict,
-        expires_delta: Optional[timedelta] = None
+        self, data: Dict, expires_delta: Optional[timedelta] = None
     ) -> str:
         """Create JWT access token."""
         to_encode = data.copy()
@@ -37,21 +36,13 @@ class SecurityService:
         else:
             expire = datetime.utcnow() + timedelta(minutes=15)
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(
-            to_encode,
-            self.secret_key,
-            algorithm=self.algorithm
-        )
+        encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return encoded_jwt
 
     def verify_token(self, token: str) -> Dict:
         """Verify JWT token."""
         try:
-            payload = jwt.decode(
-                token,
-                self.secret_key,
-                algorithms=[self.algorithm]
-            )
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             return payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(
@@ -79,10 +70,7 @@ class SecurityService:
         return True
 
     async def authenticate_user(
-        self,
-        db: AsyncSession,
-        email: str,
-        password: str
+        self, db: AsyncSession, email: str, password: str
     ) -> Optional[Dict[str, Any]]:
         """Authenticate user with email and password.
 
@@ -120,7 +108,7 @@ class SecurityService:
                 "role_id": str(user.role_id),
                 "organization_id": str(user.organization_id),
                 "is_active": user.is_active,
-                "is_superuser": user.is_superuser
+                "is_superuser": user.is_superuser,
             }
 
         except Exception as e:
@@ -128,4 +116,4 @@ class SecurityService:
             return None
 
 
-security_service = SecurityService() 
+security_service = SecurityService()

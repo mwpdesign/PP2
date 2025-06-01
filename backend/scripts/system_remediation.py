@@ -14,15 +14,12 @@ from pathlib import Path
 
 class RemediationAction:
     """Base class for remediation actions"""
+
     def __init__(self, name: str, component: str):
         self.name = name
         self.component = component
         self.logger = logging.getLogger(f"remediation.{name}")
-        self.result = {
-            "status": "UNKNOWN",
-            "details": None,
-            "timestamp": None
-        }
+        self.result = {"status": "UNKNOWN", "details": None, "timestamp": None}
 
     def execute(self) -> Dict[str, Any]:
         """Execute the remediation action"""
@@ -31,11 +28,9 @@ class RemediationAction:
             self._perform_remediation()
             return self.result
         except Exception as e:
-            self.result.update({
-                "status": "FAIL",
-                "error": str(e),
-                "error_type": e.__class__.__name__
-            })
+            self.result.update(
+                {"status": "FAIL", "error": str(e), "error_type": e.__class__.__name__}
+            )
             return self.result
 
     def _perform_remediation(self):
@@ -45,6 +40,7 @@ class RemediationAction:
 
 class ServiceRestartAction(RemediationAction):
     """Restart a system service"""
+
     def __init__(self, name: str, service_name: str):
         super().__init__(name, "service")
         self.service_name = service_name
@@ -56,7 +52,7 @@ class ServiceRestartAction(RemediationAction):
                 ["docker-compose", "stop", self.service_name],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             # Start service
@@ -64,21 +60,22 @@ class ServiceRestartAction(RemediationAction):
                 ["docker-compose", "up", "-d", self.service_name],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
-            self.result.update({
-                "status": "PASS",
-                "details": f"Successfully restarted {self.service_name}"
-            })
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(
-                f"Failed to restart {self.service_name}: {e.stderr}"
+            self.result.update(
+                {
+                    "status": "PASS",
+                    "details": f"Successfully restarted {self.service_name}",
+                }
             )
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to restart {self.service_name}: {e.stderr}")
 
 
 class DatabaseSchemaAction(RemediationAction):
     """Fix database schema issues"""
+
     def __init__(self, name: str, connection_string: str):
         super().__init__(name, "database")
         self.connection_string = connection_string
@@ -93,24 +90,28 @@ class DatabaseSchemaAction(RemediationAction):
                 ["alembic", "upgrade", "head"],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             # Verify tables
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT table_name
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
-            """)
+            """
+            )
             existing_tables = {row[0] for row in cur.fetchall()}
 
-            self.result.update({
-                "status": "PASS",
-                "details": {
-                    "action": "schema_update",
-                    "tables_present": list(existing_tables)
+            self.result.update(
+                {
+                    "status": "PASS",
+                    "details": {
+                        "action": "schema_update",
+                        "tables_present": list(existing_tables),
+                    },
                 }
-            })
+            )
 
         except (subprocess.CalledProcessError, psycopg2.Error) as e:
             raise RuntimeError(f"Failed to update database schema: {str(e)}")
@@ -120,6 +121,7 @@ class DatabaseSchemaAction(RemediationAction):
 
 class RedisCleanupAction(RemediationAction):
     """Clean up Redis cache"""
+
     def __init__(self, name: str, redis_url: str):
         super().__init__(name, "redis")
         self.redis_url = redis_url
@@ -136,14 +138,16 @@ class RedisCleanupAction(RemediationAction):
             # Get final stats
             final_keys = client.dbsize()
 
-            self.result.update({
-                "status": "PASS",
-                "details": {
-                    "initial_keys": initial_keys,
-                    "final_keys": final_keys,
-                    "keys_removed": initial_keys - final_keys
+            self.result.update(
+                {
+                    "status": "PASS",
+                    "details": {
+                        "initial_keys": initial_keys,
+                        "final_keys": final_keys,
+                        "keys_removed": initial_keys - final_keys,
+                    },
                 }
-            })
+            )
 
         except redis.RedisError as e:
             raise RuntimeError(f"Failed to clean Redis cache: {str(e)}")
@@ -153,6 +157,7 @@ class RedisCleanupAction(RemediationAction):
 
 class SystemRemediationEngine:
     """Automated system remediation engine"""
+
     def __init__(self, environment: str = "production"):
         self.environment = environment
         self.logger = logging.getLogger("system_remediation")
@@ -160,7 +165,7 @@ class SystemRemediationEngine:
             "timestamp": datetime.now().isoformat(),
             "environment": environment,
             "overall_status": "UNKNOWN",
-            "actions": {}
+            "actions": {},
         }
 
         # Configure logging
@@ -175,9 +180,7 @@ class SystemRemediationEngine:
 
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         )
 
         self.logger.addHandler(file_handler)
@@ -218,19 +221,14 @@ class SystemRemediationEngine:
         # Define remediation actions based on component type
         if component in ["Frontend", "Backend API"]:
             action = ServiceRestartAction(
-                f"restart_{component.lower()}",
-                component.lower().replace(" ", "_")
+                f"restart_{component.lower()}", component.lower().replace(" ", "_")
             )
         elif component == "Database":
             action = DatabaseSchemaAction(
-                "fix_database_schema",
-                "postgresql://localhost:5432/healthcare_ivr"
+                "fix_database_schema", "postgresql://localhost:5432/healthcare_ivr"
             )
         elif component == "Redis":
-            action = RedisCleanupAction(
-                "clean_redis_cache",
-                "redis://localhost:6379"
-            )
+            action = RedisCleanupAction("clean_redis_cache", "redis://localhost:6379")
         else:
             self.logger.warning(
                 f"No remediation action defined for component: {component}"

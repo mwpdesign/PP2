@@ -1,6 +1,7 @@
 """
 Role-based access control models.
 """
+
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID, uuid4
@@ -43,15 +44,8 @@ class Role(Base):
     )
 
     # Relationships
-    organization = relationship(
-        "Organization",
-        back_populates="roles"
-    )
-    users = relationship(
-        "User",
-        secondary="user_roles",
-        back_populates="roles"
-    )
+    organization = relationship("Organization", back_populates="roles")
+    users = relationship("User", secondary="user_roles", back_populates="roles")
 
 
 class User(Base):
@@ -71,14 +65,8 @@ class User(Base):
     )
     email: Mapped[str] = mapped_column(String(255), unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255))
-    first_name: Mapped[Optional[str]] = mapped_column(
-        String(100),
-        nullable=True
-    )
-    last_name: Mapped[Optional[str]] = mapped_column(
-        String(100),
-        nullable=True
-    )
+    first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True)
     is_superuser: Mapped[bool] = mapped_column(default=False)
     user_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -93,15 +81,8 @@ class User(Base):
     )
 
     # Relationships
-    organization = relationship(
-        "Organization",
-        back_populates="users"
-    )
-    roles = relationship(
-        "Role",
-        secondary="user_roles",
-        back_populates="users"
-    )
+    organization = relationship("Organization", back_populates="users")
+    roles = relationship("Role", secondary="user_roles", back_populates="users")
     audit_logs = relationship("AuditLog", back_populates="user")
 
     def has_permission(self, permission: str) -> bool:
@@ -109,10 +90,7 @@ class User(Base):
         if self.is_superuser:
             return True
 
-        return any(
-            permission in role.permissions
-            for role in self.roles
-        )
+        return any(permission in role.permissions for role in self.roles)
 
     def has_any_permission(self, permissions: List[str]) -> bool:
         """Check if user has any of the specified permissions."""
@@ -120,6 +98,5 @@ class User(Base):
             return True
 
         return any(
-            any(p in role.permissions for p in permissions)
-            for role in self.roles
+            any(p in role.permissions for p in permissions) for role in self.roles
         )

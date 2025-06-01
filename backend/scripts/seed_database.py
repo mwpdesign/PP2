@@ -1,4 +1,5 @@
 """Seed database with initial data for development."""
+
 import asyncio
 import json
 import os
@@ -21,8 +22,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Database configuration
 DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/healthcare_ivr"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/healthcare_ivr"
 )
 
 
@@ -43,7 +43,7 @@ ORGANIZATIONS = [
         "is_active": True,
         "status": "ACTIVE",
         "created_at": utc_now(),
-        "updated_at": utc_now()
+        "updated_at": utc_now(),
     },
     {
         "id": uuid4(),
@@ -54,8 +54,8 @@ ORGANIZATIONS = [
         "is_active": True,
         "status": "ACTIVE",
         "created_at": utc_now(),
-        "updated_at": utc_now()
-    }
+        "updated_at": utc_now(),
+    },
 ]
 
 
@@ -69,7 +69,7 @@ ROLES = [
         "parent_role_id": None,  # Root role has no parent
         "permissions": json.dumps(["*"]),
         "created_at": utc_now(),
-        "updated_at": utc_now()
+        "updated_at": utc_now(),
     },
     {
         "id": uuid4(),
@@ -77,18 +77,20 @@ ROLES = [
         "description": "Administrator role",
         "organization_id": ORGANIZATIONS[0]["id"],  # Assign to first organization
         "parent_role_id": None,  # Will be set to root role's ID
-        "permissions": json.dumps([
-            "create_users",
-            "update_users",
-            "delete_users",
-            "view_users",
-            "create_roles",
-            "update_roles",
-            "delete_roles",
-            "view_roles"
-        ]),
+        "permissions": json.dumps(
+            [
+                "create_users",
+                "update_users",
+                "delete_users",
+                "view_users",
+                "create_roles",
+                "update_roles",
+                "delete_roles",
+                "view_roles",
+            ]
+        ),
         "created_at": utc_now(),
-        "updated_at": utc_now()
+        "updated_at": utc_now(),
     },
     {
         "id": uuid4(),
@@ -98,8 +100,8 @@ ROLES = [
         "parent_role_id": None,  # Will be set to root role's ID
         "permissions": json.dumps(["ivr.*", "patients.read"]),
         "created_at": utc_now(),
-        "updated_at": utc_now()
-    }
+        "updated_at": utc_now(),
+    },
 ]
 
 # Update parent role IDs
@@ -123,7 +125,7 @@ USERS = [
         "force_password_change": False,
         "failed_login_attempts": 0,
         "created_at": utc_now(),
-        "updated_at": utc_now()
+        "updated_at": utc_now(),
     },
     {
         "id": uuid4(),
@@ -140,8 +142,8 @@ USERS = [
         "force_password_change": False,
         "failed_login_attempts": 0,
         "created_at": utc_now(),
-        "updated_at": utc_now()
-    }
+        "updated_at": utc_now(),
+    },
 ]
 
 # Update user role IDs
@@ -166,7 +168,7 @@ FACILITIES = [
         "organization_id": ORGANIZATIONS[0]["id"],
         "is_active": True,
         "created_at": utc_now(),
-        "updated_at": utc_now()
+        "updated_at": utc_now(),
     },
     {
         "id": uuid4(),
@@ -184,8 +186,8 @@ FACILITIES = [
         "organization_id": ORGANIZATIONS[0]["id"],
         "is_active": True,
         "created_at": utc_now(),
-        "updated_at": utc_now()
-    }
+        "updated_at": utc_now(),
+    },
 ]
 
 
@@ -206,14 +208,11 @@ PROVIDERS = [
         "specialty": "Multi-specialty",
         "accepting_new_patients": True,
         "insurance_networks": json.dumps(["Blue Cross", "Aetna", "United"]),
-        "office_hours": json.dumps({
-            "Mon-Fri": "8:00-17:00",
-            "Sat": "9:00-13:00"
-        }),
+        "office_hours": json.dumps({"Mon-Fri": "8:00-17:00", "Sat": "9:00-13:00"}),
         "is_active": True,
         "created_by_id": None,  # Will be set after creating users
         "created_at": utc_now(),
-        "updated_at": utc_now()
+        "updated_at": utc_now(),
     },
     {
         "id": uuid4(),
@@ -231,26 +230,24 @@ PROVIDERS = [
         "specialty": "Primary Care",
         "accepting_new_patients": True,
         "insurance_networks": json.dumps(["Blue Cross", "Cigna", "Humana"]),
-        "office_hours": json.dumps({
-            "Mon-Fri": "9:00-18:00",
-            "Sat": "10:00-14:00"
-        }),
+        "office_hours": json.dumps({"Mon-Fri": "9:00-18:00", "Sat": "10:00-14:00"}),
         "is_active": True,
         "created_by_id": None,  # Will be set after creating users
         "created_at": utc_now(),
-        "updated_at": utc_now()
-    }
+        "updated_at": utc_now(),
+    },
 ]
 
 
 async def insert_data(session) -> None:
     """Insert sample data into the database."""
     print("Inserting sample data...")
-    
+
     # Insert organizations
     for org in ORGANIZATIONS:
         await session.execute(
-            text("""
+            text(
+                """
                 INSERT INTO organizations (
                     id, name, description, settings,
                     security_policy, is_active, status, created_at,
@@ -262,7 +259,8 @@ async def insert_data(session) -> None:
                     :updated_at
                 )
                 ON CONFLICT (id) DO NOTHING
-            """),
+            """
+            ),
             {
                 "id": org["id"],
                 "name": org["name"],
@@ -272,14 +270,15 @@ async def insert_data(session) -> None:
                 "is_active": org["is_active"],
                 "status": org["status"],
                 "created_at": org["created_at"],
-                "updated_at": org["updated_at"]
-            }
+                "updated_at": org["updated_at"],
+            },
         )
-    
+
     # Insert roles
     for role in ROLES:
         await session.execute(
-            text("""
+            text(
+                """
                 INSERT INTO roles (
                     id, name, description, organization_id,
                     parent_role_id, permissions, created_at,
@@ -291,7 +290,8 @@ async def insert_data(session) -> None:
                     :updated_at
                 )
                 ON CONFLICT (id) DO NOTHING
-            """),
+            """
+            ),
             {
                 "id": role["id"],
                 "name": role["name"],
@@ -300,14 +300,15 @@ async def insert_data(session) -> None:
                 "parent_role_id": role["parent_role_id"],
                 "permissions": role["permissions"],
                 "created_at": role["created_at"],
-                "updated_at": role["updated_at"]
-            }
+                "updated_at": role["updated_at"],
+            },
         )
-    
+
     # Insert users
     for user in USERS:
         await session.execute(
-            text("""
+            text(
+                """
                 INSERT INTO users (
                     id, organization_id, email, username,
                     encrypted_password, first_name, last_name,
@@ -323,7 +324,8 @@ async def insert_data(session) -> None:
                     :failed_login_attempts, :created_at, :updated_at
                 )
                 ON CONFLICT (email) DO NOTHING
-            """),
+            """
+            ),
             {
                 "id": user["id"],
                 "organization_id": user["organization_id"],
@@ -339,10 +341,10 @@ async def insert_data(session) -> None:
                 "force_password_change": user["force_password_change"],
                 "failed_login_attempts": user["failed_login_attempts"],
                 "created_at": user["created_at"],
-                "updated_at": user["updated_at"]
-            }
+                "updated_at": user["updated_at"],
+            },
         )
-    
+
     await session.commit()
     print("Sample data inserted successfully.")
 

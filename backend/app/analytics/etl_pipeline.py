@@ -16,7 +16,7 @@ from app.analytics.models import (
     DailyMetrics,
     GeographicMetrics,
     HourlyMetrics,
-    VerificationPerformanceDimension
+    VerificationPerformanceDimension,
 )
 from app.services.redis_cache import RedisCache
 
@@ -29,9 +29,13 @@ class DataQualityValidator:
         """Check for missing required fields."""
         errors = []
         required_fields = {
-            'time_id', 'geography_id', 'organization_id',
-            'insurance_provider_id', 'approval_status',
-            'satisfaction_level', 'verification_type'
+            "time_id",
+            "geography_id",
+            "organization_id",
+            "insurance_provider_id",
+            "approval_status",
+            "satisfaction_level",
+            "verification_type",
         }
 
         missing = required_fields - set(data.keys())
@@ -45,13 +49,13 @@ class DataQualityValidator:
         """Validate data types of fields."""
         errors = []
         type_checks = {
-            'time_id': int,
-            'duration_seconds': int,
-            'verification_time_seconds': int,
-            'approval_status': str,
-            'satisfaction_level': str,
-            'sentiment_score': float,
-            'verification_type': str
+            "time_id": int,
+            "duration_seconds": int,
+            "verification_time_seconds": int,
+            "approval_status": str,
+            "satisfaction_level": str,
+            "sentiment_score": float,
+            "verification_type": str,
         }
 
         for field, expected_type in type_checks.items():
@@ -69,36 +73,34 @@ class DataQualityValidator:
         errors = []
 
         # Duration must be positive
-        if 'duration_seconds' in data and data['duration_seconds'] < 0:
+        if "duration_seconds" in data and data["duration_seconds"] < 0:
             errors.append("Duration cannot be negative")
 
         # Verify valid approval status
-        valid_statuses = {'approved', 'denied', 'pending', 'expired'}
-        has_status = 'approval_status' in data
-        status_value = data.get('approval_status', '')
+        valid_statuses = {"approved", "denied", "pending", "expired"}
+        has_status = "approval_status" in data
+        status_value = data.get("approval_status", "")
         invalid_status = has_status and status_value not in valid_statuses
         if invalid_status:
             errors.append(f"Invalid approval status: {status_value}")
 
         # Verify valid satisfaction level
-        valid_satisfaction = {'high', 'medium', 'low'}
-        has_satisfaction = 'satisfaction_level' in data
-        satisfaction_value = data.get('satisfaction_level', '')
+        valid_satisfaction = {"high", "medium", "low"}
+        has_satisfaction = "satisfaction_level" in data
+        satisfaction_value = data.get("satisfaction_level", "")
         invalid_satisfaction = (
-            has_satisfaction and
-            satisfaction_value not in valid_satisfaction
+            has_satisfaction and satisfaction_value not in valid_satisfaction
         )
         if invalid_satisfaction:
             msg = f"Invalid satisfaction level: {satisfaction_value}"
             errors.append(msg)
 
         # Verify valid verification type
-        valid_verification = {'real-time', 'batch', 'manual'}
-        has_verification = 'verification_type' in data
-        verification_value = data.get('verification_type', '')
+        valid_verification = {"real-time", "batch", "manual"}
+        has_verification = "verification_type" in data
+        verification_value = data.get("verification_type", "")
         invalid_verification = (
-            has_verification and
-            verification_value not in valid_verification
+            has_verification and verification_value not in valid_verification
         )
         if invalid_verification:
             msg = f"Invalid verification type: {verification_value}"
@@ -118,10 +120,10 @@ class ETLPipeline:
     def process_satisfaction_data(self, data: Dict) -> int:
         """Process satisfaction data and return dimension ID."""
         satisfaction = PatientSatisfactionDimension(
-            satisfaction_level=data['satisfaction_level'],
-            feedback_category=data['feedback_category'],
-            response_channel=data['response_channel'],
-            sentiment_score=data['sentiment_score']
+            satisfaction_level=data["satisfaction_level"],
+            feedback_category=data["feedback_category"],
+            response_channel=data["response_channel"],
+            sentiment_score=data["sentiment_score"],
         )
         self.db.add(satisfaction)
         self.db.flush()  # Get ID without committing
@@ -130,11 +132,11 @@ class ETLPipeline:
     def process_verification_data(self, data: Dict) -> int:
         """Process verification performance data and return dimension ID."""
         verification = VerificationPerformanceDimension(
-            verification_type=data['verification_type'],
-            response_time_category=data['response_time_category'],
-            error_type=data.get('error_type'),
-            retry_count=data.get('retry_count', 0),
-            sla_category=data['sla_category']
+            verification_type=data["verification_type"],
+            response_time_category=data["response_time_category"],
+            error_type=data.get("error_type"),
+            retry_count=data.get("retry_count", 0),
+            sla_category=data["sla_category"],
         )
         self.db.add(verification)
         self.db.flush()  # Get ID without committing
@@ -146,7 +148,7 @@ class ETLPipeline:
         validations = [
             self.validator.validate_completeness(call_data),
             self.validator.validate_data_types(call_data),
-            self.validator.validate_business_rules(call_data)
+            self.validator.validate_business_rules(call_data),
         ]
 
         for is_valid, errors in validations:
@@ -162,21 +164,19 @@ class ETLPipeline:
 
             # Create call fact record
             call_fact = CallFact(
-                call_id=call_data['call_id'],
-                time_id=call_data['time_id'],
-                geography_id=call_data['geography_id'],
-                organization_id=call_data['organization_id'],
-                insurance_provider_id=call_data['insurance_provider_id'],
-                duration_seconds=call_data['duration_seconds'],
-                approval_status=call_data['approval_status'],
-                verification_time_seconds=call_data[
-                    'verification_time_seconds'
-                ],
+                call_id=call_data["call_id"],
+                time_id=call_data["time_id"],
+                geography_id=call_data["geography_id"],
+                organization_id=call_data["organization_id"],
+                insurance_provider_id=call_data["insurance_provider_id"],
+                duration_seconds=call_data["duration_seconds"],
+                approval_status=call_data["approval_status"],
+                verification_time_seconds=call_data["verification_time_seconds"],
                 satisfaction_id=satisfaction_id,
                 verification_performance_id=verification_id,
-                sentiment_score=call_data['sentiment_score'],
-                feedback_text=call_data.get('feedback_text'),
-                partition_date=datetime.now().date()
+                sentiment_score=call_data["sentiment_score"],
+                feedback_text=call_data.get("feedback_text"),
+                partition_date=datetime.now().date(),
             )
 
             self.db.add(call_fact)
@@ -194,48 +194,33 @@ class ETLPipeline:
 
     def _update_cache(self, call_data: Dict) -> None:
         """Update Redis cache with real-time metrics."""
-        org_id = call_data['organization_id']
+        org_id = call_data["organization_id"]
         cache_key = f"call_metrics:{org_id}"
 
         # Update basic metrics
         self.cache.hincrby(cache_key, "total_calls", 1)
         self.cache.hincrbyfloat(
-            cache_key,
-            "avg_duration",
-            call_data['duration_seconds']
+            cache_key, "avg_duration", call_data["duration_seconds"]
         )
 
         # Update satisfaction metrics
         satisfaction_key = f"satisfaction:{org_id}"
-        self.cache.hincrby(
-            satisfaction_key,
-            call_data['satisfaction_level'],
-            1
-        )
+        self.cache.hincrby(satisfaction_key, call_data["satisfaction_level"], 1)
         self.cache.hincrbyfloat(
-            satisfaction_key,
-            "avg_sentiment",
-            call_data['sentiment_score']
+            satisfaction_key, "avg_sentiment", call_data["sentiment_score"]
         )
 
         # Update verification metrics
         verification_key = f"verification:{org_id}"
-        self.cache.hincrby(
-            verification_key,
-            call_data['verification_type'],
-            1
-        )
-        self.cache.hincrby(
-            verification_key,
-            call_data['sla_category'],
-            1
-        )
+        self.cache.hincrby(verification_key, call_data["verification_type"], 1)
+        self.cache.hincrby(verification_key, call_data["sla_category"], 1)
 
     def update_daily_metrics(self, date: datetime) -> bool:
         """Update daily aggregated metrics."""
         try:
             # Calculate metrics for the specified date
-            metrics_query = text("""
+            metrics_query = text(
+                """
                 WITH metrics AS (
                     SELECT
                         DATE(:date) as date,
@@ -286,7 +271,8 @@ class ETLPipeline:
                     provider_rates as approval_rate_by_provider,
                     territory_rates as territory_approval_rates
                 FROM metrics
-            """)
+            """
+            )
 
             self.db.execute(metrics_query, {"date": date})
             self.db.commit()

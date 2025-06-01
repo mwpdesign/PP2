@@ -1,4 +1,5 @@
 """Core enums for the healthcare IVR platform."""
+
 import enum
 
 
@@ -16,4 +17,4 @@ class IVRPriority(str, enum.Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
-    URGENT = "urgent" 
+    URGENT = "urgent"

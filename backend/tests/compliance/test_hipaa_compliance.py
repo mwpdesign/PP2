@@ -1,4 +1,5 @@
 """Tests for HIPAA compliance validation framework."""
+
 import pytest
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
@@ -28,7 +29,7 @@ def mock_user():
         id="test_user_id",
         username="test_user",
         email="test@example.com",
-        password_history=["old_password_hash1", "old_password_hash2"]
+        password_history=["old_password_hash1", "old_password_hash2"],
     )
 
 
@@ -40,7 +41,7 @@ def test_data_encryption_validation(compliance_validator):
         "resource_type": "patient_record",
         "resource_id": "123",
         "ip_address": "127.0.0.1",
-        "key_age_days": 30
+        "key_age_days": 30,
     }
 
     result = compliance_validator.validate_data_encryption(test_data, context)
@@ -61,7 +62,7 @@ def test_data_encryption_key_rotation(compliance_validator):
         "resource_type": "patient_record",
         "resource_id": "123",
         "ip_address": "127.0.0.1",
-        "key_age_days": 100  # Exceeds 90-day rotation requirement
+        "key_age_days": 100,  # Exceeds 90-day rotation requirement
     }
 
     result = compliance_validator.validate_data_encryption(test_data, context)
@@ -76,10 +77,7 @@ def test_password_policy_validation(compliance_validator, mock_db, mock_user):
 
     # Test valid password
     valid_password = "StrongP@ssw0rd123"
-    result = compliance_validator.validate_password_policy(
-        valid_password,
-        mock_user.id
-    )
+    result = compliance_validator.validate_password_policy(valid_password, mock_user.id)
 
     assert result["is_compliant"] is True
     assert "LENGTH_CHECK" in result["checks_performed"]
@@ -91,10 +89,7 @@ def test_password_policy_validation(compliance_validator, mock_db, mock_user):
 
     # Test invalid password
     weak_password = "weak"
-    result = compliance_validator.validate_password_policy(
-        weak_password,
-        mock_user.id
-    )
+    result = compliance_validator.validate_password_policy(weak_password, mock_user.id)
 
     assert result["is_compliant"] is False
     assert "PASSWORD_TOO_SHORT" in result["failed_checks"]
@@ -117,7 +112,7 @@ def test_audit_logging_validation(compliance_validator):
         "request_path": "/api/v1/patients/123",
         "response_status": 200,
         "phi_accessed": True,
-        "reason": "Treatment"
+        "reason": "Treatment",
     }
 
     result = compliance_validator.validate_audit_logging(valid_log)
@@ -128,10 +123,7 @@ def test_audit_logging_validation(compliance_validator):
     assert "PHI_ACCESS_LOGGING" in result["checks_performed"]
 
     # Test invalid log
-    invalid_log = {
-        "timestamp": "invalid_timestamp",
-        "user_id": "test_user"
-    }
+    invalid_log = {"timestamp": "invalid_timestamp", "user_id": "test_user"}
 
     result = compliance_validator.validate_audit_logging(invalid_log)
 
@@ -145,7 +137,7 @@ def test_session_security_validation(compliance_validator):
     valid_session = {
         "last_activity": datetime.now().isoformat(),
         "token": "valid_token",
-        "mfa_verified": True
+        "mfa_verified": True,
     }
 
     # Mock JWT decode
@@ -164,7 +156,7 @@ def test_session_security_validation(compliance_validator):
             datetime.now() - timedelta(minutes=45)
         ).isoformat(),  # 45 min old
         "token": "valid_token",
-        "mfa_verified": True
+        "mfa_verified": True,
     }
 
     result = compliance_validator.validate_session_security(expired_session)
@@ -180,26 +172,23 @@ def test_compliance_report_generation(compliance_validator):
             "category": "phi_protection",
             "is_compliant": True,
             "checks_performed": ["ENCRYPTION_METHOD", "KEY_ROTATION"],
-            "failed_checks": []
+            "failed_checks": [],
         },
         {
             "category": "access_control",
             "is_compliant": False,
             "checks_performed": ["PASSWORD_POLICY", "MFA_CHECK"],
-            "failed_checks": ["MISSING_MFA"]
+            "failed_checks": ["MISSING_MFA"],
         },
         {
             "category": "audit_logging",
             "is_compliant": True,
             "checks_performed": ["LOG_VALIDATION"],
-            "failed_checks": []
-        }
+            "failed_checks": [],
+        },
     ]
 
-    report = compliance_validator.generate_compliance_report(
-        validation_results,
-        "full"
-    )
+    report = compliance_validator.generate_compliance_report(validation_results, "full")
 
     assert report["overall_compliance_status"] == "FAIL"
     assert report["total_checks"] == 3
@@ -218,7 +207,7 @@ def test_emergency_access_validation(compliance_validator):
         "user_id": "test_user",
         "reason": "Emergency patient care",
         "patient_id": "123",
-        "break_glass": True
+        "break_glass": True,
     }
 
     # Add emergency access validation logic
@@ -231,7 +220,7 @@ def test_emergency_access_validation(compliance_validator):
         "ip_address": "127.0.0.1",
         "phi_accessed": True,
         "reason": emergency_access["reason"],
-        "break_glass": True
+        "break_glass": True,
     }
 
     result = compliance_validator.validate_audit_logging(log_entry)

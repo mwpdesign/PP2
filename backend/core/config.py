@@ -66,6 +66,7 @@ class EnvironmentSettings(BaseSettings):
 
     class Config:
         """Pydantic configuration."""
+
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
@@ -90,10 +91,8 @@ class EnvironmentSettings(BaseSettings):
         """Get AWS credentials securely."""
         return {
             "aws_access_key_id": self.AWS_ACCESS_KEY_ID.get_secret_value(),
-            "aws_secret_access_key": (
-                self.AWS_SECRET_ACCESS_KEY.get_secret_value()
-            ),
-            "region_name": self.AWS_REGION
+            "aws_secret_access_key": (self.AWS_SECRET_ACCESS_KEY.get_secret_value()),
+            "region_name": self.AWS_REGION,
         }
 
     def get_database_url(self) -> str:
@@ -118,11 +117,7 @@ class EnvironmentSettings(BaseSettings):
 
     def get_snyk_token(self) -> Optional[str]:
         """Get Snyk token if configured."""
-        return (
-            self.SNYK_TOKEN.get_secret_value()
-            if self.SNYK_TOKEN
-            else None
-        )
+        return self.SNYK_TOKEN.get_secret_value() if self.SNYK_TOKEN else None
 
 
 class Settings:
@@ -142,7 +137,7 @@ class Settings:
         """Configure logging based on environment."""
         logging.basicConfig(
             level=self.env_settings.LOG_LEVEL,
-            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
 
     def _load_feature_flags(self):
@@ -199,7 +194,7 @@ class Settings:
         return {
             "mfa_enabled": self.env_settings.ENABLE_MFA,
             "audit_logging": self.env_settings.ENABLE_AUDIT_LOGGING,
-            "phi_encryption": self.env_settings.ENABLE_PHI_ENCRYPTION
+            "phi_encryption": self.env_settings.ENABLE_PHI_ENCRYPTION,
         }
 
 

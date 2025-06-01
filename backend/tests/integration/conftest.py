@@ -1,14 +1,11 @@
 """Test fixtures for integration tests."""
+
 import pytest
 import asyncio
 from datetime import datetime
 from uuid import uuid4
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    create_async_engine,
-    async_sessionmaker
-)
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from app.core.config import settings
 from app.core.database import Base
@@ -36,11 +33,7 @@ def event_loop():
 @pytest.fixture(scope="session")
 async def async_engine():
     """Create a new async engine for testing."""
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
-        echo=True,
-        pool_pre_ping=True
-    )
+    engine = create_async_engine(TEST_DATABASE_URL, echo=True, pool_pre_ping=True)
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -61,7 +54,7 @@ def async_session_maker(async_engine):
         class_=AsyncSession,
         expire_on_commit=False,
         autocommit=False,
-        autoflush=False
+        autoflush=False,
     )
 
 
@@ -82,10 +75,7 @@ async def async_session(async_session_maker) -> AsyncSession:
 @pytest.fixture
 async def async_client(async_session_maker):
     """Create an async client for testing."""
-    async with AsyncClient(
-        app=app,
-        base_url="http://test"
-    ) as client:
+    async with AsyncClient(app=app, base_url="http://test") as client:
         app.state.session_maker = async_session_maker
         yield client
 
@@ -94,7 +84,7 @@ async def async_client(async_session_maker):
 async def test_user(
     async_session: AsyncSession,
     test_organization: Organization,
-    test_territory: Territory
+    test_territory: Territory,
 ) -> User:
     """Create a test user."""
     user = User(
@@ -105,7 +95,7 @@ async def test_user(
         last_name="User",
         organization_id=test_organization.id,
         role_id=uuid4(),
-        primary_territory_id=test_territory.id
+        primary_territory_id=test_territory.id,
     )
     async_session.add(user)
     await async_session.flush()
@@ -119,7 +109,7 @@ async def test_organization(async_session: AsyncSession) -> Organization:
         name="Test Healthcare Org",
         description="Test Organization",
         settings={},
-        security_policy={}
+        security_policy={},
     )
     async_session.add(org)
     await async_session.flush()
@@ -128,8 +118,7 @@ async def test_organization(async_session: AsyncSession) -> Organization:
 
 @pytest.fixture
 async def test_territory(
-    async_session: AsyncSession,
-    test_organization: Organization
+    async_session: AsyncSession, test_organization: Organization
 ) -> Territory:
     """Create a test territory."""
     territory = Territory(
@@ -138,7 +127,7 @@ async def test_territory(
         organization_id=test_organization.id,
         type="region",
         territory_metadata={},
-        security_policy={}
+        security_policy={},
     )
     async_session.add(territory)
     await async_session.flush()
@@ -149,7 +138,7 @@ async def test_territory(
 async def test_facility(
     async_session: AsyncSession,
     test_organization: Organization,
-    test_territory: Territory
+    test_territory: Territory,
 ) -> Facility:
     """Create a test facility."""
     facility = Facility(
@@ -162,7 +151,7 @@ async def test_facility(
         zip_code="90210",
         phone="555-123-4567",
         organization_id=test_organization.id,
-        territory_id=test_territory.id
+        territory_id=test_territory.id,
     )
     async_session.add(facility)
     await async_session.flush()
@@ -170,10 +159,7 @@ async def test_facility(
 
 
 @pytest.fixture
-async def test_provider(
-    async_session: AsyncSession,
-    test_user: User
-) -> Provider:
+async def test_provider(async_session: AsyncSession, test_user: User) -> Provider:
     """Create a test provider."""
     provider = Provider(
         name="Test Provider",
@@ -185,7 +171,7 @@ async def test_provider(
         city="Test City",
         state="CA",
         zip_code="90210",
-        created_by_id=test_user.id
+        created_by_id=test_user.id,
     )
     async_session.add(provider)
     await async_session.flush()
@@ -199,7 +185,7 @@ async def test_patient(
     test_provider: Provider,
     test_facility: Facility,
     test_territory: Territory,
-    test_organization: Organization
+    test_organization: Organization,
 ) -> Patient:
     """Create a test patient."""
     patient = Patient(
@@ -219,7 +205,7 @@ async def test_patient(
         provider_id=test_provider.id,
         facility_id=test_facility.id,
         territory_id=test_territory.id,
-        organization_id=test_organization.id
+        organization_id=test_organization.id,
     )
     async_session.add(patient)
     await async_session.flush()

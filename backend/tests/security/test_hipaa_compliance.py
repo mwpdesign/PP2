@@ -1,6 +1,7 @@
 """
 Security tests focusing on HIPAA compliance and data protection.
 """
+
 from datetime import datetime, timedelta
 from fastapi.testclient import TestClient
 import pytest
@@ -20,7 +21,7 @@ async def test_phi_encryption(db, test_user, mock_aws):
         "name": "John Doe",
         "ssn": "123-45-6789",
         "dob": "1980-01-01",
-        "medical_record": "Patient has history of..."
+        "medical_record": "Patient has history of...",
     }
 
     # Encrypt data
@@ -42,12 +43,7 @@ async def test_phi_encryption(db, test_user, mock_aws):
     mock_aws["kms"].decrypt.assert_called()
 
 
-async def test_phi_access_logging(
-    client: TestClient,
-    db,
-    test_user,
-    test_order
-):
+async def test_phi_access_logging(client: TestClient, db, test_user, test_order):
     """Test PHI access logging."""
     service = HIPAAComplianceService(db)
 
@@ -60,44 +56,34 @@ async def test_phi_access_logging(
         resource_type="order",
         resource_id=test_order.id,
         accessed_fields=["medical_history", "medications"],
-        request_metadata={
-            "ip_address": "192.168.1.1",
-            "user_agent": "test-browser"
-        }
+        request_metadata={"ip_address": "192.168.1.1", "user_agent": "test-browser"},
     )
 
     # Verify access logged
-    events = db.query(SecurityEvent).filter(
-        SecurityEvent.event_type == "phi_access"
-    ).all()
+    events = (
+        db.query(SecurityEvent).filter(SecurityEvent.event_type == "phi_access").all()
+    )
     assert len(events) == 1
     assert events[0].user_id == test_user.id
     assert events[0].details["action"] == "view"
     assert "medical_history" in events[0].details["accessed_fields"]
 
 
-async def test_territory_based_access_control(
-    client: TestClient,
-    db,
-    test_user
-):
+async def test_territory_based_access_control(client: TestClient, db, test_user):
     """Test territory-based access control."""
     # Create order with PHI
     order_data = {
         "patient_id": test_user.id,
         "provider_id": test_user.id,
         "territory_id": test_user.primary_territory_id,
-        "phi_data": {
-            "diagnosis": "Test condition",
-            "medications": ["Med A", "Med B"]
-        }
+        "phi_data": {"diagnosis": "Test condition", "medications": ["Med A", "Med B"]},
     }
 
     # Create in correct territory
     response = client.post(
         "/api/v1/orders",
         json=order_data,
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 201
     order_id = response.json()["id"]
@@ -105,24 +91,20 @@ async def test_territory_based_access_control(
     # Try to access from wrong territory
     wrong_territory = test_user.primary_territory_id + 1
     response = client.get(
-        f"/api/v1/orders/{order_id}",
-        headers={"X-Territory-ID": str(wrong_territory)}
+        f"/api/v1/orders/{order_id}", headers={"X-Territory-ID": str(wrong_territory)}
     )
     assert response.status_code == 403
 
     # Verify access denied logged
-    events = db.query(SecurityEvent).filter(
-        SecurityEvent.event_type == "unauthorized_phi_access"
-    ).all()
+    events = (
+        db.query(SecurityEvent)
+        .filter(SecurityEvent.event_type == "unauthorized_phi_access")
+        .all()
+    )
     assert len(events) > 0
 
 
-async def test_audit_trail_completeness(
-    client: TestClient,
-    db,
-    test_user,
-    test_order
-):
+async def test_audit_trail_completeness(client: TestClient, db, test_user, test_order):
     """Test completeness of audit trail."""
     service = HIPAAComplianceService(db)
 
@@ -130,7 +112,7 @@ async def test_audit_trail_completeness(
     operations = [
         ("view", ["demographics"]),
         ("update", ["medical_history"]),
-        ("delete", ["old_records"])
+        ("delete", ["old_records"]),
     ]
 
     for action, fields in operations:
@@ -144,15 +126,15 @@ async def test_audit_trail_completeness(
             accessed_fields=fields,
             request_metadata={
                 "ip_address": "192.168.1.1",
-                "user_agent": "test-browser"
-            }
+                "user_agent": "test-browser",
+            },
         )
 
     # Get audit trail
     audit_trail = await service.get_phi_access_audit_trail(
         patient_id=test_order.patient_id,
         start_date=datetime.utcnow() - timedelta(days=1),
-        end_date=datetime.utcnow()
+        end_date=datetime.utcnow(),
     )
 
     # Verify all operations logged
@@ -165,11 +147,7 @@ async def test_audit_trail_completeness(
 
 
 async def test_phi_data_retention(
-    client: TestClient,
-    db,
-    test_user,
-    test_order,
-    mock_aws
+    client: TestClient, db, test_user, test_order, mock_aws
 ):
     """Test PHI data retention policies."""
     service = HIPAAComplianceService(db)
@@ -178,7 +156,7 @@ async def test_phi_data_retention(
     phi_data = {
         "diagnosis": "Test condition",
         "medications": ["Med A", "Med B"],
-        "notes": "Patient reported..."
+        "notes": "Patient reported...",
     }
 
     encrypted_phi = await encrypt_phi(phi_data)
@@ -189,7 +167,7 @@ async def test_phi_data_retention(
     await service.delete_phi_data(
         patient_id=test_order.patient_id,
         resource_type="order",
-        resource_id=test_order.id
+        resource_id=test_order.id,
     )
 
     # Verify data deleted
@@ -197,9 +175,9 @@ async def test_phi_data_retention(
     assert not order.phi_data
 
     # Verify deletion logged
-    events = db.query(SecurityEvent).filter(
-        SecurityEvent.event_type == "phi_deletion"
-    ).all()
+    events = (
+        db.query(SecurityEvent).filter(SecurityEvent.event_type == "phi_deletion").all()
+    )
     assert len(events) > 0
 
     # Verify AWS S3 backup created
@@ -207,11 +185,7 @@ async def test_phi_data_retention(
 
 
 async def test_emergency_access_procedures(
-    client: TestClient,
-    db,
-    test_user,
-    test_order,
-    mock_notification_service
+    client: TestClient, db, test_user, test_order, mock_notification_service
 ):
     """Test emergency access procedures."""
     service = HIPAAComplianceService(db)
@@ -219,18 +193,17 @@ async def test_emergency_access_procedures(
     # Request emergency access
     response = client.post(
         f"/api/v1/emergency-access/{test_order.id}",
-        json={
-            "reason": "Medical emergency",
-            "provider_id": test_user.id
-        },
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        json={"reason": "Medical emergency", "provider_id": test_user.id},
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 200
 
     # Verify access granted and logged
-    events = db.query(SecurityEvent).filter(
-        SecurityEvent.event_type == "emergency_phi_access"
-    ).all()
+    events = (
+        db.query(SecurityEvent)
+        .filter(SecurityEvent.event_type == "emergency_phi_access")
+        .all()
+    )
     assert len(events) > 0
     assert events[0].details["reason"] == "Medical emergency"
 
@@ -239,8 +212,7 @@ async def test_emergency_access_procedures(
 
     # Test emergency access expiration
     expired_response = await service.validate_emergency_access(
-        order_id=test_order.id,
-        access_token="expired_token"
+        order_id=test_order.id, access_token="expired_token"
     )
     assert not expired_response["valid"]
 
@@ -249,7 +221,7 @@ async def test_emergency_access_procedures(
         f"/api/v1/orders/{test_order.id}/phi",
         headers={
             "X-Territory-ID": str(test_user.primary_territory_id),
-            "X-Emergency-Access-Token": "expired_token"
-        }
+            "X-Emergency-Access-Token": "expired_token",
+        },
     )
     assert response.status_code == 401

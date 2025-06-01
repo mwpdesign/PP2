@@ -1,11 +1,8 @@
 """Create a test admin user."""
+
 import asyncio
 from uuid import uuid4
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    async_sessionmaker,
-    AsyncSession
-)
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from app.models.user import User
 from app.models.organization import Organization
@@ -17,14 +14,11 @@ async def create_test_user():
     """Create a test admin user."""
     # Create engine and session
     engine = create_async_engine(
-        "postgresql+asyncpg://postgres:password@db:5432/healthcare_ivr",
-        echo=True
+        "postgresql+asyncpg://postgres:password@db:5432/healthcare_ivr", echo=True
     )
 
     async_session = async_sessionmaker(
-        engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        engine, class_=AsyncSession, expire_on_commit=False
     )
 
     async with async_session() as db:
@@ -35,7 +29,7 @@ async def create_test_user():
             description="Primary Healthcare Organization",
             settings={},
             security_policy={},
-            is_active=True
+            is_active=True,
         )
         db.add(organization)
         await db.flush()
@@ -46,7 +40,7 @@ async def create_test_user():
             name="admin",
             description="Administrator role",
             organization_id=organization.id,
-            permissions={"*": ["*"]}  # Full access
+            permissions={"*": ["*"]},  # Full access
         )
         db.add(role)
         await db.flush()
@@ -54,15 +48,15 @@ async def create_test_user():
         # Create admin user
         user = User(
             id=uuid4(),
-            username='admin',
-            email='admin@example.com',
-            encrypted_password=get_password_hash('Admin123!'),
-            first_name='Admin',
-            last_name='User',
+            username="admin",
+            email="admin@example.com",
+            encrypted_password=get_password_hash("Admin123!"),
+            first_name="Admin",
+            last_name="User",
             role_id=role.id,
             is_superuser=True,
             organization_id=organization.id,
-            is_active=True
+            is_active=True,
         )
         db.add(user)
         await db.commit()

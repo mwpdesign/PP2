@@ -26,7 +26,7 @@ class SystemVerifier:
             "database": {},
             "aws": {},
             "api": {},
-            "security": {}
+            "security": {},
         }
 
     def verify_services(self) -> bool:
@@ -35,7 +35,7 @@ class SystemVerifier:
             ("frontend", "http://localhost:3000"),
             ("backend", "http://localhost:8000/health"),
             ("database", "postgresql://localhost:5432"),
-            ("redis", "redis://localhost:6379")
+            ("redis", "redis://localhost:6379"),
         ]
 
         for service_name, url in services:
@@ -46,52 +46,38 @@ class SystemVerifier:
                     details = f"Response: {response.status_code}"
                     self.results["services"][service_name] = {
                         "status": status,
-                        "details": details
+                        "details": details,
                     }
                 else:
                     # Handle database and redis connections
                     if "postgresql" in url:
                         conn = psycopg2.connect(url)
                         conn.close()
-                        self.results["services"][service_name] = {
-                            "status": "OK"
-                        }
+                        self.results["services"][service_name] = {"status": "OK"}
                     elif "redis" in url:
                         r = redis.from_url(url)
                         r.ping()
-                        self.results["services"][service_name] = {
-                            "status": "OK"
-                        }
+                        self.results["services"][service_name] = {"status": "OK"}
             except Exception as e:
                 self.results["services"][service_name] = {
                     "status": "FAIL",
-                    "error": str(e)
+                    "error": str(e),
                 }
 
-        return all(
-            s["status"] == "OK"
-            for s in self.results["services"].values()
-        )
+        return all(s["status"] == "OK" for s in self.results["services"].values())
 
     def verify_database(self) -> Dict[str, Any]:
         """Verify database connection and configuration."""
         return {
             "status": "PASS",
             "message": (
-                "Database verification skipped - "
-                "configuration not available"
-            )
+                "Database verification skipped - " "configuration not available"
+            ),
         }
 
     def verify_aws_services(self) -> bool:
         """Verify AWS service configurations"""
-        required_services = [
-            "cognito-idp",
-            "s3",
-            "kms",
-            "ses",
-            "cloudtrail"
-        ]
+        required_services = ["cognito-idp", "s3", "kms", "ses", "cloudtrail"]
 
         try:
             for service in required_services:
@@ -111,10 +97,7 @@ class SystemVerifier:
                 self.results["aws"][service] = {"status": "OK"}
 
         except Exception as e:
-            self.results["aws"][service] = {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            self.results["aws"][service] = {"status": "FAIL", "error": str(e)}
 
         return all(s["status"] == "OK" for s in self.results["aws"].values())
 
@@ -128,7 +111,7 @@ class SystemVerifier:
             "/api/v1/providers",
             "/api/v1/ivr/requests",
             "/api/v1/orders",
-            "/api/v1/analytics/dashboard"
+            "/api/v1/analytics/dashboard",
         ]
 
         for endpoint in endpoints:
@@ -137,13 +120,10 @@ class SystemVerifier:
                 status_ok = response.status_code in [200, 401, 403]
                 self.results["api"][endpoint] = {
                     "status": "OK" if status_ok else "FAIL",
-                    "code": response.status_code
+                    "code": response.status_code,
                 }
             except Exception as e:
-                self.results["api"][endpoint] = {
-                    "status": "FAIL",
-                    "error": str(e)
-                }
+                self.results["api"][endpoint] = {"status": "FAIL", "error": str(e)}
 
         return all(e["status"] == "OK" for e in self.results["api"].values())
 
@@ -153,7 +133,7 @@ class SystemVerifier:
             self._verify_ssl_config(),
             self._verify_auth_config(),
             self._verify_encryption_config(),
-            self._verify_audit_logging()
+            self._verify_audit_logging(),
         ]
         return all(checks)
 
@@ -163,50 +143,38 @@ class SystemVerifier:
             self.results["security"]["ssl"] = {"status": "OK"}
             return True
         except Exception as e:
-            self.results["security"]["ssl"] = {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            self.results["security"]["ssl"] = {"status": "FAIL", "error": str(e)}
             return False
 
     def _verify_auth_config(self) -> bool:
         # Verify Cognito configuration
         try:
-            client = boto3.client('cognito-idp')
+            client = boto3.client("cognito-idp")
             client.list_user_pools(MaxResults=1)
             self.results["security"]["auth"] = {"status": "OK"}
             return True
         except Exception as e:
-            self.results["security"]["auth"] = {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            self.results["security"]["auth"] = {"status": "FAIL", "error": str(e)}
             return False
 
     def _verify_encryption_config(self) -> bool:
         try:
-            kms = boto3.client('kms')
+            kms = boto3.client("kms")
             _ = kms.list_keys()
             self.results["security"]["encryption"] = {"status": "OK"}
             return True
         except Exception as e:
-            self.results["security"]["encryption"] = {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            self.results["security"]["encryption"] = {"status": "FAIL", "error": str(e)}
             return False
 
     def _verify_audit_logging(self) -> bool:
         try:
-            cloudtrail = boto3.client('cloudtrail')
+            cloudtrail = boto3.client("cloudtrail")
             _ = cloudtrail.list_trails()
             self.results["security"]["audit"] = {"status": "OK"}
             return True
         except Exception as e:
-            self.results["security"]["audit"] = {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            self.results["security"]["audit"] = {"status": "FAIL", "error": str(e)}
             return False
 
     def run_verification(self) -> Tuple[bool, Dict]:
@@ -216,7 +184,7 @@ class SystemVerifier:
             self.verify_database(),
             self.verify_aws_services(),
             self.verify_api_endpoints(),
-            self.verify_security_compliance()
+            self.verify_security_compliance(),
         ]
 
         success = all(checks)
@@ -226,18 +194,17 @@ class SystemVerifier:
         report = {
             "timestamp": timestamp,
             "overall_status": "PASS" if success else "FAIL",
-            "results": self.results
+            "results": self.results,
         }
 
         # Save report
         os.makedirs("verification_reports", exist_ok=True)
-        report_file = (
-            f"verification_reports/system_verification_{timestamp}.json"
-        )
+        report_file = f"verification_reports/system_verification_{timestamp}.json"
         with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
 
         return success, report
+
 
 def main():
     """Main entry point for system verifier."""
@@ -249,9 +216,10 @@ def main():
     print(f"Timestamp: {report['timestamp']}")
     print(f"Overall Status: {report['overall_status']}")
     print("\nDetailed Results:")
-    print(json.dumps(report['results'], indent=2))
+    print(json.dumps(report["results"], indent=2))
 
     sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     main()

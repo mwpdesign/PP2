@@ -3,6 +3,7 @@ Security utilities for token validation and HIPAA compliance.
 Provides core security functionality including JWT token management,
 password hashing, and PHI field encryption.
 """
+
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Pattern
 from uuid import UUID
@@ -49,7 +50,7 @@ __all__ = [
     "generate_uuid",
     "EncryptedString",
     "verify_password",
-    "get_password_hash"
+    "get_password_hash",
 ]
 
 # Security token settings
@@ -57,13 +58,13 @@ ALGORITHM = "HS256"
 access_token_jwt_subject = "access"
 
 # Development mode flag
-IS_DEVELOPMENT = os.getenv('ENVIRONMENT', 'development') == 'development'
+IS_DEVELOPMENT = os.getenv("ENVIRONMENT", "development") == "development"
 
 # Security patterns
 PHI_PATTERN: Pattern = re.compile(
-    r'(\b\d{3}-\d{2}-\d{4}\b)|'  # SSN
-    r'(\b\d{10}\b)|'             # 10-digit number (potential MRN)
-    r'(\b[A-Za-z]{2}\d{6}\b)'    # Alphanumeric ID
+    r"(\b\d{3}-\d{2}-\d{4}\b)|"  # SSN
+    r"(\b\d{10}\b)|"  # 10-digit number (potential MRN)
+    r"(\b[A-Za-z]{2}\d{6}\b)"  # Alphanumeric ID
 )
 
 # Security middleware
@@ -85,10 +86,7 @@ def generate_uuid() -> str:
     return str(UUID(bytes=os.urandom(16), version=4))
 
 
-def create_access_token(
-    data: Dict,
-    expires_delta: Optional[timedelta] = None
-) -> str:
+def create_access_token(data: Dict, expires_delta: Optional[timedelta] = None) -> str:
     """Create JWT access token."""
     to_encode = data.copy()
     if expires_delta:
@@ -97,9 +95,7 @@ def create_access_token(
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
-        to_encode,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
     return encoded_jwt
 
@@ -118,9 +114,7 @@ def verify_token(token: str) -> Dict[str, Any]:
     """
     try:
         decoded_token = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         return decoded_token
     except JWTError as e:
@@ -132,8 +126,7 @@ def verify_token(token: str) -> Dict[str, Any]:
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> TokenData:
     """Get current user from JWT token."""
     credentials_exception = HTTPException(
@@ -143,29 +136,25 @@ async def get_current_user(
     )
     try:
         payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
-        
+
         # Get user from database
-        result = await db.execute(
-            select(User).where(User.email == email)
-        )
+        result = await db.execute(select(User).where(User.email == email))
         user = result.scalar_one_or_none()
         if user is None:
             raise credentials_exception
-            
+
         # Create TokenData with all required fields
         token_data = TokenData(
             email=email,
             id=user.id,
             organization_id=user.organization_id,
             permissions=user.permissions,
-            role=user.role
+            role=user.role,
         )
         return token_data
     except JWTError:
@@ -190,7 +179,7 @@ def sanitize_phi(text: str) -> str:
     """Remove PHI from text content."""
     if not text:
         return text
-    return PHI_PATTERN.sub('[REDACTED]', text)
+    return PHI_PATTERN.sub("[REDACTED]", text)
 
 
 def create_refresh_token(user_id: str) -> str:
@@ -204,8 +193,7 @@ def create_refresh_token(user_id: str) -> str:
     """
     expires_delta = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     return create_access_token(
-        data={"sub": user_id, "type": "refresh"},
-        expires_delta=expires_delta
+        data={"sub": user_id, "type": "refresh"}, expires_delta=expires_delta
     )
 
 
@@ -225,15 +213,13 @@ def verify_refresh_token(token: str) -> str:
         payload = verify_token(token)
         if payload.get("type") != "refresh":
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
             )
         return payload.get("sub")
     except JWTError as e:
         logger.error(f"Refresh token verification failed: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
 
@@ -242,31 +228,18 @@ def create_password_reset_token(email: str) -> str:
     expire = datetime.utcnow() + timedelta(
         minutes=settings.SECURITY_RESET_TOKEN_LIFETIME_MINUTES
     )
-    to_encode = {
-        "exp": expire,
-        "sub": email,
-        "type": "password_reset"
-    }
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.SECRET_KEY,
-        algorithm="HS256"
-    )
+    to_encode = {"exp": expire, "sub": email, "type": "password_reset"}
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
     return encoded_jwt
 
 
 def verify_password_reset_token(token: str) -> Optional[str]:
     """Verify password reset token and return email if valid."""
     try:
-        decoded_token = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=["HS256"]
-        )
+        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         token_exp = datetime.fromtimestamp(decoded_token["exp"])
         is_valid = (
-            decoded_token["type"] == "password_reset"
-            and token_exp > datetime.utcnow()
+            decoded_token["type"] == "password_reset" and token_exp > datetime.utcnow()
         )
         return decoded_token["sub"] if is_valid else None
     except jwt.JWTError:
@@ -274,9 +247,7 @@ def verify_password_reset_token(token: str) -> Optional[str]:
 
 
 async def authenticate_user(
-    db: AsyncSession,
-    username: str,
-    password: str
+    db: AsyncSession, username: str, password: str
 ) -> Optional[Dict[str, Any]]:
     """Authenticate a user with email and password.
 
@@ -314,7 +285,7 @@ async def authenticate_user(
             "role_id": str(user.role_id),
             "organization_id": str(user.organization_id),
             "is_active": user.is_active,
-            "is_superuser": user.is_superuser
+            "is_superuser": user.is_superuser,
         }
 
     except Exception as e:
@@ -331,6 +302,7 @@ def require_roles(allowed_roles: list[str]):
     Returns:
         Callable: Role checker function
     """
+
     async def role_checker(
         current_user: Dict[str, Any] = Depends(get_current_user)
     ) -> Dict[str, Any]:
@@ -375,42 +347,39 @@ def require_permissions(required_permissions: list[str]):
     def permission_decorator(func):
         @wraps(func)
         async def permission_checker(*args, **kwargs):
-            current_user = kwargs.get('current_user')
+            current_user = kwargs.get("current_user")
             if not current_user:
                 for arg in args:
-                    if isinstance(arg, dict) and 'id' in arg:
+                    if isinstance(arg, dict) and "id" in arg:
                         current_user = arg
                         break
 
             if not current_user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Could not validate credentials"
+                    detail="Could not validate credentials",
                 )
 
             # Get user's role
-            user_role = current_user.get('role')
+            user_role = current_user.get("role")
             if not user_role:
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="User role not found"
+                    status_code=status.HTTP_403_FORBIDDEN, detail="User role not found"
                 )
 
             # Check if user is superuser
-            if current_user.get('is_superuser'):
+            if current_user.get("is_superuser"):
                 return await func(*args, **kwargs)
 
             # Get role permissions from settings
             role_perms = settings.ROLE_PERMISSIONS.get(user_role, [])
 
             # Check if user has all required permissions
-            has_perms = all(
-                perm in role_perms for perm in required_permissions
-            )
+            has_perms = all(perm in role_perms for perm in required_permissions)
             if not has_perms:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Not enough permissions"
+                    detail="Not enough permissions",
                 )
 
             return await func(*args, **kwargs)
@@ -460,10 +429,7 @@ password_validator = PasswordValidator()
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a stored password against a provided password."""
     try:
-        return bcrypt.checkpw(
-            plain_password.encode(),
-            hashed_password.encode()
-        )
+        return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
     except Exception as e:
         logger.error(f"Password verification error: {str(e)}")
         return False
@@ -476,23 +442,16 @@ def get_password_hash(password: str) -> str:
 
 class EncryptedString(TypeDecorator):
     """Custom type for encrypted string fields."""
+
     impl = LargeBinary
 
-    def process_bind_param(
-        self,
-        value: Optional[str],
-        dialect
-    ) -> Optional[bytes]:
+    def process_bind_param(self, value: Optional[str], dialect) -> Optional[bytes]:
         """Encrypt string value before storing."""
         if value is not None:
             return encrypt_field(value)
         return None
 
-    def process_result_value(
-        self,
-        value: Optional[bytes],
-        dialect
-    ) -> Optional[str]:
+    def process_result_value(self, value: Optional[bytes], dialect) -> Optional[str]:
         """Decrypt bytes value when retrieving."""
         if value is not None:
             return decrypt_field(value)

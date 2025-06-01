@@ -5,6 +5,7 @@ from ..core.cognito_config import cognito
 
 class CognitoError(Exception):
     """Base exception for Cognito-related errors."""
+
     pass
 
 
@@ -18,7 +19,7 @@ class CognitoService:
         self,
         email: str,
         password: str,
-        user_attributes: Optional[Dict[str, str]] = None
+        user_attributes: Optional[Dict[str, str]] = None,
     ) -> Dict:
         """Register a new user in Cognito.
 
@@ -38,7 +39,7 @@ class CognitoService:
 
             attributes = [
                 {"Name": "email", "Value": email},
-                {"Name": "email_verified", "Value": "true"}
+                {"Name": "email_verified", "Value": "true"},
             ]
 
             if user_attributes:
@@ -49,20 +50,18 @@ class CognitoService:
                 ClientId=self.cognito.settings.COGNITO_APP_CLIENT_ID,
                 Username=email,
                 Password=password,
-                UserAttributes=attributes
+                UserAttributes=attributes,
             )
 
             return {
                 "user_id": response["UserSub"],
                 "email": email,
-                "status": "CONFIRMATION_PENDING"
+                "status": "CONFIRMATION_PENDING",
             }
 
         except ClientError as e:
             error = e.response["Error"]
-            raise CognitoError(
-                f"Registration failed: {error['Message']}"
-            )
+            raise CognitoError(f"Registration failed: {error['Message']}")
 
     async def user_login(self, email: str, password: str) -> Dict:
         """Authenticate user and get tokens.
@@ -83,28 +82,19 @@ class CognitoService:
             response = client.initiate_auth(
                 ClientId=self.cognito.settings.COGNITO_APP_CLIENT_ID,
                 AuthFlow="USER_PASSWORD_AUTH",
-                AuthParameters={
-                    "USERNAME": email,
-                    "PASSWORD": password
-                }
+                AuthParameters={"USERNAME": email, "PASSWORD": password},
             )
 
             return {
-                "access_token": (
-                    response["AuthenticationResult"]["AccessToken"]
-                ),
-                "refresh_token": (
-                    response["AuthenticationResult"]["RefreshToken"]
-                ),
+                "access_token": (response["AuthenticationResult"]["AccessToken"]),
+                "refresh_token": (response["AuthenticationResult"]["RefreshToken"]),
                 "id_token": response["AuthenticationResult"]["IdToken"],
-                "expires_in": response["AuthenticationResult"]["ExpiresIn"]
+                "expires_in": response["AuthenticationResult"]["ExpiresIn"],
             }
 
         except ClientError as e:
             error = e.response["Error"]
-            raise CognitoError(
-                f"Login failed: {error['Message']}"
-            )
+            raise CognitoError(f"Login failed: {error['Message']}")
 
     async def verify_token(self, token: str) -> Dict:
         """Verify and decode an access token.
@@ -121,22 +111,17 @@ class CognitoService:
         try:
             client = await self.cognito.get_client()
 
-            user_info = client.get_user(
-                AccessToken=token
-            )
+            user_info = client.get_user(AccessToken=token)
 
             return {
                 "attributes": {
-                    attr["Name"]: attr["Value"]
-                    for attr in user_info["UserAttributes"]
+                    attr["Name"]: attr["Value"] for attr in user_info["UserAttributes"]
                 }
             }
 
         except ClientError as e:
             error = e.response["Error"]
-            raise CognitoError(
-                f"Token verification failed: {error['Message']}"
-            )
+            raise CognitoError(f"Token verification failed: {error['Message']}")
 
     async def refresh_access_token(self, refresh_token: str) -> Dict:
         """Get new access token using refresh token.
@@ -156,24 +141,18 @@ class CognitoService:
             auth_result = client.initiate_auth(
                 ClientId=self.cognito.settings.COGNITO_APP_CLIENT_ID,
                 AuthFlow="REFRESH_TOKEN_AUTH",
-                AuthParameters={
-                    "REFRESH_TOKEN": refresh_token
-                }
+                AuthParameters={"REFRESH_TOKEN": refresh_token},
             )
 
             return {
-                "access_token": (
-                    auth_result["AuthenticationResult"]["AccessToken"]
-                ),
+                "access_token": (auth_result["AuthenticationResult"]["AccessToken"]),
                 "id_token": auth_result["AuthenticationResult"]["IdToken"],
-                "expires_in": auth_result["AuthenticationResult"]["ExpiresIn"]
+                "expires_in": auth_result["AuthenticationResult"]["ExpiresIn"],
             }
 
         except ClientError as e:
             error = e.response["Error"]
-            raise CognitoError(
-                f"Token refresh failed: {error['Message']}"
-            )
+            raise CognitoError(f"Token refresh failed: {error['Message']}")
 
     async def initiate_password_reset(self, email: str) -> Dict:
         """Initiate password reset process.
@@ -191,26 +170,20 @@ class CognitoService:
             client = await self.cognito.get_client()
 
             response = client.forgot_password(
-                ClientId=self.cognito.settings.COGNITO_APP_CLIENT_ID,
-                Username=email
+                ClientId=self.cognito.settings.COGNITO_APP_CLIENT_ID, Username=email
             )
 
             return {
                 "email": email,
-                "delivery_details": response.get("CodeDeliveryDetails", {})
+                "delivery_details": response.get("CodeDeliveryDetails", {}),
             }
 
         except ClientError as e:
             error = e.response["Error"]
-            raise CognitoError(
-                f"Password reset initiation failed: {error['Message']}"
-            )
+            raise CognitoError(f"Password reset initiation failed: {error['Message']}")
 
     async def confirm_password_reset(
-        self,
-        email: str,
-        confirmation_code: str,
-        new_password: str
+        self, email: str, confirmation_code: str, new_password: str
     ) -> Dict:
         """Complete password reset process.
 
@@ -234,13 +207,10 @@ class CognitoService:
                 ClientId=self.cognito.settings.COGNITO_APP_CLIENT_ID,
                 Username=email,
                 ConfirmationCode=confirmation_code,
-                Password=new_password
+                Password=new_password,
             )
 
-            return {
-                "email": email,
-                "status": "PASSWORD_RESET_COMPLETE"
-            }
+            return {"email": email, "status": "PASSWORD_RESET_COMPLETE"}
 
         except ClientError as e:
             error = e.response["Error"]

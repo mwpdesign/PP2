@@ -1,4 +1,5 @@
 """API documentation generator for Healthcare IVR Platform."""
+
 import os
 import json
 from typing import Dict, List, Optional, Any
@@ -22,16 +23,12 @@ class APIDocumentationGenerator:
             title="Healthcare IVR Platform API",
             version="1.0.0",
             description=self._get_api_description(),
-            routes=self.app.routes
+            routes=self.app.routes,
         )
 
         # Add security schemes
         openapi_schema["components"]["securitySchemes"] = {
-            "bearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT"
-            }
+            "bearerAuth": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"}
         }
 
         # Add global security requirement
@@ -43,16 +40,14 @@ class APIDocumentationGenerator:
             "audit_logging": True,
             "data_encryption": True,
             "access_control": "role-based",
-            "phi_handling": "encrypted-in-transit-and-at-rest"
+            "phi_handling": "encrypted-in-transit-and-at-rest",
         }
 
         # Add API versioning info
         openapi_schema["info"]["x-api-versioning"] = {
             "current": "v1",
             "supported": ["v1"],
-            "deprecation_policy": (
-                "https://api.healthcareivr.com/deprecation-policy"
-            )
+            "deprecation_policy": ("https://api.healthcareivr.com/deprecation-policy"),
         }
 
         # Save OpenAPI spec
@@ -121,7 +116,7 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
                         "requestBody": self._get_request_body(route),
                         "responses": self._get_responses(route),
                         "security": [{"bearerAuth": []}],
-                        "tags": self._get_endpoint_tags(route)
+                        "tags": self._get_endpoint_tags(route),
                     }
 
         # Save endpoint documentation
@@ -158,10 +153,8 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
             "200": {
                 "description": "Successful response",
                 "content": {
-                    "application/json": {
-                        "schema": self._get_response_schema(route)
-                    }
-                }
+                    "application/json": {"schema": self._get_response_schema(route)}
+                },
             },
             "400": {
                 "description": "Bad request",
@@ -169,12 +162,10 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
                     "application/json": {
                         "schema": {
                             "type": "object",
-                            "properties": {
-                                "detail": {"type": "string"}
-                            }
+                            "properties": {"detail": {"type": "string"}},
                         }
                     }
-                }
+                },
             },
             "401": {
                 "description": "Unauthorized",
@@ -182,12 +173,10 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
                     "application/json": {
                         "schema": {
                             "type": "object",
-                            "properties": {
-                                "detail": {"type": "string"}
-                            }
+                            "properties": {"detail": {"type": "string"}},
                         }
                     }
-                }
+                },
             },
             "403": {
                 "description": "Forbidden",
@@ -195,12 +184,10 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
                     "application/json": {
                         "schema": {
                             "type": "object",
-                            "properties": {
-                                "detail": {"type": "string"}
-                            }
+                            "properties": {"detail": {"type": "string"}},
                         }
                     }
-                }
+                },
             },
             "404": {
                 "description": "Not found",
@@ -208,12 +195,10 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
                     "application/json": {
                         "schema": {
                             "type": "object",
-                            "properties": {
-                                "detail": {"type": "string"}
-                            }
+                            "properties": {"detail": {"type": "string"}},
                         }
                     }
-                }
+                },
             },
             "500": {
                 "description": "Internal server error",
@@ -221,13 +206,11 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
                     "application/json": {
                         "schema": {
                             "type": "object",
-                            "properties": {
-                                "detail": {"type": "string"}
-                            }
+                            "properties": {"detail": {"type": "string"}},
                         }
                     }
-                }
-            }
+                },
+            },
         }
         return responses
 
@@ -248,12 +231,14 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
         params = []
         if hasattr(model, "__fields__"):
             for name, field in model.__fields__.items():
-                params.append({
-                    "name": name,
-                    "in": "query",
-                    "required": field.required,
-                    "schema": self._model_to_schema(field.type_)
-                })
+                params.append(
+                    {
+                        "name": name,
+                        "in": "query",
+                        "required": field.required,
+                        "schema": self._model_to_schema(field.type_),
+                    }
+                )
         return params
 
     def _get_endpoint_tags(self, route) -> List[str]:
@@ -270,7 +255,7 @@ API versioning is handled through the URL path (/v1/, /v2/, etc.).
         documentation = {
             "openapi": openapi_spec,
             "endpoints": endpoint_docs,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.utcnow().isoformat(),
         }
 
         # Save complete documentation
@@ -288,32 +273,28 @@ def generate_markdown_docs(documentation: Dict[str, Any]) -> str:
     # Add title and description
     if "info" in documentation["openapi"]:
         info = documentation["openapi"]["info"]
-        markdown.extend([
-            f"# {info['title']}",
-            "",
-            info.get("description", ""),
-            ""
-        ])
+        markdown.extend([f"# {info['title']}", "", info.get("description", ""), ""])
 
     # Add endpoints documentation
     markdown.append("## Endpoints\n")
     for path, methods in documentation["endpoints"].items():
         markdown.append(f"### {path}\n")
         for method, details in methods.items():
-            markdown.extend([
-                f"#### {method.upper()}",
-                "",
-                details.get("description", "No description"),
-                "",
-                "**Parameters:**"
-            ])
+            markdown.extend(
+                [
+                    f"#### {method.upper()}",
+                    "",
+                    details.get("description", "No description"),
+                    "",
+                    "**Parameters:**",
+                ]
+            )
 
             # Add parameters documentation
             if details["parameters"]:
                 for param in details["parameters"]:
                     param_desc = (
-                        f"- {param['name']} ({param['in']}): "
-                        f"{param['description']}"
+                        f"- {param['name']} ({param['in']}): " f"{param['description']}"
                     )
                     markdown.append(param_desc)
             else:

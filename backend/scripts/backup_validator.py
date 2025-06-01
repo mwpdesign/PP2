@@ -1,5 +1,6 @@
 """Backup validator for Healthcare IVR Platform."""
 
+
 class BackupValidator:
     def __init__(self):
         pass

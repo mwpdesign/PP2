@@ -1,4 +1,5 @@
 """Role-Based Access Control API endpoints."""
+
 from typing import List
 from uuid import UUID
 
@@ -16,7 +17,7 @@ from app.schemas.rbac import (
     RoleUpdate,
     PermissionCreate,
     PermissionResponse,
-    PermissionUpdate
+    PermissionUpdate,
 )
 from app.core.audit import AuditLogger
 
@@ -26,14 +27,12 @@ audit_logger = AuditLogger()
 
 
 @router.post(
-    "/roles/",
-    response_model=RoleResponse,
-    status_code=status.HTTP_201_CREATED
+    "/roles/", response_model=RoleResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_role(
     role: RoleCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Role:
     """
     Create a new role with permissions.
@@ -53,18 +52,18 @@ async def create_role(
     if not current_user.role.permissions.get("create_roles"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to create roles"
+            detail="Not authorized to create roles",
         )
 
     try:
         # Validate organization access
         if (
-            role.organization_id != current_user.organization_id and
-            not current_user.role.permissions.get("manage_all_organizations")
+            role.organization_id != current_user.organization_id
+            and not current_user.role.permissions.get("manage_all_organizations")
         ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to create roles for this organization"
+                detail="Not authorized to create roles for this organization",
             )
 
         # Create role
@@ -73,7 +72,7 @@ async def create_role(
             description=role.description,
             organization_id=role.organization_id,
             parent_role_id=role.parent_role_id,
-            permissions=role.permissions
+            permissions=role.permissions,
         )
 
         db.add(db_role)
@@ -84,7 +83,7 @@ async def create_role(
             if not permission:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Permission {permission_id} not found"
+                    detail=f"Permission {permission_id} not found",
                 )
             db_role.assigned_permissions.append(permission)
 
@@ -100,8 +99,8 @@ async def create_role(
             organization_id=role.organization_id,
             details={
                 "name": db_role.name,
-                "permission_ids": [str(p) for p in role.permission_ids]
-            }
+                "permission_ids": [str(p) for p in role.permission_ids],
+            },
         )
 
         return db_role
@@ -111,22 +110,18 @@ async def create_role(
         if "name" in str(e.orig):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Role name already exists in this organization"
+                detail="Role name already exists in this organization",
             )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Database integrity error"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Database integrity error"
         )
 
 
-@router.get(
-    "/roles/{role_id}",
-    response_model=RoleResponse
-)
+@router.get("/roles/{role_id}", response_model=RoleResponse)
 async def get_role(
     role_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Role:
     """
     Get role by ID.
@@ -145,30 +140,25 @@ async def get_role(
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
 
     # Check access
     if (
-        role.organization_id != current_user.organization_id and
-        not current_user.role.permissions.get("view_all_roles")
+        role.organization_id != current_user.organization_id
+        and not current_user.role.permissions.get("view_all_roles")
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this role"
+            detail="Not authorized to view this role",
         )
 
     return role
 
 
-@router.get(
-    "/roles/",
-    response_model=List[RoleResponse]
-)
+@router.get("/roles/", response_model=List[RoleResponse])
 async def list_roles(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ) -> List[Role]:
     """
     List roles based on user's permissions.
@@ -185,20 +175,19 @@ async def list_roles(
         return db.query(Role).all()
 
     # Otherwise, return only roles from user's organization
-    return db.query(Role).filter(
-        Role.organization_id == current_user.organization_id
-    ).all()
+    return (
+        db.query(Role)
+        .filter(Role.organization_id == current_user.organization_id)
+        .all()
+    )
 
 
-@router.put(
-    "/roles/{role_id}",
-    response_model=RoleResponse
-)
+@router.put("/roles/{role_id}", response_model=RoleResponse)
 async def update_role(
     role_id: UUID,
     role_update: RoleUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Role:
     """
     Update role details.
@@ -219,32 +208,28 @@ async def update_role(
     role = db.query(Role).filter(Role.id == role_id).first()
     if not role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
 
     # Check permissions
     if not current_user.role.permissions.get("update_roles"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update roles"
+            detail="Not authorized to update roles",
         )
 
     if (
-        role.organization_id != current_user.organization_id and
-        not current_user.role.permissions.get("manage_all_organizations")
+        role.organization_id != current_user.organization_id
+        and not current_user.role.permissions.get("manage_all_organizations")
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update roles in this organization"
+            detail="Not authorized to update roles in this organization",
         )
 
     try:
         # Update basic fields
-        update_data = role_update.dict(
-            exclude={"permission_ids"},
-            exclude_unset=True
-        )
+        update_data = role_update.dict(exclude={"permission_ids"}, exclude_unset=True)
         for field, value in update_data.items():
             setattr(role, field, value)
 
@@ -256,7 +241,7 @@ async def update_role(
                 if not permission:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail=f"Permission {permission_id} not found"
+                        detail=f"Permission {permission_id} not found",
                     )
                 role.assigned_permissions.append(permission)
 
@@ -272,8 +257,8 @@ async def update_role(
             organization_id=role.organization_id,
             details={
                 "updated_fields": list(update_data.keys()),
-                "permission_ids_updated": role_update.permission_ids is not None
-            }
+                "permission_ids_updated": role_update.permission_ids is not None,
+            },
         )
 
         return role
@@ -283,23 +268,22 @@ async def update_role(
         if "name" in str(e.orig):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Role name already exists in this organization"
+                detail="Role name already exists in this organization",
             )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Database integrity error"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Database integrity error"
         )
 
 
 @router.post(
     "/permissions/",
     response_model=PermissionResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_permission(
     permission: PermissionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Permission:
     """
     Create a new permission.
@@ -319,7 +303,7 @@ async def create_permission(
     if not current_user.role.permissions.get("create_permissions"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to create permissions"
+            detail="Not authorized to create permissions",
         )
 
     try:
@@ -329,7 +313,7 @@ async def create_permission(
             description=permission.description,
             resource_type=permission.resource_type,
             action=permission.action,
-            conditions=permission.conditions or {}
+            conditions=permission.conditions or {},
         )
 
         db.add(db_permission)
@@ -346,8 +330,8 @@ async def create_permission(
             details={
                 "name": db_permission.name,
                 "resource_type": db_permission.resource_type,
-                "action": db_permission.action
-            }
+                "action": db_permission.action,
+            },
         )
 
         return db_permission
@@ -357,22 +341,18 @@ async def create_permission(
         if "name" in str(e.orig):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Permission name already exists"
+                detail="Permission name already exists",
             )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Database integrity error"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Database integrity error"
         )
 
 
-@router.get(
-    "/permissions/{permission_id}",
-    response_model=PermissionResponse
-)
+@router.get("/permissions/{permission_id}", response_model=PermissionResponse)
 async def get_permission(
     permission_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Permission:
     """
     Get permission by ID.
@@ -392,28 +372,21 @@ async def get_permission(
     if not current_user.role.permissions.get("view_permissions"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view permissions"
+            detail="Not authorized to view permissions",
         )
 
-    permission = db.query(Permission).filter(
-        Permission.id == permission_id
-    ).first()
+    permission = db.query(Permission).filter(Permission.id == permission_id).first()
     if not permission:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Permission not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found"
         )
 
     return permission
 
 
-@router.get(
-    "/permissions/",
-    response_model=List[PermissionResponse]
-)
+@router.get("/permissions/", response_model=List[PermissionResponse])
 async def list_permissions(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ) -> List[Permission]:
     """
     List all permissions.
@@ -432,21 +405,18 @@ async def list_permissions(
     if not current_user.role.permissions.get("view_permissions"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view permissions"
+            detail="Not authorized to view permissions",
         )
 
     return db.query(Permission).all()
 
 
-@router.put(
-    "/permissions/{permission_id}",
-    response_model=PermissionResponse
-)
+@router.put("/permissions/{permission_id}", response_model=PermissionResponse)
 async def update_permission(
     permission_id: UUID,
     permission_update: PermissionUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Permission:
     """
     Update permission details.
@@ -467,17 +437,14 @@ async def update_permission(
     if not current_user.role.permissions.get("update_permissions"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update permissions"
+            detail="Not authorized to update permissions",
         )
 
     # Get permission
-    permission = db.query(Permission).filter(
-        Permission.id == permission_id
-    ).first()
+    permission = db.query(Permission).filter(Permission.id == permission_id).first()
     if not permission:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Permission not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found"
         )
 
     try:
@@ -496,9 +463,7 @@ async def update_permission(
             resource_id=permission.id,
             resource_type="permission",
             organization_id=current_user.organization_id,
-            details={
-                "updated_fields": list(update_data.keys())
-            }
+            details={"updated_fields": list(update_data.keys())},
         )
 
         return permission
@@ -506,6 +471,5 @@ async def update_permission(
     except IntegrityError:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Database integrity error"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Database integrity error"
         )

@@ -1,4 +1,5 @@
 """Facility model for the healthcare IVR platform."""
+
 from datetime import datetime
 from uuid import UUID as PyUUID, uuid4
 from sqlalchemy import String, DateTime, Boolean, ForeignKey
@@ -11,21 +12,17 @@ from app.core.database import Base
 class Facility(Base):
     """Facility model representing healthcare facilities."""
 
-    __tablename__ = 'facilities'
+    __tablename__ = "facilities"
 
     id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     facility_type: Mapped[str] = mapped_column(
-        String(50),
-        nullable=False
+        String(50), nullable=False
     )  # hospital, clinic, nursing_home, etc.
     npi: Mapped[str] = mapped_column(
-        String(10),
-        unique=True
+        String(10), unique=True
     )  # National Provider Identifier
     address_line1: Mapped[str] = mapped_column(String(255), nullable=False)
     address_line2: Mapped[str] = mapped_column(String(255))
@@ -38,35 +35,23 @@ class Facility(Base):
 
     # Organization
     organization_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('organizations.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False
     )
 
     # Status and metadata
-    is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=True
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-        onupdate=datetime.utcnow
+        DateTime(timezone=True), nullable=True, onupdate=datetime.utcnow
     )
 
     # Relationships
     patients = relationship("Patient", back_populates="facility")
     organization = relationship("Organization", back_populates="facilities")
     ivr_requests = relationship(
-        "IVRRequest",
-        back_populates="facility",
-        cascade="all, delete-orphan"
+        "IVRRequest", back_populates="facility", cascade="all, delete-orphan"
     )
 
     def __repr__(self):

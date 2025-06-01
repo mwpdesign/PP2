@@ -1,6 +1,7 @@
 """
 IVR session management service.
 """
+
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -10,15 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.models.ivr import IVRSession, IVRRequest
-from app.schemas.ivr import (
-    IVRSessionCreate,
-    IVRSessionUpdate
-)
-from app.core.exceptions import (
-    NotFoundException,
-    ValidationError,
-    UnauthorizedError
-)
+from app.schemas.ivr import IVRSessionCreate, IVRSessionUpdate
+from app.core.exceptions import NotFoundException, ValidationError, UnauthorizedError
 from app.core.security import verify_territory_access
 
 logger = logging.getLogger(__name__)
@@ -86,23 +80,20 @@ class IVRService:
             raise
 
     async def _validate_status_transition(
-        self,
-        session: IVRSession,
-        new_status: str
+        self, session: IVRSession, new_status: str
     ) -> None:
         """Validate if status transition is allowed."""
         valid_transitions = {
-            'pending': ['verified', 'cancelled'],
-            'verified': ['approved', 'cancelled'],
-            'approved': ['completed', 'cancelled'],
-            'completed': [],
-            'cancelled': []
+            "pending": ["verified", "cancelled"],
+            "verified": ["approved", "cancelled"],
+            "approved": ["completed", "cancelled"],
+            "completed": [],
+            "cancelled": [],
         }
 
         if new_status not in valid_transitions.get(session.status, []):
             raise ValidationError(
-                f"Invalid status transition from "
-                f"{session.status} to {new_status}"
+                f"Invalid status transition from " f"{session.status} to {new_status}"
             )
 
     async def delete_session(self, session_id: UUID) -> bool:
@@ -120,7 +111,9 @@ class IVRService:
             await self.db.rollback()
             raise
 
-    async def list_sessions(self, organization_id: UUID, filters: Optional[Dict] = None) -> List[IVRSession]:
+    async def list_sessions(
+        self, organization_id: UUID, filters: Optional[Dict] = None
+    ) -> List[IVRSession]:
         """List IVR sessions with optional filters."""
         try:
             query = select(IVRSession).where(

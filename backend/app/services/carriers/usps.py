@@ -2,6 +2,7 @@
 USPS carrier service implementation.
 Implements HIPAA-compliant shipping operations for USPS.
 """
+
 from typing import Dict, List
 from datetime import datetime
 import httpx
@@ -26,36 +27,34 @@ class USPSCarrier(BaseCarrier):
         )
         self.client = httpx.AsyncClient()
 
-    async def get_rates(
-        self,
-        package_info: Dict,
-        destination: Dict
-    ) -> List[Dict]:
+    async def get_rates(self, package_info: Dict, destination: Dict) -> List[Dict]:
         """Get shipping rates from USPS."""
         try:
             response = await self.client.get(
                 self.base_url,
                 params={
                     "API": "RateV4",
-                    "XML": self._build_rate_xml(package_info, destination)
-                }
+                    "XML": self._build_rate_xml(package_info, destination),
+                },
             )
             response.raise_for_status()
             data = self._parse_xml_response(response.text)
 
-            return [{
-                "service": rate["ServiceID"],
-                "carrier": "USPS",
-                "total_cost": float(rate["Rate"]),
-                "currency": "USD",
-                "delivery_days": rate.get("DeliveryDays"),
-                "service_name": self._get_service_name(rate["ServiceID"])
-            } for rate in data["RateResponse"]["Package"]["Postage"]]
+            return [
+                {
+                    "service": rate["ServiceID"],
+                    "carrier": "USPS",
+                    "total_cost": float(rate["Rate"]),
+                    "currency": "USD",
+                    "delivery_days": rate.get("DeliveryDays"),
+                    "service_name": self._get_service_name(rate["ServiceID"]),
+                }
+                for rate in data["RateResponse"]["Package"]["Postage"]
+            ]
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to get USPS rates: {str(e)}"
+                status_code=500, detail=f"Failed to get USPS rates: {str(e)}"
             )
 
     async def create_label(self, shipment_info: Dict) -> Dict:
@@ -63,10 +62,7 @@ class USPSCarrier(BaseCarrier):
         try:
             response = await self.client.get(
                 self.base_url,
-                params={
-                    "API": "eVS",
-                    "XML": self._build_label_xml(shipment_info)
-                }
+                params={"API": "eVS", "XML": self._build_label_xml(shipment_info)},
             )
             response.raise_for_status()
             data = self._parse_xml_response(response.text)
@@ -75,18 +71,15 @@ class USPSCarrier(BaseCarrier):
 
             return {
                 "tracking_number": label_response["TrackingNumber"],
-                "label_url": self._store_label(
-                    label_response["LabelImage"]
-                ),
+                "label_url": self._store_label(label_response["LabelImage"]),
                 "carrier": "USPS",
                 "service": shipment_info["service_code"],
-                "created_at": datetime.utcnow()
+                "created_at": datetime.utcnow(),
             }
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to create USPS label: {str(e)}"
+                status_code=500, detail=f"Failed to create USPS label: {str(e)}"
             )
 
     async def track_shipment(self, tracking_number: str) -> Dict:
@@ -96,8 +89,8 @@ class USPSCarrier(BaseCarrier):
                 self.base_url,
                 params={
                     "API": "TrackV2",
-                    "XML": self._build_track_xml(tracking_number)
-                }
+                    "XML": self._build_track_xml(tracking_number),
+                },
             )
             response.raise_for_status()
             data = self._parse_xml_response(response.text)
@@ -106,36 +99,32 @@ class USPSCarrier(BaseCarrier):
             latest_event = track_info["TrackDetail"][0]
 
             return {
-                "status": self._get_status_description(
-                    latest_event["EventCode"]
-                ),
+                "status": self._get_status_description(latest_event["EventCode"]),
                 "location": (
                     f"{latest_event.get('EventCity', '')}, "
                     f"{latest_event.get('EventState', '')}"
                 ).strip(" ,"),
-                "estimated_delivery": track_info.get(
-                    "ExpectedDeliveryDate"
-                ),
-                "history": [{
-                    "timestamp": event["EventDate"],
-                    "status": self._get_status_description(
-                        event["EventCode"]
-                    ),
-                    "location": (
-                        f"{event.get('EventCity', '')}, "
-                        f"{event.get('EventState', '')}"
-                    ).strip(" ,"),
-                    "description": event["Event"]
-                } for event in track_info["TrackDetail"]],
+                "estimated_delivery": track_info.get("ExpectedDeliveryDate"),
+                "history": [
+                    {
+                        "timestamp": event["EventDate"],
+                        "status": self._get_status_description(event["EventCode"]),
+                        "location": (
+                            f"{event.get('EventCity', '')}, "
+                            f"{event.get('EventState', '')}"
+                        ).strip(" ,"),
+                        "description": event["Event"],
+                    }
+                    for event in track_info["TrackDetail"]
+                ],
                 "carrier": "USPS",
                 "tracking_number": tracking_number,
-                "last_updated": datetime.utcnow()
+                "last_updated": datetime.utcnow(),
             }
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to track USPS shipment: {str(e)}"
+                status_code=500, detail=f"Failed to track USPS shipment: {str(e)}"
             )
 
     async def validate_address(self, address: Dict) -> Dict:
@@ -143,10 +132,7 @@ class USPSCarrier(BaseCarrier):
         try:
             response = await self.client.get(
                 self.base_url,
-                params={
-                    "API": "Verify",
-                    "XML": self._build_address_xml(address)
-                }
+                params={"API": "Verify", "XML": self._build_address_xml(address)},
             )
             response.raise_for_status()
             data = self._parse_xml_response(response.text)
@@ -156,31 +142,28 @@ class USPSCarrier(BaseCarrier):
 
             return {
                 "is_valid": is_valid,
-                "suggested_address": {
-                    "street": address_result["Address2"],
-                    "city": address_result["City"],
-                    "state": address_result["State"],
-                    "postal_code": address_result["Zip5"],
-                    "country": "US"
-                } if is_valid else None,
-                "errors": (
-                    []
+                "suggested_address": (
+                    {
+                        "street": address_result["Address2"],
+                        "city": address_result["City"],
+                        "state": address_result["State"],
+                        "postal_code": address_result["Zip5"],
+                        "country": "US",
+                    }
                     if is_valid
-                    else [address_result["Error"]["Description"]]
-                )
+                    else None
+                ),
+                "errors": (
+                    [] if is_valid else [address_result["Error"]["Description"]]
+                ),
             }
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to validate USPS address: {str(e)}"
+                status_code=500, detail=f"Failed to validate USPS address: {str(e)}"
             )
 
-    def _build_rate_xml(
-        self,
-        package_info: Dict,
-        destination: Dict
-    ) -> str:
+    def _build_rate_xml(self, package_info: Dict, destination: Dict) -> str:
         """Build XML for USPS rate request."""
         return f"""
         <RateV4Request USERID="{self.api_key}">
@@ -255,11 +238,9 @@ class USPSCarrier(BaseCarrier):
         return {
             "RateResponse": {
                 "Package": {
-                    "Postage": [{
-                        "ServiceID": "01",
-                        "Rate": "10.00",
-                        "DeliveryDays": "3"
-                    }]
+                    "Postage": [
+                        {"ServiceID": "01", "Rate": "10.00", "DeliveryDays": "3"}
+                    ]
                 }
             }
         }
@@ -272,7 +253,7 @@ class USPSCarrier(BaseCarrier):
             "03": "First-Class Mail",
             "04": "Parcel Select Ground",
             "05": "Media Mail",
-            "06": "First-Class Package Service"
+            "06": "First-Class Package Service",
         }
         return service_map.get(code, "Unknown")
 
@@ -284,7 +265,7 @@ class USPSCarrier(BaseCarrier):
             "03": "Out for Delivery",
             "04": "Delivered",
             "05": "Exception",
-            "06": "Return to Sender"
+            "06": "Return to Sender",
         }
         return status_map.get(code, "Unknown")
 

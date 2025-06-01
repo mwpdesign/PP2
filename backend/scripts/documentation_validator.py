@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, Optional, Any
 from datetime import datetime
 
+
 class DocumentationValidator:
     """Validates and generates documentation based on project requirements"""
 
@@ -28,8 +29,8 @@ class DocumentationValidator:
                     "Testing",
                     "Deployment",
                     "Security & Compliance",
-                    "Contributing Guidelines"
-                ]
+                    "Contributing Guidelines",
+                ],
             },
             "docs/api.md": {
                 "path": self.project_root / "docs/api.md",
@@ -40,8 +41,8 @@ class DocumentationValidator:
                     "Error Handling",
                     "Rate Limiting",
                     "Versioning",
-                    "Security Considerations"
-                ]
+                    "Security Considerations",
+                ],
             },
             "docs/database.md": {
                 "path": self.project_root / "docs/database.md",
@@ -52,8 +53,8 @@ class DocumentationValidator:
                     "Indexes",
                     "Encryption",
                     "Migrations",
-                    "Backup & Recovery"
-                ]
+                    "Backup & Recovery",
+                ],
             },
             "docs/deployment.md": {
                 "path": self.project_root / "docs/deployment.md",
@@ -64,8 +65,8 @@ class DocumentationValidator:
                     "CI/CD Pipeline",
                     "Monitoring & Logging",
                     "Scaling",
-                    "Disaster Recovery"
-                ]
+                    "Disaster Recovery",
+                ],
             },
             "docs/security.md": {
                 "path": self.project_root / "docs/security.md",
@@ -76,8 +77,8 @@ class DocumentationValidator:
                     "HIPAA Compliance",
                     "Audit Logging",
                     "Incident Response",
-                    "Security Controls"
-                ]
+                    "Security Controls",
+                ],
             },
             "docs/compliance.md": {
                 "path": self.project_root / "docs/compliance.md",
@@ -88,8 +89,8 @@ class DocumentationValidator:
                     "Audit Procedures",
                     "Risk Assessment",
                     "Training Requirements",
-                    "Compliance Monitoring"
-                ]
+                    "Compliance Monitoring",
+                ],
             },
             "docs/troubleshooting.md": {
                 "path": self.project_root / "docs/troubleshooting.md",
@@ -99,8 +100,8 @@ class DocumentationValidator:
                     "Debug Procedures",
                     "Logging",
                     "Support Contacts",
-                    "Escalation Procedures"
-                ]
+                    "Escalation Procedures",
+                ],
             },
             "docs/user_manual.md": {
                 "path": self.project_root / "docs/user_manual.md",
@@ -111,9 +112,9 @@ class DocumentationValidator:
                     "Order Management",
                     "Patient Records",
                     "Document Handling",
-                    "Reporting"
-                ]
-            }
+                    "Reporting",
+                ],
+            },
         }
 
     def _setup_logging(self) -> logging.Logger:
@@ -131,9 +132,7 @@ class DocumentationValidator:
 
         handler = logging.FileHandler(log_file)
         handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         )
 
         logger.addHandler(handler)
@@ -152,7 +151,7 @@ class DocumentationValidator:
                 "exists": doc_path.exists(),
                 "sections": {},
                 "word_count": 0,
-                "last_modified": None
+                "last_modified": None,
             }
 
             if doc_path.exists():
@@ -161,24 +160,23 @@ class DocumentationValidator:
                     doc_path.stat().st_mtime
                 ).isoformat()
 
-                validation_results[doc_name].update({
-                    "word_count": len(content.split()),
-                    "last_modified": last_modified
-                })
+                validation_results[doc_name].update(
+                    {"word_count": len(content.split()), "last_modified": last_modified}
+                )
 
                 # Check for required sections
                 for section in requirements["required_sections"]:
                     section_present = self._check_section_exists(content, section)
                     validation_results[doc_name]["sections"][section] = {
                         "present": section_present,
-                        "status": "PASS" if section_present else "FAIL"
+                        "status": "PASS" if section_present else "FAIL",
                     }
             else:
                 self.logger.warning(f"Document not found: {doc_name}")
                 for section in requirements["required_sections"]:
                     validation_results[doc_name]["sections"][section] = {
                         "present": False,
-                        "status": "FAIL"
+                        "status": "FAIL",
                     }
 
         return validation_results
@@ -190,7 +188,7 @@ class DocumentationValidator:
             f"# {section}",
             f"## {section}",
             f"### {section}",
-            f"#### {section}"
+            f"#### {section}",
         ]
         return any(pattern.lower() in content.lower() for pattern in heading_patterns)
 
@@ -205,18 +203,20 @@ class DocumentationValidator:
         template = [
             f"# {doc_name.replace('.md', '').replace('docs/', '').title()}",
             "\n## Overview\n",
-            "[Provide a brief overview of this documentation]\n"
+            "[Provide a brief overview of this documentation]\n",
         ]
 
         for section in requirements["required_sections"]:
-            template.extend([
-                f"\n## {section}\n",
-                "[Provide detailed information for this section]\n",
-                "### Key Points\n",
-                "- [Point 1]\n",
-                "- [Point 2]\n",
-                "- [Point 3]\n"
-            ])
+            template.extend(
+                [
+                    f"\n## {section}\n",
+                    "[Provide detailed information for this section]\n",
+                    "### Key Points\n",
+                    "- [Point 1]\n",
+                    "- [Point 2]\n",
+                    "- [Point 3]\n",
+                ]
+            )
 
         return "\n".join(template)
 
@@ -243,8 +243,8 @@ class DocumentationValidator:
 
         # Calculate overall status
         has_failures = any(
-            not results["exists"] or
-            any(s["status"] == "FAIL" for s in results["sections"].values())
+            not results["exists"]
+            or any(s["status"] == "FAIL" for s in results["sections"].values())
             for results in validation_results.values()
         )
 
@@ -258,11 +258,12 @@ class DocumentationValidator:
                     1 for r in validation_results.values() if not r["exists"]
                 ),
                 "incomplete_documents": sum(
-                    1 for r in validation_results.values()
-                    if r["exists"] and
-                    any(s["status"] == "FAIL" for s in r["sections"].values())
-                )
-            }
+                    1
+                    for r in validation_results.values()
+                    if r["exists"]
+                    and any(s["status"] == "FAIL" for s in r["sections"].values())
+                ),
+            },
         }
 
         # Save report
@@ -282,8 +283,9 @@ class DocumentationValidator:
         """Validate documentation."""
         return {
             "status": "PASS",
-            "message": "Documentation validation skipped - not configured"
+            "message": "Documentation validation skipped - not configured",
         }
+
 
 def main():
     """Main entry point for documentation validation"""
@@ -303,15 +305,14 @@ def main():
         print("\nSummary:")
         print(f"Total Documents: {report['summary']['total_documents']}")
         print(f"Missing Documents: {report['summary']['missing_documents']}")
-        print(
-            f"Incomplete Documents: {report['summary']['incomplete_documents']}"
-        )
+        print(f"Incomplete Documents: {report['summary']['incomplete_documents']}")
 
         sys.exit(0 if report["overall_status"] == "PASS" else 1)
 
     except Exception as e:
         print(f"Error during documentation validation: {str(e)}", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

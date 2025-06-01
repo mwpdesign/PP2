@@ -20,6 +20,7 @@ from app.models.ivr import IVRFlow, IVRNode
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def create_initial_roles(session) -> dict:
     """Create initial system roles."""
     logger.info("Creating initial roles...")
@@ -29,7 +30,7 @@ def create_initial_roles(session) -> dict:
         "PROVIDER": "Healthcare Provider",
         "IVR_OPERATOR": "IVR System Operator",
         "PATIENT": "Patient User",
-        "SUPPORT": "Support Staff"
+        "SUPPORT": "Support Staff",
     }
 
     role_objects = {}
@@ -43,6 +44,7 @@ def create_initial_roles(session) -> dict:
 
     return role_objects
 
+
 def create_initial_organization(session) -> Organization:
     """Create the initial healthcare organization."""
     logger.info("Creating initial organization...")
@@ -55,12 +57,13 @@ def create_initial_organization(session) -> Organization:
             status="ACTIVE",
             contact_email="admin@healthcare-ivr.com",
             contact_phone="+1-555-0123",
-            address="123 Healthcare Ave, Medical District, MD 12345"
+            address="123 Healthcare Ave, Medical District, MD 12345",
         )
         session.add(org)
         logger.info("Created initial organization")
 
     return org
+
 
 def create_admin_user(session, org: Organization, admin_role: Role):
     """Create the initial admin user."""
@@ -76,7 +79,7 @@ def create_admin_user(session, org: Organization, admin_role: Role):
             last_name="Administrator",
             is_active=True,
             is_superuser=True,
-            organization_id=org.id
+            organization_id=org.id,
         )
         admin.roles.append(admin_role)
         session.add(admin)
@@ -88,9 +91,10 @@ def create_admin_user(session, org: Organization, admin_role: Role):
             action="CREATE_USER",
             resource_type="USER",
             resource_id=admin.id,
-            details="Created initial admin user during system bootstrap"
+            details="Created initial admin user during system bootstrap",
         )
         session.add(audit)
+
 
 def create_sample_ivr_flow(session):
     """Create a sample IVR flow for testing."""
@@ -102,7 +106,7 @@ def create_sample_ivr_flow(session):
             name="Sample Flow",
             description="Sample patient intake flow",
             status="ACTIVE",
-            version=1
+            version=1,
         )
         session.add(flow)
 
@@ -111,19 +115,19 @@ def create_sample_ivr_flow(session):
             flow=flow,
             node_type="WELCOME",
             content="Welcome to the Healthcare IVR System",
-            order=1
+            order=1,
         )
         menu = IVRNode(
             flow=flow,
             node_type="MENU",
             content=(
-                "Press 1 for appointments, 2 for prescriptions, "
-                "3 for urgent care"
+                "Press 1 for appointments, 2 for prescriptions, " "3 for urgent care"
             ),
-            order=2
+            order=2,
         )
         session.add_all([welcome, menu])
         logger.info("Created sample IVR flow")
+
 
 def bootstrap_system():
     """Bootstrap the system with initial configuration."""
@@ -165,6 +169,7 @@ def bootstrap_system():
     except Exception as e:
         logger.error(f"Error during system bootstrap: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     bootstrap_system()

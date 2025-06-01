@@ -1,78 +1,47 @@
 """
 Database models for shipping-related entities.
 """
+
 from datetime import datetime
 from uuid import UUID as PyUUID, uuid4
-from sqlalchemy import (
-    String, Boolean, DateTime, ForeignKey, JSON, Enum
-)
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, JSON, Enum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
 from app.core.security import encrypt_field, decrypt_field
-from app.services.shipping_types import (
-    ShippingServiceType,
-    TrackingStatus
-)
+from app.services.shipping_types import ShippingServiceType, TrackingStatus
 
 
 class ShippingAddress(Base):
     """Model for storing shipping addresses."""
-    __tablename__ = 'shipping_addresses'
+
+    __tablename__ = "shipping_addresses"
 
     id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     order_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('orders.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False
     )
     address_type: Mapped[str] = mapped_column(
-        Enum('from', 'to', name='address_type_enum'),
-        nullable=False
+        Enum("from", "to", name="address_type_enum"), nullable=False
     )
-    _street1: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False
-    )  # Encrypted
-    _street2: Mapped[str] = mapped_column(
-        String(500)
-    )  # Encrypted
-    _city: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False
-    )  # Encrypted
-    _state: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False
-    )  # Encrypted
-    _zip_code: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False
-    )  # Encrypted
+    _street1: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
+    _street2: Mapped[str] = mapped_column(String(500))  # Encrypted
+    _city: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
+    _state: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
+    _zip_code: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
     _country: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False,
-        default='US'
+        String(500), nullable=False, default="US"
     )  # Encrypted
-    _phone: Mapped[str] = mapped_column(
-        String(500)
-    )  # Encrypted
-    _email: Mapped[str] = mapped_column(
-        String(500)
-    )  # Encrypted
+    _phone: Mapped[str] = mapped_column(String(500))  # Encrypted
+    _email: Mapped[str] = mapped_column(String(500))  # Encrypted
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        onupdate=datetime.utcnow
+        DateTime(timezone=True), onupdate=datetime.utcnow
     )
 
     # Relationships
@@ -201,45 +170,28 @@ class ShippingAddress(Base):
 
 class ShipmentPackage(Base):
     """Model for storing package information."""
-    __tablename__ = 'shipment_packages'
+
+    __tablename__ = "shipment_packages"
 
     id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     shipment_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('shipments.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("shipments.id"), nullable=False
     )
-    weight: Mapped[str] = mapped_column(
-        String(500),
-        nullable=False
-    )  # Encrypted
-    length: Mapped[str] = mapped_column(
-        String(500)
-    )  # Encrypted
-    width: Mapped[str] = mapped_column(
-        String(500)
-    )  # Encrypted
-    height: Mapped[str] = mapped_column(
-        String(500)
-    )  # Encrypted
-    value: Mapped[str] = mapped_column(
-        String(500)
-    )  # Encrypted
+    weight: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
+    length: Mapped[str] = mapped_column(String(500))  # Encrypted
+    width: Mapped[str] = mapped_column(String(500))  # Encrypted
+    height: Mapped[str] = mapped_column(String(500))  # Encrypted
+    value: Mapped[str] = mapped_column(String(500))  # Encrypted
     reference: Mapped[str] = mapped_column(String(100))
     requires_signature: Mapped[bool] = mapped_column(Boolean, default=True)
     is_hazardous: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        onupdate=datetime.utcnow
+        DateTime(timezone=True), onupdate=datetime.utcnow
     )
 
     # Relationships
@@ -248,90 +200,64 @@ class ShipmentPackage(Base):
 
 class Shipment(Base):
     """Model for storing shipment information."""
-    __tablename__ = 'shipments'
+
+    __tablename__ = "shipments"
 
     id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     order_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('orders.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False
     )
     service_type: Mapped[ShippingServiceType] = mapped_column(
-        Enum(ShippingServiceType),
-        nullable=False
+        Enum(ShippingServiceType), nullable=False
     )
     carrier_id: Mapped[str] = mapped_column(String(100), nullable=False)
     tracking_number: Mapped[str] = mapped_column(String(100))
     status: Mapped[TrackingStatus] = mapped_column(
-        Enum(TrackingStatus),
-        nullable=False,
-        default=TrackingStatus.PENDING
+        Enum(TrackingStatus), nullable=False, default=TrackingStatus.PENDING
     )
     label_url: Mapped[str] = mapped_column(String(500))
-    shipping_cost: Mapped[str] = mapped_column(
-        String(500)
-    )  # Encrypted
-    insurance_cost: Mapped[str] = mapped_column(
-        String(500)
-    )  # Encrypted
+    shipping_cost: Mapped[str] = mapped_column(String(500))  # Encrypted
+    insurance_cost: Mapped[str] = mapped_column(String(500))  # Encrypted
     shipment_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        onupdate=datetime.utcnow
+        DateTime(timezone=True), onupdate=datetime.utcnow
     )
 
     # Relationships
     order = relationship("Order", back_populates="shipments")
     packages = relationship(
-        "ShipmentPackage",
-        back_populates="shipment",
-        cascade="all, delete-orphan"
+        "ShipmentPackage", back_populates="shipment", cascade="all, delete-orphan"
     )
     tracking_events = relationship(
-        "ShipmentTracking",
-        back_populates="shipment",
-        cascade="all, delete-orphan"
+        "ShipmentTracking", back_populates="shipment", cascade="all, delete-orphan"
     )
 
 
 class ShipmentTracking(Base):
     """Model for storing shipment tracking events."""
-    __tablename__ = 'shipment_tracking'
+
+    __tablename__ = "shipment_tracking"
 
     id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     shipment_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('shipments.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("shipments.id"), nullable=False
     )
-    status: Mapped[TrackingStatus] = mapped_column(
-        Enum(TrackingStatus),
-        nullable=False
-    )
+    status: Mapped[TrackingStatus] = mapped_column(Enum(TrackingStatus), nullable=False)
     location: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(String(500))
     occurred_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False
+        DateTime(timezone=True), nullable=False
     )
     tracking_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
 
     # Relationships

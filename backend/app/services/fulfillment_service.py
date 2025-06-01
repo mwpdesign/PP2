@@ -2,6 +2,7 @@
 Fulfillment service for order processing and warehouse management.
 Implements HIPAA-compliant fulfillment operations.
 """
+
 from typing import List, Dict
 from datetime import datetime
 from uuid import UUID
@@ -14,7 +15,7 @@ from app.models.logistics import (
     QualityCheck,
     WarehouseLocation,
     ReturnAuthorization,
-    ReturnInspection
+    ReturnInspection,
 )
 from app.services.shipping_service import ShippingService
 from app.services.inventory_service import InventoryService
@@ -28,9 +29,7 @@ class FulfillmentService:
         self.inventory_service = InventoryService(db)
 
     async def create_fulfillment_order(
-        self,
-        order_id: UUID,
-        priority: str = "normal"
+        self, order_id: UUID, priority: str = "normal"
     ) -> FulfillmentOrder:
         """Create fulfillment order from sales order."""
         try:
@@ -43,20 +42,17 @@ class FulfillmentService:
                 status="pending",
                 priority=priority,
                 items=order.items,
-                shipping_info=order.shipping_info
+                shipping_info=order.shipping_info,
             )
             self.db.add(fulfillment_order)
 
             # Generate picking list
-            picking_list = await self.generate_picking_list(
-                fulfillment_order
-            )
+            picking_list = await self.generate_picking_list(fulfillment_order)
             self.db.add(picking_list)
 
             # Create quality check record
             quality_check = QualityCheck(
-                fulfillment_order_id=fulfillment_order.id,
-                status="pending"
+                fulfillment_order_id=fulfillment_order.id, status="pending"
             )
             self.db.add(quality_check)
 
@@ -66,13 +62,11 @@ class FulfillmentService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to create fulfillment order: {str(e)}"
+                status_code=500, detail=f"Failed to create fulfillment order: {str(e)}"
             )
 
     async def generate_picking_list(
-        self,
-        fulfillment_order: FulfillmentOrder
+        self, fulfillment_order: FulfillmentOrder
     ) -> PickingList:
         """Generate optimized picking list."""
         try:
@@ -88,7 +82,7 @@ class FulfillmentService:
             picking_list = PickingList(
                 fulfillment_order_id=fulfillment_order.id,
                 locations=optimized_route,
-                status="pending"
+                status="pending",
             )
             self.db.add(picking_list)
 
@@ -96,32 +90,28 @@ class FulfillmentService:
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to generate picking list: {str(e)}"
+                status_code=500, detail=f"Failed to generate picking list: {str(e)}"
             )
 
     def optimize_picking_route(
-        self,
-        locations: List[WarehouseLocation]
+        self, locations: List[WarehouseLocation]
     ) -> List[WarehouseLocation]:
         """Optimize warehouse picking route."""
-        return sorted(
-            locations,
-            key=lambda x: (x.zone, x.aisle, x.shelf, x.bin)
-        )
+        return sorted(locations, key=lambda x: (x.zone, x.aisle, x.shelf, x.bin))
 
     async def process_quality_check(
-        self,
-        fulfillment_order_id: UUID,
-        inspector_id: UUID,
-        results: Dict
+        self, fulfillment_order_id: UUID, inspector_id: UUID, results: Dict
     ) -> QualityCheck:
         """Process quality check for fulfillment order."""
         try:
-            quality_check = self.db.query(QualityCheck).filter(
-                QualityCheck.fulfillment_order_id == fulfillment_order_id,
-                QualityCheck.status == "pending"
-            ).first()
+            quality_check = (
+                self.db.query(QualityCheck)
+                .filter(
+                    QualityCheck.fulfillment_order_id == fulfillment_order_id,
+                    QualityCheck.status == "pending",
+                )
+                .first()
+            )
 
             if not quality_check:
                 raise ValidationError("No pending quality check found")
@@ -137,14 +127,10 @@ class FulfillmentService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to process quality check: {str(e)}"
+                status_code=500, detail=f"Failed to process quality check: {str(e)}"
             )
 
-    async def process_return(
-        self,
-        return_auth: ReturnAuthorization
-    ) -> Dict:
+    async def process_return(self, return_auth: ReturnAuthorization) -> Dict:
         """Process return merchandise authorization."""
         try:
             # Validate return authorization
@@ -153,8 +139,7 @@ class FulfillmentService:
 
             # Create inspection record
             inspection = ReturnInspection(
-                return_auth_id=return_auth.id,
-                status="pending"
+                return_auth_id=return_auth.id, status="pending"
             )
             self.db.add(inspection)
 
@@ -163,7 +148,7 @@ class FulfillmentService:
                 await self.inventory_service.add_inventory(
                     return_auth.item_id,
                     return_auth.quantity,
-                    condition=return_auth.condition
+                    condition=return_auth.condition,
                 )
 
             self.db.commit()
@@ -172,8 +157,7 @@ class FulfillmentService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to process return: {str(e)}"
+                status_code=500, detail=f"Failed to process return: {str(e)}"
             )
 
     def validate_return(self, return_auth: ReturnAuthorization) -> bool:

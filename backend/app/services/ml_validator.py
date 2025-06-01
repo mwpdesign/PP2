@@ -18,15 +18,11 @@ class MLValidator:
 
         # Initialize anomaly detection model
         self.anomaly_detector = IsolationForest(
-            n_estimators=100,
-            contamination=0.1,
-            random_state=42
+            n_estimators=100, contamination=0.1, random_state=42
         )
 
     async def analyze_compliance(
-        self,
-        aspect: str,
-        validation_data: Dict[str, Any]
+        self, aspect: str, validation_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Analyze compliance patterns using ML techniques
@@ -49,38 +45,26 @@ class MLValidator:
 
         # Generate risk assessment
         risk_assessment = await self._assess_compliance_risk(
-            aspect,
-            features,
-            anomalies
+            aspect, features, anomalies
         )
 
         # Generate recommendations
-        recommendations = await self._generate_recommendations(
-            aspect,
-            risk_assessment
-        )
+        recommendations = await self._generate_recommendations(aspect, risk_assessment)
 
         return {
             "risk_assessment": risk_assessment,
             "recommendations": recommendations,
-            "anomalies_detected": len(anomalies)
+            "anomalies_detected": len(anomalies),
         }
 
     async def _get_relevant_audit_logs(
-        self,
-        aspect: str,
-        limit: int = 1000
+        self, aspect: str, limit: int = 1000
     ) -> List[AuditLog]:
         """Retrieve relevant historical audit logs"""
-        return await self.audit_service.get_logs_by_aspect(
-            aspect=aspect,
-            limit=limit
-        )
+        return await self.audit_service.get_logs_by_aspect(aspect=aspect, limit=limit)
 
     def _extract_features(
-        self,
-        audit_logs: List[AuditLog],
-        current_data: Dict[str, Any]
+        self, audit_logs: List[AuditLog], current_data: Dict[str, Any]
     ) -> np.ndarray:
         """Extract numerical features for ML analysis"""
         features = []
@@ -91,7 +75,7 @@ class MLValidator:
                 log.error_count,
                 log.response_time,
                 log.data_volume,
-                self._calculate_risk_score(log)
+                self._calculate_risk_score(log),
             ]
             features.append(feature_vector)
 
@@ -101,17 +85,14 @@ class MLValidator:
             current_data.get("error_count", 0),
             current_data.get("response_time", 0),
             current_data.get("data_volume", 0),
-            self._calculate_risk_score(current_data)
+            self._calculate_risk_score(current_data),
         ]
         features.append(current_vector)
 
         # Scale features
         return self.scaler.fit_transform(features)
 
-    async def _detect_anomalies(
-        self,
-        features: np.ndarray
-    ) -> List[int]:
+    async def _detect_anomalies(self, features: np.ndarray) -> List[int]:
         """Detect anomalies in the feature set"""
         # Train and predict
         predictions = self.anomaly_detector.fit_predict(features)
@@ -120,10 +101,7 @@ class MLValidator:
         return [i for i, pred in enumerate(predictions) if pred == -1]
 
     async def _assess_compliance_risk(
-        self,
-        aspect: str,
-        features: np.ndarray,
-        anomalies: List[int]
+        self, aspect: str, features: np.ndarray, anomalies: List[int]
     ) -> Dict[str, Any]:
         """Assess compliance risk based on ML analysis"""
         # Calculate base risk score
@@ -144,79 +122,75 @@ class MLValidator:
             "base_risk": base_risk,
             "adjusted_risk": adjusted_risk,
             "confidence": confidence,
-            "sensitivity": sensitivity_multiplier
+            "sensitivity": sensitivity_multiplier,
         }
 
     async def _generate_recommendations(
-        self,
-        aspect: str,
-        risk_assessment: Dict[str, Any]
+        self, aspect: str, risk_assessment: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Generate ML-based recommendations"""
         recommendations = []
 
         # Add recommendations based on risk level
         if risk_assessment["risk_level"] == "high":
-            recommendations.extend([
-                {
-                    "priority": "high",
-                    "category": "immediate_action",
-                    "description": "Significant compliance anomalies detected",
-                    "actions": [
-                        "Review all recent transactions",
-                        "Increase monitoring frequency",
-                        "Update access controls"
-                    ]
-                }
-            ])
+            recommendations.extend(
+                [
+                    {
+                        "priority": "high",
+                        "category": "immediate_action",
+                        "description": "Significant compliance anomalies detected",
+                        "actions": [
+                            "Review all recent transactions",
+                            "Increase monitoring frequency",
+                            "Update access controls",
+                        ],
+                    }
+                ]
+            )
         elif risk_assessment["risk_level"] == "medium":
-            recommendations.extend([
-                {
-                    "priority": "medium",
-                    "category": "monitoring",
-                    "description": "Potential compliance concerns identified",
-                    "actions": [
-                        "Review affected transactions",
-                        "Update validation rules",
-                        "Enhance logging"
-                    ]
-                }
-            ])
+            recommendations.extend(
+                [
+                    {
+                        "priority": "medium",
+                        "category": "monitoring",
+                        "description": "Potential compliance concerns identified",
+                        "actions": [
+                            "Review affected transactions",
+                            "Update validation rules",
+                            "Enhance logging",
+                        ],
+                    }
+                ]
+            )
         else:
-            recommendations.extend([
-                {
-                    "priority": "low",
-                    "category": "maintenance",
-                    "description": "Minor optimization opportunities",
-                    "actions": [
-                        "Regular monitoring",
-                        "Periodic rule updates"
-                    ]
-                }
-            ])
+            recommendations.extend(
+                [
+                    {
+                        "priority": "low",
+                        "category": "maintenance",
+                        "description": "Minor optimization opportunities",
+                        "actions": ["Regular monitoring", "Periodic rule updates"],
+                    }
+                ]
+            )
 
         return recommendations
 
-    def _calculate_risk_score(
-        self,
-        data: Dict[str, Any]
-    ) -> float:
+    def _calculate_risk_score(self, data: Dict[str, Any]) -> float:
         """Calculate risk score from data points"""
         weights = settings.RISK_SCORE_WEIGHTS
 
         score = (
-            weights["access"] * data.get("access_count", 0) +
-            weights["error"] * data.get("error_count", 0) +
-            weights["time"] * data.get("response_time", 0) +
-            weights["volume"] * data.get("data_volume", 0)
+            weights["access"] * data.get("access_count", 0)
+            + weights["error"] * data.get("error_count", 0)
+            + weights["time"] * data.get("response_time", 0)
+            + weights["volume"] * data.get("data_volume", 0)
         )
 
         return min(score / 100.0, 1.0)  # Normalize to [0,1]
 
     def _calculate_confidence_score(
-        self,
-        features: np.ndarray,
-        anomalies: List[int]
+        self, features: np.ndarray, anomalies: List[int]
     ) -> float:
         """Calculate confidence score for predictions"""
         if len(features) < 2:
@@ -237,9 +211,7 @@ class MLValidator:
         return "low"
 
     def _calculate_compliance_score(
-        self,
-        risk_assessment: Dict[str, Any],
-        anomalies: List[int]
+        self, risk_assessment: Dict[str, Any], anomalies: List[int]
     ) -> float:
         """Calculate overall compliance score"""
         base_score = 1.0 - risk_assessment["adjusted_risk"]
@@ -251,8 +223,6 @@ class MLValidator:
         )
 
         # Weight with confidence
-        final_score = (adjusted_score * confidence) + (
-            base_score * (1.0 - confidence)
-        )
+        final_score = (adjusted_score * confidence) + (base_score * (1.0 - confidence))
 
         return max(0.0, min(1.0, final_score))  # Ensure [0,1] range

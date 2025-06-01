@@ -2,17 +2,20 @@ from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, constr
 
+
 # Base Schemas
 class TerritoryBase(BaseModel):
     name: str
     boundary_data: dict
     parent_id: Optional[str] = None
 
+
 class FacilityBase(BaseModel):
     name: str
     address: str
     territory_id: Optional[str] = None
     facility_metadata: Optional[dict] = None
+
 
 class ProviderBase(BaseModel):
     facility_id: str
@@ -24,6 +27,7 @@ class ProviderBase(BaseModel):
     specialty: str
     provider_metadata: Optional[dict] = None
 
+
 class CredentialBase(BaseModel):
     provider_id: str
     credential_type: str
@@ -32,6 +36,7 @@ class CredentialBase(BaseModel):
     issue_date: datetime
     expiry_date: datetime
 
+
 class RelationshipBase(BaseModel):
     provider_id: str
     related_provider_id: str
@@ -39,21 +44,27 @@ class RelationshipBase(BaseModel):
     start_date: datetime
     end_date: Optional[datetime] = None
 
+
 # Create Schemas
 class TerritoryCreate(TerritoryBase):
     pass
 
+
 class FacilityCreate(FacilityBase):
     pass
+
 
 class ProviderCreate(ProviderBase):
     pass
 
+
 class CredentialCreate(CredentialBase):
     pass
 
+
 class RelationshipCreate(RelationshipBase):
     pass
+
 
 # Response Schemas
 class TerritoryResponse(TerritoryBase):
@@ -65,6 +76,7 @@ class TerritoryResponse(TerritoryBase):
     class Config:
         from_attributes = True
 
+
 class FacilityResponse(FacilityBase):
     id: str
     status: str
@@ -75,6 +87,7 @@ class FacilityResponse(FacilityBase):
     class Config:
         from_attributes = True
 
+
 class CredentialResponse(CredentialBase):
     id: str
     verification_status: str
@@ -84,6 +97,7 @@ class CredentialResponse(CredentialBase):
 
     class Config:
         from_attributes = True
+
 
 class ProviderResponse(ProviderBase):
     id: str
@@ -97,6 +111,7 @@ class ProviderResponse(ProviderBase):
     class Config:
         from_attributes = True
 
+
 class RelationshipResponse(RelationshipBase):
     id: str
     status: str
@@ -106,6 +121,7 @@ class RelationshipResponse(RelationshipBase):
     class Config:
         from_attributes = True
 
+
 # Search Schemas
 class ProviderSearchParams(BaseModel):
     territory_id: Optional[str] = None
@@ -114,6 +130,7 @@ class ProviderSearchParams(BaseModel):
     name: Optional[str] = None
     npi: Optional[str] = None
     status: Optional[str] = "active"
+
 
 class ProviderSearchResponse(BaseModel):
     items: List[ProviderResponse]

@@ -17,7 +17,7 @@ from app.api.ivr.schemas import (
     IVRSessionUpdate,
     IVRSessionResponse,
     IVRDocumentCreate,
-    IVRDocumentResponse
+    IVRDocumentResponse,
 )
 from app.api.ivr.models import IVRStatus
 from app.api.ivr.workflow_service import IVRWorkflowService
@@ -28,6 +28,7 @@ from app.models.ivr import IVRRequest, IVRSession, IVRDocument
 from app.services.ivr_service import IVRService
 
 router = APIRouter(prefix="/ivr", tags=["ivr"])
+
 
 @router.post("/requests", response_model=IVRRequestResponse)
 @audit_log("create_ivr_request")
@@ -43,6 +44,7 @@ async def create_ivr_request(
         return ivr_request
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.get("/requests", response_model=IVRQueueResponse)
 @audit_log("list_ivr_requests")
@@ -61,6 +63,7 @@ async def list_ivr_requests(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.get("/requests/{request_id}", response_model=IVRRequestResponse)
 @audit_log("get_ivr_request")
 async def get_ivr_request(
@@ -75,6 +78,7 @@ async def get_ivr_request(
         return ivr_request
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.put("/requests/{request_id}/status", response_model=IVRRequestResponse)
 @audit_log("update_ivr_status")
@@ -93,6 +97,7 @@ async def update_ivr_status(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/requests/{request_id}/approve", response_model=IVRRequestResponse)
 @audit_log("approve_ivr_request")
 async def approve_ivr_request(
@@ -108,6 +113,7 @@ async def approve_ivr_request(
         return ivr_request
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.post("/requests/{request_id}/reject", response_model=IVRRequestResponse)
 @audit_log("reject_ivr_request")
@@ -126,6 +132,7 @@ async def reject_ivr_request(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/requests/{request_id}/escalate", response_model=IVRRequestResponse)
 @audit_log("escalate_ivr_request")
 async def escalate_ivr_request(
@@ -141,6 +148,7 @@ async def escalate_ivr_request(
         return ivr_request
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.get("/queue", response_model=IVRQueueResponse)
 @audit_log("get_review_queue")
@@ -159,6 +167,7 @@ async def get_review_queue(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/batch-process", response_model=IVRBatchResponse)
 @audit_log("batch_process_ivr")
 async def batch_process_ivr(
@@ -174,56 +183,43 @@ async def batch_process_ivr(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post(
-    "/sessions",
-    response_model=IVRSessionResponse,
-    status_code=status.HTTP_201_CREATED
+    "/sessions", response_model=IVRSessionResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_session(
     session_data: IVRSessionCreate,
     db: Session = Depends(get_db),
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> IVRSessionResponse:
     """Create a new IVR session."""
     ivr_service = IVRService(db)
-    return await ivr_service.create_session(
-        session_data,
-        current_user
-    )
+    return await ivr_service.create_session(session_data, current_user)
 
-@router.get(
-    "/sessions/{session_id}",
-    response_model=IVRSessionResponse
-)
+
+@router.get("/sessions/{session_id}", response_model=IVRSessionResponse)
 async def get_session(
     session_id: UUID,
     db: Session = Depends(get_db),
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> IVRSessionResponse:
     """Get IVR session details by ID."""
     ivr_service = IVRService(db)
     session = await ivr_service.get_session(session_id)
     if not session:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="IVR session not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="IVR session not found"
         )
     return session
 
-@router.put(
-    "/sessions/{session_id}",
-    response_model=IVRSessionResponse
-)
+
+@router.put("/sessions/{session_id}", response_model=IVRSessionResponse)
 async def update_session(
     session_id: UUID,
     session_data: IVRSessionUpdate,
     db: Session = Depends(get_db),
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> IVRSessionResponse:
     """Update an existing IVR session."""
     ivr_service = IVRService(db)
-    return await ivr_service.update_session(
-        session_id,
-        session_data,
-        current_user
-    )
+    return await ivr_service.update_session(session_id, session_data, current_user)

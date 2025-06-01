@@ -1,6 +1,7 @@
 """
 Role management API endpoints.
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -9,12 +10,7 @@ from uuid import UUID
 from ...core.database import get_db
 from ...core.security import get_current_user
 from .models import User, Role
-from .schemas import (
-    RoleCreate,
-    RoleUpdate,
-    RoleResponse,
-    UserRoleAssign
-)
+from .schemas import RoleCreate, RoleUpdate, RoleResponse, UserRoleAssign
 
 router = APIRouter(prefix="/users", tags=["user-management"])
 
@@ -23,13 +19,13 @@ router = APIRouter(prefix="/users", tags=["user-management"])
 async def create_role(
     role: RoleCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Create a new role."""
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only superusers can create roles"
+            detail="Only superusers can create roles",
         )
 
     db_role = Role(**role.dict())
@@ -41,8 +37,7 @@ async def create_role(
 
 @router.get("/roles", response_model=List[RoleResponse])
 async def list_roles(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """List all roles."""
     roles = await db.query(Role).all()
@@ -53,14 +48,13 @@ async def list_roles(
 async def get_role(
     role_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Get a specific role."""
     role = await db.query(Role).filter(Role.id == role_id).first()
     if not role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
     return role
 
@@ -70,20 +64,19 @@ async def update_role(
     role_id: UUID,
     role_update: RoleUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Update a role."""
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only superusers can update roles"
+            detail="Only superusers can update roles",
         )
 
     db_role = await db.query(Role).filter(Role.id == role_id).first()
     if not db_role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
 
     for field, value in role_update.dict(exclude_unset=True).items():
@@ -98,26 +91,24 @@ async def update_role(
 async def delete_role(
     role_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Delete a role."""
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only superusers can delete roles"
+            detail="Only superusers can delete roles",
         )
 
     db_role = await db.query(Role).filter(Role.id == role_id).first()
     if not db_role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
 
     if db_role.is_system_role:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete system roles"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete system roles"
         )
 
     await db.delete(db_role)
@@ -130,20 +121,19 @@ async def assign_permissions(
     role_id: UUID,
     permissions: List[str],
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Assign permissions to a role."""
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only superusers can assign permissions"
+            detail="Only superusers can assign permissions",
         )
 
     db_role = await db.query(Role).filter(Role.id == role_id).first()
     if not db_role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
 
     db_role.permissions = permissions
@@ -156,25 +146,22 @@ async def set_role_hierarchy(
     role_id: UUID,
     parent_role_ids: List[UUID],
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Set role hierarchy."""
     if not current_user.is_superuser:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only superusers can set role hierarchy"
+            detail="Only superusers can set role hierarchy",
         )
 
     db_role = await db.query(Role).filter(Role.id == role_id).first()
     if not db_role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
 
-    parent_roles = await db.query(Role).filter(
-        Role.id.in_(parent_role_ids)
-    ).all()
+    parent_roles = await db.query(Role).filter(Role.id.in_(parent_role_ids)).all()
 
     db_role.parent_roles = parent_roles
     await db.commit()
@@ -186,41 +173,35 @@ async def assign_user_roles(
     user_id: UUID,
     role_assignments: List[UserRoleAssign],
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Assign roles to a user."""
     if not current_user.is_superuser and not current_user.has_permission(
-        'assign_roles'
+        "assign_roles"
     ):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions"
         )
 
     db_user = await db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     # Verify roles exist
     for assignment in role_assignments:
-        role = await db.query(Role).filter(
-            Role.id == assignment.role_id
-        ).first()
+        role = await db.query(Role).filter(Role.id == assignment.role_id).first()
         if not role:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Role {assignment.role_id} not found"
+                detail=f"Role {assignment.role_id} not found",
             )
 
     # Update user roles
     db_user.roles = []
     for assignment in role_assignments:
-        role = await db.query(Role).filter(
-            Role.id == assignment.role_id
-        ).first()
+        role = await db.query(Role).filter(Role.id == assignment.role_id).first()
         db_user.roles.append(role)
 
     await db.commit()

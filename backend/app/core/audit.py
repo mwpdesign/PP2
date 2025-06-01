@@ -1,4 +1,5 @@
 """Audit logging module for HIPAA compliance."""
+
 import json
 import logging
 from datetime import datetime
@@ -39,7 +40,7 @@ class AuditLogger:
         organization_id: PyUUID,
         details: Optional[Dict[str, Any]] = None,
         status: str = "success",
-        severity: str = "info"
+        severity: str = "info",
     ) -> None:
         """
         Log an auditable action in HIPAA-compliant format.
@@ -65,7 +66,7 @@ class AuditLogger:
                 "severity": severity,
                 "source_ip": self._get_source_ip(),
                 "session_id": self._get_session_id(),
-                "details": details or {}
+                "details": details or {},
             }
 
             # Log the audit event
@@ -78,11 +79,13 @@ class AuditLogger:
         except Exception as e:
             # Log audit logging failures separately
             self.logger.error(
-                json.dumps({
-                    "error": "Audit logging failed",
-                    "details": str(e),
-                    "original_action": action
-                })
+                json.dumps(
+                    {
+                        "error": "Audit logging failed",
+                        "details": str(e),
+                        "original_action": action,
+                    }
+                )
             )
 
     def log_phi_access(
@@ -92,7 +95,7 @@ class AuditLogger:
         action: str,
         reason: str,
         organization_id: PyUUID,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Log PHI access events with special handling.
@@ -112,7 +115,7 @@ class AuditLogger:
             "reason": reason,
             "organization_id": str(organization_id),
             "access_type": "phi",
-            "details": details or {}
+            "details": details or {},
         }
 
         # Log PHI access with high severity
@@ -123,7 +126,7 @@ class AuditLogger:
             resource_type="patient",
             organization_id=organization_id,
             details=phi_event,
-            severity="high"
+            severity="high",
         )
 
     def log_security_event(
@@ -132,7 +135,7 @@ class AuditLogger:
         user_id: Optional[PyUUID],
         status: str,
         organization_id: PyUUID,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         Log security-related events.
@@ -149,7 +152,7 @@ class AuditLogger:
             "user_id": str(user_id) if user_id else None,
             "status": status,
             "organization_id": str(organization_id),
-            "details": details or {}
+            "details": details or {},
         }
 
         self.log_action(
@@ -159,7 +162,7 @@ class AuditLogger:
             resource_type="security",
             organization_id=organization_id,
             details=security_event,
-            severity="high"
+            severity="high",
         )
 
     def _get_source_ip(self) -> Optional[str]:
@@ -179,11 +182,13 @@ class AuditLogger:
 
         # Log full event details for high-severity events
         self.logger.warning(
-            json.dumps({
-                "high_severity_event": True,
-                "event_data": event,
-                "timestamp": datetime.utcnow().isoformat()
-            })
+            json.dumps(
+                {
+                    "high_severity_event": True,
+                    "event_data": event,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
         )
 
 
@@ -197,7 +202,7 @@ def audit_shipping_operation(
     order_id: PyUUID,
     organization_id: PyUUID,
     carrier: str,
-    details: Optional[Dict[str, Any]] = None
+    details: Optional[Dict[str, Any]] = None,
 ) -> None:
     """
     Audit shipping-related operations.
@@ -215,7 +220,7 @@ def audit_shipping_operation(
         "operation": operation,
         "carrier": carrier,
         "order_id": str(order_id),
-        "details": details or {}
+        "details": details or {},
     }
 
     audit_logger.log_action(
@@ -225,7 +230,7 @@ def audit_shipping_operation(
         resource_type="shipping",
         organization_id=organization_id,
         details=shipping_event,
-        severity="info"
+        severity="info",
     )
 
 
@@ -236,35 +241,25 @@ class AuditMixin:
     """Mixin class for adding audit fields to models."""
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=datetime.utcnow,
-        nullable=False
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
-        nullable=False
+        nullable=False,
     )
     created_by_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('users.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     updated_by_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('users.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
 
     # Relationships
     created_by = relationship(
-        "User",
-        foreign_keys=[created_by_id],
-        backref="created_records"
+        "User", foreign_keys=[created_by_id], backref="created_records"
     )
     updated_by = relationship(
-        "User",
-        foreign_keys=[updated_by_id],
-        backref="updated_records"
+        "User", foreign_keys=[updated_by_id], backref="updated_records"
     )

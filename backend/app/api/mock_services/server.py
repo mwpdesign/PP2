@@ -2,6 +2,7 @@
 Mock services server for local development.
 Provides mock implementations of external services like UPS and Twilio.
 """
+
 from datetime import datetime
 from typing import Dict, Any, Optional
 
@@ -47,6 +48,7 @@ TWILIO_CREDS = {
 
 class ShipmentRequest(BaseModel):
     """Shipment request model."""
+
     from_address: Dict[str, str]
     to_address: Dict[str, str]
     weight: float
@@ -55,6 +57,7 @@ class ShipmentRequest(BaseModel):
 
 class CallRequest(BaseModel):
     """IVR call request model."""
+
     to_number: str
     message: str
     callback_url: Optional[str] = None
@@ -77,20 +80,17 @@ async def dashboard() -> Dict[str, Any]:
                 "endpoints": [
                     "/ups/rates",
                     "/ups/ship",
-                    "/ups/track/{tracking_number}"
-                ]
+                    "/ups/track/{tracking_number}",
+                ],
             },
             "twilio": {
                 "status": "active",
                 "credentials": TWILIO_CREDS,
-                "endpoints": [
-                    "/twilio/call",
-                    "/twilio/status/{call_sid}"
-                ]
-            }
+                "endpoints": ["/twilio/call", "/twilio/status/{call_sid}"],
+            },
         },
         "mock_delay_ms": MOCK_DELAY_MS,
-        "uptime": "0h 0m 0s"  # TODO: Implement actual uptime
+        "uptime": "0h 0m 0s",  # TODO: Implement actual uptime
     }
 
 
@@ -115,7 +115,7 @@ async def get_ups_rates(request: ShipmentRequest) -> Dict[str, Any]:
             .replace(hour=17, minute=0, second=0, microsecond=0)
             .isoformat()
         ),
-        "guaranteed": True
+        "guaranteed": True,
     }
 
 
@@ -128,7 +128,7 @@ async def create_shipment(request: ShipmentRequest) -> Dict[str, Any]:
     return {
         "tracking_number": tracking_number,
         "label_url": f"http://localhost:8001/labels/{tracking_number}.pdf",
-        "rate": await get_ups_rates(request)
+        "rate": await get_ups_rates(request),
     }
 
 
@@ -148,9 +148,9 @@ async def track_shipment(tracking_number: str) -> Dict[str, Any]:
             {
                 "timestamp": datetime.utcnow().isoformat(),
                 "location": "Local Facility",
-                "description": "Package is out for delivery"
+                "description": "Package is out for delivery",
             }
-        ]
+        ],
     }
 
 
@@ -166,7 +166,7 @@ async def initiate_call(request: CallRequest) -> Dict[str, Any]:
         "from": TWILIO_CREDS["phone"],
         "status": "queued",
         "direction": "outbound-api",
-        "callback_url": request.callback_url
+        "callback_url": request.callback_url,
     }
 
 
@@ -179,11 +179,12 @@ async def get_call_status(call_sid: str) -> Dict[str, Any]:
         "duration": "60",
         "direction": "outbound-api",
         "answered_by": "human",
-        "caller_name": "HEALTHCARE IVR"
+        "caller_name": "HEALTHCARE IVR",
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.getenv("PORT", "8001"))
     uvicorn.run(app, host="0.0.0.0", port=port)

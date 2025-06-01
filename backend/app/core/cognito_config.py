@@ -1,4 +1,5 @@
 """AWS Cognito configuration."""
+
 from typing import Optional
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict, field_validator
@@ -9,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 class CognitoSettings(BaseSettings):
     """AWS Cognito configuration settings."""
-    model_config = ConfigDict(extra='ignore')  # Allow extra env vars
+
+    model_config = ConfigDict(extra="ignore")  # Allow extra env vars
 
     # Make all fields optional for development
     aws_region: Optional[str] = None
@@ -50,17 +52,23 @@ class CognitoConfig:
             return None
 
         if not self.idp_client:
-            if not all([
-                self.settings.aws_region,
-                self.settings.cognito_user_pool_id,
-                self.settings.cognito_app_client_id
-            ]):
-                logger.warning("Cognito configuration incomplete - some settings missing")
+            if not all(
+                [
+                    self.settings.aws_region,
+                    self.settings.cognito_user_pool_id,
+                    self.settings.cognito_app_client_id,
+                ]
+            ):
+                logger.warning(
+                    "Cognito configuration incomplete - some settings missing"
+                )
                 return None
 
             import boto3
-            self.idp_client = boto3.client('cognito-idp',
-                region_name=self.settings.aws_region)
+
+            self.idp_client = boto3.client(
+                "cognito-idp", region_name=self.settings.aws_region
+            )
         return self.idp_client
 
     def get_jwt_config(self) -> dict:
@@ -69,7 +77,7 @@ class CognitoConfig:
             "region": self.settings.aws_region,
             "user_pool_id": self.settings.cognito_user_pool_id,
             "app_client_id": self.settings.cognito_app_client_id,
-            "domain": self.settings.cognito_domain
+            "domain": self.settings.cognito_domain,
         }
 
     async def validate_config(self) -> bool:
@@ -84,9 +92,7 @@ class CognitoConfig:
                 return False
 
             # Test API call
-            client.describe_user_pool(
-                UserPoolId=self.settings.cognito_user_pool_id
-            )
+            client.describe_user_pool(UserPoolId=self.settings.cognito_user_pool_id)
             return True
         except Exception as e:
             logger.error(f"Cognito configuration validation failed: {str(e)}")

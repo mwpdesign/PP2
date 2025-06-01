@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr, Field, constr
 
 class UserRegistration(BaseModel):
     """User registration request model."""
+
     email: EmailStr
     password: constr(min_length=8)
     first_name: str
@@ -13,12 +14,14 @@ class UserRegistration(BaseModel):
 
 class UserLogin(BaseModel):
     """User login request model."""
+
     email: EmailStr
     password: str
 
 
 class TokenResponse(BaseModel):
     """Authentication token response model."""
+
     access_token: str
     token_type: str = "bearer"
     refresh_token: Optional[str] = None
@@ -28,11 +31,13 @@ class TokenResponse(BaseModel):
 
 class PasswordReset(BaseModel):
     """Password reset request model."""
+
     email: EmailStr
 
 
 class PasswordResetConfirm(BaseModel):
     """Password reset confirmation model."""
+
     email: EmailStr
     confirmation_code: str
     new_password: constr(min_length=8)
@@ -40,6 +45,7 @@ class PasswordResetConfirm(BaseModel):
 
 class UserProfile(BaseModel):
     """User profile response model."""
+
     email: EmailStr
     first_name: str
     last_name: str

@@ -2,17 +2,14 @@
 Incident Response Service.
 Provides automated security incident response and forensic data collection.
 """
+
 from datetime import datetime, timedelta
 import boto3
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from app.core.config import get_settings
-from app.models.security import (
-    SecurityIncident,
-    ForensicData,
-    IncidentTimeline
-)
+from app.models.security import SecurityIncident, ForensicData, IncidentTimeline
 from app.services.notification_service import NotificationService
 from app.services.security_monitoring import SecurityMonitoringService
 
@@ -27,36 +24,32 @@ class IncidentResponseService:
         self.security_service = SecurityMonitoringService(db)
 
         # Initialize AWS clients
-        self.s3 = boto3.client('s3')
-        self.sns = boto3.client('sns')
-        self.cloudwatch = boto3.client('cloudwatch')
+        self.s3 = boto3.client("s3")
+        self.sns = boto3.client("sns")
+        self.cloudwatch = boto3.client("cloudwatch")
 
         # Response thresholds
         self.thresholds = {
-            'high_severity_timeout': 60,  # Minutes until escalation
-            'medium_severity_timeout': 240,  # 4 hours
-            'low_severity_timeout': 1440,  # 24 hours
-            'max_failed_responses': 3  # Max failed response attempts
+            "high_severity_timeout": 60,  # Minutes until escalation
+            "medium_severity_timeout": 240,  # 4 hours
+            "low_severity_timeout": 1440,  # 24 hours
+            "max_failed_responses": 3,  # Max failed response attempts
         }
 
     async def handle_security_incident(
-        self,
-        incident_id: int,
-        user_id: int,
-        territory_id: int
+        self, incident_id: int, user_id: int, territory_id: int
     ) -> None:
         """Handle a security incident with automated response."""
         try:
             # Get incident details
-            incident = self.db.query(SecurityIncident).filter(
-                SecurityIncident.id == incident_id
-            ).first()
+            incident = (
+                self.db.query(SecurityIncident)
+                .filter(SecurityIncident.id == incident_id)
+                .first()
+            )
 
             if not incident:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Incident not found"
-                )
+                raise HTTPException(status_code=404, detail="Incident not found")
 
             # Create incident timeline
             timeline = IncidentTimeline(
@@ -64,9 +57,9 @@ class IncidentResponseService:
                 action="incident_response_started",
                 user_id=user_id,
                 details={
-                    'timestamp': datetime.utcnow().isoformat(),
-                    'territory_id': territory_id
-                }
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "territory_id": territory_id,
+                },
             )
             self.db.add(timeline)
 
@@ -87,14 +80,10 @@ class IncidentResponseService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=f"Error handling security incident: {str(e)}"
+                status_code=500, detail=f"Error handling security incident: {str(e)}"
             )
 
-    async def _collect_forensic_data(
-        self,
-        incident: SecurityIncident
-    ) -> None:
+    async def _collect_forensic_data(self, incident: SecurityIncident) -> None:
         """Collect forensic data for incident investigation."""
         try:
             # Collect relevant logs
@@ -111,11 +100,11 @@ class IncidentResponseService:
                 incident_id=incident.id,
                 data_type="incident_forensics",
                 data={
-                    'logs': logs,
-                    'system_state': system_state,
-                    'user_activity': user_activity,
-                    'collection_time': datetime.utcnow().isoformat()
-                }
+                    "logs": logs,
+                    "system_state": system_state,
+                    "user_activity": user_activity,
+                    "collection_time": datetime.utcnow().isoformat(),
+                },
             )
             self.db.add(forensic_data)
 
@@ -124,22 +113,18 @@ class IncidentResponseService:
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Error collecting forensic data: {str(e)}"
+                status_code=500, detail=f"Error collecting forensic data: {str(e)}"
             )
 
-    async def _apply_automated_response(
-        self,
-        incident: SecurityIncident
-    ) -> None:
+    async def _apply_automated_response(self, incident: SecurityIncident) -> None:
         """Apply automated response based on incident type."""
         try:
             response_actions = {
-                'unauthorized_access': self._handle_unauthorized_access,
-                'suspicious_activity': self._handle_suspicious_activity,
-                'data_breach': self._handle_data_breach,
-                'compliance_violation': self._handle_compliance_violation,
-                'system_compromise': self._handle_system_compromise
+                "unauthorized_access": self._handle_unauthorized_access,
+                "suspicious_activity": self._handle_suspicious_activity,
+                "data_breach": self._handle_data_breach,
+                "compliance_violation": self._handle_compliance_violation,
+                "system_compromise": self._handle_system_compromise,
             }
 
             if incident.incident_type in response_actions:
@@ -149,21 +134,17 @@ class IncidentResponseService:
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Error applying automated response: {str(e)}"
+                status_code=500, detail=f"Error applying automated response: {str(e)}"
             )
 
-    async def _handle_unauthorized_access(
-        self,
-        incident: SecurityIncident
-    ) -> None:
+    async def _handle_unauthorized_access(self, incident: SecurityIncident) -> None:
         """Handle unauthorized access incidents."""
         try:
             # Lock affected accounts
-            if incident.details.get('user_id'):
+            if incident.details.get("user_id"):
                 await self.security_service._lock_account(
-                    user_id=incident.details['user_id'],
-                    reason="unauthorized_access_detected"
+                    user_id=incident.details["user_id"],
+                    reason="unauthorized_access_detected",
                 )
 
             # Revoke active sessions
@@ -174,21 +155,17 @@ class IncidentResponseService:
                 incident_id=incident.id,
                 action="account_lockout",
                 details={
-                    'reason': "unauthorized_access",
-                    'timestamp': datetime.utcnow().isoformat()
-                }
+                    "reason": "unauthorized_access",
+                    "timestamp": datetime.utcnow().isoformat(),
+                },
             )
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Error handling unauthorized access: {str(e)}"
+                status_code=500, detail=f"Error handling unauthorized access: {str(e)}"
             )
 
-    async def _handle_suspicious_activity(
-        self,
-        incident: SecurityIncident
-    ) -> None:
+    async def _handle_suspicious_activity(self, incident: SecurityIncident) -> None:
         """Handle suspicious activity incidents."""
         try:
             # Increase monitoring
@@ -202,21 +179,17 @@ class IncidentResponseService:
                 incident_id=incident.id,
                 action="increased_monitoring",
                 details={
-                    'restrictions_applied': True,
-                    'timestamp': datetime.utcnow().isoformat()
-                }
+                    "restrictions_applied": True,
+                    "timestamp": datetime.utcnow().isoformat(),
+                },
             )
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Error handling suspicious activity: {str(e)}"
+                status_code=500, detail=f"Error handling suspicious activity: {str(e)}"
             )
 
-    async def _handle_data_breach(
-        self,
-        incident: SecurityIncident
-    ) -> None:
+    async def _handle_data_breach(self, incident: SecurityIncident) -> None:
         """Handle potential data breach incidents."""
         try:
             # Isolate affected systems
@@ -233,22 +206,18 @@ class IncidentResponseService:
                 incident_id=incident.id,
                 action="data_breach_response",
                 details={
-                    'systems_isolated': True,
-                    'audit_started': True,
-                    'timestamp': datetime.utcnow().isoformat()
-                }
+                    "systems_isolated": True,
+                    "audit_started": True,
+                    "timestamp": datetime.utcnow().isoformat(),
+                },
             )
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Error handling data breach: {str(e)}"
+                status_code=500, detail=f"Error handling data breach: {str(e)}"
             )
 
-    async def _check_escalation_needs(
-        self,
-        incident: SecurityIncident
-    ) -> None:
+    async def _check_escalation_needs(self, incident: SecurityIncident) -> None:
         """Check if incident needs escalation."""
         try:
             # Get incident age
@@ -257,7 +226,7 @@ class IncidentResponseService:
             # Get timeout for severity
             timeout = self.thresholds.get(
                 f"{incident.severity}_severity_timeout",
-                self.thresholds['medium_severity_timeout']
+                self.thresholds["medium_severity_timeout"],
             )
 
             if age > timedelta(minutes=timeout):
@@ -265,14 +234,10 @@ class IncidentResponseService:
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Error checking escalation needs: {str(e)}"
+                status_code=500, detail=f"Error checking escalation needs: {str(e)}"
             )
 
-    async def _escalate_incident(
-        self,
-        incident: SecurityIncident
-    ) -> None:
+    async def _escalate_incident(self, incident: SecurityIncident) -> None:
         """Escalate an incident to higher priority."""
         try:
             # Update incident priority
@@ -285,9 +250,9 @@ class IncidentResponseService:
                 incident_id=incident.id,
                 action="incident_escalated",
                 details={
-                    'reason': "response_timeout",
-                    'timestamp': datetime.utcnow().isoformat()
-                }
+                    "reason": "response_timeout",
+                    "timestamp": datetime.utcnow().isoformat(),
+                },
             )
             self.db.add(timeline)
 
@@ -299,21 +264,17 @@ class IncidentResponseService:
                 incident_id=incident.id,
                 action="incident_escalation",
                 details={
-                    'reason': "response_timeout",
-                    'timestamp': datetime.utcnow().isoformat()
-                }
+                    "reason": "response_timeout",
+                    "timestamp": datetime.utcnow().isoformat(),
+                },
             )
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Error escalating incident: {str(e)}"
+                status_code=500, detail=f"Error escalating incident: {str(e)}"
             )
 
-    async def _send_incident_notifications(
-        self,
-        incident: SecurityIncident
-    ) -> None:
+    async def _send_incident_notifications(self, incident: SecurityIncident) -> None:
         """Send incident notifications to relevant parties."""
         try:
             # Get notification recipients
@@ -321,19 +282,19 @@ class IncidentResponseService:
 
             # Prepare notification data
             notification_data = {
-                'incident_id': incident.id,
-                'incident_type': incident.incident_type,
-                'severity': incident.severity,
-                'status': incident.status,
-                'details': incident.details,
-                'timestamp': datetime.utcnow().isoformat()
+                "incident_id": incident.id,
+                "incident_type": incident.incident_type,
+                "severity": incident.severity,
+                "status": incident.status,
+                "details": incident.details,
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             # Send notifications
             await self.notification_service.send_notification(
                 user_ids=recipients,
                 notification_type="security_incident",
-                data=notification_data
+                data=notification_data,
             )
 
             # Send SNS alert for high severity
@@ -341,11 +302,11 @@ class IncidentResponseService:
                 await self._send_sns_alert(
                     topic_arn=self.settings.SECURITY_ALERTS_SNS_TOPIC,
                     message=notification_data,
-                    subject=f"High Severity Incident: {incident.incident_type}"
+                    subject=f"High Severity Incident: {incident.incident_type}",
                 )
 
         except Exception as e:
             raise HTTPException(
                 status_code=500,
-                detail=f"Error sending incident notifications: {str(e)}"
+                detail=f"Error sending incident notifications: {str(e)}",
             )

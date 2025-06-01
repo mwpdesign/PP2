@@ -2,6 +2,7 @@
 HIPAA Compliance Audit Service.
 Provides comprehensive audit logging and compliance monitoring.
 """
+
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 from sqlalchemy import and_, or_, func
@@ -10,8 +11,11 @@ from fastapi import HTTPException
 
 from app.core.config import get_settings
 from app.models.audit import (
-    AuditLog, ComplianceCheck, PHIAccess,
-    SecurityIncident, AuditReport
+    AuditLog,
+    ComplianceCheck,
+    PHIAccess,
+    SecurityIncident,
+    AuditReport,
 )
 
 
@@ -30,9 +34,9 @@ class HIPAAComplianceService:
 
         # PHI access patterns to monitor
         self.suspicious_patterns = {
-            'bulk_access': 50,  # Max records per minute
-            'off_hours_access': {'start': 22, 'end': 5},  # 10 PM - 5 AM
-            'multiple_territories': 3  # Max territories per minute
+            "bulk_access": 50,  # Max records per minute
+            "off_hours_access": {"start": 22, "end": 5},  # 10 PM - 5 AM
+            "multiple_territories": 3,  # Max territories per minute
         }
 
     async def log_phi_access(
@@ -44,7 +48,7 @@ class HIPAAComplianceService:
         resource_type: str,
         resource_id: int,
         accessed_fields: List[str],
-        request_metadata: Dict[str, Any]
+        request_metadata: Dict[str, Any],
     ) -> None:
         """
         Log PHI access with detailed tracking.
@@ -69,13 +73,13 @@ class HIPAAComplianceService:
                 resource_type=resource_type,
                 resource_id=resource_id,
                 accessed_fields=accessed_fields,
-                ip_address=request_metadata.get('ip_address'),
-                user_agent=request_metadata.get('user_agent'),
-                request_id=request_metadata.get('request_id'),
-                correlation_id=request_metadata.get('correlation_id'),
-                session_id=request_metadata.get('session_id'),
-                access_reason=request_metadata.get('access_reason'),
-                access_location=request_metadata.get('access_location')
+                ip_address=request_metadata.get("ip_address"),
+                user_agent=request_metadata.get("user_agent"),
+                request_id=request_metadata.get("request_id"),
+                correlation_id=request_metadata.get("correlation_id"),
+                session_id=request_metadata.get("session_id"),
+                access_reason=request_metadata.get("access_reason"),
+                access_location=request_metadata.get("access_location"),
             )
             self.db.add(phi_access)
 
@@ -87,10 +91,10 @@ class HIPAAComplianceService:
                 resource_id=resource_id,
                 territory_id=territory_id,
                 details={
-                    'patient_id': patient_id,
-                    'accessed_fields': accessed_fields,
-                    'metadata': request_metadata
-                }
+                    "patient_id": patient_id,
+                    "accessed_fields": accessed_fields,
+                    "metadata": request_metadata,
+                },
             )
             self.db.add(audit_log)
 
@@ -103,16 +107,11 @@ class HIPAAComplianceService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=(
-                    f"Failed to log PHI access: {str(e)}"
-                )
+                status_code=500, detail=(f"Failed to log PHI access: {str(e)}")
             )
 
     async def run_compliance_check(
-        self,
-        check_type: str,
-        territory_id: Optional[int] = None
+        self, check_type: str, territory_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Run automated compliance checks.
@@ -123,39 +122,33 @@ class HIPAAComplianceService:
         """
         try:
             results = {
-                'status': 'completed',
-                'timestamp': datetime.utcnow(),
-                'violations': [],
-                'warnings': []
+                "status": "completed",
+                "timestamp": datetime.utcnow(),
+                "violations": [],
+                "warnings": [],
             }
 
-            if check_type == 'phi_access':
+            if check_type == "phi_access":
                 # Check PHI access patterns
-                violations = await self._check_phi_access_compliance(
-                    territory_id
-                )
-                results['violations'].extend(violations)
+                violations = await self._check_phi_access_compliance(territory_id)
+                results["violations"].extend(violations)
 
-            elif check_type == 'audit_logs':
+            elif check_type == "audit_logs":
                 # Check audit log completeness
-                violations = await self._check_audit_log_compliance(
-                    territory_id
-                )
-                results['violations'].extend(violations)
+                violations = await self._check_audit_log_compliance(territory_id)
+                results["violations"].extend(violations)
 
-            elif check_type == 'encryption':
+            elif check_type == "encryption":
                 # Check encryption compliance
-                violations = await self._check_encryption_compliance(
-                    territory_id
-                )
-                results['violations'].extend(violations)
+                violations = await self._check_encryption_compliance(territory_id)
+                results["violations"].extend(violations)
 
             # Record compliance check
             check = ComplianceCheck(
                 check_type=check_type,
                 territory_id=territory_id,
-                status='completed',
-                results=results
+                status="completed",
+                results=results,
             )
             self.db.add(check)
             self.db.commit()
@@ -172,7 +165,7 @@ class HIPAAComplianceService:
         report_type: str,
         start_date: datetime,
         end_date: datetime,
-        territory_id: Optional[int] = None
+        territory_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Generate HIPAA compliance audit report.
@@ -185,39 +178,33 @@ class HIPAAComplianceService:
         """
         try:
             report_data = {
-                'period': {
-                    'start': start_date.isoformat(),
-                    'end': end_date.isoformat()
+                "period": {
+                    "start": start_date.isoformat(),
+                    "end": end_date.isoformat(),
                 },
-                'generated_at': datetime.utcnow().isoformat(),
-                'metrics': {},
-                'violations': [],
-                'recommendations': []
+                "generated_at": datetime.utcnow().isoformat(),
+                "metrics": {},
+                "violations": [],
+                "recommendations": [],
             }
 
             # Get PHI access statistics
             phi_stats = await self._get_phi_access_stats(
-                start_date,
-                end_date,
-                territory_id
+                start_date, end_date, territory_id
             )
-            report_data['metrics']['phi_access'] = phi_stats
+            report_data["metrics"]["phi_access"] = phi_stats
 
             # Get security incidents
             security_stats = await self._get_security_incidents(
-                start_date,
-                end_date,
-                territory_id
+                start_date, end_date, territory_id
             )
-            report_data['metrics']['security'] = security_stats
+            report_data["metrics"]["security"] = security_stats
 
             # Get compliance check results
             compliance_stats = await self._get_compliance_check_results(
-                start_date,
-                end_date,
-                territory_id
+                start_date, end_date, territory_id
             )
-            report_data['metrics']['compliance'] = compliance_stats
+            report_data["metrics"]["compliance"] = compliance_stats
 
             # Save report
             report = AuditReport(
@@ -225,7 +212,7 @@ class HIPAAComplianceService:
                 territory_id=territory_id,
                 start_date=start_date,
                 end_date=end_date,
-                report_data=report_data
+                report_data=report_data,
             )
             self.db.add(report)
             self.db.commit()
@@ -235,10 +222,7 @@ class HIPAAComplianceService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500,
-                detail=(
-                    f"Failed to generate audit report: {str(e)}"
-                )
+                status_code=500, detail=(f"Failed to generate audit report: {str(e)}")
             )
 
     async def report_security_incident(
@@ -249,7 +233,7 @@ class HIPAAComplianceService:
         territory_id: int,
         severity: str,
         affected_resources: List[Dict[str, Any]],
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> SecurityIncident:
         """
         Report a security incident for HIPAA compliance.
@@ -272,8 +256,8 @@ class HIPAAComplianceService:
                 severity=severity,
                 affected_resources=affected_resources,
                 metadata=metadata or {},
-                status='open',
-                reported_at=datetime.utcnow()
+                status="open",
+                reported_at=datetime.utcnow(),
             )
             self.db.add(incident)
             self.db.commit()
@@ -283,66 +267,57 @@ class HIPAAComplianceService:
             self.db.rollback()
             raise HTTPException(
                 status_code=500,
-                detail=(
-                    f"Failed to report security incident: {str(e)}"
-                )
+                detail=(f"Failed to report security incident: {str(e)}"),
             )
 
     async def _check_access_patterns(
-        self,
-        user_id: int,
-        patient_id: int,
-        territory_id: int
+        self, user_id: int, patient_id: int, territory_id: int
     ) -> None:
         """Check for suspicious PHI access patterns."""
         now = datetime.utcnow()
         hour_ago = now - timedelta(hours=1)
 
         # Check for bulk access
-        bulk_access = self.db.query(PHIAccess).filter(
-            and_(
-                PHIAccess.user_id == user_id,
-                PHIAccess.created_at >= hour_ago
+        bulk_access = (
+            self.db.query(PHIAccess)
+            .filter(
+                and_(PHIAccess.user_id == user_id, PHIAccess.created_at >= hour_ago)
             )
-        ).count()
+            .count()
+        )
 
         if bulk_access > self.settings.MAX_PHI_ACCESS_PER_HOUR:
             await self.report_security_incident(
-                incident_type='bulk_access',
-                description=(
-                    f'User accessed {bulk_access} PHI records in 1 hour'
-                ),
+                incident_type="bulk_access",
+                description=(f"User accessed {bulk_access} PHI records in 1 hour"),
                 user_id=user_id,
                 territory_id=territory_id,
-                severity='medium',
-                affected_resources=[{'type': 'patient', 'id': patient_id}]
+                severity="medium",
+                affected_resources=[{"type": "patient", "id": patient_id}],
             )
 
         # Check for territory hopping
-        territories = self.db.query(
-            PHIAccess.territory_id
-        ).filter(
-            and_(
-                PHIAccess.user_id == user_id,
-                PHIAccess.created_at >= hour_ago
+        territories = (
+            self.db.query(PHIAccess.territory_id)
+            .filter(
+                and_(PHIAccess.user_id == user_id, PHIAccess.created_at >= hour_ago)
             )
-        ).distinct().count()
+            .distinct()
+            .count()
+        )
 
         if territories > self.settings.MAX_TERRITORIES_PER_HOUR:
             await self.report_security_incident(
-                incident_type='territory_hopping',
-                description=(
-                    f'User accessed {territories} territories in 1 hour'
-                ),
+                incident_type="territory_hopping",
+                description=(f"User accessed {territories} territories in 1 hour"),
                 user_id=user_id,
                 territory_id=territory_id,
-                severity='high',
-                affected_resources=[{'type': 'patient', 'id': patient_id}]
+                severity="high",
+                affected_resources=[{"type": "patient", "id": patient_id}],
             )
 
     async def _check_phi_access_compliance(
-        self,
-        territory_id: Optional[int]
+        self, territory_id: Optional[int]
     ) -> List[Dict[str, Any]]:
         """Check PHI access compliance."""
         violations = []
@@ -350,9 +325,7 @@ class HIPAAComplianceService:
         day_ago = now - timedelta(days=1)
 
         # Base query
-        query = self.db.query(PHIAccess).filter(
-            PHIAccess.created_at >= day_ago
-        )
+        query = self.db.query(PHIAccess).filter(PHIAccess.created_at >= day_ago)
 
         if territory_id:
             query = query.filter(PHIAccess.territory_id == territory_id)
@@ -362,22 +335,23 @@ class HIPAAComplianceService:
             or_(
                 PHIAccess.access_reason.is_(None),
                 PHIAccess.ip_address.is_(None),
-                PHIAccess.user_agent.is_(None)
+                PHIAccess.user_agent.is_(None),
             )
         ).all()
 
         if missing_fields:
-            violations.append({
-                'type': 'incomplete_audit_logs',
-                'description': 'PHI access logs missing required fields',
-                'count': len(missing_fields)
-            })
+            violations.append(
+                {
+                    "type": "incomplete_audit_logs",
+                    "description": "PHI access logs missing required fields",
+                    "count": len(missing_fields),
+                }
+            )
 
         return violations
 
     async def _check_audit_log_compliance(
-        self,
-        territory_id: Optional[int]
+        self, territory_id: Optional[int]
     ) -> List[Dict[str, Any]]:
         """Check audit log compliance."""
         violations = []
@@ -385,9 +359,7 @@ class HIPAAComplianceService:
         month_ago = now - timedelta(days=30)
 
         # Base query
-        query = self.db.query(AuditLog).filter(
-            AuditLog.created_at >= month_ago
-        )
+        query = self.db.query(AuditLog).filter(AuditLog.created_at >= month_ago)
 
         if territory_id:
             query = query.filter(AuditLog.territory_id == territory_id)
@@ -395,17 +367,18 @@ class HIPAAComplianceService:
         # Check for gaps in audit logs
         gaps = await self._find_audit_log_gaps(query)
         if gaps:
-            violations.append({
-                'type': 'audit_log_gaps',
-                'description': 'Gaps detected in audit log timeline',
-                'gaps': gaps
-            })
+            violations.append(
+                {
+                    "type": "audit_log_gaps",
+                    "description": "Gaps detected in audit log timeline",
+                    "gaps": gaps,
+                }
+            )
 
         return violations
 
     async def _check_encryption_compliance(
-        self,
-        territory_id: Optional[int]
+        self, territory_id: Optional[int]
     ) -> List[Dict[str, Any]]:
         """Check encryption compliance."""
         # This is a placeholder for actual encryption checks
@@ -413,51 +386,39 @@ class HIPAAComplianceService:
         return []
 
     async def _get_phi_access_stats(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        territory_id: Optional[int]
+        self, start_date: datetime, end_date: datetime, territory_id: Optional[int]
     ) -> Dict[str, Any]:
         """Get PHI access statistics."""
         # Base query
         query = self.db.query(PHIAccess).filter(
-            and_(
-                PHIAccess.created_at >= start_date,
-                PHIAccess.created_at <= end_date
-            )
+            and_(PHIAccess.created_at >= start_date, PHIAccess.created_at <= end_date)
         )
 
         if territory_id:
             query = query.filter(PHIAccess.territory_id == territory_id)
 
         return {
-            'total_access': query.count(),
-            'unique_users': query.with_entities(
-                PHIAccess.user_id
-            ).distinct().count(),
-            'unique_patients': query.with_entities(
-                PHIAccess.patient_id
-            ).distinct().count(),
-            'by_action': dict(
-                query.with_entities(
-                    PHIAccess.action,
-                    func.count(PHIAccess.id)
-                ).group_by(PHIAccess.action).all()
-            )
+            "total_access": query.count(),
+            "unique_users": query.with_entities(PHIAccess.user_id).distinct().count(),
+            "unique_patients": query.with_entities(PHIAccess.patient_id)
+            .distinct()
+            .count(),
+            "by_action": dict(
+                query.with_entities(PHIAccess.action, func.count(PHIAccess.id))
+                .group_by(PHIAccess.action)
+                .all()
+            ),
         }
 
     async def _get_security_incidents(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        territory_id: Optional[int]
+        self, start_date: datetime, end_date: datetime, territory_id: Optional[int]
     ) -> Dict[str, Any]:
         """Get security incident statistics."""
         # Base query
         query = self.db.query(SecurityIncident).filter(
             and_(
                 SecurityIncident.reported_at >= start_date,
-                SecurityIncident.reported_at <= end_date
+                SecurityIncident.reported_at <= end_date,
             )
         )
 
@@ -465,36 +426,33 @@ class HIPAAComplianceService:
             query = query.filter(SecurityIncident.territory_id == territory_id)
 
         return {
-            'total_incidents': query.count(),
-            'by_type': dict(
+            "total_incidents": query.count(),
+            "by_type": dict(
                 query.with_entities(
-                    SecurityIncident.incident_type,
-                    func.count(SecurityIncident.id)
-                ).group_by(SecurityIncident.incident_type).all()
+                    SecurityIncident.incident_type, func.count(SecurityIncident.id)
+                )
+                .group_by(SecurityIncident.incident_type)
+                .all()
             ),
-            'by_severity': dict(
+            "by_severity": dict(
                 query.with_entities(
-                    SecurityIncident.severity,
-                    func.count(SecurityIncident.id)
-                ).group_by(SecurityIncident.severity).all()
+                    SecurityIncident.severity, func.count(SecurityIncident.id)
+                )
+                .group_by(SecurityIncident.severity)
+                .all()
             ),
-            'open_incidents': query.filter(
-                SecurityIncident.status == 'open'
-            ).count()
+            "open_incidents": query.filter(SecurityIncident.status == "open").count(),
         }
 
     async def _get_compliance_check_results(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        territory_id: Optional[int]
+        self, start_date: datetime, end_date: datetime, territory_id: Optional[int]
     ) -> Dict[str, Any]:
         """Get compliance check statistics."""
         # Base query
         query = self.db.query(ComplianceCheck).filter(
             and_(
                 ComplianceCheck.created_at >= start_date,
-                ComplianceCheck.created_at <= end_date
+                ComplianceCheck.created_at <= end_date,
             )
         )
 
@@ -502,22 +460,20 @@ class HIPAAComplianceService:
             query = query.filter(ComplianceCheck.territory_id == territory_id)
 
         return {
-            'total_checks': query.count(),
-            'by_type': dict(
+            "total_checks": query.count(),
+            "by_type": dict(
                 query.with_entities(
-                    ComplianceCheck.check_type,
-                    func.count(ComplianceCheck.id)
-                ).group_by(ComplianceCheck.check_type).all()
+                    ComplianceCheck.check_type, func.count(ComplianceCheck.id)
+                )
+                .group_by(ComplianceCheck.check_type)
+                .all()
             ),
-            'violations_found': query.filter(
-                ComplianceCheck.results['violations'].cast(str) != '[]'
-            ).count()
+            "violations_found": query.filter(
+                ComplianceCheck.results["violations"].cast(str) != "[]"
+            ).count(),
         }
 
-    async def _find_audit_log_gaps(
-        self,
-        query: Any
-    ) -> List[Dict[str, Any]]:
+    async def _find_audit_log_gaps(self, query: Any) -> List[Dict[str, Any]]:
         """Find gaps in audit log timeline."""
         gaps = []
         logs = query.order_by(AuditLog.created_at).all()
@@ -532,10 +488,12 @@ class HIPAAComplianceService:
 
             # Flag gaps longer than 1 hour
             if gap > timedelta(hours=1):
-                gaps.append({
-                    'start': current.created_at.isoformat(),
-                    'end': next_log.created_at.isoformat(),
-                    'duration_minutes': gap.total_seconds() / 60
-                })
+                gaps.append(
+                    {
+                        "start": current.created_at.isoformat(),
+                        "end": next_log.created_at.isoformat(),
+                        "duration_minutes": gap.total_seconds() / 60,
+                    }
+                )
 
         return gaps

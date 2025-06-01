@@ -1,4 +1,5 @@
 """Integration tests for Role-Based Access Control endpoints."""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -16,7 +17,7 @@ def test_organization(db: Session) -> Organization:
         name="Test Organization",
         description="Test organization for integration tests",
         settings={},
-        security_policy={}
+        security_policy={},
     )
     db.add(org)
     db.commit()
@@ -32,26 +33,26 @@ def test_permissions(db: Session) -> list[Permission]:
             name="view_users",
             description="Can view users",
             resource_type="user",
-            action="read"
+            action="read",
         ),
         Permission(
             name="create_users",
             description="Can create users",
             resource_type="user",
-            action="create"
+            action="create",
         ),
         Permission(
             name="update_users",
             description="Can update users",
             resource_type="user",
-            action="update"
+            action="update",
         ),
         Permission(
             name="delete_users",
             description="Can delete users",
             resource_type="user",
-            action="delete"
-        )
+            action="delete",
+        ),
     ]
     db.add_all(permissions)
     db.commit()
@@ -74,8 +75,8 @@ def admin_user(db: Session, test_organization: Organization) -> User:
             "view_all_roles": True,
             "create_permissions": True,
             "update_permissions": True,
-            "view_permissions": True
-        }
+            "view_permissions": True,
+        },
     )
     db.add(admin_role)
     db.commit()
@@ -89,7 +90,7 @@ def admin_user(db: Session, test_organization: Organization) -> User:
         role_id=admin_role.id,
         is_active=True,
         first_name="Admin",
-        last_name="User"
+        last_name="User",
     )
     db.add(admin)
     db.commit()
@@ -108,7 +109,7 @@ def test_create_role(
     db: Session,
     admin_token: str,
     test_organization: Organization,
-    test_permissions: list[Permission]
+    test_permissions: list[Permission],
 ):
     """Test role creation endpoint."""
     response = client.post(
@@ -117,13 +118,10 @@ def test_create_role(
             "name": "TEST_ROLE",
             "description": "Test role",
             "organization_id": str(test_organization.id),
-            "permissions": {
-                "view_users": True,
-                "create_users": True
-            },
-            "permission_ids": [str(p.id) for p in test_permissions[:2]]
+            "permissions": {"view_users": True, "create_users": True},
+            "permission_ids": [str(p.id) for p in test_permissions[:2]],
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 201
@@ -141,7 +139,7 @@ def test_get_role(
     db: Session,
     admin_token: str,
     test_organization: Organization,
-    test_permissions: list[Permission]
+    test_permissions: list[Permission],
 ):
     """Test get role endpoint."""
     # Create test role
@@ -149,7 +147,7 @@ def test_get_role(
         name="GET_TEST_ROLE",
         description="Role for get test",
         organization_id=test_organization.id,
-        permissions={"view_users": True}
+        permissions={"view_users": True},
     )
     role.assigned_permissions.append(test_permissions[0])
     db.add(role)
@@ -158,7 +156,7 @@ def test_get_role(
 
     response = client.get(
         f"/api/v1/rbac/roles/{role.id}",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 200
@@ -170,10 +168,7 @@ def test_get_role(
 
 
 def test_list_roles(
-    client: TestClient,
-    db: Session,
-    admin_token: str,
-    test_organization: Organization
+    client: TestClient, db: Session, admin_token: str, test_organization: Organization
 ):
     """Test list roles endpoint."""
     # Create additional roles
@@ -182,7 +177,7 @@ def test_list_roles(
             name=f"TEST_ROLE_{i}",
             description=f"Test role {i}",
             organization_id=test_organization.id,
-            permissions={}
+            permissions={},
         )
         for i in range(3)
     ]
@@ -190,8 +185,7 @@ def test_list_roles(
     db.commit()
 
     response = client.get(
-        "/api/v1/rbac/roles/",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        "/api/v1/rbac/roles/", headers={"Authorization": f"Bearer {admin_token}"}
     )
 
     assert response.status_code == 200
@@ -206,7 +200,7 @@ def test_update_role(
     db: Session,
     admin_token: str,
     test_organization: Organization,
-    test_permissions: list[Permission]
+    test_permissions: list[Permission],
 ):
     """Test role update endpoint."""
     # Create test role
@@ -214,7 +208,7 @@ def test_update_role(
         name="UPDATE_TEST_ROLE",
         description="Role for update test",
         organization_id=test_organization.id,
-        permissions={"view_users": True}
+        permissions={"view_users": True},
     )
     role.assigned_permissions.append(test_permissions[0])
     db.add(role)
@@ -226,13 +220,10 @@ def test_update_role(
         json={
             "name": "UPDATED_ROLE",
             "description": "Updated description",
-            "permissions": {
-                "view_users": True,
-                "create_users": True
-            },
-            "permission_ids": [str(p.id) for p in test_permissions[:2]]
+            "permissions": {"view_users": True, "create_users": True},
+            "permission_ids": [str(p.id) for p in test_permissions[:2]],
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 200
@@ -244,11 +235,7 @@ def test_update_role(
     assert len(data["assigned_permissions"]) == 2
 
 
-def test_create_permission(
-    client: TestClient,
-    db: Session,
-    admin_token: str
-):
+def test_create_permission(client: TestClient, db: Session, admin_token: str):
     """Test permission creation endpoint."""
     response = client.post(
         "/api/v1/rbac/permissions/",
@@ -257,9 +244,9 @@ def test_create_permission(
             "description": "Custom test permission",
             "resource_type": "custom",
             "action": "execute",
-            "conditions": {"require_mfa": True}
+            "conditions": {"require_mfa": True},
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 201
@@ -274,13 +261,13 @@ def test_get_permission(
     client: TestClient,
     db: Session,
     admin_token: str,
-    test_permissions: list[Permission]
+    test_permissions: list[Permission],
 ):
     """Test get permission endpoint."""
     permission = test_permissions[0]
     response = client.get(
         f"/api/v1/rbac/permissions/{permission.id}",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 200
@@ -295,12 +282,11 @@ def test_list_permissions(
     client: TestClient,
     db: Session,
     admin_token: str,
-    test_permissions: list[Permission]
+    test_permissions: list[Permission],
 ):
     """Test list permissions endpoint."""
     response = client.get(
-        "/api/v1/rbac/permissions/",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        "/api/v1/rbac/permissions/", headers={"Authorization": f"Bearer {admin_token}"}
     )
 
     assert response.status_code == 200
@@ -314,7 +300,7 @@ def test_update_permission(
     client: TestClient,
     db: Session,
     admin_token: str,
-    test_permissions: list[Permission]
+    test_permissions: list[Permission],
 ):
     """Test permission update endpoint."""
     permission = test_permissions[0]
@@ -322,9 +308,9 @@ def test_update_permission(
         f"/api/v1/rbac/permissions/{permission.id}",
         json={
             "description": "Updated description",
-            "conditions": {"new_condition": True}
+            "conditions": {"new_condition": True},
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 200
@@ -335,9 +321,7 @@ def test_update_permission(
 
 
 def test_unauthorized_access(
-    client: TestClient,
-    db: Session,
-    test_organization: Organization
+    client: TestClient, db: Session, test_organization: Organization
 ):
     """Test unauthorized access to RBAC endpoints."""
     # Create regular user with no permissions
@@ -345,7 +329,7 @@ def test_unauthorized_access(
         name="REGULAR",
         description="Regular user role",
         organization_id=test_organization.id,
-        permissions={}
+        permissions={},
     )
     db.add(regular_role)
     db.commit()
@@ -356,7 +340,7 @@ def test_unauthorized_access(
         encrypted_password=get_password_hash("RegularPassword123!"),
         organization_id=test_organization.id,
         role_id=regular_role.id,
-        is_active=True
+        is_active=True,
     )
     db.add(regular_user)
     db.commit()
@@ -371,9 +355,9 @@ def test_unauthorized_access(
             "name": "UNAUTHORIZED_ROLE",
             "description": "Should not be created",
             "organization_id": str(test_organization.id),
-            "permissions": {}
+            "permissions": {},
         },
-        headers={"Authorization": f"Bearer {regular_token}"}
+        headers={"Authorization": f"Bearer {regular_token}"},
     )
     assert response.status_code == 403
 
@@ -383,17 +367,15 @@ def test_unauthorized_access(
         json={
             "name": "unauthorized_permission",
             "resource_type": "test",
-            "action": "test"
+            "action": "test",
         },
-        headers={"Authorization": f"Bearer {regular_token}"}
+        headers={"Authorization": f"Bearer {regular_token}"},
     )
     assert response.status_code == 403
 
 
 def test_invalid_input(
-    client: TestClient,
-    admin_token: str,
-    test_organization: Organization
+    client: TestClient, admin_token: str, test_organization: Organization
 ):
     """Test input validation for RBAC endpoints."""
     # Test invalid role name
@@ -403,27 +385,23 @@ def test_invalid_input(
             "name": "",
             "description": "Invalid role",
             "organization_id": str(test_organization.id),
-            "permissions": {}
+            "permissions": {},
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 422
 
     # Test invalid permission name
     response = client.post(
         "/api/v1/rbac/permissions/",
-        json={
-            "name": "",
-            "resource_type": "",
-            "action": ""
-        },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        json={"name": "", "resource_type": "", "action": ""},
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 422
 
     # Test invalid UUID
     response = client.get(
         "/api/v1/rbac/roles/not-a-uuid",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 422

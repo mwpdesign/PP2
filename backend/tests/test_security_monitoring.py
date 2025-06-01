@@ -1,6 +1,7 @@
 """
 Unit tests for security monitoring service.
 """
+
 import pytest
 from datetime import datetime, timedelta
 from fastapi import HTTPException
@@ -10,23 +11,17 @@ from app.models.security import (
     SecurityEvent,
     SecurityAlert,
     SecurityIncident,
-    ThreatDetectionRule
+    ThreatDetectionRule,
 )
 
 
-async def test_handle_failed_authentication(
-    db,
-    test_user,
-    mock_notification_service
-):
+async def test_handle_failed_authentication(db, test_user, mock_notification_service):
     """Test handling failed authentication attempts."""
     service = SecurityMonitoringService(db)
 
     # Test single failed attempt
     await service.handle_failed_authentication(
-        user_id=test_user.id,
-        ip_address="192.168.1.1",
-        user_agent="test-browser"
+        user_id=test_user.id, ip_address="192.168.1.1", user_agent="test-browser"
     )
 
     events = db.query(SecurityEvent).all()
@@ -38,9 +33,7 @@ async def test_handle_failed_authentication(
     # Test account lockout after multiple failures
     for _ in range(4):  # Total will be 5 with previous attempt
         await service.handle_failed_authentication(
-            user_id=test_user.id,
-            ip_address="192.168.1.1",
-            user_agent="test-browser"
+            user_id=test_user.id, ip_address="192.168.1.1", user_agent="test-browser"
         )
 
     # Verify account locked
@@ -50,10 +43,7 @@ async def test_handle_failed_authentication(
 
 
 async def test_detect_suspicious_patterns(
-    db,
-    test_user,
-    mock_notification_service,
-    mock_aws
+    db, test_user, mock_notification_service, mock_aws
 ):
     """Test detection of suspicious access patterns."""
     service = SecurityMonitoringService(db)
@@ -64,13 +54,15 @@ async def test_detect_suspicious_patterns(
             user_id=test_user.id,
             territory_id=test_user.primary_territory_id,
             action="view",
-            resource_type="patient"
+            resource_type="patient",
         )
 
     # Verify excessive access alert created
-    alerts = db.query(SecurityAlert).filter(
-        SecurityAlert.alert_type == "excessive_access"
-    ).all()
+    alerts = (
+        db.query(SecurityAlert)
+        .filter(SecurityAlert.alert_type == "excessive_access")
+        .all()
+    )
     assert len(alerts) > 0
     assert alerts[0].severity == "high"
 
@@ -78,11 +70,7 @@ async def test_detect_suspicious_patterns(
     mock_aws["sns"].publish.assert_called()
 
 
-async def test_security_metrics(
-    db,
-    test_user,
-    test_security_rule
-):
+async def test_security_metrics(db, test_user, test_security_rule):
     """Test security metrics collection."""
     service = SecurityMonitoringService(db)
 
@@ -92,14 +80,14 @@ async def test_security_metrics(
             event_type="failed_authentication",
             severity="medium",
             user_id=test_user.id,
-            territory_id=test_user.primary_territory_id
+            territory_id=test_user.primary_territory_id,
         ),
         SecurityEvent(
             event_type="unauthorized_access",
             severity="high",
             user_id=test_user.id,
-            territory_id=test_user.primary_territory_id
-        )
+            territory_id=test_user.primary_territory_id,
+        ),
     ]
     db.add_all(events)
     db.commit()
@@ -110,7 +98,7 @@ async def test_security_metrics(
     metrics = await service.get_security_metrics(
         start_date=start_date,
         end_date=end_date,
-        territory_id=test_user.primary_territory_id
+        territory_id=test_user.primary_territory_id,
     )
 
     assert metrics["total_events"] == 2
@@ -121,10 +109,7 @@ async def test_security_metrics(
 
 
 async def test_evaluate_security_rule(
-    db,
-    test_user,
-    test_security_rule,
-    mock_notification_service
+    db, test_user, test_security_rule, mock_notification_service
 ):
     """Test security rule evaluation."""
     service = SecurityMonitoringService(db)
@@ -137,7 +122,7 @@ async def test_evaluate_security_rule(
             severity="high",
             user_id=test_user.id,
             territory_id=test_user.primary_territory_id,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
         events.append(event)
 
@@ -148,18 +133,17 @@ async def test_evaluate_security_rule(
     await service._evaluate_rule(test_security_rule)
 
     # Verify alert created
-    alerts = db.query(SecurityAlert).filter(
-        SecurityAlert.alert_type == test_security_rule.alert_type
-    ).all()
+    alerts = (
+        db.query(SecurityAlert)
+        .filter(SecurityAlert.alert_type == test_security_rule.alert_type)
+        .all()
+    )
     assert len(alerts) == 1
     assert alerts[0].severity == test_security_rule.severity
 
 
 async def test_create_security_alert(
-    db,
-    test_user,
-    mock_notification_service,
-    mock_aws
+    db, test_user, mock_notification_service, mock_aws
 ):
     """Test security alert creation."""
     service = SecurityMonitoringService(db)
@@ -170,7 +154,7 @@ async def test_create_security_alert(
         severity="high",
         user_id=test_user.id,
         territory_id=test_user.primary_territory_id,
-        details={"test": "data"}
+        details={"test": "data"},
     )
 
     # Verify alert created
@@ -191,17 +175,15 @@ async def test_create_security_alert(
     mock_aws["sns"].publish.assert_called_once()
 
 
-async def test_check_cloudtrail_events(
-    db,
-    mock_aws
-):
+async def test_check_cloudtrail_events(db, mock_aws):
     """Test CloudTrail event monitoring."""
     service = SecurityMonitoringService(db)
 
     # Mock CloudTrail events
     mock_aws["cloudtrail"].lookup_events.return_value = {
-        "Events": [{
-            "CloudTrailEvent": """
+        "Events": [
+            {
+                "CloudTrailEvent": """
             {
                 "eventType": "AwsApiCall",
                 "eventName": "DeleteBucket",
@@ -209,15 +191,18 @@ async def test_check_cloudtrail_events(
                 "sourceIPAddress": "192.168.1.1"
             }
             """
-        }]
+            }
+        ]
     }
 
     # Check events
     await service._check_cloudtrail_events()
 
     # Verify alert created for sensitive operation
-    alerts = db.query(SecurityAlert).filter(
-        SecurityAlert.alert_type == "sensitive_aws_operation"
-    ).all()
+    alerts = (
+        db.query(SecurityAlert)
+        .filter(SecurityAlert.alert_type == "sensitive_aws_operation")
+        .all()
+    )
     assert len(alerts) == 1
     assert alerts[0].severity == "high"

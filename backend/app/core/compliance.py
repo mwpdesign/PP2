@@ -15,17 +15,20 @@ from fastapi import HTTPException
 from app.core.config import settings
 from app.models.audit import AuditLog
 
+
 class PHIAccessType(Enum):
     VIEW = "view"
     MODIFY = "modify"
     EXPORT = "export"
     DELETE = "delete"
 
+
 class SecurityIncidentSeverity(Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
 
 class ComplianceService:
     def __init__(self, db: Session):
@@ -40,7 +43,7 @@ class ComplianceService:
         data_elements: List[str],
         territory_id: int,
         ip_address: str,
-        session_id: str
+        session_id: str,
     ) -> Dict:
         """Log PHI access with detailed audit trail."""
         try:
@@ -53,7 +56,7 @@ class ComplianceService:
                 "data_elements": json.dumps(data_elements),
                 "territory_id": territory_id,
                 "ip_address": ip_address,
-                "session_id": session_id
+                "session_id": session_id,
             }
 
             # Store in secure audit log
@@ -66,17 +69,14 @@ class ComplianceService:
 
         except Exception as e:
             self.logger.error(f"PHI access logging failed: {str(e)}")
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to log PHI access"
-            )
+            raise HTTPException(status_code=500, detail="Failed to log PHI access")
 
     async def report_security_incident(
         self,
         incident_type: str,
         severity: SecurityIncidentSeverity,
         details: Dict,
-        affected_patients: Optional[List[int]] = None
+        affected_patients: Optional[List[int]] = None,
     ) -> Dict:
         """Report and handle security incidents."""
         try:
@@ -87,14 +87,17 @@ class ComplianceService:
                 "severity": severity.value,
                 "details": json.dumps(details),
                 "affected_patients": affected_patients,
-                "status": "open"
+                "status": "open",
             }
 
             # Store incident report
             await self._store_security_incident(incident)
 
             # Trigger notifications based on severity
-            if severity in [SecurityIncidentSeverity.HIGH, SecurityIncidentSeverity.CRITICAL]:
+            if severity in [
+                SecurityIncidentSeverity.HIGH,
+                SecurityIncidentSeverity.CRITICAL,
+            ]:
                 await self._notify_security_team(incident)
 
             # Start automated response for critical incidents
@@ -106,8 +109,7 @@ class ComplianceService:
         except Exception as e:
             self.logger.error(f"Security incident reporting failed: {str(e)}")
             raise HTTPException(
-                status_code=500,
-                detail="Failed to report security incident"
+                status_code=500, detail="Failed to report security incident"
             )
 
     async def _store_audit_log(self, log_entry: Dict) -> None:
@@ -134,6 +136,7 @@ class ComplianceService:
         """Start automated incident response procedures."""
         # TODO: Implement automated incident response
         pass
+
 
 async def log_phi_access(
     session: AsyncSession,

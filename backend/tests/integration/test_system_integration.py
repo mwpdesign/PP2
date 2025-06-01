@@ -31,7 +31,7 @@ class SystemIntegrationVerifier:
             "email": f"test.user.{uuid.uuid4()}@example.com",
             "password": "TestPass123!",
             "role": "admin",
-            "territory_id": "TEST_TERRITORY"
+            "territory_id": "TEST_TERRITORY",
         }
         response = await self.client.post("/api/v1/users/", json=user_data)
         assert response.status_code == 201
@@ -39,10 +39,7 @@ class SystemIntegrationVerifier:
         # Get authentication token
         auth_response = await self.client.post(
             "/api/v1/auth/login",
-            json={
-                "email": user_data["email"],
-                "password": user_data["password"]
-            }
+            json={"email": user_data["email"], "password": user_data["password"]},
         )
         assert auth_response.status_code == 200
         self.test_user_token = auth_response.json()["access_token"]
@@ -52,12 +49,12 @@ class SystemIntegrationVerifier:
         await self.setup_test_environment()
 
         workflow_results = {
-            'patient_registration': await self._verify_patient_registration(),
-            'insurance_verification': await self._verify_insurance_check(),
-            'ivr_interaction': await self._verify_ivr_workflow(),
-            'order_processing': await self._verify_order_creation(),
-            'shipping_logistics': await self._verify_shipping_process(),
-            'notification_tracking': await self._verify_notification_system()
+            "patient_registration": await self._verify_patient_registration(),
+            "insurance_verification": await self._verify_insurance_check(),
+            "ivr_interaction": await self._verify_ivr_workflow(),
+            "order_processing": await self._verify_order_creation(),
+            "shipping_logistics": await self._verify_shipping_process(),
+            "notification_tracking": await self._verify_notification_system(),
         }
 
         return await self._analyze_workflow_results(workflow_results)
@@ -70,21 +67,17 @@ class SystemIntegrationVerifier:
             "last_name": "Patient",
             "dob": "1990-01-01",
             "ssn": "123-45-6789",  # Will be encrypted
-            "email": "test.patient.{}@example.com".format(
-                uuid.uuid4()
-            ),
+            "email": "test.patient.{}@example.com".format(uuid.uuid4()),
             "phone": "555-0123",
             "address": "123 Test St",
             "insurance_provider": "Test Insurance",
-            "insurance_id": "INS123456"
+            "insurance_id": "INS123456",
         }
 
         # Register patient
         headers = {"Authorization": f"Bearer {self.test_user_token}"}
         response = await self.client.post(
-            "/api/v1/patients/",
-            json=patient_data,
-            headers=headers
+            "/api/v1/patients/", json=patient_data, headers=headers
         )
 
         assert response.status_code == 201
@@ -96,8 +89,7 @@ class SystemIntegrationVerifier:
 
         # Verify audit log
         audit_logs = await self.audit_service.get_logs(
-            entity_type="patient",
-            entity_id=self.test_patient_id
+            entity_type="patient", entity_id=self.test_patient_id
         )
         assert len(audit_logs) > 0
 
@@ -105,7 +97,7 @@ class SystemIntegrationVerifier:
             "status": "success",
             "encryption_verified": True,
             "audit_logs_present": True,
-            "patient_id": self.test_patient_id
+            "patient_id": self.test_patient_id,
         }
 
     async def _verify_insurance_check(self) -> Dict[str, Any]:
@@ -114,8 +106,7 @@ class SystemIntegrationVerifier:
 
         # Trigger insurance verification
         response = await self.client.post(
-            "/api/v1/insurance/verify/{0}".format(self.test_patient_id),
-            headers=headers
+            "/api/v1/insurance/verify/{0}".format(self.test_patient_id), headers=headers
         )
 
         assert response.status_code == 200
@@ -124,13 +115,13 @@ class SystemIntegrationVerifier:
         # Verify audit logging
         audit_logs = await self.audit_service.get_logs(
             entity_type="insurance_verification",
-            entity_id=verification_result["verification_id"]
+            entity_id=verification_result["verification_id"],
         )
 
         return {
             "status": "success",
             "verification_status": verification_result["status"],
-            "audit_logs_present": len(audit_logs) > 0
+            "audit_logs_present": len(audit_logs) > 0,
         }
 
     async def _verify_ivr_workflow(self) -> Dict[str, Any]:
@@ -145,14 +136,12 @@ class SystemIntegrationVerifier:
             "details": {
                 "medication": "Test Medication",
                 "dosage": "100mg",
-                "frequency": "daily"
-            }
+                "frequency": "daily",
+            },
         }
 
         response = await self.client.post(
-            "/api/v1/ivr/requests/",
-            json=ivr_data,
-            headers=headers
+            "/api/v1/ivr/requests/", json=ivr_data, headers=headers
         )
 
         assert response.status_code == 201
@@ -160,8 +149,7 @@ class SystemIntegrationVerifier:
 
         # Verify workflow progression
         status_response = await self.client.get(
-            "/api/v1/ivr/requests/{}/status".format(self.test_ivr_id),
-            headers=headers
+            "/api/v1/ivr/requests/{}/status".format(self.test_ivr_id), headers=headers
         )
 
         assert status_response.status_code == 200
@@ -169,7 +157,7 @@ class SystemIntegrationVerifier:
         return {
             "status": "success",
             "ivr_id": self.test_ivr_id,
-            "workflow_status": status_response.json()["status"]
+            "workflow_status": status_response.json()["status"],
         }
 
     async def _verify_order_creation(self) -> Dict[str, Any]:
@@ -180,18 +168,11 @@ class SystemIntegrationVerifier:
         order_data = {
             "ivr_request_id": self.test_ivr_id,
             "patient_id": self.test_patient_id,
-            "items": [
-                {
-                    "product_id": "TEST_PROD_1",
-                    "quantity": 1
-                }
-            ]
+            "items": [{"product_id": "TEST_PROD_1", "quantity": 1}],
         }
 
         response = await self.client.post(
-            "/api/v1/orders/",
-            json=order_data,
-            headers=headers
+            "/api/v1/orders/", json=order_data, headers=headers
         )
 
         assert response.status_code == 201
@@ -199,8 +180,7 @@ class SystemIntegrationVerifier:
 
         # Verify inventory update
         inventory_response = await self.client.get(
-            "/api/v1/inventory/{}".format("TEST_PROD_1"),
-            headers=headers
+            "/api/v1/inventory/{}".format("TEST_PROD_1"), headers=headers
         )
 
         assert inventory_response.status_code == 200
@@ -208,7 +188,7 @@ class SystemIntegrationVerifier:
         return {
             "status": "success",
             "order_id": self.test_order_id,
-            "inventory_updated": True
+            "inventory_updated": True,
         }
 
     async def _verify_shipping_process(self) -> Dict[str, Any]:
@@ -223,14 +203,12 @@ class SystemIntegrationVerifier:
                 "street": "123 Test St",
                 "city": "Test City",
                 "state": "TS",
-                "zip": "12345"
-            }
+                "zip": "12345",
+            },
         }
 
         response = await self.client.post(
-            "/api/v1/shipping/",
-            json=shipping_data,
-            headers=headers
+            "/api/v1/shipping/", json=shipping_data, headers=headers
         )
 
         assert response.status_code == 201
@@ -238,8 +216,7 @@ class SystemIntegrationVerifier:
 
         # Verify tracking information
         tracking_response = await self.client.get(
-            "/api/v1/shipping/{}/tracking".format(shipping_id),
-            headers=headers
+            "/api/v1/shipping/{}/tracking".format(shipping_id), headers=headers
         )
 
         assert tracking_response.status_code == 200
@@ -247,7 +224,7 @@ class SystemIntegrationVerifier:
         return {
             "status": "success",
             "shipping_id": shipping_id,
-            "tracking_available": True
+            "tracking_available": True,
         }
 
     async def _verify_notification_system(self) -> Dict[str, Any]:
@@ -261,46 +238,39 @@ class SystemIntegrationVerifier:
                 "recipient_id": self.test_patient_id,
                 "channel": channel,
                 "template": "order_status_update",
-                "context": {
-                    "order_id": self.test_order_id,
-                    "status": "shipped"
-                }
+                "context": {"order_id": self.test_order_id, "status": "shipped"},
             }
 
             result = await self.notification_service.send_notification(
                 notification_data
             )
-            notification_results.append({
-                "channel": channel,
-                "status": result["status"]
-            })
+            notification_results.append(
+                {"channel": channel, "status": result["status"]}
+            )
 
         return {
             "status": "success",
             "notifications_sent": notification_results,
-            "all_channels_tested": len(notification_results) == len(channels)
+            "all_channels_tested": len(notification_results) == len(channels),
         }
 
     async def _analyze_workflow_results(self, results: Dict) -> Dict[str, Any]:
         """Analyze overall system integration and compliance"""
         # Verify all components succeeded
         all_succeeded = all(
-            result.get("status") == "success"
-            for result in results.values()
+            result.get("status") == "success" for result in results.values()
         )
 
         # Check audit trail completeness
         audit_logs = await self.audit_service.get_logs(
-            entity_type="patient",
-            entity_id=self.test_patient_id,
-            include_related=True
+            entity_type="patient", entity_id=self.test_patient_id, include_related=True
         )
 
         # Analyze security measures
         security_checks = {
             "phi_encrypted": await self._verify_phi_encryption(),
             "access_controls": await self._verify_access_controls(),
-            "audit_logging": len(audit_logs) > 0
+            "audit_logging": len(audit_logs) > 0,
         }
 
         return {
@@ -312,17 +282,19 @@ class SystemIntegrationVerifier:
             "test_ids": {
                 "patient_id": self.test_patient_id,
                 "order_id": self.test_order_id,
-                "ivr_id": self.test_ivr_id
-            }
+                "ivr_id": self.test_ivr_id,
+            },
         }
 
     async def _verify_phi_encryption(self) -> bool:
         """Verify PHI fields are properly encrypted"""
         patient = await self.db.get(Patient, self.test_patient_id)
-        return all([
-            self.encryption_service.is_encrypted(patient.ssn),
-            self.encryption_service.is_encrypted(patient.medical_record_number)
-        ])
+        return all(
+            [
+                self.encryption_service.is_encrypted(patient.ssn),
+                self.encryption_service.is_encrypted(patient.medical_record_number),
+            ]
+        )
 
     async def _verify_access_controls(self) -> bool:
         """Verify RBAC and territory-based access controls"""
@@ -331,15 +303,13 @@ class SystemIntegrationVerifier:
         access_results = []
 
         for role in test_roles:
-            token = create_access_token({
-                "sub": "test.{}@example.com".format(role),
-                "role": role
-            })
+            token = create_access_token(
+                {"sub": "test.{}@example.com".format(role), "role": role}
+            )
             headers = {"Authorization": f"Bearer {token}"}
 
             response = await self.client.get(
-                "/api/v1/patients/{}".format(self.test_patient_id),
-                headers=headers
+                "/api/v1/patients/{}".format(self.test_patient_id), headers=headers
             )
 
             access_results.append(response.status_code in [200, 403])
@@ -348,11 +318,7 @@ class SystemIntegrationVerifier:
 
 
 @pytest.mark.asyncio
-async def test_complete_system_integration(
-    db_session,
-    test_client,
-    monkeypatch
-):
+async def test_complete_system_integration(db_session, test_client, monkeypatch):
     """Execute complete system integration test"""
     verifier = SystemIntegrationVerifier(db_session, test_client)
     results = await verifier.simulate_complete_workflow()
@@ -372,7 +338,7 @@ async def test_complete_system_integration(
         "test_run_id": str(uuid.uuid4()),
         "timestamp": results["timestamp"],
         "results": results,
-        "environment": settings.ENVIRONMENT
+        "environment": settings.ENVIRONMENT,
     }
 
     # Save verification report
@@ -388,7 +354,7 @@ async def save_verification_report(report_data: Dict[str, Any]):
     reports_dir.mkdir(exist_ok=True)
 
     report_file = reports_dir / "integration_report_{}.json".format(
-        report_data['test_run_id']
+        report_data["test_run_id"]
     )
     with open(report_file, "w") as f:
         json.dump(report_data, f, indent=2)

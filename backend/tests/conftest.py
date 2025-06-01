@@ -1,4 +1,5 @@
 """Test fixtures for integration tests."""
+
 import pytest
 import asyncio
 from httpx import AsyncClient

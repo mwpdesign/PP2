@@ -1,4 +1,5 @@
 """Audit mixin for tracking model changes."""
+
 from datetime import datetime
 from uuid import UUID as PyUUID
 from sqlalchemy import DateTime, ForeignKey
@@ -10,25 +11,19 @@ class AuditMixin:
     """Mixin class for adding audit fields to models."""
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=datetime.utcnow,
-        nullable=False
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
-        nullable=False
+        nullable=False,
     )
     created_by_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('users.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     updated_by_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('users.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
 
     # Relationships
@@ -36,16 +31,12 @@ class AuditMixin:
     def created_by(cls):
         """Relationship to user who created the record."""
         return relationship(
-            "User",
-            foreign_keys=[cls.created_by_id],
-            back_populates="created_records"
+            "User", foreign_keys=[cls.created_by_id], back_populates="created_records"
         )
 
     @declared_attr
     def updated_by(cls):
         """Relationship to user who last updated the record."""
         return relationship(
-            "User",
-            foreign_keys=[cls.updated_by_id],
-            back_populates="updated_records"
+            "User", foreign_keys=[cls.updated_by_id], back_populates="updated_records"
         )

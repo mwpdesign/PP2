@@ -17,10 +17,10 @@ class SMSService:
     def __init__(self):
         """Initialize SNS service."""
         self.sns_client = boto3.client(
-            'sns',
+            "sns",
             region_name=settings.AWS_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
         self.kms_service = KMSService()
 
@@ -34,22 +34,17 @@ class SMSService:
         try:
             self.sns_client.set_sms_attributes(
                 attributes={
-                    'DefaultSenderID': self.sender_id,
-                    'DefaultSMSType': 'Transactional',
-                    'MaxPrice': self.max_price,
-                    'UsageReportS3Bucket': settings.SNS_USAGE_REPORT_BUCKET
+                    "DefaultSenderID": self.sender_id,
+                    "DefaultSMSType": "Transactional",
+                    "MaxPrice": self.max_price,
+                    "UsageReportS3Bucket": settings.SNS_USAGE_REPORT_BUCKET,
                 }
             )
         except ClientError as e:
             logger.error(f"Failed to configure SNS: {str(e)}")
             raise
 
-    async def send_sms(
-        self,
-        recipient_id: str,
-        content: str,
-        metadata: Dict
-    ) -> bool:
+    async def send_sms(self, recipient_id: str, content: str, metadata: Dict) -> bool:
         """Send HIPAA-compliant SMS."""
         try:
             # Get recipient phone from user service
@@ -70,15 +65,15 @@ class SMSService:
                 PhoneNumber=phone_number,
                 Message=content,
                 MessageAttributes={
-                    'AWS.SNS.SMS.SenderID': {
-                        'DataType': 'String',
-                        'StringValue': self.sender_id
+                    "AWS.SNS.SMS.SenderID": {
+                        "DataType": "String",
+                        "StringValue": self.sender_id,
                     },
-                    'AWS.SNS.SMS.SMSType': {
-                        'DataType': 'String',
-                        'StringValue': 'Transactional'
-                    }
-                }
+                    "AWS.SNS.SMS.SMSType": {
+                        "DataType": "String",
+                        "StringValue": "Transactional",
+                    },
+                },
             )
 
             logger.info(
@@ -104,7 +99,8 @@ class SMSService:
     def _validate_phone_number(self, phone_number: str) -> bool:
         """Validate phone number format."""
         import re
-        pattern = r'^\+[1-9]\d{1,14}$'
+
+        pattern = r"^\+[1-9]\d{1,14}$"
         return bool(re.match(pattern, phone_number))
 
     async def _is_opted_out(self, phone_number: str) -> bool:
@@ -113,7 +109,7 @@ class SMSService:
             response = self.sns_client.check_if_phone_number_is_opted_out(
                 phoneNumber=phone_number
             )
-            return response['isOptedOut']
+            return response["isOptedOut"]
 
         except ClientError as e:
             logger.error(f"Failed to check opt-out status: {str(e)}")
@@ -123,7 +119,7 @@ class SMSService:
         """Get list of opted-out phone numbers."""
         try:
             response = self.sns_client.list_phone_numbers_opted_out()
-            return response['phoneNumbers']
+            return response["phoneNumbers"]
 
         except ClientError as e:
             logger.error(f"Failed to get opt-out list: {str(e)}")
@@ -142,11 +138,7 @@ class SMSService:
             logger.error(f"Failed to process opt-out: {str(e)}")
             raise
 
-    async def _update_user_preferences(
-        self,
-        phone_number: str,
-        opted_out: bool
-    ):
+    async def _update_user_preferences(self, phone_number: str, opted_out: bool):
         """Update user notification preferences."""
         # TODO: Implement user preferences update
         pass

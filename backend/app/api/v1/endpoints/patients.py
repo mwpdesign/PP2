@@ -1,8 +1,15 @@
 """Patient endpoints for the API."""
+
 from typing import Optional
 from fastapi import (
-    APIRouter, Depends, HTTPException, Query, status,
-    UploadFile, File, Form
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    status,
+    UploadFile,
+    File,
+    Form,
 )
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,12 +40,12 @@ async def search_patients(
     current_user: TokenData = Depends(get_current_user),
     query: Optional[str] = None,
     skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100)
+    limit: int = Query(10, ge=1, le=100),
 ) -> PatientSearchResults:
     """Search patients with pagination"""
     try:
         logger.info("Starting patients search query...")
-        
+
         # Base query - filter by organization
         query_filter = select(Patient).where(
             Patient.organization_id == current_user.organization_id
@@ -46,16 +53,16 @@ async def search_patients(
 
         # Apply search filter if query provided
         if query:
-            query_filter = query_filter.where(
-                Patient.status == 'active'
-            )
+            query_filter = query_filter.where(Patient.status == "active")
 
         # Get total count
-        count_query = select(func.count()).select_from(Patient).where(
-            Patient.organization_id == current_user.organization_id
+        count_query = (
+            select(func.count())
+            .select_from(Patient)
+            .where(Patient.organization_id == current_user.organization_id)
         )
         if query:
-            count_query = count_query.where(Patient.status == 'active')
+            count_query = count_query.where(Patient.status == "active")
 
         total = await db.scalar(count_query)
 
@@ -66,16 +73,13 @@ async def search_patients(
         result = await db.execute(query_filter)
         patients = result.scalars().all()
 
-        return PatientSearchResults(
-            total=total or 0,
-            patients=patients
-        )
+        return PatientSearchResults(total=total or 0, patients=patients)
 
     except Exception as e:
         logger.error(f"Patient search failed with error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to search patients: {str(e)}"
+            detail=f"Failed to search patients: {str(e)}",
         )
 
 
@@ -83,17 +87,17 @@ async def search_patients(
 async def register_patient(
     patient_data: PatientRegistration,
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user),
 ) -> PatientSchema:
     """Register a new patient."""
     try:
         # Create patient instance with organization
         db_patient = Patient(
             **patient_data.dict(),
-            status='active',
+            status="active",
             organization_id=current_user.organization_id,
             created_by_id=current_user.id,
-            updated_by_id=current_user.id
+            updated_by_id=current_user.id,
         )
 
         # Add to database
@@ -105,31 +109,27 @@ async def register_patient(
 
     except Exception as e:
         await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/{patient_id}", response_model=PatientSchema)
 async def get_patient(
     patient_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user),
 ) -> Patient:
     """Get patient by ID"""
     patient = await db.get(Patient, patient_id)
     if not patient:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
         )
 
     # Check organization access
     if patient.organization_id != current_user.organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this patient"
+            detail="Not authorized to access this patient",
         )
 
     return PatientSchema.from_orm(patient)
@@ -141,28 +141,27 @@ async def update_patient(
     db: AsyncSession = Depends(get_db),
     patient_id: UUID,
     patient_in: PatientUpdate,
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user),
 ) -> Patient:
     """Update patient"""
     patient = await db.get(Patient, patient_id)
     if not patient:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
         )
 
     # Check organization access
     if patient.organization_id != current_user.organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this patient"
+            detail="Not authorized to update this patient",
         )
 
     # Update patient
     patient_data = patient_in.dict(exclude_unset=True)
     for field, value in patient_data.items():
         setattr(patient, field, value)
-    
+
     patient.updated_by_id = current_user.id
     await db.commit()
     await db.refresh(patient)
@@ -174,21 +173,20 @@ async def update_patient(
 async def delete_patient(
     patient_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user),
 ):
     """Delete patient"""
     patient = await db.get(Patient, patient_id)
     if not patient:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
         )
 
     # Check organization access
     if patient.organization_id != current_user.organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this patient"
+            detail="Not authorized to delete this patient",
         )
 
     await db.delete(patient)
@@ -203,22 +201,21 @@ async def upload_patient_document(
     document_category: str = Form(...),
     display_name: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user)
+    current_user: TokenData = Depends(get_current_user),
 ):
     """Upload patient document"""
     # Verify patient exists
     patient = await db.get(Patient, patient_id)
     if not patient:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Patient not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
         )
 
     # Check organization access
     if patient.organization_id != current_user.organization_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to upload documents for this patient"
+            detail="Not authorized to upload documents for this patient",
         )
 
     # Create document
@@ -230,7 +227,7 @@ async def upload_patient_document(
         display_name=display_name or document.filename,
         organization_id=current_user.organization_id,
         created_by_id=current_user.id,
-        updated_by_id=current_user.id
+        updated_by_id=current_user.id,
     )
 
     # Save document

@@ -16,6 +16,7 @@ from pathlib import Path
 
 class HealthCheck:
     """Base class for health checks"""
+
     def __init__(self, name: str, check_type: str):
         self.name = name
         self.type = check_type
@@ -27,11 +28,13 @@ class HealthCheck:
             self.result["timestamp"] = datetime.now().isoformat()
             self._execute_check()
         except Exception as e:
-            self.result.update({
-                "status": "FAIL",
-                "details": str(e),
-                "error_type": e.__class__.__name__
-            })
+            self.result.update(
+                {
+                    "status": "FAIL",
+                    "details": str(e),
+                    "error_type": e.__class__.__name__,
+                }
+            )
         return self.result
 
     def _execute_check(self):
@@ -41,6 +44,7 @@ class HealthCheck:
 
 class HTTPHealthCheck(HealthCheck):
     """Health check for HTTP services"""
+
     def __init__(self, name: str, url: str, expected_status: List[int] = None):
         super().__init__(name, "http")
         self.url = url
@@ -49,17 +53,20 @@ class HTTPHealthCheck(HealthCheck):
     def _execute_check(self):
         response = requests.get(self.url, timeout=10)
         is_healthy = response.status_code in self.expected_status
-        self.result.update({
-            "status": "PASS" if is_healthy else "FAIL",
-            "details": {
-                "status_code": response.status_code,
-                "response_time": response.elapsed.total_seconds()
+        self.result.update(
+            {
+                "status": "PASS" if is_healthy else "FAIL",
+                "details": {
+                    "status_code": response.status_code,
+                    "response_time": response.elapsed.total_seconds(),
+                },
             }
-        })
+        )
 
 
 class DatabaseHealthCheck(HealthCheck):
     """Health check for database services"""
+
     def __init__(self, name: str, connection_string: str):
         super().__init__(name, "database")
         self.connection_string = connection_string
@@ -74,16 +81,26 @@ class DatabaseHealthCheck(HealthCheck):
 
         # Check required tables
         required_tables = [
-            "users", "organizations", "roles", "permissions",
-            "facilities", "doctors", "patients", "ivr_requests",
-            "orders", "audit_logs", "territories"
+            "users",
+            "organizations",
+            "roles",
+            "permissions",
+            "facilities",
+            "doctors",
+            "patients",
+            "ivr_requests",
+            "orders",
+            "audit_logs",
+            "territories",
         ]
 
-        cur.execute("""
+        cur.execute(
+            """
             SELECT table_name
             FROM information_schema.tables
             WHERE table_schema = 'public'
-        """)
+        """
+        )
         existing_tables = {row[0] for row in cur.fetchall()}
         missing_tables = set(required_tables) - existing_tables
 
@@ -95,18 +112,21 @@ class DatabaseHealthCheck(HealthCheck):
 
         conn.close()
 
-        self.result.update({
-            "status": "PASS" if not missing_tables else "FAIL",
-            "details": {
-                "version": version,
-                "missing_tables": list(missing_tables),
-                "table_stats": table_stats
+        self.result.update(
+            {
+                "status": "PASS" if not missing_tables else "FAIL",
+                "details": {
+                    "version": version,
+                    "missing_tables": list(missing_tables),
+                    "table_stats": table_stats,
+                },
             }
-        })
+        )
 
 
 class RedisHealthCheck(HealthCheck):
     """Health check for Redis services"""
+
     def __init__(self, name: str, url: str):
         super().__init__(name, "redis")
         self.url = url
@@ -116,18 +136,21 @@ class RedisHealthCheck(HealthCheck):
         info = client.info()
         client.close()
 
-        self.result.update({
-            "status": "PASS",
-            "details": {
-                "version": info["redis_version"],
-                "used_memory": info["used_memory_human"],
-                "connected_clients": info["connected_clients"]
+        self.result.update(
+            {
+                "status": "PASS",
+                "details": {
+                    "version": info["redis_version"],
+                    "used_memory": info["used_memory_human"],
+                    "connected_clients": info["connected_clients"],
+                },
             }
-        })
+        )
 
 
 class AWSServiceHealthCheck(HealthCheck):
     """Health check for AWS services"""
+
     def __init__(self, name: str, service: str):
         super().__init__(name, "aws")
         self.service = service
@@ -139,7 +162,7 @@ class AWSServiceHealthCheck(HealthCheck):
             "s3": self._check_s3,
             "kms": self._check_kms,
             "ses": self._check_ses,
-            "cloudtrail": self._check_cloudtrail
+            "cloudtrail": self._check_cloudtrail,
         }
 
         check_func = service_checks.get(self.service)
@@ -147,49 +170,47 @@ class AWSServiceHealthCheck(HealthCheck):
             raise ValueError(f"Unsupported AWS service: {self.service}")
 
         details = check_func(client)
-        self.result.update({
-            "status": "PASS",
-            "details": details
-        })
+        self.result.update({"status": "PASS", "details": details})
 
     def _check_cognito(self, client) -> Dict:
         response = client.list_user_pools(MaxResults=10)
         return {
             "user_pools": len(response["UserPools"]),
-            "pools": [pool["Name"] for pool in response["UserPools"]]
+            "pools": [pool["Name"] for pool in response["UserPools"]],
         }
 
     def _check_s3(self, client) -> Dict:
         response = client.list_buckets()
         return {
             "bucket_count": len(response["Buckets"]),
-            "buckets": [bucket["Name"] for bucket in response["Buckets"]]
+            "buckets": [bucket["Name"] for bucket in response["Buckets"]],
         }
 
     def _check_kms(self, client) -> Dict:
         response = client.list_keys()
         return {
             "key_count": len(response["Keys"]),
-            "keys": [key["KeyId"] for key in response["Keys"]]
+            "keys": [key["KeyId"] for key in response["Keys"]],
         }
 
     def _check_ses(self, client) -> Dict:
         response = client.get_send_quota()
         return {
             "max_24_hour_send": response["Max24HourSend"],
-            "sent_last_24_hours": response["SentLast24Hours"]
+            "sent_last_24_hours": response["SentLast24Hours"],
         }
 
     def _check_cloudtrail(self, client) -> Dict:
         response = client.list_trails()
         return {
             "trail_count": len(response["Trails"]),
-            "trails": [trail["Name"] for trail in response["Trails"]]
+            "trails": [trail["Name"] for trail in response["Trails"]],
         }
 
 
 class SystemVerificationEngine:
     """Advanced system verification engine"""
+
     def __init__(self, environment: str = "production"):
         self.environment = environment
         self.logger = logging.getLogger("system_verification")
@@ -197,7 +218,7 @@ class SystemVerificationEngine:
             "timestamp": datetime.now().isoformat(),
             "environment": environment,
             "overall_status": "UNKNOWN",
-            "components": {}
+            "components": {},
         }
 
         # Configure logging
@@ -212,9 +233,7 @@ class SystemVerificationEngine:
 
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         )
 
         self.logger.addHandler(file_handler)
@@ -227,29 +246,17 @@ class SystemVerificationEngine:
 
             # Define health checks
             health_checks = [
-                HTTPHealthCheck(
-                    "Frontend",
-                    "http://localhost:3000",
-                    [200]
-                ),
-                HTTPHealthCheck(
-                    "Backend API",
-                    "http://localhost:8000/health",
-                    [200]
-                ),
+                HTTPHealthCheck("Frontend", "http://localhost:3000", [200]),
+                HTTPHealthCheck("Backend API", "http://localhost:8000/health", [200]),
                 DatabaseHealthCheck(
-                    "Database",
-                    "postgresql://localhost:5432/healthcare_ivr"
+                    "Database", "postgresql://localhost:5432/healthcare_ivr"
                 ),
-                RedisHealthCheck(
-                    "Redis",
-                    "redis://localhost:6379"
-                ),
+                RedisHealthCheck("Redis", "redis://localhost:6379"),
                 AWSServiceHealthCheck("Cognito", "cognito-idp"),
                 AWSServiceHealthCheck("S3", "s3"),
                 AWSServiceHealthCheck("KMS", "kms"),
                 AWSServiceHealthCheck("SES", "ses"),
-                AWSServiceHealthCheck("CloudTrail", "cloudtrail")
+                AWSServiceHealthCheck("CloudTrail", "cloudtrail"),
             ]
 
             # Run all health checks

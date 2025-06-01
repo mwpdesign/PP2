@@ -1,4 +1,5 @@
 """Script to add sample patient data."""
+
 import asyncio
 import uuid
 from datetime import datetime
@@ -17,7 +18,7 @@ def encrypt_to_bytes(value: str) -> bytes:
     """Encrypt a string value to bytes."""
     encrypted = encrypt_field(value)
     if isinstance(encrypted, str):
-        return encrypted.encode('utf-8')
+        return encrypted.encode("utf-8")
     return encrypted
 
 
@@ -28,7 +29,7 @@ async def add_sample_data():
             # First check if we have an organization, if not create one
             org_result = await db.execute(select(Organization).limit(1))
             organization = org_result.scalar_one_or_none()
-            
+
             if not organization:
                 organization = Organization(
                     name="Demo Healthcare",
@@ -38,7 +39,7 @@ async def add_sample_data():
                     is_active=True,
                     status="active",
                     created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
                 db.add(organization)
                 await db.commit()
@@ -62,7 +63,7 @@ async def add_sample_data():
                     force_password_change=False,
                     failed_login_attempts=0,
                     created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
                 db.add(user)
                 await db.commit()
@@ -91,7 +92,7 @@ async def add_sample_data():
                     organization_id=organization.id,
                     is_active=True,
                     created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
                 db.add(facility)
                 await db.commit()
@@ -125,16 +126,14 @@ async def add_sample_data():
                     is_active=True,
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow(),
-                    created_by_id=user.id
+                    created_by_id=user.id,
                 )
                 db.add(provider)
                 await db.commit()
                 await db.refresh(provider)
 
             # Create a patient if it doesn't exist
-            patient_result = await db.execute(
-                select(Patient).limit(1)
-            )
+            patient_result = await db.execute(select(Patient).limit(1))
             patient = patient_result.scalar_one_or_none()
 
             if not patient:
@@ -155,7 +154,7 @@ async def add_sample_data():
                     updated_by_id=user.id,
                     organization_id=organization.id,
                     facility_id=facility.id,
-                    provider_id=provider.id
+                    provider_id=provider.id,
                 )
                 db.add(patient)
                 await db.commit()
@@ -169,4 +168,4 @@ async def add_sample_data():
 
 
 if __name__ == "__main__":
-    asyncio.run(add_sample_data()) 
+    asyncio.run(add_sample_data())

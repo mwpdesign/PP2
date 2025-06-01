@@ -15,77 +15,57 @@ from app.core.security import encrypt_field, decrypt_field
 
 class Order(Base, AuditMixin):
     """Order model for managing medical supply orders."""
-    __tablename__ = 'orders'
+
+    __tablename__ = "orders"
 
     id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     # Organization
     organization_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('organizations.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False
     )
-    order_number: Mapped[str] = mapped_column(
-        String(50),
-        unique=True,
-        nullable=False
-    )
+    order_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     patient_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('patients.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("patients.id"), nullable=False
     )
     provider_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('providers.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("providers.id"), nullable=False
     )
     created_by_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('users.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     updated_by_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('users.id'),
-        nullable=True
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
     ivr_session_id: Mapped[str] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(
         Enum(
-            'pending',
-            'verified',
-            'approved',
-            'processing',
-            'completed',
-            'cancelled',
-            name='order_status_enum'
+            "pending",
+            "verified",
+            "approved",
+            "processing",
+            "completed",
+            "cancelled",
+            name="order_status_enum",
         ),
         nullable=False,
-        default='pending'
+        default="pending",
     )
     order_type: Mapped[str] = mapped_column(
         Enum(
-            'prescription',
-            'medical_equipment',
-            'lab_test',
-            'referral',
-            name='order_type_enum'
-        ),
-        nullable=False
-    )
-    priority: Mapped[str] = mapped_column(
-        Enum(
-            'routine',
-            'urgent',
-            'emergency',
-            name='order_priority_enum'
+            "prescription",
+            "medical_equipment",
+            "lab_test",
+            "referral",
+            name="order_type_enum",
         ),
         nullable=False,
-        default='routine'
+    )
+    priority: Mapped[str] = mapped_column(
+        Enum("routine", "urgent", "emergency", name="order_priority_enum"),
+        nullable=False,
+        default="routine",
     )
     _total_amount: Mapped[str] = mapped_column(String(500))  # Encrypted
     _notes: Mapped[str] = mapped_column(Text)  # Encrypted
@@ -94,57 +74,37 @@ class Order(Base, AuditMixin):
     _delivery_info: Mapped[str] = mapped_column(String(2000))  # Encrypted JSON
     completion_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=datetime.utcnow
+        DateTime(timezone=True), default=datetime.utcnow
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
+        DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # Relationships
     organization = relationship("Organization", back_populates="orders")
     patient = relationship(
-        "Patient",
-        foreign_keys=[patient_id],
-        back_populates="orders"
+        "Patient", foreign_keys=[patient_id], back_populates="orders"
     )
     provider = relationship(
-        "Provider",
-        foreign_keys=[provider_id],
-        back_populates="orders"
+        "Provider", foreign_keys=[provider_id], back_populates="orders"
     )
     created_by = relationship(
-        "User",
-        foreign_keys=[created_by_id],
-        back_populates="created_orders"
+        "User", foreign_keys=[created_by_id], back_populates="created_orders"
     )
     updated_by = relationship(
-        "User",
-        foreign_keys=[updated_by_id],
-        back_populates="updated_orders"
+        "User", foreign_keys=[updated_by_id], back_populates="updated_orders"
     )
     shipping_addresses = relationship(
-        "ShippingAddress",
-        back_populates="order",
-        cascade="all, delete-orphan"
+        "ShippingAddress", back_populates="order", cascade="all, delete-orphan"
     )
     shipments = relationship(
-        "Shipment",
-        back_populates="order",
-        cascade="all, delete-orphan"
+        "Shipment", back_populates="order", cascade="all, delete-orphan"
     )
     fulfillment_orders = relationship(
-        "FulfillmentOrder",
-        back_populates="order",
-        cascade="all, delete-orphan"
+        "FulfillmentOrder", back_populates="order", cascade="all, delete-orphan"
     )
     status_history = relationship(
-        "OrderStatusHistory",
-        back_populates="order",
-        cascade="all, "
-        "delete-orphan"
+        "OrderStatusHistory", back_populates="order", cascade="all, " "delete-orphan"
     )
 
     @property
@@ -225,58 +185,49 @@ class Order(Base, AuditMixin):
 
 class OrderStatusHistory(Base):
     """History of order status changes."""
-    __tablename__ = 'order_status_history'
+
+    __tablename__ = "order_status_history"
 
     id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     order_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('orders.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False
     )
     from_status: Mapped[str] = mapped_column(
         Enum(
-            'pending',
-            'verified',
-            'approved',
-            'processing',
-            'completed',
-            'cancelled',
-            name='order_status_enum'
+            "pending",
+            "verified",
+            "approved",
+            "processing",
+            "completed",
+            "cancelled",
+            name="order_status_enum",
         ),
-        nullable=True
+        nullable=True,
     )
     to_status: Mapped[str] = mapped_column(
         Enum(
-            'pending',
-            'verified',
-            'approved',
-            'processing',
-            'completed',
-            'cancelled',
-            name='order_status_enum'
+            "pending",
+            "verified",
+            "approved",
+            "processing",
+            "completed",
+            "cancelled",
+            name="order_status_enum",
         ),
-        nullable=False
+        nullable=False,
     )
     changed_by_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey('users.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     reason: Mapped[str] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        default=datetime.utcnow,
-        nullable=False
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
 
     # Relationships
-    order = relationship('Order', back_populates='status_history')
+    order = relationship("Order", back_populates="status_history")
     changed_by = relationship(
-        'User',
-        foreign_keys=[changed_by_id],
-        back_populates='order_status_changes'
+        "User", foreign_keys=[changed_by_id], back_populates="order_status_changes"
     )

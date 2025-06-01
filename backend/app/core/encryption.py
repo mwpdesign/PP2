@@ -2,6 +2,7 @@
 Core encryption module providing encryption utilities and configuration.
 Handles encryption key management and rotation policies.
 """
+
 from typing import Dict, Optional
 from datetime import datetime, timedelta
 from fastapi import HTTPException
@@ -25,15 +26,15 @@ class EncryptionConfig:
 
         # KMS key configuration
         self.key_rotation_period = timedelta(days=90)  # HIPAA best practice
-        self.key_alias_prefix = 'alias/healthcare-ivr'
+        self.key_alias_prefix = "alias/healthcare-ivr"
 
         # Encryption contexts
         self.resource_types = {
-            'patient': 'PHI',
-            'order': 'PHI',
-            'insurance': 'PHI',
-            'document': 'PHI',
-            'audit': 'AUDIT'
+            "patient": "PHI",
+            "order": "PHI",
+            "insurance": "PHI",
+            "document": "PHI",
+            "audit": "AUDIT",
         }
 
         # Access logging configuration
@@ -49,7 +50,7 @@ class EncryptionConfig:
         resource_type: str,
         resource_id: str,
         user_id: Optional[str] = None,
-        additional_context: Optional[Dict] = None
+        additional_context: Optional[Dict] = None,
     ) -> Dict:
         """
         Create a standardized encryption context.
@@ -59,16 +60,16 @@ class EncryptionConfig:
             raise ValueError(f"Invalid resource type: {resource_type}")
 
         context = {
-            'resource_type': resource_type,
-            'resource_id': resource_id,
-            'data_classification': self.resource_types[resource_type],
-            'environment': self.settings.environment,
-            'application': 'healthcare-ivr-platform',
-            'encryption_version': '1.0'
+            "resource_type": resource_type,
+            "resource_id": resource_id,
+            "data_classification": self.resource_types[resource_type],
+            "environment": self.settings.environment,
+            "application": "healthcare-ivr-platform",
+            "encryption_version": "1.0",
         }
 
         if user_id:
-            context['user_id'] = user_id
+            context["user_id"] = user_id
 
         if additional_context:
             context.update(additional_context)
@@ -88,40 +89,33 @@ class EncryptionConfig:
         return age >= self.key_rotation_period
 
     def validate_encryption_context(
-        self,
-        context: Dict,
-        required_fields: Optional[list] = None
+        self, context: Dict, required_fields: Optional[list] = None
     ) -> bool:
         """
         Validate encryption context has required fields.
         Returns True if valid, raises exception if invalid.
         """
         required = required_fields or [
-            'resource_type',
-            'resource_id',
-            'data_classification'
+            "resource_type",
+            "resource_id",
+            "data_classification",
         ]
 
         try:
             for field in required:
                 if field not in context:
-                    raise ValueError(
-                        f"Missing required field in context: {field}"
-                    )
+                    raise ValueError(f"Missing required field in context: {field}")
 
             if (
-                'resource_type' in context and
-                context['resource_type'] not in self.resource_types
+                "resource_type" in context
+                and context["resource_type"] not in self.resource_types
             ):
-                raise ValueError(
-                    f"Invalid resource type: {context['resource_type']}"
-                )
+                raise ValueError(f"Invalid resource type: {context['resource_type']}")
 
             return True
         except ValueError as e:
             raise HTTPException(
-                status_code=400,
-                detail=f"Invalid encryption context: {str(e)}"
+                status_code=400, detail=f"Invalid encryption context: {str(e)}"
             )
 
 
@@ -139,7 +133,7 @@ class FieldLevelEncryption:
 
     def __init__(self):
         """Initialize encryption with AWS KMS."""
-        self.kms = boto3.client('kms')
+        self.kms = boto3.client("kms")
         self._data_key = None
         self._fernet = None
 
@@ -161,13 +155,12 @@ class FieldLevelEncryption:
         """Get data key from AWS KMS."""
         try:
             response = self.kms.generate_data_key(
-                KeyId=settings.AWS_KMS_KEY_ID,
-                KeySpec='AES_256'
+                KeyId=settings.AWS_KMS_KEY_ID, KeySpec="AES_256"
             )
             # Store encrypted version for later decryption
-            self._encrypted_key = response['CiphertextBlob']
+            self._encrypted_key = response["CiphertextBlob"]
             # Use plaintext version for current operations
-            return response['Plaintext']
+            return response["Plaintext"]
         except ClientError as e:
             # Fall back to local key if KMS is not available
             if settings.ENABLE_LOCAL_ENCRYPTION:
@@ -241,6 +234,7 @@ class FieldLevelEncryption:
 
 class EncryptionError(Exception):
     """Custom exception for encryption-related errors."""
+
     pass
 
 
@@ -255,10 +249,10 @@ def encrypt_field(value: str) -> str:
         return value
 
     # Handle date strings
-    if isinstance(value, str) and 'T' in value:
+    if isinstance(value, str) and "T" in value:
         try:
-            dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
-            value = dt.strftime('%Y-%m-%d')
+            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            value = dt.strftime("%Y-%m-%d")
         except ValueError:
             pass
 

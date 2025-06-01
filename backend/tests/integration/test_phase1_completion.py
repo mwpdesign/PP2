@@ -2,6 +2,7 @@
 Phase 1 Completion Integration Tests.
 Tests end-to-end functionality of core features.
 """
+
 import pytest
 from datetime import date
 from uuid import uuid4
@@ -21,7 +22,7 @@ pytestmark = pytest.mark.asyncio
 async def test_facility_patient_relationship(
     async_session: AsyncSession,
     test_organization: Organization,
-    test_territory: Territory
+    test_territory: Territory,
 ):
     """Test facility-patient relationship mapping."""
     # Create test facility
@@ -35,7 +36,7 @@ async def test_facility_patient_relationship(
         zip_code="90210",
         phone="555-123-4567",
         organization_id=test_organization.id,
-        territory_id=test_territory.id
+        territory_id=test_territory.id,
     )
     async_session.add(facility)
     await async_session.flush()
@@ -51,7 +52,7 @@ async def test_facility_patient_relationship(
         city="Healthville",
         state="CA",
         zip_code="90210",
-        created_by_id=uuid4()
+        created_by_id=uuid4(),
     )
     async_session.add(provider)
     await async_session.flush()
@@ -74,7 +75,7 @@ async def test_facility_patient_relationship(
         provider_id=provider.id,
         facility_id=facility.id,
         territory_id=test_territory.id,
-        organization_id=test_organization.id
+        organization_id=test_organization.id,
     )
     async_session.add(patient)
     await async_session.flush()
@@ -95,7 +96,7 @@ async def test_patient_registration_api(
     test_organization: Organization,
     test_territory: Territory,
     test_facility: Facility,
-    test_provider: Provider
+    test_provider: Provider,
 ):
     """Test patient registration through API."""
     patient_data = {
@@ -114,12 +115,11 @@ async def test_patient_registration_api(
         "provider_id": str(test_provider.id),
         "facility_id": str(test_facility.id),
         "territory_id": str(test_territory.id),
-        "organization_id": str(test_organization.id)
+        "organization_id": str(test_organization.id),
     }
 
     response = await async_client.post(
-        f"{settings.API_V1_STR}/patients/",
-        json=patient_data
+        f"{settings.API_V1_STR}/patients/", json=patient_data
     )
     assert response.status_code == 201
     data = response.json()
@@ -128,27 +128,24 @@ async def test_patient_registration_api(
 
 
 async def test_patient_document_upload(
-    async_client: AsyncClient,
-    test_patient: Patient
+    async_client: AsyncClient, test_patient: Patient
 ):
     """Test patient document upload functionality."""
     import io
 
     # Create a test file
     file_content = io.BytesIO(b"Test medical document content")
-    files = {
-        "file": ("test_document.pdf", file_content, "application/pdf")
-    }
+    files = {"file": ("test_document.pdf", file_content, "application/pdf")}
 
     form_data = {
         "document_type": "medical_record",
-        "document_category": "test_category"
+        "document_category": "test_category",
     }
 
     response = await async_client.post(
         f"{settings.API_V1_STR}/patients/{test_patient.id}/documents",
         files=files,
-        data=form_data
+        data=form_data,
     )
     assert response.status_code == 201
     data = response.json()
@@ -156,9 +153,7 @@ async def test_patient_document_upload(
 
 
 async def test_patient_facility_query(
-    async_client: AsyncClient,
-    test_patient: Patient,
-    test_facility: Facility
+    async_client: AsyncClient, test_patient: Patient, test_facility: Facility
 ):
     """Test querying patient with facility information."""
     response = await async_client.get(

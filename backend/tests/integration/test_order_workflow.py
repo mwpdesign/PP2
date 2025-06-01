@@ -1,6 +1,7 @@
 """
 Integration tests for complete order workflow.
 """
+
 import pytest
 from datetime import datetime
 from fastapi.testclient import TestClient
@@ -17,7 +18,7 @@ async def test_complete_order_workflow(
     test_user,
     mock_notification_service,
     mock_websocket_service,
-    mock_aws
+    mock_aws,
 ):
     """Test complete order workflow from creation to completion."""
     # Create order via API
@@ -25,19 +26,13 @@ async def test_complete_order_workflow(
         "patient_id": test_user.id,
         "provider_id": test_user.id,
         "territory_id": test_user.primary_territory_id,
-        "items": [
-            {
-                "product_id": 1,
-                "quantity": 2,
-                "notes": "Test order item"
-            }
-        ]
+        "items": [{"product_id": 1, "quantity": 2, "notes": "Test order item"}],
     }
 
     response = client.post(
         "/api/v1/orders",
         json=order_data,
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 201
     order_id = response.json()["id"]
@@ -50,7 +45,7 @@ async def test_complete_order_workflow(
     # Submit order for verification
     response = client.post(
         f"/api/v1/orders/{order_id}/submit",
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "PENDING_VERIFICATION"
@@ -58,7 +53,7 @@ async def test_complete_order_workflow(
     # Verify insurance
     response = client.post(
         f"/api/v1/orders/{order_id}/verify",
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "VERIFIED"
@@ -66,7 +61,7 @@ async def test_complete_order_workflow(
     # Start processing
     response = client.post(
         f"/api/v1/orders/{order_id}/process",
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "PROCESSING"
@@ -74,7 +69,7 @@ async def test_complete_order_workflow(
     # Mark ready to ship
     response = client.post(
         f"/api/v1/orders/{order_id}/ready",
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "READY_TO_SHIP"
@@ -83,7 +78,7 @@ async def test_complete_order_workflow(
     response = client.post(
         f"/api/v1/orders/{order_id}/ship",
         json={"tracking_number": "1234567890"},
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "SHIPPED"
@@ -91,7 +86,7 @@ async def test_complete_order_workflow(
     # Mark delivered
     response = client.post(
         f"/api/v1/orders/{order_id}/deliver",
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "DELIVERED"
@@ -99,7 +94,7 @@ async def test_complete_order_workflow(
     # Complete order
     response = client.post(
         f"/api/v1/orders/{order_id}/complete",
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 200
     assert response.json()["status"] == "COMPLETED"
@@ -115,29 +110,20 @@ async def test_complete_order_workflow(
     assert len(events) > 0  # Should have audit logs for each action
 
 
-async def test_order_territory_isolation(
-    client: TestClient,
-    db,
-    test_user
-):
+async def test_order_territory_isolation(client: TestClient, db, test_user):
     """Test order territory isolation."""
     # Create order in one territory
     order_data = {
         "patient_id": test_user.id,
         "provider_id": test_user.id,
         "territory_id": test_user.primary_territory_id,
-        "items": [
-            {
-                "product_id": 1,
-                "quantity": 1
-            }
-        ]
+        "items": [{"product_id": 1, "quantity": 1}],
     }
 
     response = client.post(
         "/api/v1/orders",
         json=order_data,
-        headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+        headers={"X-Territory-ID": str(test_user.primary_territory_id)},
     )
     assert response.status_code == 201
     order_id = response.json()["id"]
@@ -145,24 +131,20 @@ async def test_order_territory_isolation(
     # Try to access from different territory
     wrong_territory = test_user.primary_territory_id + 1
     response = client.get(
-        f"/api/v1/orders/{order_id}",
-        headers={"X-Territory-ID": str(wrong_territory)}
+        f"/api/v1/orders/{order_id}", headers={"X-Territory-ID": str(wrong_territory)}
     )
     assert response.status_code == 403
 
     # Try to update from different territory
     response = client.post(
         f"/api/v1/orders/{order_id}/submit",
-        headers={"X-Territory-ID": str(wrong_territory)}
+        headers={"X-Territory-ID": str(wrong_territory)},
     )
     assert response.status_code == 403
 
 
 async def test_concurrent_order_processing(
-    client: TestClient,
-    db,
-    test_user,
-    mock_notification_service
+    client: TestClient, db, test_user, mock_notification_service
 ):
     """Test concurrent order processing."""
     # Create multiple orders
@@ -172,17 +154,12 @@ async def test_concurrent_order_processing(
             "patient_id": test_user.id,
             "provider_id": test_user.id,
             "territory_id": test_user.primary_territory_id,
-            "items": [
-                {
-                    "product_id": 1,
-                    "quantity": 1
-                }
-            ]
+            "items": [{"product_id": 1, "quantity": 1}],
         }
         response = client.post(
             "/api/v1/orders",
             json=order_data,
-            headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+            headers={"X-Territory-ID": str(test_user.primary_territory_id)},
         )
         assert response.status_code == 201
         order_ids.append(response.json()["id"])
@@ -191,14 +168,12 @@ async def test_concurrent_order_processing(
     for order_id in order_ids:
         response = client.post(
             f"/api/v1/orders/{order_id}/submit",
-            headers={"X-Territory-ID": str(test_user.primary_territory_id)}
+            headers={"X-Territory-ID": str(test_user.primary_territory_id)},
         )
         assert response.status_code == 200
 
     # Verify all orders updated
-    orders = db.query(Order).filter(
-        Order.id.in_(order_ids)
-    ).all()
+    orders = db.query(Order).filter(Order.id.in_(order_ids)).all()
     assert all(o.status == "PENDING_VERIFICATION" for o in orders)
 
     # Verify notifications sent for all orders

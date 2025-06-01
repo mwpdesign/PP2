@@ -1,4 +1,5 @@
 """Organization management API endpoints."""
+
 from typing import List
 from uuid import UUID
 
@@ -13,7 +14,7 @@ from app.models.user import User
 from app.schemas.organization import (
     OrganizationCreate,
     OrganizationResponse,
-    OrganizationUpdate
+    OrganizationUpdate,
 )
 from app.core.audit import AuditLogger
 
@@ -23,14 +24,12 @@ audit_logger = AuditLogger()
 
 
 @router.post(
-    "/",
-    response_model=OrganizationResponse,
-    status_code=status.HTTP_201_CREATED
+    "/", response_model=OrganizationResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_organization(
     org: OrganizationCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Organization:
     """
     Create a new organization.
@@ -50,7 +49,7 @@ async def create_organization(
     if not current_user.role.permissions.get("create_organizations"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to create organizations"
+            detail="Not authorized to create organizations",
         )
 
     try:
@@ -59,7 +58,7 @@ async def create_organization(
             name=org.name,
             description=org.description,
             settings=org.settings or {},
-            security_policy=org.security_policy or {}
+            security_policy=org.security_policy or {},
         )
 
         db.add(db_org)
@@ -73,7 +72,7 @@ async def create_organization(
             resource_id=db_org.id,
             resource_type="organization",
             organization_id=db_org.id,
-            details={"name": db_org.name}
+            details={"name": db_org.name},
         )
 
         return db_org
@@ -83,22 +82,18 @@ async def create_organization(
         if "name" in str(e.orig):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Organization name already exists"
+                detail="Organization name already exists",
             )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Database integrity error"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Database integrity error"
         )
 
 
-@router.get(
-    "/{org_id}",
-    response_model=OrganizationResponse
-)
+@router.get("/{org_id}", response_model=OrganizationResponse)
 async def get_organization(
     org_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Organization:
     """
     Get organization by ID.
@@ -116,31 +111,26 @@ async def get_organization(
     """
     # Check if user has access to the organization
     if (
-        current_user.organization_id != org_id and
-        not current_user.role.permissions.get("view_all_organizations")
+        current_user.organization_id != org_id
+        and not current_user.role.permissions.get("view_all_organizations")
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this organization"
+            detail="Not authorized to view this organization",
         )
 
     org = db.query(Organization).filter(Organization.id == org_id).first()
     if not org:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Organization not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found"
         )
 
     return org
 
 
-@router.get(
-    "/",
-    response_model=List[OrganizationResponse]
-)
+@router.get("/", response_model=List[OrganizationResponse])
 async def list_organizations(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ) -> List[Organization]:
     """
     List organizations based on user's permissions.
@@ -164,15 +154,12 @@ async def list_organizations(
     ]
 
 
-@router.put(
-    "/{org_id}",
-    response_model=OrganizationResponse
-)
+@router.put("/{org_id}", response_model=OrganizationResponse)
 async def update_organization(
     org_id: UUID,
     org_update: OrganizationUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> Organization:
     """
     Update organization details.
@@ -193,15 +180,14 @@ async def update_organization(
     if not current_user.role.permissions.get("update_organizations"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update organizations"
+            detail="Not authorized to update organizations",
         )
 
     # Get organization
     org = db.query(Organization).filter(Organization.id == org_id).first()
     if not org:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Organization not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found"
         )
 
     try:
@@ -220,9 +206,7 @@ async def update_organization(
             resource_id=org.id,
             resource_type="organization",
             organization_id=org.id,
-            details={
-                "updated_fields": list(update_data.keys())
-            }
+            details={"updated_fields": list(update_data.keys())},
         )
 
         return org
@@ -232,9 +216,8 @@ async def update_organization(
         if "name" in str(e.orig):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Organization name already exists"
+                detail="Organization name already exists",
             )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Database integrity error"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Database integrity error"
         )

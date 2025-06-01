@@ -1,6 +1,7 @@
 """
 API router configuration.
 """
+
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
     users,
@@ -17,23 +18,7 @@ api_router = APIRouter()
 api_router.include_router(auth_router)
 
 # Always include core v1 endpoints
-api_router.include_router(
-    users.router,
-    prefix="/users",
-    tags=["users"]
-)
-api_router.include_router(
-    orders.router,
-    prefix="/orders",
-    tags=["orders"]
-)
-api_router.include_router(
-    patients.router,
-    prefix="/patients",
-    tags=["patients"]
-)
-api_router.include_router(
-    providers.router,
-    prefix="/providers",
-    tags=["providers"]
-)
+api_router.include_router(users.router, prefix="/users", tags=["users"])
+api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
+api_router.include_router(patients.router, prefix="/patients", tags=["patients"])
+api_router.include_router(providers.router, prefix="/providers", tags=["providers"])

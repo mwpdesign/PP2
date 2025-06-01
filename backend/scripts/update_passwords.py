@@ -19,18 +19,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def update_user_passwords(session):
     """Update passwords for demo users"""
     users = [
-        {
-            "email": "admin@example.com",
-            "password": "admin123"
-        },
-        {
-            "email": "provider@example.com",
-            "password": "provider123"
-        },
-        {
-            "email": "staff@example.com",
-            "password": "staff123"
-        }
+        {"email": "admin@example.com", "password": "admin123"},
+        {"email": "provider@example.com", "password": "provider123"},
+        {"email": "staff@example.com", "password": "staff123"},
     ]
 
     for user_data in users:
@@ -48,8 +39,7 @@ def main():
     """Main function to update passwords"""
     # Get database URL from environment or use default
     database_url = os.getenv(
-        "DATABASE_URL",
-        "postgresql://postgres:postgres@localhost:5432/healthcare_ivr"
+        "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/healthcare_ivr"
     )
 
     # Create database engine and session
@@ -71,4 +61,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

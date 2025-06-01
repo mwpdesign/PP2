@@ -1,4 +1,5 @@
 """Provider API models."""
+
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -10,6 +11,7 @@ from app.models.provider import Provider
 
 class ProviderBase(BaseModel):
     """Base provider model."""
+
     name: str
     npi: constr(min_length=10, max_length=10)
     tax_id: str
@@ -30,16 +32,19 @@ class ProviderBase(BaseModel):
 
 class ProviderCreate(ProviderBase):
     """Provider creation model."""
+
     pass
 
 
 class ProviderUpdate(ProviderBase):
     """Provider update model."""
+
     pass
 
 
 class ProviderInDB(ProviderBase):
     """Provider database model."""
+
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -47,9 +52,11 @@ class ProviderInDB(ProviderBase):
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True
 
 
 class ProviderResponse(ProviderInDB):
     """Provider response model."""
+
     pass

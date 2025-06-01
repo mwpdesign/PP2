@@ -1,6 +1,7 @@
 """
 Shipping API endpoints.
 """
+
 from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,20 +10,28 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.core.exceptions import ShippingException
-from app.services.multi_carrier_shipping import (
-    MultiCarrierShippingService,
-    CarrierType
-)
+from app.services.multi_carrier_shipping import MultiCarrierShippingService, CarrierType
 from app.services.shipping_types import (
-    Address, Package, ShippingRate, TrackingInfo, ShippingServiceType
+    Address,
+    Package,
+    ShippingRate,
+    TrackingInfo,
+    ShippingServiceType,
 )
 from app.schemas.shipping import (
-    ShippingAddressCreate, ShippingAddressUpdate,
-    ShippingAddressResponse, ShipmentCreate, ShipmentUpdate,
-    ShipmentResponse, ShipmentTrackingResponse
+    ShippingAddressCreate,
+    ShippingAddressUpdate,
+    ShippingAddressResponse,
+    ShipmentCreate,
+    ShipmentUpdate,
+    ShipmentResponse,
+    ShipmentTrackingResponse,
 )
 from app.models.shipping import (
-    ShippingAddress, Shipment, ShipmentPackage, ShipmentTracking
+    ShippingAddress,
+    Shipment,
+    ShipmentPackage,
+    ShipmentTracking,
 )
 
 router = APIRouter()
@@ -36,16 +45,14 @@ def get_shipping_service() -> MultiCarrierShippingService:
 @router.post(
     "/addresses",
     response_model=ShippingAddressResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_shipping_address(
     address: ShippingAddressCreate,
     order_id: UUID,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
-    shipping_service: MultiCarrierShippingService = Depends(
-        get_shipping_service
-    )
+    shipping_service: MultiCarrierShippingService = Depends(get_shipping_service),
 ):
     """Create a new shipping address."""
     # Create address model
@@ -60,7 +67,7 @@ async def create_shipping_address(
         country=address.country,
         is_residential=address.is_residential,
         phone=address.phone,
-        email=address.email
+        email=address.email,
     )
 
     # Validate address with shipping carriers
@@ -73,19 +80,15 @@ async def create_shipping_address(
         country=address.country,
         is_residential=address.is_residential,
         phone=address.phone,
-        email=address.email
+        email=address.email,
     )
 
     validation_results = await shipping_service.validate_address(addr)
 
     # Check if at least one carrier validates the address
-    if not any(
-        result.get("valid", False)
-        for result in validation_results.values()
-    ):
+    if not any(result.get("valid", False) for result in validation_results.values()):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid shipping address"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid shipping address"
         )
 
     db.add(db_address)
@@ -94,45 +97,35 @@ async def create_shipping_address(
     return db_address
 
 
-@router.get(
-    "/addresses/{address_id}",
-    response_model=ShippingAddressResponse
-)
+@router.get("/addresses/{address_id}", response_model=ShippingAddressResponse)
 async def get_shipping_address(
     address_id: UUID,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get a shipping address by ID."""
-    address = db.query(ShippingAddress).filter(
-        ShippingAddress.id == address_id
-    ).first()
+    address = db.query(ShippingAddress).filter(ShippingAddress.id == address_id).first()
     if not address:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shipping address not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Shipping address not found"
         )
     return address
 
 
-@router.put(
-    "/addresses/{address_id}",
-    response_model=ShippingAddressResponse
-)
+@router.put("/addresses/{address_id}", response_model=ShippingAddressResponse)
 async def update_shipping_address(
     address_id: UUID,
     address: ShippingAddressUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Update a shipping address."""
-    db_address = db.query(ShippingAddress).filter(
-        ShippingAddress.id == address_id
-    ).first()
+    db_address = (
+        db.query(ShippingAddress).filter(ShippingAddress.id == address_id).first()
+    )
     if not db_address:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shipping address not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Shipping address not found"
         )
 
     for field, value in address.dict(exclude_unset=True).items():
@@ -144,17 +137,13 @@ async def update_shipping_address(
 
 
 @router.post(
-    "/shipments",
-    response_model=ShipmentResponse,
-    status_code=status.HTTP_201_CREATED
+    "/shipments", response_model=ShipmentResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_shipment(
     shipment: ShipmentCreate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
-    shipping_service: MultiCarrierShippingService = Depends(
-        get_shipping_service
-    )
+    shipping_service: MultiCarrierShippingService = Depends(get_shipping_service),
 ):
     """Create a new shipment."""
     # Get addresses from database
@@ -163,8 +152,7 @@ async def create_shipment(
 
     if not from_addr or not to_addr:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Address not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Address not found"
         )
 
     # Convert to shipping service models
@@ -177,7 +165,7 @@ async def create_shipment(
         country=from_addr.country,
         is_residential=from_addr.is_residential,
         phone=from_addr.phone,
-        email=from_addr.email
+        email=from_addr.email,
     )
 
     to_address = Address(
@@ -189,7 +177,7 @@ async def create_shipment(
         country=to_addr.country,
         is_residential=to_addr.is_residential,
         phone=to_addr.phone,
-        email=to_addr.email
+        email=to_addr.email,
     )
 
     try:
@@ -198,7 +186,7 @@ async def create_shipment(
             order_id=shipment.order_id,
             carrier=shipment.carrier.value,
             service_type=shipment.service_type,
-            status="pending"
+            status="pending",
         )
         db.add(db_shipment)
 
@@ -215,7 +203,7 @@ async def create_shipment(
                 reference=pkg.reference,
                 requires_signature=True,  # Medical supplies require signature
                 is_temperature_controlled=pkg.is_temperature_controlled,
-                temperature_range=pkg.temperature_range
+                temperature_range=pkg.temperature_range,
             )
             db.add(db_package)
 
@@ -228,7 +216,7 @@ async def create_shipment(
                 value=pkg.value,
                 requires_signature=True,
                 is_temperature_controlled=pkg.is_temperature_controlled,
-                temperature_range=pkg.temperature_range
+                temperature_range=pkg.temperature_range,
             )
 
             label = await shipping_service.create_label(
@@ -237,7 +225,7 @@ async def create_shipment(
                 package,
                 shipment.service_type,
                 shipment.carrier,
-                pkg.reference
+                pkg.reference,
             )
 
             # Update shipment with label info
@@ -251,57 +239,42 @@ async def create_shipment(
 
     except ShippingException as e:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create shipment"
+            detail="Failed to create shipment",
         )
 
 
-@router.get(
-    "/shipments/{shipment_id}",
-    response_model=ShipmentResponse
-)
+@router.get("/shipments/{shipment_id}", response_model=ShipmentResponse)
 async def get_shipment(
     shipment_id: UUID,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get a shipment by ID."""
-    shipment = db.query(Shipment).filter(
-        Shipment.id == shipment_id
-    ).first()
+    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
     if not shipment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shipment not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Shipment not found"
         )
     return shipment
 
 
-@router.put(
-    "/shipments/{shipment_id}",
-    response_model=ShipmentResponse
-)
+@router.put("/shipments/{shipment_id}", response_model=ShipmentResponse)
 async def update_shipment(
     shipment_id: UUID,
     shipment: ShipmentUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Update a shipment."""
-    db_shipment = db.query(Shipment).filter(
-        Shipment.id == shipment_id
-    ).first()
+    db_shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
     if not db_shipment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shipment not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Shipment not found"
         )
 
     for field, value in shipment.dict(exclude_unset=True).items():
@@ -313,119 +286,96 @@ async def update_shipment(
 
 
 @router.get(
-    "/shipments/{shipment_id}/tracking",
-    response_model=List[ShipmentTrackingResponse]
+    "/shipments/{shipment_id}/tracking", response_model=List[ShipmentTrackingResponse]
 )
 async def get_shipment_tracking(
     shipment_id: UUID,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get tracking events for a shipment."""
-    tracking_events = db.query(ShipmentTracking).filter(
-        ShipmentTracking.shipment_id == shipment_id
-    ).order_by(ShipmentTracking.timestamp.desc()).all()
+    tracking_events = (
+        db.query(ShipmentTracking)
+        .filter(ShipmentTracking.shipment_id == shipment_id)
+        .order_by(ShipmentTracking.timestamp.desc())
+        .all()
+    )
     return tracking_events
 
 
-@router.post(
-    "/shipments/{shipment_id}/validate",
-    response_model=dict
-)
+@router.post("/shipments/{shipment_id}/validate", response_model=dict)
 async def validate_shipment(
     shipment_id: UUID,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Validate shipment details with carrier."""
     shipping_service = get_shipping_service()
-    shipment = db.query(Shipment).filter(
-        Shipment.id == shipment_id
-    ).first()
+    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
     if not shipment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shipment not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Shipment not found"
         )
 
     try:
         # Get addresses
-        addresses = db.query(ShippingAddress).filter(
-            ShippingAddress.order_id == shipment.order_id
-        ).all()
-        from_address = next(
-            (a for a in addresses if a.address_type == 'from'),
-            None
+        addresses = (
+            db.query(ShippingAddress)
+            .filter(ShippingAddress.order_id == shipment.order_id)
+            .all()
         )
-        to_address = next(
-            (a for a in addresses if a.address_type == 'to'),
-            None
-        )
+        from_address = next((a for a in addresses if a.address_type == "from"), None)
+        to_address = next((a for a in addresses if a.address_type == "to"), None)
 
         if not from_address or not to_address:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing shipping addresses"
+                detail="Missing shipping addresses",
             )
 
         # Validate addresses with carrier
         validation_results = {
-            'from_address': await shipping_service.validate_address(
-                from_address,
-                shipment.carrier
+            "from_address": await shipping_service.validate_address(
+                from_address, shipment.carrier
             ),
-            'to_address': await shipping_service.validate_address(
-                to_address,
-                shipment.carrier
-            )
+            "to_address": await shipping_service.validate_address(
+                to_address, shipment.carrier
+            ),
         }
 
         return validation_results
     except ShippingException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.post(
-    "/shipments/{shipment_id}/rates",
-    response_model=List[dict]
-)
+@router.post("/shipments/{shipment_id}/rates", response_model=List[dict])
 async def get_shipment_rates(
     shipment_id: UUID,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get shipping rates for a shipment."""
     shipping_service = get_shipping_service()
-    shipment = db.query(Shipment).filter(
-        Shipment.id == shipment_id
-    ).first()
+    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
     if not shipment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shipment not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Shipment not found"
         )
 
     try:
         # Get addresses
-        addresses = db.query(ShippingAddress).filter(
-            ShippingAddress.order_id == shipment.order_id
-        ).all()
-        from_address = next(
-            (a for a in addresses if a.address_type == 'from'),
-            None
+        addresses = (
+            db.query(ShippingAddress)
+            .filter(ShippingAddress.order_id == shipment.order_id)
+            .all()
         )
-        to_address = next(
-            (a for a in addresses if a.address_type == 'to'),
-            None
-        )
+        from_address = next((a for a in addresses if a.address_type == "from"), None)
+        to_address = next((a for a in addresses if a.address_type == "to"), None)
 
         if not from_address or not to_address:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing shipping addresses"
+                detail="Missing shipping addresses",
             )
 
         # Get rates from carrier
@@ -433,55 +383,42 @@ async def get_shipment_rates(
             from_address=from_address,
             to_address=to_address,
             package=shipment.packages[0],  # TODO: Handle multiple packages
-            carrier=shipment.carrier
+            carrier=shipment.carrier,
         )
 
         return rates
     except ShippingException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.post(
-    "/shipments/{shipment_id}/label",
-    response_model=dict
-)
+@router.post("/shipments/{shipment_id}/label", response_model=dict)
 async def create_shipping_label(
     shipment_id: UUID,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Create shipping label for a shipment."""
     shipping_service = get_shipping_service()
-    shipment = db.query(Shipment).filter(
-        Shipment.id == shipment_id
-    ).first()
+    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first()
     if not shipment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shipment not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Shipment not found"
         )
 
     try:
         # Get addresses
-        addresses = db.query(ShippingAddress).filter(
-            ShippingAddress.order_id == shipment.order_id
-        ).all()
-        from_address = next(
-            (a for a in addresses if a.address_type == 'from'),
-            None
+        addresses = (
+            db.query(ShippingAddress)
+            .filter(ShippingAddress.order_id == shipment.order_id)
+            .all()
         )
-        to_address = next(
-            (a for a in addresses if a.address_type == 'to'),
-            None
-        )
+        from_address = next((a for a in addresses if a.address_type == "from"), None)
+        to_address = next((a for a in addresses if a.address_type == "to"), None)
 
         if not from_address or not to_address:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing shipping addresses"
+                detail="Missing shipping addresses",
             )
 
         # Create label with carrier
@@ -490,30 +427,21 @@ async def create_shipping_label(
             to_address=to_address,
             package=shipment.packages[0],  # TODO: Handle multiple packages
             service_type=shipment.service_type,
-            carrier=shipment.carrier
+            carrier=shipment.carrier,
         )
 
         # Update shipment with label info
         shipment.tracking_number = label.tracking_number
         shipment.label_url = label.label_url
-        shipment.status = 'label_created'
+        shipment.status = "label_created"
         db.commit()
 
-        return {
-            'tracking_number': label.tracking_number,
-            'label_url': label.label_url
-        }
+        return {"tracking_number": label.tracking_number, "label_url": label.label_url}
     except ShippingException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get(
-    "/rates",
-    response_model=List[ShippingRate]
-)
+@router.get("/rates", response_model=List[ShippingRate])
 async def get_shipping_rates(
     from_address_id: UUID,
     to_address_id: UUID,
@@ -526,9 +454,7 @@ async def get_shipping_rates(
     carrier: Optional[CarrierType] = None,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
-    shipping_service: MultiCarrierShippingService = Depends(
-        get_shipping_service
-    )
+    shipping_service: MultiCarrierShippingService = Depends(get_shipping_service),
 ):
     """Get shipping rates for a package."""
     # Get addresses from database
@@ -537,8 +463,7 @@ async def get_shipping_rates(
 
     if not from_addr or not to_addr:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Address not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Address not found"
         )
 
     # Convert to shipping service models
@@ -551,7 +476,7 @@ async def get_shipping_rates(
         country=from_addr.country,
         is_residential=from_addr.is_residential,
         phone=from_addr.phone,
-        email=from_addr.email
+        email=from_addr.email,
     )
 
     to_address = Address(
@@ -563,7 +488,7 @@ async def get_shipping_rates(
         country=to_addr.country,
         is_residential=to_addr.is_residential,
         phone=to_addr.phone,
-        email=to_addr.email
+        email=to_addr.email,
     )
 
     package = Package(
@@ -573,48 +498,34 @@ async def get_shipping_rates(
         height=height,
         value=value,
         requires_signature=True,  # Medical supplies require signature
-        is_temperature_controlled=False
+        is_temperature_controlled=False,
     )
 
     try:
         return await shipping_service.get_rates(
-            from_address,
-            to_address,
-            package,
-            service_type,
-            carrier
+            from_address, to_address, package, service_type, carrier
         )
     except ShippingException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get(
-    "/shipments/{shipment_id}/track",
-    response_model=TrackingInfo
-)
+@router.get("/shipments/{shipment_id}/track", response_model=TrackingInfo)
 async def track_shipment(
     shipment_id: UUID,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
-    shipping_service: MultiCarrierShippingService = Depends(
-        get_shipping_service
-    )
+    shipping_service: MultiCarrierShippingService = Depends(get_shipping_service),
 ):
     """Track a shipment."""
     shipment = db.query(Shipment).get(shipment_id)
     if not shipment:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shipment not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Shipment not found"
         )
 
     try:
         tracking_info = await shipping_service.track_shipment(
-            shipment.tracking_number,
-            CarrierType(shipment.carrier)
+            shipment.tracking_number, CarrierType(shipment.carrier)
         )
 
         # Update shipment status
@@ -625,7 +536,4 @@ async def track_shipment(
 
         return tracking_info
     except ShippingException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

@@ -1,25 +1,24 @@
 """
 Pydantic schemas for shipping-related entities.
 """
+
 from datetime import datetime
 from typing import Dict, List, Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, EmailStr
 
-from app.services.shipping_types import (
-    ShippingServiceType,
-    TrackingStatus
-)
+from app.services.shipping_types import ShippingServiceType, TrackingStatus
 
 
 class ShippingAddressBase(BaseModel):
     """Base schema for shipping address."""
+
     street1: str = Field(..., min_length=1, max_length=200)
     street2: Optional[str] = Field(None, max_length=200)
     city: str = Field(..., min_length=1, max_length=100)
     state: str = Field(..., min_length=2, max_length=50)
     postal_code: str = Field(..., min_length=5, max_length=10)
-    country: str = Field(default='US', min_length=2, max_length=2)
+    country: str = Field(default="US", min_length=2, max_length=2)
     is_residential: bool = True
     phone: Optional[str] = Field(None, max_length=20)
     email: Optional[EmailStr] = None
@@ -27,11 +26,13 @@ class ShippingAddressBase(BaseModel):
 
 class ShippingAddressCreate(ShippingAddressBase):
     """Schema for creating a shipping address."""
-    address_type: str = Field(..., pattern='^(from|to)$')
+
+    address_type: str = Field(..., pattern="^(from|to)$")
 
 
 class ShippingAddressUpdate(ShippingAddressBase):
     """Schema for updating a shipping address."""
+
     street1: Optional[str] = Field(None, min_length=1, max_length=200)
     city: Optional[str] = Field(None, min_length=1, max_length=100)
     state: Optional[str] = Field(None, min_length=2, max_length=50)
@@ -41,6 +42,7 @@ class ShippingAddressUpdate(ShippingAddressBase):
 
 class ShippingAddressResponse(ShippingAddressBase):
     """Schema for shipping address response."""
+
     id: UUID
     order_id: UUID
     address_type: str
@@ -53,6 +55,7 @@ class ShippingAddressResponse(ShippingAddressBase):
 
 class ShipmentPackageBase(BaseModel):
     """Base schema for shipment package."""
+
     weight: float = Field(..., gt=0)
     length: Optional[float] = Field(None, gt=0)
     width: Optional[float] = Field(None, gt=0)
@@ -66,11 +69,13 @@ class ShipmentPackageBase(BaseModel):
 
 class ShipmentPackageCreate(ShipmentPackageBase):
     """Schema for creating a shipment package."""
+
     pass
 
 
 class ShipmentPackageUpdate(BaseModel):
     """Schema for updating a shipment package."""
+
     weight: Optional[float] = Field(None, gt=0)
     length: Optional[float] = Field(None, gt=0)
     width: Optional[float] = Field(None, gt=0)
@@ -84,6 +89,7 @@ class ShipmentPackageUpdate(BaseModel):
 
 class ShipmentPackageResponse(ShipmentPackageBase):
     """Schema for shipment package response."""
+
     id: UUID
     shipment_id: UUID
     created_at: datetime
@@ -95,6 +101,7 @@ class ShipmentPackageResponse(ShipmentPackageBase):
 
 class ShipmentTrackingBase(BaseModel):
     """Base schema for shipment tracking."""
+
     timestamp: datetime
     status: TrackingStatus
     location: Optional[str] = Field(None, max_length=200)
@@ -105,11 +112,13 @@ class ShipmentTrackingBase(BaseModel):
 
 class ShipmentTrackingCreate(ShipmentTrackingBase):
     """Schema for creating a shipment tracking event."""
+
     pass
 
 
 class ShipmentTrackingResponse(ShipmentTrackingBase):
     """Schema for shipment tracking response."""
+
     id: UUID
     shipment_id: UUID
     created_at: datetime
@@ -120,11 +129,12 @@ class ShipmentTrackingResponse(ShipmentTrackingBase):
 
 class ShipmentBase(BaseModel):
     """Base schema for shipment."""
+
     carrier: str = Field(..., min_length=1, max_length=50)
     service_type: ShippingServiceType
     tracking_number: Optional[str] = Field(None, max_length=100)
     rate: Optional[float] = Field(None, ge=0)
-    currency: str = Field(default='USD', min_length=3, max_length=3)
+    currency: str = Field(default="USD", min_length=3, max_length=3)
     label_url: Optional[str] = Field(None, max_length=500)
     estimated_delivery: Optional[datetime] = None
     actual_delivery: Optional[datetime] = None
@@ -133,11 +143,13 @@ class ShipmentBase(BaseModel):
 
 class ShipmentCreate(ShipmentBase):
     """Schema for creating a shipment."""
+
     packages: List[ShipmentPackageCreate]
 
 
 class ShipmentUpdate(BaseModel):
     """Schema for updating a shipment."""
+
     carrier: Optional[str] = Field(None, min_length=1, max_length=50)
     service_type: Optional[ShippingServiceType] = None
     tracking_number: Optional[str] = Field(None, max_length=100)
@@ -148,13 +160,13 @@ class ShipmentUpdate(BaseModel):
     actual_delivery: Optional[datetime] = None
     status: Optional[str] = Field(
         None,
-        pattern='^(pending|label_created|picked_up|'
-                'in_transit|delivered|exception)$'
+        pattern="^(pending|label_created|picked_up|" "in_transit|delivered|exception)$",
     )
 
 
 class ShipmentResponse(ShipmentBase):
     """Schema for shipment response."""
+
     id: UUID
     order_id: UUID
     status: str

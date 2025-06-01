@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 
 class ComprehensiveVerifier:
     """Comprehensive system verification engine"""
+
     def __init__(self, environment: str = "production"):
         self.environment = environment
         self.logger = logging.getLogger("comprehensive_verification")
@@ -24,7 +25,7 @@ class ComprehensiveVerifier:
             "timestamp": datetime.now().isoformat(),
             "environment": environment,
             "overall_status": "UNKNOWN",
-            "categories": {}
+            "categories": {},
         }
 
         # Configure logging
@@ -40,9 +41,7 @@ class ComprehensiveVerifier:
 
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         )
 
         self.logger.addHandler(file_handler)
@@ -55,7 +54,7 @@ class ComprehensiveVerifier:
                 ["docker-compose", "ps", "--format", "json"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             services = json.loads(result.stdout)
 
@@ -65,22 +64,16 @@ class ComprehensiveVerifier:
                 service_status[service["Service"]] = {
                     "status": "PASS" if is_running else "FAIL",
                     "state": service["State"],
-                    "ports": service.get("Ports", "")
+                    "ports": service.get("Ports", ""),
                 }
 
-            all_passing = all(
-                s["status"] == "PASS"
-                for s in service_status.values()
-            )
+            all_passing = all(s["status"] == "PASS" for s in service_status.values())
             return {
                 "status": "PASS" if all_passing else "FAIL",
-                "details": service_status
+                "details": service_status,
             }
         except Exception as e:
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
     def verify_frontend(self) -> Dict[str, Any]:
         """Verify frontend functionality"""
@@ -90,13 +83,7 @@ class ComprehensiveVerifier:
             response = requests.get(base_url, timeout=10)
 
             # Check critical frontend endpoints
-            endpoints = [
-                "/",
-                "/login",
-                "/dashboard",
-                "/patients",
-                "/orders"
-            ]
+            endpoints = ["/", "/login", "/dashboard", "/patients", "/orders"]
 
             endpoint_status = {}
             for endpoint in endpoints:
@@ -105,26 +92,20 @@ class ComprehensiveVerifier:
                     resp = requests.get(url, timeout=10)
                     endpoint_status[endpoint] = {
                         "status": "PASS" if resp.status_code == 200 else "FAIL",
-                        "code": resp.status_code
+                        "code": resp.status_code,
                     }
                 except Exception as e:
-                    endpoint_status[endpoint] = {
-                        "status": "FAIL",
-                        "error": str(e)
-                    }
+                    endpoint_status[endpoint] = {"status": "FAIL", "error": str(e)}
 
             return {
                 "status": "PASS" if response.status_code == 200 else "FAIL",
                 "details": {
                     "main_status": response.status_code,
-                    "endpoints": endpoint_status
-                }
+                    "endpoints": endpoint_status,
+                },
             }
         except Exception as e:
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
     def verify_backend_api(self) -> Dict[str, Any]:
         """Verify backend API functionality"""
@@ -139,7 +120,7 @@ class ComprehensiveVerifier:
                 "/api/v1/patients",
                 "/api/v1/orders",
                 "/api/v1/providers",
-                "/api/v1/analytics"
+                "/api/v1/analytics",
             ]
 
             endpoint_status = {}
@@ -150,26 +131,20 @@ class ComprehensiveVerifier:
                     valid_codes = [200, 401, 403]
                     endpoint_status[endpoint] = {
                         "status": "PASS" if resp.status_code in valid_codes else "FAIL",
-                        "code": resp.status_code
+                        "code": resp.status_code,
                     }
                 except Exception as e:
-                    endpoint_status[endpoint] = {
-                        "status": "FAIL",
-                        "error": str(e)
-                    }
+                    endpoint_status[endpoint] = {"status": "FAIL", "error": str(e)}
 
             return {
                 "status": "PASS" if health_response.status_code == 200 else "FAIL",
                 "details": {
                     "health_status": health_response.status_code,
-                    "endpoints": endpoint_status
-                }
+                    "endpoints": endpoint_status,
+                },
             }
         except Exception as e:
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
     def verify_database(self) -> Dict[str, Any]:
         """Verify database functionality and schema"""
@@ -193,28 +168,32 @@ class ComprehensiveVerifier:
                 "ivr_requests",
                 "orders",
                 "audit_logs",
-                "territories"
+                "territories",
             ]
 
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT table_name
                 FROM information_schema.tables
                 WHERE table_schema = 'public'
-            """)
+            """
+            )
             existing_tables = {row[0] for row in cur.fetchall()}
             missing_tables = set(required_tables) - existing_tables
 
             # Check table schemas
             schema_status = {}
             for table in existing_tables & set(required_tables):
-                cur.execute(f"""
+                cur.execute(
+                    f"""
                     SELECT column_name, data_type
                     FROM information_schema.columns
                     WHERE table_name = '{table}'
-                """)
+                """
+                )
                 schema_status[table] = {
                     "columns": {row[0]: row[1] for row in cur.fetchall()},
-                    "row_count": self._get_table_count(cur, table)
+                    "row_count": self._get_table_count(cur, table),
                 }
 
             conn.close()
@@ -224,14 +203,11 @@ class ComprehensiveVerifier:
                 "details": {
                     "version": version,
                     "missing_tables": list(missing_tables),
-                    "schema_status": schema_status
-                }
+                    "schema_status": schema_status,
+                },
             }
         except Exception as e:
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
     def _get_table_count(self, cursor, table: str) -> int:
         """Get row count for a table"""
@@ -245,7 +221,7 @@ class ComprehensiveVerifier:
             "s3": self._verify_s3,
             "kms": self._verify_kms,
             "ses": self._verify_ses,
-            "cloudtrail": self._verify_cloudtrail
+            "cloudtrail": self._verify_cloudtrail,
         }
 
         results = {}
@@ -254,14 +230,15 @@ class ComprehensiveVerifier:
                 client = boto3.client(service)
                 results[service] = verify_func(client)
             except Exception as e:
-                results[service] = {
-                    "status": "FAIL",
-                    "error": str(e)
-                }
+                results[service] = {"status": "FAIL", "error": str(e)}
 
         return {
-            "status": "PASS" if all(r["status"] == "PASS" for r in results.values()) else "FAIL",
-            "details": results
+            "status": (
+                "PASS"
+                if all(r["status"] == "PASS" for r in results.values())
+                else "FAIL"
+            ),
+            "details": results,
         }
 
     def _verify_cognito(self, client) -> Dict[str, Any]:
@@ -271,8 +248,8 @@ class ComprehensiveVerifier:
             "status": "PASS",
             "details": {
                 "user_pools": len(response["UserPools"]),
-                "pools": [pool["Name"] for pool in response["UserPools"]]
-            }
+                "pools": [pool["Name"] for pool in response["UserPools"]],
+            },
         }
 
     def _verify_s3(self, client) -> Dict[str, Any]:
@@ -282,8 +259,8 @@ class ComprehensiveVerifier:
             "status": "PASS",
             "details": {
                 "bucket_count": len(response["Buckets"]),
-                "buckets": [bucket["Name"] for bucket in response["Buckets"]]
-            }
+                "buckets": [bucket["Name"] for bucket in response["Buckets"]],
+            },
         }
 
     def _verify_kms(self, client) -> Dict[str, Any]:
@@ -293,8 +270,8 @@ class ComprehensiveVerifier:
             "status": "PASS",
             "details": {
                 "key_count": len(response["Keys"]),
-                "keys": [key["KeyId"] for key in response["Keys"]]
-            }
+                "keys": [key["KeyId"] for key in response["Keys"]],
+            },
         }
 
     def _verify_ses(self, client) -> Dict[str, Any]:
@@ -304,8 +281,8 @@ class ComprehensiveVerifier:
             "status": "PASS",
             "details": {
                 "max_24_hour_send": response["Max24HourSend"],
-                "sent_last_24_hours": response["SentLast24Hours"]
-            }
+                "sent_last_24_hours": response["SentLast24Hours"],
+            },
         }
 
     def _verify_cloudtrail(self, client) -> Dict[str, Any]:
@@ -315,8 +292,8 @@ class ComprehensiveVerifier:
             "status": "PASS",
             "details": {
                 "trail_count": len(response["Trails"]),
-                "trails": [trail["Name"] for trail in response["Trails"]]
-            }
+                "trails": [trail["Name"] for trail in response["Trails"]],
+            },
         }
 
     def verify_security(self) -> Dict[str, Any]:
@@ -325,12 +302,16 @@ class ComprehensiveVerifier:
             "ssl_config": self._verify_ssl_config(),
             "auth_config": self._verify_auth_config(),
             "encryption_config": self._verify_encryption_config(),
-            "audit_logging": self._verify_audit_logging()
+            "audit_logging": self._verify_audit_logging(),
         }
 
         return {
-            "status": "PASS" if all(c["status"] == "PASS" for c in security_checks.values()) else "FAIL",
-            "details": security_checks
+            "status": (
+                "PASS"
+                if all(c["status"] == "PASS" for c in security_checks.values())
+                else "FAIL"
+            ),
+            "details": security_checks,
         }
 
     def _verify_ssl_config(self) -> Dict[str, Any]:
@@ -339,29 +320,16 @@ class ComprehensiveVerifier:
             response = requests.get("https://localhost:443", verify=True)
             return {
                 "status": "PASS",
-                "details": {
-                    "ssl_enabled": True,
-                    "certificate_valid": True
-                }
+                "details": {"ssl_enabled": True, "certificate_valid": True},
             }
         except requests.exceptions.SSLError:
-            return {
-                "status": "FAIL",
-                "error": "SSL certificate validation failed"
-            }
+            return {"status": "FAIL", "error": "SSL certificate validation failed"}
         except Exception as e:
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
     def _verify_auth_config(self) -> Dict[str, Any]:
         """Verify authentication configuration"""
-        required_env_vars = [
-            "COGNITO_USER_POOL_ID",
-            "COGNITO_CLIENT_ID",
-            "JWT_SECRET"
-        ]
+        required_env_vars = ["COGNITO_USER_POOL_ID", "COGNITO_CLIENT_ID", "JWT_SECRET"]
 
         missing_vars = [var for var in required_env_vars if not os.getenv(var)]
 
@@ -369,16 +337,13 @@ class ComprehensiveVerifier:
             "status": "PASS" if not missing_vars else "FAIL",
             "details": {
                 "missing_env_vars": missing_vars,
-                "auth_configured": len(missing_vars) == 0
-            }
+                "auth_configured": len(missing_vars) == 0,
+            },
         }
 
     def _verify_encryption_config(self) -> Dict[str, Any]:
         """Verify encryption configuration"""
-        required_env_vars = [
-            "KMS_KEY_ID",
-            "ENCRYPTION_KEY"
-        ]
+        required_env_vars = ["KMS_KEY_ID", "ENCRYPTION_KEY"]
 
         missing_vars = [var for var in required_env_vars if not os.getenv(var)]
 
@@ -386,8 +351,8 @@ class ComprehensiveVerifier:
             "status": "PASS" if not missing_vars else "FAIL",
             "details": {
                 "missing_env_vars": missing_vars,
-                "encryption_configured": len(missing_vars) == 0
-            }
+                "encryption_configured": len(missing_vars) == 0,
+            },
         }
 
     def _verify_audit_logging(self) -> Dict[str, Any]:
@@ -397,12 +362,14 @@ class ComprehensiveVerifier:
             cur = conn.cursor()
 
             # Check audit_logs table
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables
                     WHERE table_name = 'audit_logs'
                 )
-            """)
+            """
+            )
             table_exists = cur.fetchone()[0]
 
             if table_exists:
@@ -415,16 +382,10 @@ class ComprehensiveVerifier:
 
             return {
                 "status": "PASS" if table_exists else "FAIL",
-                "details": {
-                    "table_exists": table_exists,
-                    "log_count": log_count
-                }
+                "details": {"table_exists": table_exists, "log_count": log_count},
             }
         except Exception as e:
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
     def verify_documentation(self) -> Dict[str, Any]:
         """Verify documentation completeness"""
@@ -436,7 +397,7 @@ class ComprehensiveVerifier:
             "docs/security.md",
             "docs/compliance.md",
             "docs/troubleshooting.md",
-            "docs/user_manual.md"
+            "docs/user_manual.md",
         ]
 
         doc_status = {}
@@ -448,16 +409,18 @@ class ComprehensiveVerifier:
                 doc_status[doc] = {
                     "exists": True,
                     "size": len(content),
-                    "last_modified": datetime.fromtimestamp(doc_path.stat().st_mtime).isoformat()
+                    "last_modified": datetime.fromtimestamp(
+                        doc_path.stat().st_mtime
+                    ).isoformat(),
                 }
             else:
-                doc_status[doc] = {
-                    "exists": False
-                }
+                doc_status[doc] = {"exists": False}
 
         return {
-            "status": "PASS" if all(d["exists"] for d in doc_status.values()) else "FAIL",
-            "details": doc_status
+            "status": (
+                "PASS" if all(d["exists"] for d in doc_status.values()) else "FAIL"
+            ),
+            "details": doc_status,
         }
 
     def run_verification(self) -> Tuple[bool, Dict[str, Any]]:
@@ -473,7 +436,7 @@ class ComprehensiveVerifier:
                 "database": self.verify_database,
                 "aws_services": self.verify_aws_services,
                 "security": self.verify_security,
-                "documentation": self.verify_documentation
+                "documentation": self.verify_documentation,
             }
 
             for category, verify_func in verifications.items():

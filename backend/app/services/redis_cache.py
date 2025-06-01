@@ -16,7 +16,7 @@ class RedisCache:
             host=settings.REDIS_HOST,
             port=settings.REDIS_PORT,
             password=settings.REDIS_PASSWORD,
-            decode_responses=True
+            decode_responses=True,
         )
         self.default_ttl = 3600  # 1 hour default TTL
 
@@ -25,11 +25,7 @@ class RedisCache:
         try:
             if isinstance(value, (dict, list)):
                 value = json.dumps(value)
-            return self.redis.set(
-                key,
-                value,
-                ex=ttl or self.default_ttl
-            )
+            return self.redis.set(key, value, ex=ttl or self.default_ttl)
         except Exception as e:
             print(f"Error setting cache key {key}: {e}")
             return False
@@ -38,7 +34,7 @@ class RedisCache:
         """Get a value from cache."""
         try:
             value = self.redis.get(key)
-            if value and value.startswith('{') or value.startswith('['):
+            if value and value.startswith("{") or value.startswith("["):
                 return json.loads(value)
             return value
         except Exception as e:
@@ -83,38 +79,28 @@ class RedisCache:
             return False
 
     def cache_daily_metrics(
-        self,
-        org_id: str,
-        date: str,
-        metrics: Dict[str, Union[int, float, Dict]]
+        self, org_id: str, date: str, metrics: Dict[str, Union[int, float, Dict]]
     ) -> bool:
         """Cache daily metrics for fast access."""
         key = f"daily_metrics:{org_id}:{date}"
         return self.set(key, metrics, ttl=86400)  # 24 hour TTL
 
     def get_daily_metrics(
-        self,
-        org_id: str,
-        date: str
+        self, org_id: str, date: str
     ) -> Optional[Dict[str, Union[int, float, Dict]]]:
         """Get cached daily metrics."""
         key = f"daily_metrics:{org_id}:{date}"
         return self.get(key)
 
     def cache_dashboard_data(
-        self,
-        user_id: str,
-        dashboard_type: str,
-        data: Dict[str, Any]
+        self, user_id: str, dashboard_type: str, data: Dict[str, Any]
     ) -> bool:
         """Cache dashboard data for specific user and type."""
         key = f"dashboard:{dashboard_type}:{user_id}"
         return self.set(key, data, ttl=300)  # 5 minute TTL
 
     def get_dashboard_data(
-        self,
-        user_id: str,
-        dashboard_type: str
+        self, user_id: str, dashboard_type: str
     ) -> Optional[Dict[str, Any]]:
         """Get cached dashboard data."""
         key = f"dashboard:{dashboard_type}:{user_id}"

@@ -1,17 +1,12 @@
 """Seed script for patient data with HIPAA-compliant encryption."""
+
 import asyncio
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import init_db, async_session_factory
 from app.core.encryption import encrypt_field
-from app.models import (
-    Patient,
-    Organization,
-    Facility,
-    Provider,
-    User
-)
+from app.models import Patient, Organization, Facility, Provider, User
 
 
 async def get_first_entity(db: AsyncSession, model_class):
@@ -39,21 +34,15 @@ async def create_seed_patients():
 
         facility = await get_first_entity(db, Facility)
         if not facility:
-            raise ValueError(
-                "No facility found. Please run facility setup first."
-            )
+            raise ValueError("No facility found. Please run facility setup first.")
 
         provider = await get_first_entity(db, Provider)
         if not provider:
-            raise ValueError(
-                "No provider found. Please run provider setup first."
-            )
+            raise ValueError("No provider found. Please run provider setup first.")
 
         user = await get_first_entity(db, User)
         if not user:
-            raise ValueError(
-                "No user found. Please run user setup first."
-            )
+            raise ValueError("No user found. Please run user setup first.")
 
         # Create sample patients
         patients = [
@@ -66,14 +55,12 @@ async def create_seed_patients():
                 "encrypted_ssn": encrypt_field("123-45-6789"),
                 "encrypted_phone": encrypt_field("(555) 123-4567"),
                 "encrypted_email": encrypt_field("john.smith@example.com"),
-                "encrypted_address": encrypt_field(
-                    "123 Main St, City, ST 12345"
-                ),
+                "encrypted_address": encrypt_field("123 Main St, City, ST 12345"),
                 "status": "active",
                 "organization_id": organization.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
-                "created_by_id": user.id
+                "created_by_id": user.id,
             },
             {
                 "id": uuid4(),
@@ -84,14 +71,12 @@ async def create_seed_patients():
                 "encrypted_ssn": encrypt_field("987-65-4321"),
                 "encrypted_phone": encrypt_field("(555) 987-6543"),
                 "encrypted_email": encrypt_field("jane.doe@example.com"),
-                "encrypted_address": encrypt_field(
-                    "456 Oak St, Town, ST 67890"
-                ),
+                "encrypted_address": encrypt_field("456 Oak St, Town, ST 67890"),
                 "status": "active",
                 "organization_id": organization.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
-                "created_by_id": user.id
+                "created_by_id": user.id,
             },
             {
                 "id": uuid4(),
@@ -102,14 +87,12 @@ async def create_seed_patients():
                 "encrypted_ssn": encrypt_field("456-78-9012"),
                 "encrypted_phone": encrypt_field("(555) 234-5678"),
                 "encrypted_email": encrypt_field("michael.brown@example.com"),
-                "encrypted_address": encrypt_field(
-                    "789 Pine Rd, Village, ST 34567"
-                ),
+                "encrypted_address": encrypt_field("789 Pine Rd, Village, ST 34567"),
                 "status": "active",
                 "organization_id": organization.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
-                "created_by_id": user.id
+                "created_by_id": user.id,
             },
             {
                 "id": uuid4(),
@@ -120,14 +103,12 @@ async def create_seed_patients():
                 "encrypted_ssn": encrypt_field("345-67-8901"),
                 "encrypted_phone": encrypt_field("(555) 345-6789"),
                 "encrypted_email": encrypt_field("emily.davis@example.com"),
-                "encrypted_address": encrypt_field(
-                    "321 Elm St, County, ST 89012"
-                ),
+                "encrypted_address": encrypt_field("321 Elm St, County, ST 89012"),
                 "status": "active",
                 "organization_id": organization.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
-                "created_by_id": user.id
+                "created_by_id": user.id,
             },
             {
                 "id": uuid4(),
@@ -138,15 +119,13 @@ async def create_seed_patients():
                 "encrypted_ssn": encrypt_field("234-56-7890"),
                 "encrypted_phone": encrypt_field("(555) 456-7890"),
                 "encrypted_email": encrypt_field("william.wilson@example.com"),
-                "encrypted_address": encrypt_field(
-                    "654 Maple Dr, Borough, ST 45678"
-                ),
+                "encrypted_address": encrypt_field("654 Maple Dr, Borough, ST 45678"),
                 "status": "active",
                 "organization_id": organization.id,
                 "facility_id": facility.id,
                 "provider_id": provider.id,
-                "created_by_id": user.id
-            }
+                "created_by_id": user.id,
+            },
         ]
 
         for patient_data in patients:

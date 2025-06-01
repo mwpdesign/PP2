@@ -54,9 +54,7 @@ def import_validator(module_path: str, class_name: str) -> Any:
 SecurityConfigValidator = import_validator(
     "scripts.security_validator", "SecurityConfigValidator"
 )
-BackupValidator = import_validator(
-    "scripts.backup_validator", "BackupValidator"
-)
+BackupValidator = import_validator("scripts.backup_validator", "BackupValidator")
 HIPAAComplianceChecker = import_validator(
     "scripts.compliance_checker", "HIPAAComplianceChecker"
 )
@@ -90,9 +88,7 @@ class ValidationResult:
     message: str
     details: Dict[str, Any] = field(default_factory=dict)
     recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(
-        default_factory=lambda: (datetime.now(UTC).isoformat())
-    )
+    timestamp: str = field(default_factory=lambda: (datetime.now(UTC).isoformat()))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert validation result to dictionary."""
@@ -130,9 +126,7 @@ class ComplianceResult:
     details: Dict[str, Any] = field(default_factory=dict)
     risks: List[str] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(UTC).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert compliance result to dictionary."""
@@ -286,16 +280,10 @@ class HIPAAComplianceValidator:
         try:
             log_config = self.config.get("logging", {})
             log_settings = {
-                "phi_access_logging": log_config.get(
-                    "phi_access_logging", False
-                ),
+                "phi_access_logging": log_config.get("phi_access_logging", False),
                 "retention_days": log_config.get("retention_days", 0),
-                "encryption_enabled": log_config.get(
-                    "encryption_enabled", False
-                ),
-                "monitoring_enabled": log_config.get(
-                    "monitoring_enabled", False
-                ),
+                "encryption_enabled": log_config.get("encryption_enabled", False),
+                "monitoring_enabled": log_config.get("monitoring_enabled", False),
             }
 
             risks = []
@@ -303,15 +291,11 @@ class HIPAAComplianceValidator:
 
             if log_settings["retention_days"] < 365:
                 risks.append("Log retention period too short")
-                recommendations.append(
-                    "Increase log retention to minimum 365 days"
-                )
+                recommendations.append("Increase log retention to minimum 365 days")
 
             if not log_settings["phi_access_logging"]:
                 risks.append("PHI access logging not enabled")
-                recommendations.append(
-                    "Enable comprehensive PHI access logging"
-                )
+                recommendations.append("Enable comprehensive PHI access logging")
 
             if not log_settings["encryption_enabled"]:
                 risks.append("Log encryption not enabled")
@@ -433,16 +417,13 @@ class HIPAAComplianceValidator:
         report = {
             "timestamp": datetime.now(UTC).isoformat(),
             "overall_status": ComplianceStatus.COMPLIANT,
-            "results": {
-                name: result.to_dict() for name, result in results.items()
-            },
+            "results": {name: result.to_dict() for name, result in results.items()},
         }
 
         non_compliant = [
             name
             for name, result in results.items()
-            if result.status
-            in [ComplianceStatus.NON_COMPLIANT, ComplianceStatus.ERROR]
+            if result.status in [ComplianceStatus.NON_COMPLIANT, ComplianceStatus.ERROR]
         ]
         partial_compliant = [
             name
@@ -458,20 +439,12 @@ class HIPAAComplianceValidator:
         report["summary"] = {
             "total_checks": len(results),
             "compliant": len(
-                [
-                    r
-                    for r in results.values()
-                    if r.status == ComplianceStatus.COMPLIANT
-                ]
+                [r for r in results.values() if r.status == ComplianceStatus.COMPLIANT]
             ),
             "non_compliant": len(non_compliant),
             "partial": len(partial_compliant),
             "errors": len(
-                [
-                    r
-                    for r in results.values()
-                    if r.status == ComplianceStatus.ERROR
-                ]
+                [r for r in results.values() if r.status == ComplianceStatus.ERROR]
             ),
         }
 
@@ -526,9 +499,7 @@ class SystemIntegrationValidator:
             )
             sys.exit(1)
 
-    def _load_config(
-        self, config_path: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def _load_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
         """Load validation configuration from YAML file."""
         default_config = Path("backend/config/validation_config.yaml")
         config_file = Path(config_path) if config_path else default_config
@@ -593,9 +564,7 @@ class SystemIntegrationValidator:
                 sock.settimeout(2)
                 result = sock.connect_ex(("localhost", port))
                 sock.close()
-                status = (
-                    ServiceStatus.PASS if result == 0 else ServiceStatus.FAIL
-                )
+                status = ServiceStatus.PASS if result == 0 else ServiceStatus.FAIL
                 results[service] = {
                     "status": status.value,
                     "port": port,
@@ -608,9 +577,7 @@ class SystemIntegrationValidator:
                     "error": str(e),
                 }
 
-        if all(
-            r["status"] == ServiceStatus.PASS.value for r in results.values()
-        ):
+        if all(r["status"] == ServiceStatus.PASS.value for r in results.values()):
             status = ServiceStatus.PASS
             message = "All critical services are running"
         else:
@@ -687,9 +654,7 @@ class SystemIntegrationValidator:
                     if security_result["status"] == "PASS"
                     else ServiceStatus.FAIL
                 ),
-                message=security_result.get(
-                    "message", "Security validation complete"
-                ),
+                message=security_result.get("message", "Security validation complete"),
                 details=security_result,
             )
         except Exception as e:
@@ -765,14 +730,9 @@ class SystemIntegrationValidator:
         try:
             compliance_report = self.hipaa_validator.validate_compliance()
             status = ServiceStatus.PASS
-            if (
-                compliance_report["overall_status"]
-                == ComplianceStatus.NON_COMPLIANT
-            ):
+            if compliance_report["overall_status"] == ComplianceStatus.NON_COMPLIANT:
                 status = ServiceStatus.FAIL
-            elif (
-                compliance_report["overall_status"] == ComplianceStatus.PARTIAL
-            ):
+            elif compliance_report["overall_status"] == ComplianceStatus.PARTIAL:
                 status = ServiceStatus.WARN
 
             return ValidationResult(
@@ -819,16 +779,13 @@ class SystemIntegrationValidator:
         failed_checks = [
             name
             for name, result in validation_results.items()
-            if result["status"]
-            in [ServiceStatus.FAIL.value, ServiceStatus.ERROR.value]
+            if result["status"] in [ServiceStatus.FAIL.value, ServiceStatus.ERROR.value]
         ]
 
         report = {
             "timestamp": datetime.now(UTC).isoformat(),
             "overall_status": (
-                ServiceStatus.FAIL.value
-                if failed_checks
-                else ServiceStatus.PASS.value
+                ServiceStatus.FAIL.value if failed_checks else ServiceStatus.PASS.value
             ),
             "results": validation_results,
             "summary": {
@@ -865,9 +822,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Enhanced System Integration Validator"
     )
-    parser.add_argument(
-        "--config", help="Path to validation configuration file"
-    )
+    parser.add_argument("--config", help="Path to validation configuration file")
     args = parser.parse_args()
     validator = SystemIntegrationValidator(args.config)
     try:

@@ -23,6 +23,7 @@ from app.core.audit import audit_log
 
 router = APIRouter(prefix="/providers", tags=["providers"])
 
+
 @router.post("/facilities", response_model=FacilityResponse)
 @audit_log("create_facility")
 async def create_facility(
@@ -38,6 +39,7 @@ async def create_facility(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/doctors", response_model=ProviderResponse)
 @audit_log("create_provider")
 async def create_provider(
@@ -52,6 +54,7 @@ async def create_provider(
         return provider
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.put("/{provider_id}/credentials", response_model=CredentialResponse)
 @audit_log("update_credentials")
@@ -72,6 +75,7 @@ async def update_credentials(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/territories", response_model=TerritoryResponse)
 @audit_log("create_territory")
 async def create_territory(
@@ -87,6 +91,7 @@ async def create_territory(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.post("/relationships", response_model=RelationshipResponse)
 @audit_log("create_relationship")
 async def create_relationship(
@@ -97,12 +102,11 @@ async def create_relationship(
     """Create a relationship between providers."""
     provider_service = ProviderService(db, current_user)
     try:
-        relationship = provider_service.create_provider_relationship(
-            relationship_data
-        )
+        relationship = provider_service.create_provider_relationship(relationship_data)
         return relationship
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.get("/search", response_model=ProviderSearchResponse)
 @audit_log("search_providers")
@@ -120,6 +124,7 @@ async def search_providers(
         return ProviderSearchResponse(**results)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.post("/{credential_id}/verify", response_model=CredentialResponse)
 @audit_log("verify_credentials")

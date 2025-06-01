@@ -2,6 +2,7 @@
 UPS carrier service implementation.
 Implements HIPAA-compliant shipping operations for UPS.
 """
+
 from typing import Dict, List
 from datetime import datetime
 import httpx
@@ -26,11 +27,7 @@ class UPSCarrier(BaseCarrier):
         )
         self.client = httpx.AsyncClient()
 
-    async def get_rates(
-        self,
-        package_info: Dict,
-        destination: Dict
-    ) -> List[Dict]:
+    async def get_rates(self, package_info: Dict, destination: Dict) -> List[Dict]:
         """Get shipping rates from UPS."""
         try:
             response = await self.client.post(
@@ -38,29 +35,21 @@ class UPSCarrier(BaseCarrier):
                 json={
                     "RateRequest": {
                         "Request": {
-                            "TransactionReference": {
-                                "CustomerContext": "Rate Request"
-                            }
+                            "TransactionReference": {"CustomerContext": "Rate Request"}
                         },
                         "Shipment": {
                             "Package": {
-                                "PackagingType": {
-                                    "Code": "02"
-                                },
+                                "PackagingType": {"Code": "02"},
                                 "Dimensions": {
-                                    "UnitOfMeasurement": {
-                                        "Code": "IN"
-                                    },
+                                    "UnitOfMeasurement": {"Code": "IN"},
                                     "Length": str(package_info["length"]),
                                     "Width": str(package_info["width"]),
-                                    "Height": str(package_info["height"])
+                                    "Height": str(package_info["height"]),
                                 },
                                 "PackageWeight": {
-                                    "UnitOfMeasurement": {
-                                        "Code": "LBS"
-                                    },
-                                    "Weight": str(package_info["weight"])
-                                }
+                                    "UnitOfMeasurement": {"Code": "LBS"},
+                                    "Weight": str(package_info["weight"]),
+                                },
                             },
                             "ShipTo": {
                                 "Address": {
@@ -68,30 +57,32 @@ class UPSCarrier(BaseCarrier):
                                     "City": destination["city"],
                                     "StateProvinceCode": destination["state"],
                                     "PostalCode": destination["postal_code"],
-                                    "CountryCode": destination["country"]
+                                    "CountryCode": destination["country"],
                                 }
-                            }
-                        }
+                            },
+                        },
                     }
                 },
-                headers=self._get_headers()
+                headers=self._get_headers(),
             )
             response.raise_for_status()
             data = response.json()
 
-            return [{
-                "service": rate["Service"]["Code"],
-                "carrier": "UPS",
-                "total_cost": float(rate["TotalCharges"]["MonetaryValue"]),
-                "currency": rate["TotalCharges"]["CurrencyCode"],
-                "delivery_days": rate.get("GuaranteedDaysToDelivery"),
-                "service_name": self._get_service_name(rate["Service"]["Code"])
-            } for rate in data["RateResponse"]["RatedShipment"]]
+            return [
+                {
+                    "service": rate["Service"]["Code"],
+                    "carrier": "UPS",
+                    "total_cost": float(rate["TotalCharges"]["MonetaryValue"]),
+                    "currency": rate["TotalCharges"]["CurrencyCode"],
+                    "delivery_days": rate.get("GuaranteedDaysToDelivery"),
+                    "service_name": self._get_service_name(rate["Service"]["Code"]),
+                }
+                for rate in data["RateResponse"]["RatedShipment"]
+            ]
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to get UPS rates: {str(e)}"
+                status_code=500, detail=f"Failed to get UPS rates: {str(e)}"
             )
 
     async def create_label(self, shipment_info: Dict) -> Dict:
@@ -102,33 +93,24 @@ class UPSCarrier(BaseCarrier):
                 json={
                     "ShipmentRequest": {
                         "Request": {
-                            "TransactionReference": {
-                                "CustomerContext": "Label Request"
-                            }
+                            "TransactionReference": {"CustomerContext": "Label Request"}
                         },
                         "Shipment": {
                             "Description": shipment_info.get(
-                                "description",
-                                "Medical Supplies"
+                                "description", "Medical Supplies"
                             ),
                             "Package": {
-                                "PackagingType": {
-                                    "Code": "02"
-                                },
+                                "PackagingType": {"Code": "02"},
                                 "Dimensions": {
-                                    "UnitOfMeasurement": {
-                                        "Code": "IN"
-                                    },
+                                    "UnitOfMeasurement": {"Code": "IN"},
                                     "Length": str(shipment_info["length"]),
                                     "Width": str(shipment_info["width"]),
-                                    "Height": str(shipment_info["height"])
+                                    "Height": str(shipment_info["height"]),
                                 },
                                 "PackageWeight": {
-                                    "UnitOfMeasurement": {
-                                        "Code": "LBS"
-                                    },
-                                    "Weight": str(shipment_info["weight"])
-                                }
+                                    "UnitOfMeasurement": {"Code": "LBS"},
+                                    "Weight": str(shipment_info["weight"]),
+                                },
                             },
                             "ShipTo": {
                                 "Address": self._format_address(
@@ -140,49 +122,41 @@ class UPSCarrier(BaseCarrier):
                                     shipment_info["from_address"]
                                 )
                             },
-                            "Service": {
-                                "Code": shipment_info["service_code"]
-                            },
+                            "Service": {"Code": shipment_info["service_code"]},
                             "PaymentInformation": {
                                 "ShipmentCharge": {
                                     "Type": "01",
                                     "BillShipper": {
                                         "AccountNumber": self.account_number
-                                    }
+                                    },
                                 }
-                            }
+                            },
                         },
-                        "LabelSpecification": {
-                            "LabelImageFormat": {
-                                "Code": "GIF"
-                            }
-                        }
+                        "LabelSpecification": {"LabelImageFormat": {"Code": "GIF"}},
                     }
                 },
-                headers=self._get_headers()
+                headers=self._get_headers(),
             )
             response.raise_for_status()
             data = response.json()
 
             shipment_results = data["ShipmentResponse"]["ShipmentResults"]
             tracking_number = shipment_results["TrackingNumber"]
-            label_image = (
-                shipment_results["PackageResults"]
-                ["ShippingLabel"]["GraphicImage"]
-            )
+            label_image = shipment_results["PackageResults"]["ShippingLabel"][
+                "GraphicImage"
+            ]
 
             return {
                 "tracking_number": tracking_number,
                 "label_url": self._store_label(label_image),
                 "carrier": "UPS",
                 "service": shipment_info["service_code"],
-                "created_at": datetime.utcnow()
+                "created_at": datetime.utcnow(),
             }
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to create UPS label: {str(e)}"
+                status_code=500, detail=f"Failed to create UPS label: {str(e)}"
             )
 
     async def track_shipment(self, tracking_number: str) -> Dict:
@@ -193,14 +167,12 @@ class UPSCarrier(BaseCarrier):
                 json={
                     "TrackRequest": {
                         "Request": {
-                            "TransactionReference": {
-                                "CustomerContext": "Track Request"
-                            }
+                            "TransactionReference": {"CustomerContext": "Track Request"}
                         },
-                        "InquiryNumber": tracking_number
+                        "InquiryNumber": tracking_number,
                     }
                 },
-                headers=self._get_headers()
+                headers=self._get_headers(),
             )
             response.raise_for_status()
             data = response.json()
@@ -213,35 +185,32 @@ class UPSCarrier(BaseCarrier):
                     current_status["Status"]["Code"]
                 ),
                 "location": (
-                    current_status.get("Location", {})
-                    .get("Address", {})
-                    .get("City")
+                    current_status.get("Location", {}).get("Address", {}).get("City")
                 ),
                 "estimated_delivery": (
-                    data["TrackResponse"]["Shipment"][0]
-                    .get("ScheduledDeliveryDate")
+                    data["TrackResponse"]["Shipment"][0].get("ScheduledDeliveryDate")
                 ),
-                "history": [{
-                    "timestamp": f"{activity['Date']}T{activity['Time']}",
-                    "status": self._get_status_description(
-                        activity["Status"]["Code"]
-                    ),
-                    "location": (
-                        activity.get("Location", {})
-                        .get("Address", {})
-                        .get("City")
-                    ),
-                    "description": activity["Status"]["Description"]
-                } for activity in package["Activity"]],
+                "history": [
+                    {
+                        "timestamp": f"{activity['Date']}T{activity['Time']}",
+                        "status": self._get_status_description(
+                            activity["Status"]["Code"]
+                        ),
+                        "location": (
+                            activity.get("Location", {}).get("Address", {}).get("City")
+                        ),
+                        "description": activity["Status"]["Description"],
+                    }
+                    for activity in package["Activity"]
+                ],
                 "carrier": "UPS",
                 "tracking_number": tracking_number,
-                "last_updated": datetime.utcnow()
+                "last_updated": datetime.utcnow(),
             }
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to track UPS shipment: {str(e)}"
+                status_code=500, detail=f"Failed to track UPS shipment: {str(e)}"
             )
 
     async def validate_address(self, address: Dict) -> Dict:
@@ -256,46 +225,48 @@ class UPSCarrier(BaseCarrier):
                             "PoliticalDivision2": address["city"],
                             "PoliticalDivision1": address["state"],
                             "PostcodePrimaryLow": address["postal_code"],
-                            "CountryCode": address["country"]
+                            "CountryCode": address["country"],
                         }
                     }
                 },
-                headers=self._get_headers()
+                headers=self._get_headers(),
             )
             response.raise_for_status()
             data = response.json()
 
-            is_valid = bool(
-                data["XAVResponse"].get("ValidAddressIndicator")
+            is_valid = bool(data["XAVResponse"].get("ValidAddressIndicator"))
+            suggested = (
+                data["XAVResponse"]
+                .get("CandidateAddressList", [{}])[0]
+                .get("AddressKeyFormat", {})
             )
-            suggested = data["XAVResponse"].get(
-                "CandidateAddressList",
-                [{}]
-            )[0].get("AddressKeyFormat", {})
 
             return {
                 "is_valid": is_valid,
-                "suggested_address": {
-                    "street": suggested.get("AddressLine", [None])[0],
-                    "city": suggested.get("PoliticalDivision2"),
-                    "state": suggested.get("PoliticalDivision1"),
-                    "postal_code": suggested.get("PostcodePrimaryLow"),
-                    "country": suggested.get("CountryCode")
-                } if suggested else None,
-                "errors": [] if is_valid else ["Invalid address"]
+                "suggested_address": (
+                    {
+                        "street": suggested.get("AddressLine", [None])[0],
+                        "city": suggested.get("PoliticalDivision2"),
+                        "state": suggested.get("PoliticalDivision1"),
+                        "postal_code": suggested.get("PostcodePrimaryLow"),
+                        "country": suggested.get("CountryCode"),
+                    }
+                    if suggested
+                    else None
+                ),
+                "errors": [] if is_valid else ["Invalid address"],
             }
 
         except Exception as e:
             raise HTTPException(
-                status_code=500,
-                detail=f"Failed to validate UPS address: {str(e)}"
+                status_code=500, detail=f"Failed to validate UPS address: {str(e)}"
             )
 
     def _get_headers(self) -> Dict:
         """Get UPS API headers."""
         return {
             "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
     def _get_service_name(self, code: str) -> str:
@@ -307,7 +278,7 @@ class UPSCarrier(BaseCarrier):
             "12": "3 Day Select",
             "13": "Next Day Air Saver",
             "14": "UPS Next Day Air Early",
-            "59": "2nd Day Air A.M."
+            "59": "2nd Day Air A.M.",
         }
         return service_map.get(code, "Unknown")
 
@@ -320,7 +291,7 @@ class UPSCarrier(BaseCarrier):
             "P": "Pickup",
             "O": "Out for Delivery",
             "M": "Manifest Pickup",
-            "R": "Return to Sender"
+            "R": "Return to Sender",
         }
         return status_map.get(code, "Unknown")
 
@@ -336,5 +307,5 @@ class UPSCarrier(BaseCarrier):
             "City": address["city"],
             "StateProvinceCode": address["state"],
             "PostalCode": address["postal_code"],
-            "CountryCode": address["country"]
+            "CountryCode": address["country"],
         }

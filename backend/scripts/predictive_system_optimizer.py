@@ -29,13 +29,9 @@ class PredictiveSystemOptimizer:
 
         # Initialize ML models
         self.performance_model = RandomForestRegressor(
-            n_estimators=100,
-            random_state=42
+            n_estimators=100, random_state=42
         )
-        self.anomaly_detector = IsolationForest(
-            contamination=0.1,
-            random_state=42
-        )
+        self.anomaly_detector = IsolationForest(contamination=0.1, random_state=42)
         self.scaler = StandardScaler()
 
         # Initialize metrics registry
@@ -49,7 +45,7 @@ class PredictiveSystemOptimizer:
             "predictions": {},
             "optimizations": {},
             "risks": {},
-            "recommendations": []
+            "recommendations": [],
         }
 
     def setup_logging(self):
@@ -67,9 +63,7 @@ class PredictiveSystemOptimizer:
 
         handler = logging.FileHandler(log_file)
         handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         )
 
         self.logger.addHandler(handler)
@@ -80,28 +74,28 @@ class PredictiveSystemOptimizer:
             "cpu_usage": Gauge(
                 "system_cpu_usage",
                 "Current CPU usage percentage",
-                registry=self.registry
+                registry=self.registry,
             ),
             "memory_usage": Gauge(
                 "system_memory_usage",
                 "Current memory usage percentage",
-                registry=self.registry
+                registry=self.registry,
             ),
             "disk_usage": Gauge(
                 "system_disk_usage",
                 "Current disk usage percentage",
-                registry=self.registry
+                registry=self.registry,
             ),
             "network_latency": Gauge(
                 "system_network_latency",
                 "Current network latency in ms",
-                registry=self.registry
+                registry=self.registry,
             ),
             "error_rate": Gauge(
                 "system_error_rate",
                 "Current error rate percentage",
-                registry=self.registry
-            )
+                registry=self.registry,
+            ),
         }
 
     def collect_system_metrics(self) -> Dict[str, float]:
@@ -111,7 +105,7 @@ class PredictiveSystemOptimizer:
             "memory_usage": psutil.virtual_memory().percent,
             "disk_usage": psutil.disk_usage("/").percent,
             "network_latency": self._measure_network_latency(),
-            "error_rate": self._calculate_error_rate()
+            "error_rate": self._calculate_error_rate(),
         }
 
         # Update Prometheus metrics
@@ -120,11 +114,7 @@ class PredictiveSystemOptimizer:
 
         try:
             # Push to Prometheus if configured
-            push_to_gateway(
-                "localhost:9091",
-                "healthcare_ivr_optimizer",
-                self.registry
-            )
+            push_to_gateway("localhost:9091", "healthcare_ivr_optimizer", self.registry)
         except Exception as e:
             self.logger.warning(f"Failed to push metrics: {e}")
 
@@ -134,7 +124,7 @@ class PredictiveSystemOptimizer:
         """Measure network latency to key endpoints."""
         endpoints = [
             "http://localhost:8000/health",
-            "http://localhost:8000/api/v1/status"
+            "http://localhost:8000/api/v1/status",
         ]
 
         latencies = []
@@ -143,17 +133,11 @@ class PredictiveSystemOptimizer:
         for endpoint in endpoints:
             try:
                 start_time = datetime.now()
-                requests.get(
-                    endpoint,
-                    timeout=5,
-                    verify=False
-                )
+                requests.get(endpoint, timeout=5, verify=False)
                 latency = (datetime.now() - start_time).total_seconds() * 1000
                 latencies.append(latency)
             except Exception as e:
-                self.logger.warning(
-                    f"Failed to measure latency for {endpoint}: {e}"
-                )
+                self.logger.warning(f"Failed to measure latency for {endpoint}: {e}")
 
         return np.mean(latencies) if latencies else 0.0
 
@@ -192,7 +176,7 @@ class PredictiveSystemOptimizer:
                     "cpu_usage",
                     "memory_usage",
                     "disk_usage",
-                    "network_latency"
+                    "network_latency",
                 ]
                 X = metrics_history[features]
                 y = metrics_history["response_time"]
@@ -205,37 +189,31 @@ class PredictiveSystemOptimizer:
 
                 # Make predictions
                 current_metrics = self.collect_system_metrics()
-                current_features = np.array([
+                current_features = np.array(
                     [
-                        current_metrics["cpu_usage"],
-                        current_metrics["memory_usage"],
-                        current_metrics["disk_usage"],
-                        current_metrics["network_latency"]
+                        [
+                            current_metrics["cpu_usage"],
+                            current_metrics["memory_usage"],
+                            current_metrics["disk_usage"],
+                            current_metrics["network_latency"],
+                        ]
                     ]
-                ])
+                )
                 current_scaled = self.scaler.transform(current_features)
                 prediction = self.performance_model.predict(current_scaled)[0]
 
                 return {
                     "status": "PASS",
                     "predicted_response_time": prediction,
-                    "confidence_score": (
-                        self.performance_model.score(X_scaled, y)
-                    ),
-                    "current_metrics": current_metrics
+                    "confidence_score": (self.performance_model.score(X_scaled, y)),
+                    "current_metrics": current_metrics,
                 }
             else:
-                return {
-                    "status": "FAIL",
-                    "error": "Insufficient historical data"
-                }
+                return {"status": "FAIL", "error": "Insufficient historical data"}
 
         except Exception as e:
             self.logger.error(f"Performance prediction failed: {e}")
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
     def detect_anomalies(self) -> Dict[str, Any]:
         """Detect system anomalies using Isolation Forest."""
@@ -256,28 +234,19 @@ class PredictiveSystemOptimizer:
             anomalies = {}
             for metric, value in metrics.items():
                 if value > 90:  # Direct threshold check
-                    anomalies[metric] = {
-                        "value": value,
-                        "severity": "HIGH"
-                    }
+                    anomalies[metric] = {"value": value, "severity": "HIGH"}
                 elif value > 75:
-                    anomalies[metric] = {
-                        "value": value,
-                        "severity": "MEDIUM"
-                    }
+                    anomalies[metric] = {"value": value, "severity": "MEDIUM"}
 
             return {
                 "status": "PASS",
                 "anomaly_score": float(anomaly_scores[0]),
-                "anomalies": anomalies
+                "anomalies": anomalies,
             }
 
         except Exception as e:
             self.logger.error(f"Anomaly detection failed: {e}")
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
     def optimize_resources(self) -> Dict[str, Any]:
         """Optimize system resource allocation."""
@@ -289,55 +258,58 @@ class PredictiveSystemOptimizer:
 
             # CPU Optimization
             if current_metrics["cpu_usage"] > 80:
-                optimizations.append({
-                    "resource": "CPU",
-                    "current_usage": current_metrics["cpu_usage"],
-                    "recommendation": "Scale up CPU resources or optimize workload",
-                    "actions": [
-                        "Identify CPU-intensive processes",
-                        "Consider horizontal scaling",
-                        "Optimize database queries"
-                    ]
-                })
+                optimizations.append(
+                    {
+                        "resource": "CPU",
+                        "current_usage": current_metrics["cpu_usage"],
+                        "recommendation": "Scale up CPU resources or optimize workload",
+                        "actions": [
+                            "Identify CPU-intensive processes",
+                            "Consider horizontal scaling",
+                            "Optimize database queries",
+                        ],
+                    }
+                )
 
             # Memory Optimization
             if current_metrics["memory_usage"] > 85:
-                optimizations.append({
-                    "resource": "Memory",
-                    "current_usage": current_metrics["memory_usage"],
-                    "recommendation": "Optimize memory usage",
-                    "actions": [
-                        "Implement caching",
-                        "Review memory leaks",
-                        "Adjust JVM settings"
-                    ]
-                })
+                optimizations.append(
+                    {
+                        "resource": "Memory",
+                        "current_usage": current_metrics["memory_usage"],
+                        "recommendation": "Optimize memory usage",
+                        "actions": [
+                            "Implement caching",
+                            "Review memory leaks",
+                            "Adjust JVM settings",
+                        ],
+                    }
+                )
 
             # Disk Optimization
             if current_metrics["disk_usage"] > 90:
-                optimizations.append({
-                    "resource": "Disk",
-                    "current_usage": current_metrics["disk_usage"],
-                    "recommendation": "Manage disk space",
-                    "actions": [
-                        "Implement log rotation",
-                        "Archive old data",
-                        "Clean temporary files"
-                    ]
-                })
+                optimizations.append(
+                    {
+                        "resource": "Disk",
+                        "current_usage": current_metrics["disk_usage"],
+                        "recommendation": "Manage disk space",
+                        "actions": [
+                            "Implement log rotation",
+                            "Archive old data",
+                            "Clean temporary files",
+                        ],
+                    }
+                )
 
             return {
                 "status": "PASS",
                 "current_metrics": current_metrics,
-                "optimizations": optimizations
+                "optimizations": optimizations,
             }
 
         except Exception as e:
             self.logger.error(f"Resource optimization failed: {e}")
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
     def analyze_security_risks(self) -> Dict[str, Any]:
         """Analyze potential security risks."""
@@ -345,9 +317,8 @@ class PredictiveSystemOptimizer:
 
         try:
             # Check security components from integration report
-            security_status = (
-                self.integration_report.get("components", {})
-                .get("security", {})
+            security_status = self.integration_report.get("components", {}).get(
+                "security", {}
             )
 
             risks = []
@@ -355,15 +326,12 @@ class PredictiveSystemOptimizer:
             # Analyze security findings
             if security_status.get("status") == "FAIL":
                 risks.extend(
-                    self._analyze_security_findings(
-                        security_status.get("findings", [])
-                    )
+                    self._analyze_security_findings(security_status.get("findings", []))
                 )
 
             # Check compliance status
-            compliance_status = (
-                self.integration_report.get("components", {})
-                .get("compliance", {})
+            compliance_status = self.integration_report.get("components", {}).get(
+                "compliance", {}
             )
 
             if compliance_status.get("status") == "FAIL":
@@ -374,32 +342,22 @@ class PredictiveSystemOptimizer:
                 )
 
             # Calculate risk scores
-            risk_scores = {
-                risk["category"]: risk["severity"]
-                for risk in risks
-            }
+            risk_scores = {risk["category"]: risk["severity"] for risk in risks}
 
             return {
                 "status": "PASS",
                 "risk_scores": risk_scores,
                 "identified_risks": risks,
                 "overall_risk_level": max(
-                    (risk["severity"] for risk in risks),
-                    default=0
-                )
+                    (risk["severity"] for risk in risks), default=0
+                ),
             }
 
         except Exception as e:
             self.logger.error(f"Security risk analysis failed: {e}")
-            return {
-                "status": "FAIL",
-                "error": str(e)
-            }
+            return {"status": "FAIL", "error": str(e)}
 
-    def _analyze_security_findings(
-        self,
-        findings: List[Dict]
-    ) -> List[Dict]:
+    def _analyze_security_findings(self, findings: List[Dict]) -> List[Dict]:
         """Analyze security findings and calculate risk levels."""
         risks = []
 
@@ -407,19 +365,18 @@ class PredictiveSystemOptimizer:
             severity = finding.get("severity", "LOW")
             category = finding.get("category", "Unknown")
 
-            risks.append({
-                "category": category,
-                "severity": self._calculate_severity_score(severity),
-                "finding": finding.get("description", ""),
-                "mitigation": self._get_mitigation_strategy(category)
-            })
+            risks.append(
+                {
+                    "category": category,
+                    "severity": self._calculate_severity_score(severity),
+                    "finding": finding.get("description", ""),
+                    "mitigation": self._get_mitigation_strategy(category),
+                }
+            )
 
         return risks
 
-    def _analyze_compliance_risks(
-        self,
-        violations: List[Dict]
-    ) -> List[Dict]:
+    def _analyze_compliance_risks(self, violations: List[Dict]) -> List[Dict]:
         """Analyze compliance violations and assess risks."""
         risks = []
 
@@ -427,24 +384,20 @@ class PredictiveSystemOptimizer:
             category = violation.get("requirement", "Unknown")
             severity = violation.get("impact", "LOW")
 
-            risks.append({
-                "category": f"Compliance - {category}",
-                "severity": self._calculate_severity_score(severity),
-                "finding": violation.get("description", ""),
-                "mitigation": self._get_compliance_recommendation(category)
-            })
+            risks.append(
+                {
+                    "category": f"Compliance - {category}",
+                    "severity": self._calculate_severity_score(severity),
+                    "finding": violation.get("description", ""),
+                    "mitigation": self._get_compliance_recommendation(category),
+                }
+            )
 
         return risks
 
     def _calculate_severity_score(self, severity: str) -> int:
         """Calculate numerical severity score."""
-        severity_map = {
-            "CRITICAL": 9,
-            "HIGH": 7,
-            "MEDIUM": 5,
-            "LOW": 3,
-            "INFO": 1
-        }
+        severity_map = {"CRITICAL": 9, "HIGH": 7, "MEDIUM": 5, "LOW": 3, "INFO": 1}
         return severity_map.get(severity.upper(), 1)
 
     def _get_mitigation_strategy(self, category: str) -> List[str]:
@@ -453,23 +406,23 @@ class PredictiveSystemOptimizer:
             "Authentication": [
                 "Implement MFA",
                 "Review password policies",
-                "Audit access controls"
+                "Audit access controls",
             ],
             "Authorization": [
                 "Review role permissions",
                 "Implement least privilege",
-                "Audit access logs"
+                "Audit access logs",
             ],
             "Encryption": [
                 "Update encryption algorithms",
                 "Review key management",
-                "Implement data-at-rest encryption"
+                "Implement data-at-rest encryption",
             ],
             "Network": [
                 "Review firewall rules",
                 "Implement IDS/IPS",
-                "Monitor network traffic"
-            ]
+                "Monitor network traffic",
+            ],
         }
         return strategies.get(category, ["Review security policies"])
 
@@ -479,18 +432,18 @@ class PredictiveSystemOptimizer:
             "HIPAA": [
                 "Review PHI handling",
                 "Update audit logging",
-                "Enhance access controls"
+                "Enhance access controls",
             ],
             "Data Protection": [
                 "Review data encryption",
                 "Update data retention policies",
-                "Implement data masking"
+                "Implement data masking",
             ],
             "Access Control": [
                 "Review access policies",
                 "Implement role-based access",
-                "Enhance authentication"
-            ]
+                "Enhance authentication",
+            ],
         }
         return recommendations.get(requirement, ["Review compliance requirements"])
 
@@ -526,14 +479,13 @@ class PredictiveSystemOptimizer:
                 self.optimization_results["predictions"],
                 self.optimization_results["anomalies"],
                 self.optimization_results["optimizations"],
-                self.optimization_results["risks"]
+                self.optimization_results["risks"],
             ]
 
             self.optimization_results["overall_status"] = (
-                "PASS" if all(
-                    comp.get("status") == "PASS"
-                    for comp in components
-                ) else "FAIL"
+                "PASS"
+                if all(comp.get("status") == "PASS" for comp in components)
+                else "FAIL"
             )
 
             # Save report
@@ -558,43 +510,52 @@ class PredictiveSystemOptimizer:
         recommendations = []
 
         # Performance recommendations
-        if (self.optimization_results["predictions"].get("status") == "PASS" and
-            self.optimization_results["predictions"].get(
+        if (
+            self.optimization_results["predictions"].get("status") == "PASS"
+            and self.optimization_results["predictions"].get(
                 "predicted_response_time", 0
-            ) > 1000):
-            recommendations.append({
-                "category": "Performance",
-                "severity": "HIGH",
-                "description": "High response times predicted",
-                "actions": [
-                    "Optimize database queries",
-                    "Implement caching",
-                    "Consider scaling resources"
-                ]
-            })
+            )
+            > 1000
+        ):
+            recommendations.append(
+                {
+                    "category": "Performance",
+                    "severity": "HIGH",
+                    "description": "High response times predicted",
+                    "actions": [
+                        "Optimize database queries",
+                        "Implement caching",
+                        "Consider scaling resources",
+                    ],
+                }
+            )
 
         # Resource optimization recommendations
         resource_opts = self.optimization_results["optimizations"]
         if resource_opts.get("status") == "PASS":
             for opt in resource_opts.get("optimizations", []):
-                recommendations.append({
-                    "category": "Resource",
-                    "severity": "MEDIUM",
-                    "description": opt["recommendation"],
-                    "actions": opt["actions"]
-                })
+                recommendations.append(
+                    {
+                        "category": "Resource",
+                        "severity": "MEDIUM",
+                        "description": opt["recommendation"],
+                        "actions": opt["actions"],
+                    }
+                )
 
         # Security recommendations
         risks = self.optimization_results["risks"]
         if risks.get("status") == "PASS":
             for risk in risks.get("identified_risks", []):
                 if risk["severity"] >= 7:
-                    recommendations.append({
-                        "category": "Security",
-                        "severity": "HIGH",
-                        "description": f"High security risk: {risk['finding']}",
-                        "actions": risk["mitigation"]
-                    })
+                    recommendations.append(
+                        {
+                            "category": "Security",
+                            "severity": "HIGH",
+                            "description": f"High security risk: {risk['finding']}",
+                            "actions": risk["mitigation"],
+                        }
+                    )
 
         return recommendations
 
@@ -603,20 +564,18 @@ def main():
     """Main entry point for predictive system optimizer."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Predictive System Optimizer"
-    )
+    parser = argparse.ArgumentParser(description="Predictive System Optimizer")
     parser.add_argument(
         "--report",
         help="Path to system integration report",
-        default="verification_reports/latest_report.json"
+        default="verification_reports/latest_report.json",
     )
     args = parser.parse_args()
 
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     try:
@@ -629,7 +588,9 @@ def main():
         report_path = optimizer.generate_optimization_report()
 
         print(f"\nOptimization Report Generated: {report_path}")
-        print("\nOptimization Status:", optimizer.optimization_results["overall_status"])
+        print(
+            "\nOptimization Status:", optimizer.optimization_results["overall_status"]
+        )
 
         if optimizer.optimization_results["recommendations"]:
             print("\nKey Recommendations:")
@@ -640,9 +601,7 @@ def main():
                 for action in rec["actions"]:
                     print(f"    * {action}")
 
-        sys.exit(
-            0 if optimizer.optimization_results["overall_status"] == "PASS" else 1
-        )
+        sys.exit(0 if optimizer.optimization_results["overall_status"] == "PASS" else 1)
 
     except Exception as e:
         logging.error(f"Optimization failed: {str(e)}", exc_info=True)

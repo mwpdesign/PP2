@@ -1,4 +1,5 @@
 """Main FastAPI application."""
+
 import logging
 import os
 from fastapi import FastAPI
@@ -9,8 +10,7 @@ from app.core.database import init_db
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ app = FastAPI(title="Healthcare IVR Platform")
 
 
 # Configure CORS based on environment
-IS_DEVELOPMENT = os.getenv('ENVIRONMENT', 'development') == 'development'
+IS_DEVELOPMENT = os.getenv("ENVIRONMENT", "development") == "development"
 
 if IS_DEVELOPMENT:
     # Development CORS settings - more permissive
@@ -41,9 +41,7 @@ else:
     # Production CORS settings - more restrictive
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            os.getenv('FRONTEND_URL', 'http://localhost:3000')
-        ],
+        allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:3000")],
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
         allow_headers=["Authorization", "Content-Type"],

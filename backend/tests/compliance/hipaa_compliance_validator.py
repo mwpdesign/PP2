@@ -1,4 +1,5 @@
 """HIPAA compliance validation framework for Healthcare IVR Platform."""
+
 import os
 import json
 import logging
@@ -43,7 +44,7 @@ class HIPAAComplianceValidator:
                 "min_encryption_strength": 256,
                 "allowed_encryption_algorithms": ["AES-256-GCM", "RSA-4096"],
                 "key_rotation_days": 90,
-                "data_retention_years": 6
+                "data_retention_years": 6,
             },
             "access_control": {
                 "min_password_length": 12,
@@ -53,12 +54,12 @@ class HIPAAComplianceValidator:
                     "uppercase": True,
                     "lowercase": True,
                     "numbers": True,
-                    "special_chars": True
+                    "special_chars": True,
                 },
                 "max_failed_login_attempts": 5,
                 "lockout_duration_minutes": 30,
                 "session_timeout_minutes": 30,
-                "mfa_required": True
+                "mfa_required": True,
             },
             "audit_logging": {
                 "log_sensitive_operations": True,
@@ -74,30 +75,30 @@ class HIPAAComplianceValidator:
                     "request_method",
                     "request_path",
                     "response_status",
-                    "phi_accessed"
-                ]
+                    "phi_accessed",
+                ],
             },
             "data_transmission": {
                 "min_tls_version": "1.2",
                 "allowed_protocols": ["TLS 1.2", "TLS 1.3"],
                 "required_cipher_suites": [
                     "TLS_AES_256_GCM_SHA384",
-                    "TLS_CHACHA20_POLY1305_SHA256"
+                    "TLS_CHACHA20_POLY1305_SHA256",
                 ],
                 "hsts_enabled": True,
-                "hsts_max_age_days": 365
+                "hsts_max_age_days": 365,
             },
             "data_backup": {
                 "backup_frequency_hours": 24,
                 "encryption_required": True,
                 "retention_years": 6,
-                "test_recovery_frequency_days": 30
+                "test_recovery_frequency_days": 30,
             },
             "emergency_access": {
                 "break_glass_enabled": True,
                 "break_glass_notification_required": True,
-                "break_glass_audit_detail": "enhanced"
-            }
+                "break_glass_audit_detail": "enhanced",
+            },
         }
 
     def validate_data_encryption(self, data: str, context: Dict) -> Dict:
@@ -108,7 +109,7 @@ class HIPAAComplianceValidator:
             "key_rotation_status": "UNKNOWN",
             "compliance_status": "FAIL",
             "checks_performed": [],
-            "failed_checks": []
+            "failed_checks": [],
         }
 
         try:
@@ -136,8 +137,7 @@ class HIPAAComplianceValidator:
 
             # Generate encryption audit trail
             results["encryption_hash"] = hashlib.sha256(
-                encrypted_data if "encrypted_data" in locals()
-                else data.encode()
+                encrypted_data if "encrypted_data" in locals() else data.encode()
             ).hexdigest()
 
             # Log encryption operation
@@ -157,11 +157,7 @@ class HIPAAComplianceValidator:
     def validate_password_policy(self, password: str, user_id: str) -> Dict:
         """Validate password against HIPAA compliance requirements."""
         policy = self.config["access_control"]
-        results = {
-            "is_compliant": True,
-            "checks_performed": [],
-            "failed_checks": []
-        }
+        results = {"is_compliant": True, "checks_performed": [], "failed_checks": []}
 
         # Length check
         if len(password) < policy["min_password_length"]:
@@ -175,7 +171,7 @@ class HIPAAComplianceValidator:
             "uppercase": any(c.isupper() for c in password),
             "lowercase": any(c.islower() for c in password),
             "numbers": any(c.isdigit() for c in password),
-            "special_chars": any(not c.isalnum() for c in password)
+            "special_chars": any(not c.isalnum() for c in password),
         }
 
         for check, passed in complexity_checks.items():
@@ -205,7 +201,7 @@ class HIPAAComplianceValidator:
             "is_compliant": True,
             "checks_performed": [],
             "failed_checks": [],
-            "missing_fields": []
+            "missing_fields": [],
         }
 
         # Check required fields
@@ -246,11 +242,7 @@ class HIPAAComplianceValidator:
 
     def validate_session_security(self, session_data: Dict) -> Dict:
         """Validate session security settings."""
-        results = {
-            "is_compliant": True,
-            "checks_performed": [],
-            "failed_checks": []
-        }
+        results = {"is_compliant": True, "checks_performed": [], "failed_checks": []}
 
         # Check session timeout
         if "last_activity" in session_data:
@@ -266,9 +258,7 @@ class HIPAAComplianceValidator:
         if "token" in session_data:
             try:
                 decoded = jwt.decode(
-                    session_data["token"],
-                    settings.SECRET_KEY,
-                    algorithms=["HS256"]
+                    session_data["token"], settings.SECRET_KEY, algorithms=["HS256"]
                 )
                 results["checks_performed"].append("TOKEN_VALIDATION")
             except jwt.InvalidTokenError:
@@ -286,9 +276,7 @@ class HIPAAComplianceValidator:
         return results
 
     def generate_compliance_report(
-        self,
-        validation_results: List[Dict],
-        report_type: str = "full"
+        self, validation_results: List[Dict], report_type: str = "full"
     ) -> Dict:
         """Generate comprehensive compliance report."""
         report = {
@@ -302,8 +290,8 @@ class HIPAAComplianceValidator:
                 "phi_protection": {"status": "PASS", "issues": []},
                 "access_control": {"status": "PASS", "issues": []},
                 "audit_logging": {"status": "PASS", "issues": []},
-                "data_transmission": {"status": "PASS", "issues": []}
-            }
+                "data_transmission": {"status": "PASS", "issues": []},
+            },
         }
 
         # Process validation results
@@ -346,7 +334,7 @@ class HIPAAComplianceValidator:
             request_method=log_entry.get("request_method"),
             request_path=log_entry.get("request_path"),
             response_status=log_entry.get("response_status"),
-            phi_accessed=log_entry.get("phi_accessed", False)
+            phi_accessed=log_entry.get("phi_accessed", False),
         )
         self.db.add(audit_log)
         self.db.commit()
@@ -360,7 +348,7 @@ class HIPAAComplianceValidator:
             "resource_type": context.get("resource_type"),
             "resource_id": context.get("resource_id"),
             "ip_address": context.get("ip_address"),
-            "phi_accessed": True
+            "phi_accessed": True,
         }
         self.validate_audit_logging(log_entry)
 

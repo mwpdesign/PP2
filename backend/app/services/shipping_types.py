@@ -1,6 +1,7 @@
 """
 Shipping service type definitions and base classes.
 """
+
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 from enum import Enum
@@ -9,6 +10,7 @@ from pydantic import BaseModel
 
 class Address(BaseModel):
     """Shipping address model."""
+
     street1: str
     street2: Optional[str] = None
     city: str
@@ -23,6 +25,7 @@ class Address(BaseModel):
 
 class Package(BaseModel):
     """Package information model."""
+
     weight: float  # in pounds
     length: float  # in inches
     width: float  # in inches
@@ -37,6 +40,7 @@ class Package(BaseModel):
 
 class ShippingServiceType(str, Enum):
     """Shipping service types."""
+
     GROUND = "GROUND"
     EXPRESS = "EXPRESS"
     OVERNIGHT = "OVERNIGHT"
@@ -46,6 +50,7 @@ class ShippingServiceType(str, Enum):
 
 class TrackingStatus(str, Enum):
     """Shipment tracking status types."""
+
     PENDING = "PENDING"  # Initial state before carrier pickup
     CREATED = "CREATED"
     PICKUP = "PICKUP"
@@ -58,6 +63,7 @@ class TrackingStatus(str, Enum):
 
 class TrackingEvent(BaseModel):
     """Shipment tracking event."""
+
     status: TrackingStatus
     timestamp: datetime
     location: Optional[str] = None
@@ -67,6 +73,7 @@ class TrackingEvent(BaseModel):
 
 class ShippingRate(BaseModel):
     """Shipping rate information."""
+
     carrier: str
     service: ShippingServiceType
     rate: float
@@ -77,6 +84,7 @@ class ShippingRate(BaseModel):
 
 class ShippingLabel(BaseModel):
     """Shipping label information."""
+
     carrier: str
     tracking_number: str
     label_url: str
@@ -87,6 +95,7 @@ class ShippingLabel(BaseModel):
 
 class TrackingInfo(BaseModel):
     """Shipment tracking information."""
+
     carrier: str
     tracking_number: str
     status: TrackingStatus
@@ -114,7 +123,7 @@ class ShippingProvider:
         from_address: Address,
         to_address: Address,
         package: Package,
-        service_type: Optional[ShippingServiceType] = None
+        service_type: Optional[ShippingServiceType] = None,
     ) -> List[ShippingRate]:
         """Get available shipping rates."""
         raise NotImplementedError()
@@ -125,7 +134,7 @@ class ShippingProvider:
         to_address: Address,
         package: Package,
         service_type: ShippingServiceType,
-        reference: Optional[str] = None
+        reference: Optional[str] = None,
     ) -> ShippingLabel:
         """Create shipping label."""
         raise NotImplementedError()

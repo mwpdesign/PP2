@@ -1,4 +1,5 @@
 """User service for managing users."""
+
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy import select, or_
@@ -20,11 +21,7 @@ class UserService:
         """
         self.db = db
 
-    async def create_user(
-        self,
-        user_data: UserCreate,
-        created_by_id: UUID
-    ) -> User:
+    async def create_user(self, user_data: UserCreate, created_by_id: UUID) -> User:
         """Create a new user.
 
         Args:
@@ -40,10 +37,7 @@ class UserService:
         # Check if user already exists
         result = await self.db.execute(
             select(User).where(
-                or_(
-                    User.email == user_data.email,
-                    User.username == user_data.username
-                )
+                or_(User.email == user_data.email, User.username == user_data.username)
             )
         )
         existing_user = result.scalar_one_or_none()
@@ -67,7 +61,7 @@ class UserService:
             mfa_enabled=user_data.mfa_enabled,
             is_active=user_data.is_active,
             is_superuser=user_data.is_superuser,
-            created_by=created_by_id
+            created_by=created_by_id,
         )
 
         self.db.add(db_user)
@@ -88,10 +82,7 @@ class UserService:
         return await self.db.get(User, user_id)
 
     async def get_users(
-        self,
-        organization_id: UUID,
-        skip: int = 0,
-        limit: int = 100
+        self, organization_id: UUID, skip: int = 0, limit: int = 100
     ) -> List[User]:
         """Get users for an organization.
 
@@ -112,10 +103,7 @@ class UserService:
         return list(result.scalars().all())
 
     async def update_user(
-        self,
-        user_id: UUID,
-        user_data: UserUpdate,
-        updated_by_id: UUID
+        self, user_id: UUID, user_data: UserUpdate, updated_by_id: UUID
     ) -> User:
         """Update user data.
 
@@ -164,10 +152,7 @@ class UserService:
         await self.db.commit()
 
     async def update_user_preferences(
-        self,
-        user_id: UUID,
-        preferences: UserPreferences,
-        updated_by_id: UUID
+        self, user_id: UUID, preferences: UserPreferences, updated_by_id: UUID
     ) -> User:
         """Update user preferences.
 
@@ -195,10 +180,7 @@ class UserService:
 
         return user
 
-    async def get_user_by_email(
-        self,
-        email: str
-    ) -> User:
+    async def get_user_by_email(self, email: str) -> User:
         """Get user by email.
 
         Args:
@@ -207,15 +189,10 @@ class UserService:
         Returns:
             User: User object
         """
-        result = await self.db.execute(
-            select(User).where(User.email == email)
-        )
+        result = await self.db.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
-    async def get_user_by_username(
-        self,
-        username: str
-    ) -> User:
+    async def get_user_by_username(self, username: str) -> User:
         """Get user by username.
 
         Args:
@@ -224,16 +201,10 @@ class UserService:
         Returns:
             User: User object
         """
-        result = await self.db.execute(
-            select(User).where(User.username == username)
-        )
+        result = await self.db.execute(select(User).where(User.username == username))
         return result.scalar_one_or_none()
 
-    async def update_user_password(
-        self,
-        user: User,
-        new_password: str
-    ) -> User:
+    async def update_user_password(self, user: User, new_password: str) -> User:
         """Update user password.
 
         Args:

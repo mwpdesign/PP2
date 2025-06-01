@@ -4,11 +4,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.providers.models import (
-    ProviderCreate,
-    ProviderUpdate,
-    ProviderInDB
-)
+from app.api.providers.models import ProviderCreate, ProviderUpdate, ProviderInDB
 from app.models.provider import Provider
 
 
@@ -20,15 +16,10 @@ class ProviderService:
         self.db = db
 
     async def create_provider(
-        self,
-        provider_data: ProviderCreate,
-        created_by_id: UUID
+        self, provider_data: ProviderCreate, created_by_id: UUID
     ) -> Provider:
         """Create a new provider."""
-        provider = Provider(
-            **provider_data.model_dump(),
-            created_by_id=created_by_id
-        )
+        provider = Provider(**provider_data.model_dump(), created_by_id=created_by_id)
         self.db.add(provider)
         await self.db.commit()
         await self.db.refresh(provider)
@@ -41,23 +32,13 @@ class ProviderService:
         )
         return result.scalar_one_or_none()
 
-    async def get_providers(
-        self,
-        skip: int = 0,
-        limit: int = 100
-    ) -> List[Provider]:
+    async def get_providers(self, skip: int = 0, limit: int = 100) -> List[Provider]:
         """Get a list of providers."""
-        result = await self.db.execute(
-            select(Provider)
-            .offset(skip)
-            .limit(limit)
-        )
+        result = await self.db.execute(select(Provider).offset(skip).limit(limit))
         return result.scalars().all()
 
     async def update_provider(
-        self,
-        provider_id: UUID,
-        provider_data: ProviderUpdate
+        self, provider_id: UUID, provider_data: ProviderUpdate
     ) -> Optional[Provider]:
         """Update a provider."""
         provider = await self.get_provider(provider_id)

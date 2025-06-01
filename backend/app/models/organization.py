@@ -1,4 +1,5 @@
 """Organization model for the healthcare IVR platform."""
+
 from datetime import datetime
 from uuid import UUID as PyUUID, uuid4
 from sqlalchemy import String, DateTime, Boolean, JSON
@@ -16,36 +17,21 @@ class Organization(Base):
     __tablename__ = "organizations"
 
     id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4
+        UUID(as_uuid=True), primary_key=True, default=uuid4
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    settings: Mapped[dict] = mapped_column(
-        JSON,
-        nullable=False,
-        server_default='{}'
-    )
+    settings: Mapped[dict] = mapped_column(JSON, nullable=False, server_default="{}")
     security_policy: Mapped[dict] = mapped_column(
-        JSON,
-        nullable=False,
-        server_default='{}'
+        JSON, nullable=False, server_default="{}"
     )
-    is_active: Mapped[bool] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=True
-    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     status: Mapped[str] = mapped_column(String(50))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now()
+        DateTime(timezone=True), server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
     # Relationships

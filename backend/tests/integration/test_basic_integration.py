@@ -1,4 +1,5 @@
 """Basic integration tests for the Healthcare IVR Platform."""
+
 import pytest
 from httpx import AsyncClient
 from typing import Dict, Any
@@ -20,10 +21,7 @@ async def test_health_check():
 async def test_auth_flow(test_client, test_user):
     """Test authentication flow."""
     # Login
-    login_data = {
-        "username": test_user.email,
-        "password": "test_password"
-    }
+    login_data = {"username": test_user.email, "password": "test_password"}
     response = await test_client.post("/api/v1/auth/login", json=login_data)
     assert response.status_code == 200
     token_data = response.json()
@@ -37,11 +35,7 @@ async def test_auth_flow(test_client, test_user):
 
 
 @pytest.mark.asyncio
-async def test_patient_workflow(
-    test_client,
-    test_user,
-    test_data: Dict[str, Any]
-):
+async def test_patient_workflow(test_client, test_user, test_data: Dict[str, Any]):
     """Test patient registration and retrieval."""
     # Register patient
     patient_data = {
@@ -50,13 +44,10 @@ async def test_patient_workflow(
         "date_of_birth": "1990-01-01",
         "email": "john.doe@example.com",
         "phone": "+1234567890",
-        "territory": test_data["test_user"]["territory"]
+        "territory": test_data["test_user"]["territory"],
     }
 
-    response = await test_client.post(
-        "/api/v1/patients/register",
-        json=patient_data
-    )
+    response = await test_client.post("/api/v1/patients/register", json=patient_data)
     assert response.status_code == 201
     patient_id = response.json()["id"]
 
@@ -67,23 +58,14 @@ async def test_patient_workflow(
 
 
 @pytest.mark.asyncio
-async def test_order_workflow(
-    test_client,
-    test_user,
-    test_data: Dict[str, Any]
-):
+async def test_order_workflow(test_client, test_user, test_data: Dict[str, Any]):
     """Test order creation and processing."""
     # Create order
     order_data = {
         "patient_id": test_data["test_patient"]["id"],
         "provider_id": test_data["test_user"]["id"],
         "territory": test_data["test_user"]["territory"],
-        "items": [
-            {
-                "product_id": "TEST-PROD-1",
-                "quantity": 1
-            }
-        ]
+        "items": [{"product_id": "TEST-PROD-1", "quantity": 1}],
     }
 
     response = await test_client.post("/api/v1/orders/create", json=order_data)
@@ -97,17 +79,13 @@ async def test_order_workflow(
 
 
 @pytest.mark.asyncio
-async def test_ivr_workflow(
-    test_client,
-    test_user,
-    test_data: Dict[str, Any]
-):
+async def test_ivr_workflow(test_client, test_user, test_data: Dict[str, Any]):
     """Test IVR call flow."""
     # Start IVR call
     call_data = {
         "patient_id": test_data["test_patient"]["id"],
         "phone_number": "+1234567890",
-        "territory": test_data["test_user"]["territory"]
+        "territory": test_data["test_user"]["territory"],
     }
 
     response = await test_client.post("/api/v1/ivr/start-call", json=call_data)
@@ -129,10 +107,7 @@ async def test_security_features(test_client):
     for _ in range(max_attempts + 1):
         response = await test_client.post(
             "/api/v1/auth/login",
-            json={
-                "username": "nonexistent@example.com",
-                "password": "wrong_password"
-            }
+            json={"username": "nonexistent@example.com", "password": "wrong_password"},
         )
     assert response.status_code == 429  # Too many requests
 
@@ -143,11 +118,7 @@ async def test_security_features(test_client):
 
 
 @pytest.mark.asyncio
-async def test_compliance_features(
-    test_client,
-    test_user,
-    test_data: Dict[str, Any]
-):
+async def test_compliance_features(test_client, test_user, test_data: Dict[str, Any]):
     """Test HIPAA compliance features."""
     # Test PHI access logging
     patient_id = test_data["test_patient"]["id"]
@@ -156,11 +127,7 @@ async def test_compliance_features(
 
     # Verify audit log
     response = await test_client.get(
-        "/api/v1/audit/logs",
-        params={
-            "resource_id": patient_id,
-            "action": "read"
-        }
+        "/api/v1/audit/logs", params={"resource_id": patient_id, "action": "read"}
     )
     assert response.status_code == 200
     logs = response.json()
@@ -169,30 +136,24 @@ async def test_compliance_features(
 
 
 @pytest.mark.asyncio
-async def test_notification_system(
-    test_client,
-    test_user,
-    test_data: Dict[str, Any]
-):
+async def test_notification_system(test_client, test_user, test_data: Dict[str, Any]):
     """Test notification system."""
     # Create notification
     notification_data = {
         "recipient_id": test_data["test_user"]["id"],
         "type": "order_status",
         "message": "Your order has been processed",
-        "territory": test_data["test_user"]["territory"]
+        "territory": test_data["test_user"]["territory"],
     }
 
     response = await test_client.post(
-        "/api/v1/notifications/send",
-        json=notification_data
+        "/api/v1/notifications/send", json=notification_data
     )
     assert response.status_code == 200
 
     # Verify notification delivery
     response = await test_client.get(
-        "/api/v1/notifications/user",
-        params={"user_id": test_data["test_user"]["id"]}
+        "/api/v1/notifications/user", params={"user_id": test_data["test_user"]["id"]}
     )
     assert response.status_code == 200
     notifications = response.json()

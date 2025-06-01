@@ -21,10 +21,10 @@ class SESService:
     def __init__(self):
         """Initialize SES service."""
         self.ses_client = boto3.client(
-            'ses',
+            "ses",
             region_name=settings.AWS_REGION,
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
         self.kms_service = KMSService()
 
@@ -38,7 +38,7 @@ class SESService:
         recipient_id: str,
         content: str,
         metadata: Dict,
-        attachments: Optional[Dict[str, bytes]] = None
+        attachments: Optional[Dict[str, bytes]] = None,
     ) -> bool:
         """Send HIPAA-compliant email."""
         try:
@@ -46,17 +46,17 @@ class SESService:
             recipient_email = await self._get_recipient_email(recipient_id)
 
             # Create message container
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = metadata.get('subject', 'Healthcare Notification')
-            msg['From'] = self.sender
-            msg['To'] = recipient_email
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = metadata.get("subject", "Healthcare Notification")
+            msg["From"] = self.sender
+            msg["To"] = recipient_email
 
             # Create HTML and plain text versions
             text_content = self._create_text_content(content)
             html_content = self._create_html_content(content)
 
-            msg.attach(MIMEText(text_content, 'plain'))
-            msg.attach(MIMEText(html_content, 'html'))
+            msg.attach(MIMEText(text_content, "plain"))
+            msg.attach(MIMEText(html_content, "html"))
 
             # Add attachments if any
             if attachments:
@@ -66,9 +66,7 @@ class SESService:
 
                     attachment = MIMEApplication(encrypted_content)
                     attachment.add_header(
-                        'Content-Disposition',
-                        'attachment',
-                        filename=filename
+                        "Content-Disposition", "attachment", filename=filename
                     )
                     msg.attach(attachment)
 
@@ -76,8 +74,8 @@ class SESService:
             response = self.ses_client.send_raw_email(
                 Source=self.sender,
                 Destinations=[recipient_email],
-                RawMessage={'Data': msg.as_string()},
-                ConfigurationSetName=settings.SES_CONFIGURATION_SET
+                RawMessage={"Data": msg.as_string()},
+                ConfigurationSetName=settings.SES_CONFIGURATION_SET,
             )
 
             logger.info(
@@ -88,10 +86,9 @@ class SESService:
             return True
 
         except ClientError as e:
-            error = e.response['Error']
+            error = e.response["Error"]
             logger.error(
-                f"Failed to send email: {error['Message']}, "
-                f"Type: {error['Code']}"
+                f"Failed to send email: {error['Message']}, " f"Type: {error['Code']}"
             )
             return False
 
@@ -143,21 +140,20 @@ class SESService:
             # Set up bounce notifications
             self.ses_client.set_identity_notification_topic(
                 Identity=self.sender,
-                NotificationType='Bounce',
-                SnsTopic=self.bounce_topic_arn
+                NotificationType="Bounce",
+                SnsTopic=self.bounce_topic_arn,
             )
 
             # Set up complaint notifications
             self.ses_client.set_identity_notification_topic(
                 Identity=self.sender,
-                NotificationType='Complaint',
-                SnsTopic=self.complaint_topic_arn
+                NotificationType="Complaint",
+                SnsTopic=self.complaint_topic_arn,
             )
 
             # Enable notifications
             self.ses_client.set_identity_feedback_forwarding_enabled(
-                Identity=self.sender,
-                ForwardingEnabled=True
+                Identity=self.sender, ForwardingEnabled=True
             )
 
             logger.info("Successfully configured bounce and complaint handling")

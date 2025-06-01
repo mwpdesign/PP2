@@ -2,6 +2,7 @@
 Manual verification script for Phase 1 completion.
 Tests basic database relationships and functionality.
 """
+
 import os
 import sys
 from datetime import datetime
@@ -35,7 +36,7 @@ def create_test_data(session):
             name="Test Healthcare Org",
             description="Test organization for verification",
             settings={"test_mode": True},
-            security_policy={"mfa_required": True}
+            security_policy={"mfa_required": True},
         )
         session.add(org)
         session.flush()
@@ -49,7 +50,7 @@ def create_test_data(session):
             organization_id=org.id,
             type="region",
             territory_metadata={"region": "test"},
-            security_policy={"access_level": "full"}
+            security_policy={"access_level": "full"},
         )
         session.add(territory)
         session.flush()
@@ -67,7 +68,7 @@ def create_test_data(session):
             zip_code="12345",
             phone="555-0123",
             organization_id=org.id,
-            territory_id=territory.id
+            territory_id=territory.id,
         )
         session.add(facility)
         session.flush()
@@ -79,7 +80,7 @@ def create_test_data(session):
             name="Test Role",
             description="Test role for verification",
             organization_id=org.id,
-            permissions={"test": True}
+            permissions={"test": True},
         )
         session.add(role)
         session.flush()
@@ -97,7 +98,7 @@ def create_test_data(session):
             primary_territory_id=territory.id,
             assigned_territories=[territory.id],
             security_groups=["test_group"],
-            role_id=role.id
+            role_id=role.id,
         )
         session.add(user)
         session.flush()
@@ -117,7 +118,7 @@ def create_test_data(session):
             zip_code="12345",
             specialty="Family Medicine",
             accepting_new_patients=True,
-            created_by_id=user.id
+            created_by_id=user.id,
         )
         session.add(provider)
         session.flush()
@@ -142,7 +143,7 @@ def create_test_data(session):
             provider_id=provider.id,
             territory_id=territory.id,
             organization_id=org.id,
-            facility_id=facility.id
+            facility_id=facility.id,
         )
         session.add(patient)
         session.flush()
@@ -152,53 +153,47 @@ def create_test_data(session):
         print("\n=== Verifying Relationships ===")
 
         # Verify Organization -> Territory
-        org_territories = session.query(Territory).filter_by(
-            organization_id=org.id
-        ).all()
-        assert len(org_territories) == 1, (
-            "Organization -> Territory relationship failed"
+        org_territories = (
+            session.query(Territory).filter_by(organization_id=org.id).all()
         )
+        assert (
+            len(org_territories) == 1
+        ), "Organization -> Territory relationship failed"
         print("✅ Organization -> Territory relationship verified")
 
         # Verify Territory -> Facility
-        territory_facilities = session.query(Facility).filter_by(
-            territory_id=territory.id
-        ).all()
-        assert len(territory_facilities) == 1, (
-            "Territory -> Facility relationship failed"
+        territory_facilities = (
+            session.query(Facility).filter_by(territory_id=territory.id).all()
         )
+        assert (
+            len(territory_facilities) == 1
+        ), "Territory -> Facility relationship failed"
         print("✅ Territory -> Facility relationship verified")
 
         # Verify User -> Organization
-        user_org = session.query(Organization).filter_by(
-            id=user.organization_id
-        ).first()
+        user_org = (
+            session.query(Organization).filter_by(id=user.organization_id).first()
+        )
         assert user_org is not None, "User -> Organization relationship failed"
         print("✅ User -> Organization relationship verified")
 
         # Verify User -> Role
-        user_role = session.query(Role).filter_by(
-            id=user.role_id
-        ).first()
+        user_role = session.query(Role).filter_by(id=user.role_id).first()
         assert user_role is not None, "User -> Role relationship failed"
         print("✅ User -> Role relationship verified")
 
         # Verify Patient -> Provider
-        patient_provider = session.query(Provider).filter_by(
-            id=patient.provider_id
-        ).first()
-        assert patient_provider is not None, (
-            "Patient -> Provider relationship failed"
+        patient_provider = (
+            session.query(Provider).filter_by(id=patient.provider_id).first()
         )
+        assert patient_provider is not None, "Patient -> Provider relationship failed"
         print("✅ Patient -> Provider relationship verified")
 
         # Verify Patient -> Facility
-        patient_facility = session.query(Facility).filter_by(
-            id=patient.facility_id
-        ).first()
-        assert patient_facility is not None, (
-            "Patient -> Facility relationship failed"
+        patient_facility = (
+            session.query(Facility).filter_by(id=patient.facility_id).first()
         )
+        assert patient_facility is not None, "Patient -> Facility relationship failed"
         print("✅ Patient -> Facility relationship verified")
 
         # Commit changes
@@ -212,7 +207,7 @@ def create_test_data(session):
             "role": role,
             "user": user,
             "provider": provider,
-            "patient": patient
+            "patient": patient,
         }
 
     except Exception as e:

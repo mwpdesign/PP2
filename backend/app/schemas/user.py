@@ -1,4 +1,5 @@
 """User schemas."""
+
 from datetime import datetime
 from typing import Dict, List, Optional
 from uuid import UUID
@@ -7,6 +8,7 @@ from pydantic import BaseModel, EmailStr
 
 class UserBase(BaseModel):
     """Base user schema."""
+
     email: EmailStr
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -17,6 +19,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """User creation schema."""
+
     username: str
     password: str
     organization_id: UUID
@@ -27,6 +30,7 @@ class UserCreate(UserBase):
 
 class UserInDB(UserBase):
     """User database schema."""
+
     id: UUID
     organization_id: UUID
     hashed_password: str
@@ -35,11 +39,13 @@ class UserInDB(UserBase):
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True
 
 
 class UserUpdate(BaseModel):
     """User update schema."""
+
     email: Optional[EmailStr] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -51,6 +57,7 @@ class UserUpdate(BaseModel):
 
 class UserPreferences(BaseModel):
     """User preferences schema."""
+
     theme: Optional[str] = None
     notifications_enabled: bool = True
     language: str = "en"
@@ -58,6 +65,7 @@ class UserPreferences(BaseModel):
 
 class UserResponse(UserBase):
     """User response schema."""
+
     id: UUID
     organization_id: UUID
     role_id: UUID
@@ -70,11 +78,13 @@ class UserResponse(UserBase):
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True
 
 
 class UserLogin(BaseModel):
     """User login schema."""
+
     username: str
     password: str
     mfa_token: Optional[str] = None
@@ -82,6 +92,7 @@ class UserLogin(BaseModel):
 
 class TokenResponse(BaseModel):
     """Token response schema."""
+
     access_token: str
     token_type: str
     expires_in: int
@@ -90,4 +101,5 @@ class TokenResponse(BaseModel):
 
     class Config:
         """Pydantic configuration."""
+
         from_attributes = True

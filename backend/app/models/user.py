@@ -1,8 +1,7 @@
 """User model for the healthcare IVR platform."""
+
 from datetime import datetime, timedelta
-from sqlalchemy import (
-    String, Boolean, DateTime, Integer, ForeignKey, Column
-)
+from sqlalchemy import String, Boolean, DateTime, Integer, ForeignKey, Column
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -23,12 +22,7 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid4,
-        index=True
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
     username = Column(String(50), unique=True, index=True)
     email = Column(String(255), unique=True, index=True)
     encrypted_password = Column(String(255))
@@ -40,22 +34,13 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
 
     # Role fields
-    role_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey('roles.id'),
-        nullable=False
-    )
+    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False)
     role = relationship("Role", back_populates="users")
 
     # Audit fields
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now()
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     last_login = Column(DateTime(timezone=True))
 
@@ -69,181 +54,146 @@ class User(Base):
 
     # Organizational details
     organization_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey('organizations.id'),
-        nullable=False
+        UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False
     )
-    organization = relationship(
-        "Organization",
-        back_populates="users"
-    )
+    organization = relationship("Organization", back_populates="users")
 
     # Sensitive data relationship
-    sensitive_data = relationship(
-        "SensitiveData",
-        back_populates="user",
-        uselist=False
-    )
+    sensitive_data = relationship("SensitiveData", back_populates="user", uselist=False)
 
     # IVR relationships
     current_ivr_reviews = relationship(
         "IVRRequest",
         foreign_keys="IVRRequest.current_reviewer_id",
-        back_populates="current_reviewer"
+        back_populates="current_reviewer",
     )
     ivr_status_changes = relationship(
         "IVRStatusHistory",
         foreign_keys="IVRStatusHistory.changed_by_id",
-        back_populates="changed_by"
+        back_populates="changed_by",
     )
     ivr_approvals = relationship(
-        "IVRApproval",
-        foreign_keys="IVRApproval.approver_id",
-        back_populates="approver"
+        "IVRApproval", foreign_keys="IVRApproval.approver_id", back_populates="approver"
     )
     ivr_escalations_created = relationship(
         "IVREscalation",
         foreign_keys="IVREscalation.escalated_by_id",
-        back_populates="escalated_by"
+        back_populates="escalated_by",
     )
     ivr_escalations_received = relationship(
         "IVREscalation",
         foreign_keys="IVREscalation.escalated_to_id",
-        back_populates="escalated_to"
+        back_populates="escalated_to",
     )
     ivr_escalations_assigned = relationship(
         "IVREscalation",
         foreign_keys="IVREscalation.escalated_to_id",
         back_populates="escalated_to",
-        overlaps="ivr_escalations_received"
+        overlaps="ivr_escalations_received",
     )
     ivr_reviews = relationship(
-        "IVRReview",
-        foreign_keys="IVRReview.reviewer_id",
-        back_populates="reviewer"
+        "IVRReview", foreign_keys="IVRReview.reviewer_id", back_populates="reviewer"
     )
     uploaded_documents = relationship(
         "IVRDocument",
         foreign_keys="IVRDocument.uploaded_by_id",
-        back_populates="uploaded_by"
+        back_populates="uploaded_by",
     )
 
     # Provider relationship
     providers = relationship(
-        "Provider",
-        foreign_keys="Provider.created_by_id",
-        back_populates="created_by"
+        "Provider", foreign_keys="Provider.created_by_id", back_populates="created_by"
     )
 
     # Quality checks relationship
     quality_checks = relationship(
         "QualityCheck",
         foreign_keys="QualityCheck.created_by_id",
-        back_populates="created_by"
+        back_populates="created_by",
     )
 
     # Patient relationships
     patients = relationship(
-        "Patient",
-        foreign_keys="Patient.created_by_id",
-        back_populates="created_by"
+        "Patient", foreign_keys="Patient.created_by_id", back_populates="created_by"
     )
     updated_patients = relationship(
-        "Patient",
-        foreign_keys="Patient.updated_by_id",
-        back_populates="updated_by"
+        "Patient", foreign_keys="Patient.updated_by_id", back_populates="updated_by"
     )
     created_orders = relationship(
-        "Order",
-        foreign_keys="Order.created_by_id",
-        back_populates="created_by"
+        "Order", foreign_keys="Order.created_by_id", back_populates="created_by"
     )
     updated_orders = relationship(
-        "Order",
-        foreign_keys="Order.updated_by_id",
-        back_populates="updated_by"
+        "Order", foreign_keys="Order.updated_by_id", back_populates="updated_by"
     )
     order_status_changes = relationship(
         "OrderStatusHistory",
         foreign_keys="OrderStatusHistory.changed_by_id",
-        back_populates="changed_by"
+        back_populates="changed_by",
     )
     secondary_insurance = relationship(
         "SecondaryInsurance",
         foreign_keys="SecondaryInsurance.created_by_id",
-        back_populates="created_by"
+        back_populates="created_by",
     )
     phi_access_logs = relationship(
-        "PHIAccess",
-        foreign_keys="PHIAccess.user_id",
-        back_populates="user"
+        "PHIAccess", foreign_keys="PHIAccess.user_id", back_populates="user"
     )
     audit_logs = relationship(
-        "AuditLog",
-        foreign_keys="AuditLog.user_id",
-        back_populates="user"
+        "AuditLog", foreign_keys="AuditLog.user_id", back_populates="user"
     )
     created_audit_logs = relationship(
-        "AuditLog",
-        foreign_keys="AuditLog.created_by_id",
-        back_populates="created_by"
+        "AuditLog", foreign_keys="AuditLog.created_by_id", back_populates="created_by"
     )
     updated_audit_logs = relationship(
-        "AuditLog",
-        foreign_keys="AuditLog.updated_by_id",
-        back_populates="updated_by"
+        "AuditLog", foreign_keys="AuditLog.updated_by_id", back_populates="updated_by"
     )
     created_compliance_checks = relationship(
         "ComplianceCheck",
         foreign_keys="ComplianceCheck.created_by_id",
-        back_populates="created_by"
+        back_populates="created_by",
     )
     updated_compliance_checks = relationship(
         "ComplianceCheck",
         foreign_keys="ComplianceCheck.updated_by_id",
-        back_populates="updated_by"
+        back_populates="updated_by",
     )
     created_audit_reports = relationship(
         "AuditReport",
         foreign_keys="AuditReport.created_by_id",
-        back_populates="created_by"
+        back_populates="created_by",
     )
     updated_audit_reports = relationship(
         "AuditReport",
         foreign_keys="AuditReport.updated_by_id",
-        back_populates="updated_by"
+        back_populates="updated_by",
     )
     created_phi_access_logs = relationship(
-        "PHIAccess",
-        foreign_keys="PHIAccess.created_by_id",
-        back_populates="created_by"
+        "PHIAccess", foreign_keys="PHIAccess.created_by_id", back_populates="created_by"
     )
     updated_phi_access_logs = relationship(
-        "PHIAccess",
-        foreign_keys="PHIAccess.updated_by_id",
-        back_populates="updated_by"
+        "PHIAccess", foreign_keys="PHIAccess.updated_by_id", back_populates="updated_by"
     )
     created_records = relationship(
         "Order",
         foreign_keys="Order.created_by_id",
         back_populates="created_by",
-        overlaps="created_orders"
+        overlaps="created_orders",
     )
     updated_records = relationship(
         "Order",
         foreign_keys="Order.updated_by_id",
         back_populates="updated_by",
-        overlaps="updated_orders"
+        overlaps="updated_orders",
     )
     created_documents = relationship(
         "PatientDocument",
         foreign_keys="PatientDocument.created_by_id",
-        back_populates="created_by"
+        back_populates="created_by",
     )
     updated_documents = relationship(
         "PatientDocument",
         foreign_keys="PatientDocument.updated_by_id",
-        back_populates="updated_by"
+        back_populates="updated_by",
     )
 
     def __repr__(self) -> str:

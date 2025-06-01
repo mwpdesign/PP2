@@ -3,11 +3,7 @@
 import os
 import logging
 from typing import AsyncGenerator, Optional
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    create_async_engine,
-    async_sessionmaker
-)
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, declared_attr
 from sqlalchemy import text
 from dotenv import load_dotenv
@@ -33,7 +29,7 @@ def get_async_url():
             f"{os.getenv('DB_HOST', 'localhost')}:"
             f"{os.getenv('DB_PORT', '5432')}/"
             f"{os.getenv('DB_NAME', 'healthcare_ivr')}"
-        )
+        ),
     )
 
 
@@ -48,7 +44,7 @@ def get_sync_url():
             f"{os.getenv('DB_HOST', 'localhost')}:"
             f"{os.getenv('DB_PORT', '5432')}/"
             f"{os.getenv('DB_NAME', 'healthcare_ivr')}"
-        )
+        ),
     ).replace("+asyncpg", "")
 
 
@@ -62,7 +58,8 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
 
 class DatabaseSettings(BaseSettings):
     """Database configuration settings."""
-    model_config = ConfigDict(extra='ignore')  # Allow extra fields
+
+    model_config = ConfigDict(extra="ignore")  # Allow extra fields
 
     # Make all fields optional with defaults
     database_required: bool = True  # Enable database by default
@@ -76,7 +73,7 @@ db_settings = DatabaseSettings()
 
 class Base(DeclarativeBase):
     """Base class for all models."""
-    
+
     @declared_attr
     def __tablename__(cls) -> str:
         """Generate __tablename__ automatically."""
@@ -108,9 +105,7 @@ async def init_db() -> bool:
 
     # Early return if database not required
     if not db_settings.database_required:
-        logger.info(
-            "Database connection disabled - running in no-database mode"
-        )
+        logger.info("Database connection disabled - running in no-database mode")
         return True
 
     try:
@@ -122,9 +117,7 @@ async def init_db() -> bool:
                 pool_pre_ping=True,
             )
             async_session_factory = async_sessionmaker(
-                engine,
-                class_=AsyncSession,
-                expire_on_commit=False
+                engine, class_=AsyncSession, expire_on_commit=False
             )
 
         # Test connection
@@ -136,18 +129,34 @@ async def init_db() -> bool:
         if engine is not None:
             # Import models here to avoid circular imports
             from app.models import (  # noqa
-                organization, user, rbac, sensitive_data,
-                patient, facility, order, ivr, insurance, audit
+                organization,
+                user,
+                rbac,
+                sensitive_data,
+                patient,
+                facility,
+                order,
+                ivr,
+                insurance,
+                audit,
             )
             from app.services.shipping_types import (  # noqa
-                ShippingServiceType, TrackingStatus, ShippingProvider,
-                ShippingRate, ShippingLabel, TrackingInfo
+                ShippingServiceType,
+                TrackingStatus,
+                ShippingProvider,
+                ShippingRate,
+                ShippingLabel,
+                TrackingInfo,
             )
             from app.analytics.models import (  # noqa
-                DimTime, DimGeography, DimOrganization,
-                DimPatientDemographics, DimPatientSatisfaction,
+                DimTime,
+                DimGeography,
+                DimOrganization,
+                DimPatientDemographics,
+                DimPatientSatisfaction,
                 DimVerificationPerformance,
-                FactIVRCall, FactOrder
+                FactIVRCall,
+                FactOrder,
             )
 
             async with engine.begin() as conn:

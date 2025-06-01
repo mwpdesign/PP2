@@ -32,7 +32,7 @@ class SecurityEventHandler:
         event_type: SecurityEventType,
         event_data: Dict,
         source: str,
-        severity: SecurityIncidentSeverity
+        severity: SecurityIncidentSeverity,
     ) -> Dict:
         """Process and respond to security events."""
         try:
@@ -42,7 +42,7 @@ class SecurityEventHandler:
                 "data": event_data,
                 "source": source,
                 "severity": severity.value,
-                "status": "processing"
+                "status": "processing",
             }
 
             # Log the event
@@ -63,8 +63,7 @@ class SecurityEventHandler:
         except Exception as e:
             self.logger.error(f"Security event handling failed: {str(e)}")
             raise HTTPException(
-                status_code=500,
-                detail="Failed to handle security event"
+                status_code=500, detail="Failed to handle security event"
             )
 
     async def _log_security_event(self, event: Dict) -> None:
@@ -73,9 +72,7 @@ class SecurityEventHandler:
             # Store event in security events log
             # TODO: Implement secure event logging
             self.logger.info(
-                "Security event: %s, Severity: %s",
-                event["type"],
-                event["severity"]
+                "Security event: %s, Severity: %s", event["type"], event["severity"]
             )
         except Exception as e:
             self.logger.error(f"Failed to log security event: {str(e)}")
@@ -85,39 +82,41 @@ class SecurityEventHandler:
         actions = []
 
         if event["severity"] == SecurityIncidentSeverity.CRITICAL.value:
-            actions.extend([
-                {
-                    "type": "notify",
-                    "target": "security_team",
-                    "priority": "high"
-                },
-                {
-                    "type": "lockdown",
-                    "scope": "affected_resources",
-                    "duration": "until_reviewed"
-                }
-            ])
+            actions.extend(
+                [
+                    {"type": "notify", "target": "security_team", "priority": "high"},
+                    {
+                        "type": "lockdown",
+                        "scope": "affected_resources",
+                        "duration": "until_reviewed",
+                    },
+                ]
+            )
 
         if event["type"] == SecurityEventType.AUTH_FAILURE.value:
-            actions.append({
-                "type": "account_protection",
-                "action": "temporary_lockout",
-                "duration": "1_hour"
-            })
+            actions.append(
+                {
+                    "type": "account_protection",
+                    "action": "temporary_lockout",
+                    "duration": "1_hour",
+                }
+            )
 
         if event["type"] == SecurityEventType.DATA_BREACH.value:
-            actions.extend([
-                {
-                    "type": "notify",
-                    "target": "data_protection_officer",
-                    "priority": "critical"
-                },
-                {
-                    "type": "initiate",
-                    "process": "breach_protocol",
-                    "priority": "immediate"
-                }
-            ])
+            actions.extend(
+                [
+                    {
+                        "type": "notify",
+                        "target": "data_protection_officer",
+                        "priority": "critical",
+                    },
+                    {
+                        "type": "initiate",
+                        "process": "breach_protocol",
+                        "priority": "immediate",
+                    },
+                ]
+            )
 
         return actions
 

@@ -16,9 +16,7 @@ queue_service = QueueService()
 
 @router.websocket("/ws")
 async def websocket_endpoint(
-    websocket: WebSocket,
-    token: str,
-    db: Session = Depends(get_db)
+    websocket: WebSocket, token: str, db: Session = Depends(get_db)
 ):
     """WebSocket connection endpoint."""
     try:
@@ -37,14 +35,14 @@ async def websocket_endpoint(
                 data = await websocket.receive_json()
 
                 # Handle message types
-                message_type = data.get('type')
+                message_type = data.get("type")
 
-                if message_type == 'ping':
-                    await websocket.send_json({'type': 'pong'})
+                if message_type == "ping":
+                    await websocket.send_json({"type": "pong"})
 
-                elif message_type == 'ack':
+                elif message_type == "ack":
                     # Handle message acknowledgment
-                    message_id = data.get('message_id')
+                    message_id = data.get("message_id")
                     if message_id:
                         await queue_service.delete_message(message_id)
 
@@ -62,97 +60,62 @@ async def websocket_endpoint(
 async def handle_websocket_message(data: dict, user_id: str, websocket: WebSocket):
     """Handle incoming WebSocket messages."""
     try:
-        message_type = data.get('type')
-        content = data.get('content')
+        message_type = data.get("type")
+        content = data.get("content")
 
-        if message_type == 'subscribe':
+        if message_type == "subscribe":
             # Handle subscription requests
-            channels = content.get('channels', [])
+            channels = content.get("channels", [])
             for channel in channels:
                 await manager.subscribe(user_id, channel)
-            await websocket.send_json({
-                'type': 'subscribed',
-                'channels': channels
-            })
+            await websocket.send_json({"type": "subscribed", "channels": channels})
 
-        elif message_type == 'unsubscribe':
+        elif message_type == "unsubscribe":
             # Handle unsubscribe requests
-            channels = content.get('channels', [])
+            channels = content.get("channels", [])
             for channel in channels:
                 await manager.unsubscribe(user_id, channel)
-            await websocket.send_json({
-                'type': 'unsubscribed',
-                'channels': channels
-            })
+            await websocket.send_json({"type": "unsubscribed", "channels": channels})
 
-        elif message_type == 'status':
+        elif message_type == "status":
             # Handle status update requests
-            status = content.get('status')
+            status = content.get("status")
             if status:
                 await manager.update_user_status(user_id, status)
-                await websocket.send_json({
-                    'type': 'status_updated',
-                    'status': status
-                })
+                await websocket.send_json({"type": "status_updated", "status": status})
 
     except Exception as e:
-        await websocket.send_json({
-            'type': 'error',
-            'message': str(e)
-        })
+        await websocket.send_json({"type": "error", "message": str(e)})
 
 
 @router.post("/notify/{user_id}")
 async def send_notification(
-    user_id: str,
-    message: dict,
-    current_user = Depends(get_current_user)
+    user_id: str, message: dict, current_user=Depends(get_current_user)
 ):
     """Send real-time notification to user."""
     try:
         # Queue message for delivery
-        await queue_service.send_message(
-            message=message,
-            user_id=user_id
-        )
+        await queue_service.send_message(message=message, user_id=user_id)
 
         # Attempt immediate delivery if user is connected
-        success = await manager.send_personal_message(
-            message=message,
-            user_id=user_id
-        )
+        success = await manager.send_personal_message(message=message, user_id=user_id)
 
-        return {
-            "status": "delivered" if success else "queued",
-            "user_id": user_id
-        }
+        return {"status": "delivered" if success else "queued", "user_id": user_id}
 
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
 
 
 @router.post("/broadcast")
 async def broadcast_message(
     message: str,
     organization_id: Optional[str] = None,
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ) -> Dict[str, Any]:
     """Broadcast message to all users in organization."""
     if not message:
-        raise HTTPException(
-            status_code=400,
-            detail="Message is required"
-        )
+        raise HTTPException(status_code=400, detail="Message is required")
 
-    await manager.broadcast(
-        message,
-        organization_id=organization_id
-    )
+    await manager.broadcast(message, organization_id=organization_id)
 
-    return {
-        "message": message,
-        "organization_id": organization_id
-    }
+    return {"message": message, "organization_id": organization_id}

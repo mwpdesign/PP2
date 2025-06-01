@@ -19,19 +19,20 @@ from typing import Dict, Any, List
 from security_validator import SecurityConfigValidator
 from compliance_checker import HIPAAComplianceChecker
 
-logger = logging.getLogger('predictive_security')
+logger = logging.getLogger("predictive_security")
+
 
 class PredictiveSecurityAnalytics:
     def __init__(self, environment: str):
         self.environment = environment
-        self.cloudwatch = boto3.client('cloudwatch')
-        self.securityhub = boto3.client('securityhub')
+        self.cloudwatch = boto3.client("cloudwatch")
+        self.securityhub = boto3.client("securityhub")
         self.security_validator = SecurityConfigValidator(environment)
         self.compliance_checker = HIPAAComplianceChecker(environment)
 
         # Initialize model paths
-        self.model_path = f'models/{environment}_security_model.joblib'
-        self.scaler_path = f'models/{environment}_scaler.joblib'
+        self.model_path = f"models/{environment}_security_model.joblib"
+        self.scaler_path = f"models/{environment}_scaler.joblib"
 
     def collect_security_data(self, days_back: int = 90) -> pd.DataFrame:
         """
@@ -47,23 +48,22 @@ class PredictiveSecurityAnalytics:
 
         # Get current security validation
         security_validation = self.security_validator.validate()
-        security_validation_df = pd.DataFrame(
-            [self._flatten_dict(security_validation)]
-        )
+        security_validation_df = pd.DataFrame([self._flatten_dict(security_validation)])
 
         # Get current compliance status
         compliance_status = self.compliance_checker.validate()
-        compliance_df = pd.DataFrame(
-            [self._flatten_dict(compliance_status)]
-        )
+        compliance_df = pd.DataFrame([self._flatten_dict(compliance_status)])
 
         # Merge all data sources
-        merged_data = pd.concat([
-            cloudwatch_metrics,
-            security_findings,
-            security_validation_df,
-            compliance_df
-        ], axis=1)
+        merged_data = pd.concat(
+            [
+                cloudwatch_metrics,
+                security_findings,
+                security_validation_df,
+                compliance_df,
+            ],
+            axis=1,
+        )
 
         return self._preprocess_data(merged_data)
 
@@ -76,54 +76,44 @@ class PredictiveSecurityAnalytics:
 
         metrics_to_collect = [
             {
-                'Namespace': 'AWS/SecurityHub',
-                'MetricName': 'SecurityFindingCount',
-                'Dimensions': [
-                    {'Name': 'Severity', 'Value': 'CRITICAL'}
-                ]
+                "Namespace": "AWS/SecurityHub",
+                "MetricName": "SecurityFindingCount",
+                "Dimensions": [{"Name": "Severity", "Value": "CRITICAL"}],
             },
             {
-                'Namespace': 'AWS/WAF',
-                'MetricName': 'BlockedRequests',
-                'Dimensions': [
-                    {'Name': 'WebACL', 'Value': f'{self.environment}-waf'}
-                ]
+                "Namespace": "AWS/WAF",
+                "MetricName": "BlockedRequests",
+                "Dimensions": [{"Name": "WebACL", "Value": f"{self.environment}-waf"}],
             },
             {
-                'Namespace': 'AWS/GuardDuty',
-                'MetricName': 'FindingCount',
-                'Dimensions': [
-                    {'Name': 'Severity', 'Value': 'High'}
-                ]
-            }
+                "Namespace": "AWS/GuardDuty",
+                "MetricName": "FindingCount",
+                "Dimensions": [{"Name": "Severity", "Value": "High"}],
+            },
         ]
 
         collected_metrics = []
         for metric in metrics_to_collect:
             try:
                 response = self.cloudwatch.get_metric_statistics(
-                    Namespace=metric['Namespace'],
-                    MetricName=metric['MetricName'],
-                    Dimensions=metric['Dimensions'],
+                    Namespace=metric["Namespace"],
+                    MetricName=metric["MetricName"],
+                    Dimensions=metric["Dimensions"],
                     StartTime=start_time,
                     EndTime=end_time,
                     Period=3600,
-                    Statistics=['Average', 'Maximum', 'Sum']
+                    Statistics=["Average", "Maximum", "Sum"],
                 )
 
-                metric_df = pd.DataFrame(response['Datapoints'])
-                metric_df['MetricName'] = metric['MetricName']
+                metric_df = pd.DataFrame(response["Datapoints"])
+                metric_df["MetricName"] = metric["MetricName"]
                 collected_metrics.append(metric_df)
             except Exception as e:
                 logger.error(
                     f"Error collecting metric {metric['MetricName']}: {str(e)}"
                 )
 
-        return (
-            pd.concat(collected_metrics)
-            if collected_metrics
-            else pd.DataFrame()
-        )
+        return pd.concat(collected_metrics) if collected_metrics else pd.DataFrame()
 
     def _fetch_security_findings(self, days_back: int) -> pd.DataFrame:
         """
@@ -134,27 +124,19 @@ class PredictiveSecurityAnalytics:
             start_time = end_time - timedelta(days=days_back)
 
             filters = {
-                'RecordState': [
-                    {'Value': 'ACTIVE', 'Comparison': 'EQUALS'}
+                "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
+                "WorkflowStatus": [{"Value": "NEW", "Comparison": "EQUALS"}],
+                "FirstObservedAt": [
+                    {"Start": start_time.isoformat(), "End": end_time.isoformat()}
                 ],
-                'WorkflowStatus': [
-                    {'Value': 'NEW', 'Comparison': 'EQUALS'}
-                ],
-                'FirstObservedAt': [
-                    {
-                        'Start': start_time.isoformat(),
-                        'End': end_time.isoformat()
-                    }
-                ]
             }
 
             response = self.securityhub.get_findings(Filters=filters)
-            findings_df = pd.DataFrame(response['Findings'])
+            findings_df = pd.DataFrame(response["Findings"])
 
             # Extract relevant security features
             security_features = findings_df.apply(
-                self._extract_security_features,
-                axis=1
+                self._extract_security_features, axis=1
             )
 
             return security_features
@@ -167,21 +149,23 @@ class PredictiveSecurityAnalytics:
         """
         Extract meaningful security features from findings
         """
-        severity = finding.get('Severity', {})
-        resources = finding.get('Resources', [{}])
-        compliance = finding.get('Compliance', {})
+        severity = finding.get("Severity", {})
+        resources = finding.get("Resources", [{}])
+        compliance = finding.get("Compliance", {})
 
-        return pd.Series({
-            'severity_critical': severity.get('Label') == 'CRITICAL',
-            'severity_high': severity.get('Label') == 'HIGH',
-            'resource_type': resources[0].get('Type', 'UNKNOWN'),
-            'compliance_status': compliance.get('Status', 'UNKNOWN'),
-            'finding_type': finding.get('Type', 'UNKNOWN'),
-            'is_phi_related': (
-                'PHI' in finding.get('Title', '') or
-                'PHI' in finding.get('Description', '')
-            )
-        })
+        return pd.Series(
+            {
+                "severity_critical": severity.get("Label") == "CRITICAL",
+                "severity_high": severity.get("Label") == "HIGH",
+                "resource_type": resources[0].get("Type", "UNKNOWN"),
+                "compliance_status": compliance.get("Status", "UNKNOWN"),
+                "finding_type": finding.get("Type", "UNKNOWN"),
+                "is_phi_related": (
+                    "PHI" in finding.get("Title", "")
+                    or "PHI" in finding.get("Description", "")
+                ),
+            }
+        )
 
     def _preprocess_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -191,13 +175,13 @@ class PredictiveSecurityAnalytics:
         data = data.fillna(0)
 
         # Convert categorical variables
-        categorical_columns = data.select_dtypes(include=['object']).columns
+        categorical_columns = data.select_dtypes(include=["object"]).columns
         for col in categorical_columns:
             data[col] = pd.Categorical(data[col]).codes
 
         return data
 
-    def _flatten_dict(self, d: Dict, parent_key: str = '', sep: str = '_') -> Dict:
+    def _flatten_dict(self, d: Dict, parent_key: str = "", sep: str = "_") -> Dict:
         """
         Flatten nested dictionary for DataFrame conversion
         """
@@ -218,8 +202,8 @@ class PredictiveSecurityAnalytics:
 
         try:
             # Prepare features and target
-            features = training_data.drop('security_incident', axis=1)
-            target = training_data['security_incident']
+            features = training_data.drop("security_incident", axis=1)
+            target = training_data["security_incident"]
 
             # Preprocess data
             scaler = StandardScaler()
@@ -232,10 +216,7 @@ class PredictiveSecurityAnalytics:
 
             # Train Random Forest model
             model = RandomForestClassifier(
-                n_estimators=100,
-                max_depth=10,
-                min_samples_split=5,
-                random_state=42
+                n_estimators=100, max_depth=10, min_samples_split=5, random_state=42
             )
             model.fit(X_train, y_train)
 
@@ -243,16 +224,20 @@ class PredictiveSecurityAnalytics:
             train_score = model.score(X_train, y_train)
             test_score = model.score(X_test, y_test)
 
-            logger.info(f"Model training complete. Train score: {train_score:.3f}, Test score: {test_score:.3f}")
+            logger.info(
+                f"Model training complete. Train score: {train_score:.3f}, Test score: {test_score:.3f}"
+            )
 
             # Save model and scaler
             joblib.dump(model, self.model_path)
             joblib.dump(scaler, self.scaler_path)
 
             return {
-                'train_accuracy': train_score,
-                'test_accuracy': test_score,
-                'feature_importances': dict(zip(features.columns, model.feature_importances_))
+                "train_accuracy": train_score,
+                "test_accuracy": test_score,
+                "feature_importances": dict(
+                    zip(features.columns, model.feature_importances_)
+                ),
             }
 
         except Exception as e:
@@ -280,23 +265,17 @@ class PredictiveSecurityAnalytics:
             )
 
             return {
-                'risk_probabilities': risk_probabilities.tolist(),
-                'high_risk_factors': high_risk_factors,
-                'prediction_timestamp': datetime.utcnow().isoformat()
+                "risk_probabilities": risk_probabilities.tolist(),
+                "high_risk_factors": high_risk_factors,
+                "prediction_timestamp": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error predicting security risks: {str(e)}")
-            return {
-                'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
-            }
+            return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
 
     def _identify_high_risk_factors(
-        self,
-        model: RandomForestClassifier,
-        data: pd.DataFrame,
-        predictions: np.ndarray
+        self, model: RandomForestClassifier, data: pd.DataFrame, predictions: np.ndarray
     ) -> List[Dict[str, Any]]:
         """
         Identify specific high-risk security factors
@@ -313,38 +292,53 @@ class PredictiveSecurityAnalytics:
             contributing_features = []
             for feature, importance in feature_importance.items():
                 if importance > 0.1 and data.iloc[idx][feature] > data[feature].mean():
-                    contributing_features.append({
-                        'feature': feature,
-                        'importance': float(importance),
-                        'value': float(data.iloc[idx][feature]),
-                        'mean_value': float(data[feature].mean())
-                    })
+                    contributing_features.append(
+                        {
+                            "feature": feature,
+                            "importance": float(importance),
+                            "value": float(data.iloc[idx][feature]),
+                            "mean_value": float(data[feature].mean()),
+                        }
+                    )
 
-            high_risk_factors.append({
-                'prediction_index': int(idx),
-                'risk_probability': float(predictions[idx, 1]),
-                'contributing_factors': contributing_features
-            })
+            high_risk_factors.append(
+                {
+                    "prediction_index": int(idx),
+                    "risk_probability": float(predictions[idx, 1]),
+                    "contributing_factors": contributing_features,
+                }
+            )
 
         return high_risk_factors
+
 
 def main():
     # Configure logging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     # Parse arguments
-    parser = argparse.ArgumentParser(description='Predictive Security Analytics')
-    parser.add_argument('--environment', default='prod',
-                      choices=['dev', 'staging', 'prod'],
-                      help='Environment to analyze')
-    parser.add_argument('--mode', choices=['train', 'predict'],
-                      default='predict',
-                      help='Mode of operation')
-    parser.add_argument('--days-back', type=int, default=90,
-                      help='Number of days of historical data to analyze')
+    parser = argparse.ArgumentParser(description="Predictive Security Analytics")
+    parser.add_argument(
+        "--environment",
+        default="prod",
+        choices=["dev", "staging", "prod"],
+        help="Environment to analyze",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["train", "predict"],
+        default="predict",
+        help="Mode of operation",
+    )
+    parser.add_argument(
+        "--days-back",
+        type=int,
+        default=90,
+        help="Number of days of historical data to analyze",
+    )
 
     args = parser.parse_args()
 
@@ -352,7 +346,7 @@ def main():
         # Initialize analytics
         security_analytics = PredictiveSecurityAnalytics(args.environment)
 
-        if args.mode == 'train':
+        if args.mode == "train":
             # Collect training data
             logger.info("Collecting training data...")
             training_data = security_analytics.collect_security_data(
@@ -384,5 +378,6 @@ def main():
         logger.error(f"Error in main execution: {str(e)}")
         raise
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

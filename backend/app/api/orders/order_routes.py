@@ -14,7 +14,7 @@ from app.api.orders.order_schemas import (
     OrderStatusResponse,
     OrderStatusHistoryResponse,
     BulkStatusUpdateRequest,
-    BulkStatusUpdateResponse
+    BulkStatusUpdateResponse,
 )
 
 router = APIRouter()
@@ -23,14 +23,14 @@ router = APIRouter()
 @router.post(
     "/orders/{order_id}/verify-insurance",
     response_model=InsuranceVerificationResponse,
-    tags=["orders"]
+    tags=["orders"],
 )
 async def verify_insurance_coverage(
     order_id: int,
     verification_data: InsuranceVerificationRequest,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory)
+    territory_id: int = Depends(get_current_territory),
 ):
     """
     Verify insurance coverage for an order
@@ -41,7 +41,7 @@ async def verify_insurance_coverage(
         patient_id=verification_data.patient_id,
         insurance_data=verification_data.insurance_data,
         user_id=current_user["id"],
-        territory_id=territory_id
+        territory_id=territory_id,
     )
     return result
 
@@ -49,30 +49,26 @@ async def verify_insurance_coverage(
 @router.get(
     "/orders/{order_id}/verification-status",
     response_model=VerificationStatusResponse,
-    tags=["orders"]
+    tags=["orders"],
 )
 async def get_verification_status(
     order_id: int,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory)
+    territory_id: int = Depends(get_current_territory),
 ):
     """
     Get the current insurance verification status for an order
     """
     service = InsuranceVerificationService(db)
     result = await service.get_verification_status(
-        order_id=order_id,
-        user_id=current_user["id"],
-        territory_id=territory_id
+        order_id=order_id, user_id=current_user["id"], territory_id=territory_id
     )
     return result
 
 
 @router.put(
-    "/orders/{order_id}/status",
-    response_model=OrderStatusResponse,
-    tags=["orders"]
+    "/orders/{order_id}/status", response_model=OrderStatusResponse, tags=["orders"]
 )
 async def update_order_status(
     order_id: int,
@@ -80,20 +76,20 @@ async def update_order_status(
     request: Request,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory)
+    territory_id: int = Depends(get_current_territory),
 ):
     """
     Update the status of an order
     """
     # Prepare request metadata for HIPAA audit
     request_metadata = {
-        'ip_address': request.client.host,
-        'user_agent': request.headers.get('user-agent'),
-        'request_id': request.headers.get('x-request-id'),
-        'correlation_id': request.headers.get('x-correlation-id'),
-        'session_id': request.headers.get('x-session-id'),
-        'access_reason': 'order_status_update',
-        'access_location': request.headers.get('x-location')
+        "ip_address": request.client.host,
+        "user_agent": request.headers.get("user-agent"),
+        "request_id": request.headers.get("x-request-id"),
+        "correlation_id": request.headers.get("x-correlation-id"),
+        "session_id": request.headers.get("x-session-id"),
+        "access_reason": "order_status_update",
+        "access_location": request.headers.get("x-location"),
     }
 
     service = OrderStatusService(db)
@@ -103,7 +99,7 @@ async def update_order_status(
         user_id=current_user["id"],
         territory_id=territory_id,
         notes=status_update.notes,
-        request_metadata=request_metadata
+        request_metadata=request_metadata,
     )
     return result
 
@@ -111,27 +107,27 @@ async def update_order_status(
 @router.get(
     "/orders/{order_id}/status-history",
     response_model=OrderStatusHistoryResponse,
-    tags=["orders"]
+    tags=["orders"],
 )
 async def get_order_status_history(
     order_id: int,
     request: Request,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory)
+    territory_id: int = Depends(get_current_territory),
 ):
     """
     Get the complete status history for an order
     """
     # Prepare request metadata for HIPAA audit
     request_metadata = {
-        'ip_address': request.client.host,
-        'user_agent': request.headers.get('user-agent'),
-        'request_id': request.headers.get('x-request-id'),
-        'correlation_id': request.headers.get('x-correlation-id'),
-        'session_id': request.headers.get('x-session-id'),
-        'access_reason': 'view_status_history',
-        'access_location': request.headers.get('x-location')
+        "ip_address": request.client.host,
+        "user_agent": request.headers.get("user-agent"),
+        "request_id": request.headers.get("x-request-id"),
+        "correlation_id": request.headers.get("x-correlation-id"),
+        "session_id": request.headers.get("x-session-id"),
+        "access_reason": "view_status_history",
+        "access_location": request.headers.get("x-location"),
     }
 
     service = OrderStatusService(db)
@@ -139,7 +135,7 @@ async def get_order_status_history(
         order_id=order_id,
         user_id=current_user["id"],
         territory_id=territory_id,
-        request_metadata=request_metadata
+        request_metadata=request_metadata,
     )
     return {"history": result}
 
@@ -147,27 +143,27 @@ async def get_order_status_history(
 @router.post(
     "/orders/bulk-status-update",
     response_model=BulkStatusUpdateResponse,
-    tags=["orders"]
+    tags=["orders"],
 )
 async def bulk_update_order_status(
     update_data: BulkStatusUpdateRequest,
     request: Request,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory)
+    territory_id: int = Depends(get_current_territory),
 ):
     """
     Update status for multiple orders at once
     """
     # Prepare request metadata for HIPAA audit
     request_metadata = {
-        'ip_address': request.client.host,
-        'user_agent': request.headers.get('user-agent'),
-        'request_id': request.headers.get('x-request-id'),
-        'correlation_id': request.headers.get('x-correlation-id'),
-        'session_id': request.headers.get('x-session-id'),
-        'access_reason': 'bulk_status_update',
-        'access_location': request.headers.get('x-location')
+        "ip_address": request.client.host,
+        "user_agent": request.headers.get("user-agent"),
+        "request_id": request.headers.get("x-request-id"),
+        "correlation_id": request.headers.get("x-correlation-id"),
+        "session_id": request.headers.get("x-session-id"),
+        "access_reason": "bulk_status_update",
+        "access_location": request.headers.get("x-location"),
     }
 
     service = OrderStatusService(db)
@@ -177,6 +173,6 @@ async def bulk_update_order_status(
         user_id=current_user["id"],
         territory_id=territory_id,
         notes=update_data.notes,
-        request_metadata=request_metadata
+        request_metadata=request_metadata,
     )
     return result

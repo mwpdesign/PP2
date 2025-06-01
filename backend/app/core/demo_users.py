@@ -1,4 +1,5 @@
 """Demo user data for development and testing."""
+
 from uuid import uuid4
 
 # Demo organization ID

@@ -1,4 +1,5 @@
 """IVR workflow service."""
+
 from typing import Dict, Any, Optional
 from datetime import datetime
 from uuid import UUID
@@ -44,9 +45,7 @@ class IVRWorkflowService:
         return request
 
     async def create_request(
-        self,
-        request_data: Dict[str, Any],
-        current_user: Dict[str, Any]
+        self, request_data: Dict[str, Any], current_user: Dict[str, Any]
     ) -> IVRRequest:
         """Create a new IVR request."""
         # Create request
@@ -60,7 +59,7 @@ class IVRWorkflowService:
             request_metadata=request_data.get("request_metadata"),
             notes=request_data.get("notes"),
             created_by=current_user["id"],
-            updated_by=current_user["id"]
+            updated_by=current_user["id"],
         )
         self.db.add(request)
 
@@ -71,15 +70,13 @@ class IVRWorkflowService:
             return request
         except Exception as e:
             await self.db.rollback()
-            raise ValidationError(
-                f"Failed to create IVR request: {str(e)}"
-            )
+            raise ValidationError(f"Failed to create IVR request: {str(e)}")
 
     async def update_request(
         self,
         request_id: UUID,
         request_data: Dict[str, Any],
-        current_user: Dict[str, Any]
+        current_user: Dict[str, Any],
     ) -> IVRRequest:
         """Update an existing IVR request."""
         # Get request
@@ -87,10 +84,7 @@ class IVRWorkflowService:
 
         # Validate status transition
         if request_data.get("status"):
-            await self._validate_status_transition(
-                request,
-                request_data["status"]
-            )
+            await self._validate_status_transition(request, request_data["status"])
 
         # Update fields
         for field, value in request_data.items():
@@ -107,34 +101,26 @@ class IVRWorkflowService:
             return request
         except Exception as e:
             await self.db.rollback()
-            raise ValidationError(
-                f"Failed to update IVR request: {str(e)}"
-            )
+            raise ValidationError(f"Failed to update IVR request: {str(e)}")
 
     async def _validate_status_transition(
-        self,
-        request: IVRRequest,
-        new_status: str
+        self, request: IVRRequest, new_status: str
     ) -> None:
         """Validate if status transition is allowed."""
         valid_transitions = {
-            'pending': ['verified', 'cancelled'],
-            'verified': ['approved', 'cancelled'],
-            'approved': ['completed', 'cancelled'],
-            'completed': [],
-            'cancelled': []
+            "pending": ["verified", "cancelled"],
+            "verified": ["approved", "cancelled"],
+            "approved": ["completed", "cancelled"],
+            "completed": [],
+            "cancelled": [],
         }
 
         if new_status not in valid_transitions.get(request.status, []):
             raise ValidationError(
-                f"Invalid status transition from "
-                f"{request.status} to {new_status}"
+                f"Invalid status transition from " f"{request.status} to {new_status}"
             )
 
-    def create_ivr_request(
-        self,
-        request_data: IVRRequestCreate
-    ) -> IVRRequest:
+    def create_ivr_request(self, request_data: IVRRequestCreate) -> IVRRequest:
         """Create a new IVR request with initial validation."""
         # Create IVR request
         ivr_request = IVRRequest(**request_data.dict())
@@ -156,10 +142,7 @@ class IVRWorkflowService:
         return ivr_request
 
     def update_ivr_status(
-        self,
-        request_id: str,
-        new_status: IVRStatus,
-        reason: Optional[str] = None
+        self, request_id: str, new_status: IVRStatus, reason: Optional[str] = None
     ) -> IVRRequest:
         """Update IVR request status with history tracking."""
         ivr_request = self._get_ivr_request(request_id)
@@ -236,9 +219,7 @@ class IVRWorkflowService:
         return ivr_request
 
     def escalate_request(
-        self,
-        request_id: str,
-        escalation_data: IVREscalationCreate
+        self, request_id: str, escalation_data: IVREscalationCreate
     ) -> IVRRequest:
         """Escalate an IVR request to a higher authority."""
         ivr_request = self._get_ivr_request(request_id)
@@ -263,27 +244,20 @@ class IVRWorkflowService:
         return ivr_request
 
     def get_review_queue(
-        self,
-        queue_params: IVRQueueParams,
-        page: int = 1,
-        size: int = 20
+        self, queue_params: IVRQueueParams, page: int = 1, size: int = 20
     ) -> Dict:
         """Get IVR requests queue with filtering and pagination."""
         query = self.db.query(IVRRequest)
 
         # Apply filters
         if queue_params.facility_id:
-            query = query.filter(
-                IVRRequest.facility_id == queue_params.facility_id
-            )
+            query = query.filter(IVRRequest.facility_id == queue_params.facility_id)
 
         if queue_params.status:
             query = query.filter(IVRRequest.status == queue_params.status)
 
         if queue_params.priority:
-            query = query.filter(
-                IVRRequest.priority == queue_params.priority
-            )
+            query = query.filter(IVRRequest.priority == queue_params.priority)
 
         if queue_params.reviewer_id:
             query = query.filter(
@@ -301,10 +275,7 @@ class IVRWorkflowService:
             "size": size,
         }
 
-    def process_batch_action(
-        self,
-        batch_action: IVRBatchAction
-    ) -> Dict:
+    def process_batch_action(self, batch_action: IVRBatchAction) -> Dict:
         """Process batch actions on multiple IVR requests."""
         success = []
         failed = {}
@@ -312,25 +283,20 @@ class IVRWorkflowService:
         for request_id in batch_action.request_ids:
             try:
                 if batch_action.action == "assign":
-                    self.assign_reviewer(
-                        request_id,
-                        batch_action.reviewer_id
-                    )
+                    self.assign_reviewer(request_id, batch_action.reviewer_id)
                 elif batch_action.action == "approve":
                     self.approve_request(
                         request_id,
                         IVRApprovalCreate(
-                            decision="approved",
-                            reason=batch_action.notes
-                        )
+                            decision="approved", reason=batch_action.notes
+                        ),
                     )
                 elif batch_action.action == "reject":
                     self.approve_request(
                         request_id,
                         IVRApprovalCreate(
-                            decision="rejected",
-                            reason=batch_action.notes
-                        )
+                            decision="rejected", reason=batch_action.notes
+                        ),
                     )
                 success.append(request_id)
             except Exception as e:
@@ -339,30 +305,18 @@ class IVRWorkflowService:
         return {
             "success": success,
             "failed": failed,
-            "total_processed": len(
-                batch_action.request_ids
-            )
+            "total_processed": len(batch_action.request_ids),
         }
 
-    def _get_ivr_request(
-        self,
-        request_id: str
-    ) -> IVRRequest:
+    def _get_ivr_request(self, request_id: str) -> IVRRequest:
         """Get IVR request."""
-        ivr_request = (
-            self.db.query(IVRRequest)
-            .filter_by(id=request_id)
-            .first()
-        )
+        ivr_request = self.db.query(IVRRequest).filter_by(id=request_id).first()
         if not ivr_request:
             raise NotFoundException("IVR request not found")
 
         return ivr_request
 
-    def _notify_submission(
-        self,
-        ivr_request: IVRRequest
-    ):
+    def _notify_submission(self, ivr_request: IVRRequest):
         """Send notifications for new IVR submission."""
         self.notification_service.notify_new_ivr(ivr_request)
 

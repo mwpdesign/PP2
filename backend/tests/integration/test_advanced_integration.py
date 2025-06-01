@@ -8,14 +8,12 @@ from app.core.config import settings
 from app.services.security_service import SecurityService
 from app.services.performance_monitor import PerformanceMonitor
 from app.services.ml_validator import MLValidator
-from app.core.exceptions import (
-    SecurityException,
-    ComplianceException
-)
+from app.core.exceptions import SecurityException, ComplianceException
 
 
 class ComplianceLevel(Enum):
     """Compliance verification levels"""
+
     BASIC = "basic"
     STANDARD = "standard"
     ENHANCED = "enhanced"
@@ -25,6 +23,7 @@ class ComplianceLevel(Enum):
 @dataclass
 class PerformanceMetrics:
     """Performance measurement data structure"""
+
     response_time: float
     cpu_usage: float
     memory_usage: float
@@ -38,8 +37,8 @@ class AdvancedSystemIntegrationVerifier:
         self,
         db_session,
         test_client,
-        environment: str = 'development',
-        compliance_level: ComplianceLevel = ComplianceLevel.HIPAA
+        environment: str = "development",
+        compliance_level: ComplianceLevel = ComplianceLevel.HIPAA,
     ):
         """Initialize advanced verifier with dependencies"""
         self.db = db_session
@@ -89,7 +88,7 @@ class AdvancedSystemIntegrationVerifier:
                 compliance_results=compliance_results,
                 security_results=security_results,
                 performance_results=performance_results,
-                execution_time=time.time() - start_time
+                execution_time=time.time() - start_time,
             )
 
             return report
@@ -113,9 +112,7 @@ class AdvancedSystemIntegrationVerifier:
         )
 
         # IVR System
-        results["ivr"] = await self._verify_ivr_workflow(
-            metrics_name="ivr_workflow"
-        )
+        results["ivr"] = await self._verify_ivr_workflow(metrics_name="ivr_workflow")
 
         # Order Processing
         results["order"] = await self._verify_order_workflow(
@@ -151,7 +148,7 @@ class AdvancedSystemIntegrationVerifier:
                 "encryption": encryption_status,
                 "access_controls": access_status,
                 "audit_trail": audit_status,
-                "performance": await self.performance_monitor.end_operation(metrics)
+                "performance": await self.performance_monitor.end_operation(metrics),
             }
 
         except Exception as e:
@@ -167,16 +164,20 @@ class AdvancedSystemIntegrationVerifier:
             "data_transmission": await self._verify_data_transmission(),
             "retention_policies": await self._verify_retention_policies(),
             "breach_notification": await self._verify_breach_notification(),
-            "encryption_standards": await self._verify_encryption_standards()
+            "encryption_standards": await self._verify_encryption_standards(),
         }
 
         return {
-            "status": "compliant" if all(
-                result["status"] == "success"
-                for result in compliance_results.values()
-            ) else "non_compliant",
+            "status": (
+                "compliant"
+                if all(
+                    result["status"] == "success"
+                    for result in compliance_results.values()
+                )
+                else "non_compliant"
+            ),
             "results": compliance_results,
-            "violations": self.compliance_violations
+            "violations": self.compliance_violations,
         }
 
     async def _verify_phi_protection(self) -> Dict[str, Any]:
@@ -199,7 +200,7 @@ class AdvancedSystemIntegrationVerifier:
                 "storage_encryption": storage_encryption,
                 "transit_encryption": transit_encryption,
                 "key_management": key_management,
-                "data_masking": data_masking
+                "data_masking": data_masking,
             }
 
         except ComplianceException as e:
@@ -214,16 +215,20 @@ class AdvancedSystemIntegrationVerifier:
             "data_protection": await self._verify_data_protection(),
             "network_security": await self._verify_network_security(),
             "vulnerability_scan": await self._verify_vulnerabilities(),
-            "threat_detection": await self._verify_threat_detection()
+            "threat_detection": await self._verify_threat_detection(),
         }
 
         return {
-            "status": "secure" if all(
-                result["status"] == "success"
-                for result in security_results.values()
-            ) else "vulnerable",
+            "status": (
+                "secure"
+                if all(
+                    result["status"] == "success"
+                    for result in security_results.values()
+                )
+                else "vulnerable"
+            ),
             "results": security_results,
-            "events": self.security_events
+            "events": self.security_events,
         }
 
     async def _verify_performance(self) -> Dict[str, Any]:
@@ -232,7 +237,7 @@ class AdvancedSystemIntegrationVerifier:
         test_scenarios = [
             {"users": 10, "duration": 60},
             {"users": 50, "duration": 120},
-            {"users": 100, "duration": 180}
+            {"users": 100, "duration": 180},
         ]
 
         performance_results = {
@@ -240,16 +245,20 @@ class AdvancedSystemIntegrationVerifier:
             "response_times": await self._verify_response_times(),
             "resource_usage": await self._verify_resource_usage(),
             "scalability": await self._verify_scalability(),
-            "reliability": await self._verify_reliability()
+            "reliability": await self._verify_reliability(),
         }
 
         return {
-            "status": "optimal" if all(
-                result["status"] == "success"
-                for result in performance_results.values()
-            ) else "suboptimal",
+            "status": (
+                "optimal"
+                if all(
+                    result["status"] == "success"
+                    for result in performance_results.values()
+                )
+                else "suboptimal"
+            ),
             "results": performance_results,
-            "metrics": self.performance_metrics
+            "metrics": self.performance_metrics,
         }
 
     async def _generate_verification_report(
@@ -258,7 +267,7 @@ class AdvancedSystemIntegrationVerifier:
         compliance_results: Dict[str, Any],
         security_results: Dict[str, Any],
         performance_results: Dict[str, Any],
-        execution_time: float
+        execution_time: float,
     ) -> Dict[str, Any]:
         """Generate comprehensive verification report"""
         report = {
@@ -267,29 +276,35 @@ class AdvancedSystemIntegrationVerifier:
             "environment": self.environment,
             "compliance_level": self.compliance_level.value,
             "execution_time": execution_time,
-            "overall_status": "success" if all([
-                workflow_results.get("status") == "success",
-                compliance_results.get("status") == "compliant",
-                security_results.get("status") == "secure",
-                performance_results.get("status") == "optimal"
-            ]) else "failure",
+            "overall_status": (
+                "success"
+                if all(
+                    [
+                        workflow_results.get("status") == "success",
+                        compliance_results.get("status") == "compliant",
+                        security_results.get("status") == "secure",
+                        performance_results.get("status") == "optimal",
+                    ]
+                )
+                else "failure"
+            ),
             "results": {
                 "workflow": workflow_results,
                 "compliance": compliance_results,
                 "security": security_results,
-                "performance": performance_results
+                "performance": performance_results,
             },
             "metrics": {
                 "total_tests": len(self.performance_metrics),
                 "compliance_violations": len(self.compliance_violations),
-                "security_events": len(self.security_events)
+                "security_events": len(self.security_events),
             },
             "recommendations": await self._generate_recommendations(
                 workflow_results,
                 compliance_results,
                 security_results,
-                performance_results
-            )
+                performance_results,
+            ),
         }
 
         # Save detailed report
@@ -302,7 +317,7 @@ class AdvancedSystemIntegrationVerifier:
         workflow_results: Dict[str, Any],
         compliance_results: Dict[str, Any],
         security_results: Dict[str, Any],
-        performance_results: Dict[str, Any]
+        performance_results: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Generate actionable recommendations based on verification results"""
         recommendations = []
@@ -310,22 +325,26 @@ class AdvancedSystemIntegrationVerifier:
         # Analyze compliance violations
         if self.compliance_violations:
             for violation in self.compliance_violations:
-                recommendations.append({
-                    "type": "compliance",
-                    "severity": "high",
-                    "issue": str(violation),
-                    "recommendation": violation.remediation_steps
-                })
+                recommendations.append(
+                    {
+                        "type": "compliance",
+                        "severity": "high",
+                        "issue": str(violation),
+                        "recommendation": violation.remediation_steps,
+                    }
+                )
 
         # Analyze security events
         if self.security_events:
             for event in self.security_events:
-                recommendations.append({
-                    "type": "security",
-                    "severity": event.severity,
-                    "issue": event.description,
-                    "recommendation": event.mitigation_steps
-                })
+                recommendations.append(
+                    {
+                        "type": "security",
+                        "severity": event.severity,
+                        "issue": event.description,
+                        "recommendation": event.mitigation_steps,
+                    }
+                )
 
         # Analyze performance metrics
         if self.performance_metrics:
@@ -334,12 +353,14 @@ class AdvancedSystemIntegrationVerifier:
             ) / len(self.performance_metrics)
 
             if avg_response_time > settings.PERFORMANCE_THRESHOLD:
-                recommendations.append({
-                    "type": "performance",
-                    "severity": "medium",
-                    "issue": "High average response time",
-                    "recommendation": "Consider optimization or scaling"
-                })
+                recommendations.append(
+                    {
+                        "type": "performance",
+                        "severity": "medium",
+                        "issue": "High average response time",
+                        "recommendation": "Consider optimization or scaling",
+                    }
+                )
 
         return recommendations
 
@@ -361,17 +382,13 @@ class AdvancedSystemIntegrationVerifier:
 
 
 @pytest.mark.asyncio
-async def test_advanced_system_integration(
-    db_session,
-    test_client,
-    monkeypatch
-):
+async def test_advanced_system_integration(db_session, test_client, monkeypatch):
     """Execute advanced system integration verification"""
     verifier = AdvancedSystemIntegrationVerifier(
         db_session,
         test_client,
-        environment='testing',
-        compliance_level=ComplianceLevel.HIPAA
+        environment="testing",
+        compliance_level=ComplianceLevel.HIPAA,
     )
 
     results = await verifier.perform_comprehensive_verification()

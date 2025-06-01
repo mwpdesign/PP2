@@ -1,6 +1,7 @@
 """
 USPS shipping provider implementation with HIPAA compliance.
 """
+
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import asyncio
@@ -11,9 +12,15 @@ from app.core.config import get_settings
 from app.core.exceptions import ShippingException
 from app.core.audit import audit_shipping_operation
 from app.services.shipping_types import (
-    ShippingProvider, Address, Package, ShippingRate,
-    ShippingLabel, TrackingInfo, ShippingServiceType,
-    TrackingStatus, TrackingEvent
+    ShippingProvider,
+    Address,
+    Package,
+    ShippingRate,
+    ShippingLabel,
+    TrackingInfo,
+    ShippingServiceType,
+    TrackingStatus,
+    TrackingEvent,
 )
 
 
@@ -25,7 +32,7 @@ class USPSProvider(ShippingProvider):
         ShippingServiceType.EXPRESS: "Priority Mail Express",
         ShippingServiceType.OVERNIGHT: "Priority Mail Express",
         ShippingServiceType.PRIORITY: "Priority Mail",
-        ShippingServiceType.ECONOMY: "USPS Ground"
+        ShippingServiceType.ECONOMY: "USPS Ground",
     }
 
     def __init__(self, api_key: str, test_mode: bool = False):
@@ -56,12 +63,7 @@ class USPSProvider(ShippingProvider):
 
         return ET.tostring(root, encoding="unicode")
 
-    async def _make_request(
-        self,
-        api: str,
-        data: Dict,
-        retry_count: int = 0
-    ) -> Dict:
+    async def _make_request(self, api: str, data: Dict, retry_count: int = 0) -> Dict:
         """Make request to USPS API with retry logic."""
         if retry_count >= 3:
             raise ShippingException("Max retries exceeded for USPS API request")
@@ -70,11 +72,7 @@ class USPSProvider(ShippingProvider):
 
         try:
             response = await self.client.get(
-                self.base_url,
-                params={
-                    "API": api,
-                    "XML": xml_data
-                }
+                self.base_url, params={"API": api, "XML": xml_data}
             )
             response.raise_for_status()
 
@@ -88,7 +86,7 @@ class USPSProvider(ShippingProvider):
             return self._parse_xml_response(root)
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 429:  # Rate limit exceeded
-                await asyncio.sleep(2 ** retry_count)
+                await asyncio.sleep(2**retry_count)
                 return await self._make_request(api, data, retry_count + 1)
             raise ShippingException(f"USPS API request failed: {str(e)}")
         except Exception as e:
@@ -117,9 +115,7 @@ class USPSProvider(ShippingProvider):
                 "City": address.city,
                 "State": address.state,
                 "Zip5": address.postal_code[:5],
-                "Zip4": address.postal_code[6:] if len(
-                    address.postal_code
-                ) > 5 else ""
+                "Zip4": address.postal_code[6:] if len(address.postal_code) > 5 else "",
             }
         }
 
@@ -135,23 +131,20 @@ class USPSProvider(ShippingProvider):
             audit_shipping_operation(
                 operation="usps_address_validation",
                 status="success",
-                metadata={
-                    "address_id": str(address.id),
-                    "validation_result": is_valid
-                }
+                metadata={"address_id": str(address.id), "validation_result": is_valid},
             )
 
             return {
                 "valid": is_valid,
                 "normalized_address": normalized,
-                "validation_details": result
+                "validation_details": result,
             }
         except Exception as e:
             audit_shipping_operation(
                 operation="usps_address_validation",
                 status="error",
                 error=str(e),
-                metadata={"address_id": str(address.id)}
+                metadata={"address_id": str(address.id)},
             )
             raise
 
@@ -160,7 +153,7 @@ class USPSProvider(ShippingProvider):
         from_address: Address,
         to_address: Address,
         package: Package,
-        service_type: Optional[ShippingServiceType] = None
+        service_type: Optional[ShippingServiceType] = None,
     ) -> List[ShippingRate]:
         """Get USPS shipping rates."""
         try:
@@ -169,33 +162,32 @@ class USPSProvider(ShippingProvider):
                     "Package": {
                         "Service": (
                             self.SERVICE_MAPPING[service_type]
-                            if service_type else "ALL"
+                            if service_type
+                            else "ALL"
                         ),
                         "FirstClassMailType": "PACKAGE",
                         "ZipOrigination": from_address.postal_code[:5],
                         "ZipDestination": to_address.postal_code[:5],
                         "Pounds": str(int(package.weight)),
-                        "Ounces": str(
-                            round((package.weight % 1) * 16)
-                        ),
+                        "Ounces": str(round((package.weight % 1) * 16)),
                         "Container": "",
                         "Size": "REGULAR",
-                        "Machinable": "true"
+                        "Machinable": "true",
                     }
                 }
             }
 
             if all([package.length, package.width, package.height]):
-                data["RateV4Request"]["Package"].update({
-                    "Container": "RECTANGULAR",
-                    "Size": "LARGE",
-                    "Length": str(package.length),
-                    "Width": str(package.width),
-                    "Height": str(package.height),
-                    "Girth": str(
-                        2 * (package.width + package.height)
-                    )
-                })
+                data["RateV4Request"]["Package"].update(
+                    {
+                        "Container": "RECTANGULAR",
+                        "Size": "LARGE",
+                        "Length": str(package.length),
+                        "Width": str(package.width),
+                        "Height": str(package.height),
+                        "Girth": str(2 * (package.width + package.height)),
+                    }
+                )
 
             result = await self._make_request("RateV4", data)
 
@@ -203,22 +195,21 @@ class USPSProvider(ShippingProvider):
             for rate in result.get("Package", {}).get("Postage", []):
                 service_name = rate.get("MailService", "")
                 service_type = next(
-                    (k for k, v in self.SERVICE_MAPPING.items()
-                     if v in service_name),
-                    None
+                    (k for k, v in self.SERVICE_MAPPING.items() if v in service_name),
+                    None,
                 )
                 if service_type:
-                    rates.append(ShippingRate(
-                        carrier="USPS",
-                        service_type=service_type,
-                        rate=float(rate["Rate"]),
-                        currency="USD",
-                        delivery_days=self._parse_delivery_days(
-                            service_name
-                        ),
-                        guaranteed_delivery="Express" in service_name,
-                        tracking_included=True
-                    ))
+                    rates.append(
+                        ShippingRate(
+                            carrier="USPS",
+                            service_type=service_type,
+                            rate=float(rate["Rate"]),
+                            currency="USD",
+                            delivery_days=self._parse_delivery_days(service_name),
+                            guaranteed_delivery="Express" in service_name,
+                            tracking_included=True,
+                        )
+                    )
 
             audit_shipping_operation(
                 operation="usps_rate_request",
@@ -226,8 +217,8 @@ class USPSProvider(ShippingProvider):
                 metadata={
                     "from_address": str(from_address.id),
                     "to_address": str(to_address.id),
-                    "rates_count": len(rates)
-                }
+                    "rates_count": len(rates),
+                },
             )
 
             return rates
@@ -238,8 +229,8 @@ class USPSProvider(ShippingProvider):
                 error=str(e),
                 metadata={
                     "from_address": str(from_address.id),
-                    "to_address": str(to_address.id)
-                }
+                    "to_address": str(to_address.id),
+                },
             )
             raise
 
@@ -259,7 +250,7 @@ class USPSProvider(ShippingProvider):
         to_address: Address,
         package: Package,
         service_type: ShippingServiceType,
-        reference: Optional[str] = None
+        reference: Optional[str] = None,
     ) -> ShippingLabel:
         """Create USPS shipping label."""
         try:
@@ -271,19 +262,21 @@ class USPSProvider(ShippingProvider):
                     "ServiceType": self.SERVICE_MAPPING[service_type],
                     "ImageType": "PDF",
                     "LabelType": "Default",
-                    "CustomerRefNo": reference or "Medical Supplies"
+                    "CustomerRefNo": reference or "Medical Supplies",
                 }
             }
 
             if all([package.length, package.width, package.height]):
-                data["LabelRequest"].update({
-                    "Container": "RECTANGULAR",
-                    "Size": "LARGE",
-                    "Length": str(package.length),
-                    "Width": str(package.width),
-                    "Height": str(package.height),
-                    "Girth": str(2 * (package.width + package.height))
-                })
+                data["LabelRequest"].update(
+                    {
+                        "Container": "RECTANGULAR",
+                        "Size": "LARGE",
+                        "Length": str(package.length),
+                        "Width": str(package.width),
+                        "Height": str(package.height),
+                        "Girth": str(2 * (package.width + package.height)),
+                    }
+                )
 
             result = await self._make_request("DelivLabel", data)
 
@@ -299,8 +292,8 @@ class USPSProvider(ShippingProvider):
                 metadata={
                     "tracking_number": tracking_number,
                     "from_address": str(from_address.id),
-                    "to_address": str(to_address.id)
-                }
+                    "to_address": str(to_address.id),
+                },
             )
 
             return ShippingLabel(
@@ -308,7 +301,7 @@ class USPSProvider(ShippingProvider):
                 tracking_number=tracking_number,
                 label_url=label_url,
                 label_data=label_data,
-                expires_at=datetime.utcnow() + timedelta(days=7)
+                expires_at=datetime.utcnow() + timedelta(days=7),
             )
         except Exception as e:
             audit_shipping_operation(
@@ -317,21 +310,15 @@ class USPSProvider(ShippingProvider):
                 error=str(e),
                 metadata={
                     "from_address": str(from_address.id),
-                    "to_address": str(to_address.id)
-                }
+                    "to_address": str(to_address.id),
+                },
             )
             raise
 
     async def track_shipment(self, tracking_number: str) -> TrackingInfo:
         """Track USPS shipment."""
         try:
-            data = {
-                "TrackFieldRequest": {
-                    "TrackID": {
-                        "ID": tracking_number
-                    }
-                }
-            }
+            data = {"TrackFieldRequest": {"TrackID": {"ID": tracking_number}}}
 
             result = await self._make_request("TrackV2", data)
             track_info = result["TrackInfo"]
@@ -341,54 +328,56 @@ class USPSProvider(ShippingProvider):
                 "In Transit": TrackingStatus.IN_TRANSIT,
                 "Out for Delivery": TrackingStatus.OUT_FOR_DELIVERY,
                 "Exception": TrackingStatus.EXCEPTION,
-                "Return to Sender": TrackingStatus.RETURNED
+                "Return to Sender": TrackingStatus.RETURNED,
             }
 
             events = []
             for event in track_info.get("TrackDetail", []):
                 status = next(
                     (k for k, v in status_mapping.items() if k in event),
-                    TrackingStatus.IN_TRANSIT
+                    TrackingStatus.IN_TRANSIT,
                 )
-                events.append(TrackingEvent(
-                    timestamp=datetime.strptime(
-                        event["EventDate"] + " " + event["EventTime"],
-                        "%B %d, %Y %I:%M %p"
-                    ),
-                    status=status,
-                    location=event.get("EventCity", ""),
-                    description=event["Event"],
-                    details=event
-                ))
+                events.append(
+                    TrackingEvent(
+                        timestamp=datetime.strptime(
+                            event["EventDate"] + " " + event["EventTime"],
+                            "%B %d, %Y %I:%M %p",
+                        ),
+                        status=status,
+                        location=event.get("EventCity", ""),
+                        description=event["Event"],
+                        details=event,
+                    )
+                )
 
             audit_shipping_operation(
                 operation="usps_tracking",
                 status="success",
                 metadata={
                     "tracking_number": tracking_number,
-                    "current_status": track_info["Status"]
-                }
+                    "current_status": track_info["Status"],
+                },
             )
 
             return TrackingInfo(
                 carrier="USPS",
                 tracking_number=tracking_number,
                 current_status=status_mapping.get(
-                    track_info["Status"],
-                    TrackingStatus.IN_TRANSIT
+                    track_info["Status"], TrackingStatus.IN_TRANSIT
                 ),
-                estimated_delivery=datetime.strptime(
-                    track_info["ExpectedDeliveryDate"],
-                    "%B %d, %Y"
-                ) if "ExpectedDeliveryDate" in track_info else None,
+                estimated_delivery=(
+                    datetime.strptime(track_info["ExpectedDeliveryDate"], "%B %d, %Y")
+                    if "ExpectedDeliveryDate" in track_info
+                    else None
+                ),
                 events=events,
-                last_updated=datetime.utcnow()
+                last_updated=datetime.utcnow(),
             )
         except Exception as e:
             audit_shipping_operation(
                 operation="usps_tracking",
                 status="error",
                 error=str(e),
-                metadata={"tracking_number": tracking_number}
+                metadata={"tracking_number": tracking_number},
             )
             raise

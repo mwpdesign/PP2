@@ -1,4 +1,5 @@
 """Integration tests for organization management endpoints."""
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -16,7 +17,7 @@ def test_organization(db: Session) -> Organization:
         name="Test Organization",
         description="Test organization for integration tests",
         settings={},
-        security_policy={}
+        security_policy={},
     )
     db.add(org)
     db.commit()
@@ -36,8 +37,8 @@ def admin_user(db: Session, test_organization: Organization) -> User:
             "create_organizations": True,
             "update_organizations": True,
             "view_all_organizations": True,
-            "manage_all_organizations": True
-        }
+            "manage_all_organizations": True,
+        },
     )
     db.add(admin_role)
     db.commit()
@@ -51,7 +52,7 @@ def admin_user(db: Session, test_organization: Organization) -> User:
         role_id=admin_role.id,
         is_active=True,
         first_name="Admin",
-        last_name="User"
+        last_name="User",
     )
     db.add(admin)
     db.commit()
@@ -65,11 +66,7 @@ def admin_token(admin_user: User) -> str:
     return create_access_token(data={"sub": str(admin_user.id)})
 
 
-def test_create_organization(
-    client: TestClient,
-    db: Session,
-    admin_token: str
-):
+def test_create_organization(client: TestClient, db: Session, admin_token: str):
     """Test organization creation endpoint."""
     response = client.post(
         "/api/v1/organizations/",
@@ -77,9 +74,9 @@ def test_create_organization(
             "name": "New Organization",
             "description": "A new test organization",
             "settings": {"key": "value"},
-            "security_policy": {"mfa_required": True}
+            "security_policy": {"mfa_required": True},
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 201
@@ -92,15 +89,12 @@ def test_create_organization(
 
 
 def test_get_organization(
-    client: TestClient,
-    db: Session,
-    admin_token: str,
-    test_organization: Organization
+    client: TestClient, db: Session, admin_token: str, test_organization: Organization
 ):
     """Test get organization endpoint."""
     response = client.get(
         f"/api/v1/organizations/{test_organization.id}",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 200
@@ -111,10 +105,7 @@ def test_get_organization(
 
 
 def test_list_organizations(
-    client: TestClient,
-    db: Session,
-    admin_token: str,
-    test_organization: Organization
+    client: TestClient, db: Session, admin_token: str, test_organization: Organization
 ):
     """Test list organizations endpoint."""
     # Create additional organization
@@ -122,14 +113,13 @@ def test_list_organizations(
         name="Another Organization",
         description="Another test organization",
         settings={},
-        security_policy={}
+        security_policy={},
     )
     db.add(new_org)
     db.commit()
 
     response = client.get(
-        "/api/v1/organizations/",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        "/api/v1/organizations/", headers={"Authorization": f"Bearer {admin_token}"}
     )
 
     assert response.status_code == 200
@@ -140,10 +130,7 @@ def test_list_organizations(
 
 
 def test_update_organization(
-    client: TestClient,
-    db: Session,
-    admin_token: str,
-    test_organization: Organization
+    client: TestClient, db: Session, admin_token: str, test_organization: Organization
 ):
     """Test organization update endpoint."""
     response = client.put(
@@ -152,9 +139,9 @@ def test_update_organization(
             "name": "Updated Organization",
             "description": "Updated description",
             "settings": {"updated": True},
-            "security_policy": {"mfa_required": False}
+            "security_policy": {"mfa_required": False},
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == 200
@@ -166,9 +153,7 @@ def test_update_organization(
 
 
 def test_unauthorized_access(
-    client: TestClient,
-    db: Session,
-    test_organization: Organization
+    client: TestClient, db: Session, test_organization: Organization
 ):
     """Test unauthorized access to organization endpoints."""
     # Create regular user with limited permissions
@@ -176,7 +161,7 @@ def test_unauthorized_access(
         name="REGULAR",
         description="Regular user role",
         organization_id=test_organization.id,
-        permissions={}
+        permissions={},
     )
     db.add(regular_role)
     db.commit()
@@ -187,7 +172,7 @@ def test_unauthorized_access(
         encrypted_password=get_password_hash("RegularPassword123!"),
         organization_id=test_organization.id,
         role_id=regular_role.id,
-        is_active=True
+        is_active=True,
     )
     db.add(regular_user)
     db.commit()
@@ -198,11 +183,8 @@ def test_unauthorized_access(
     # Try to create organization
     response = client.post(
         "/api/v1/organizations/",
-        json={
-            "name": "Unauthorized Org",
-            "description": "Should not be created"
-        },
-        headers={"Authorization": f"Bearer {regular_token}"}
+        json={"name": "Unauthorized Org", "description": "Should not be created"},
+        headers={"Authorization": f"Bearer {regular_token}"},
     )
     assert response.status_code == 403
 
@@ -210,60 +192,48 @@ def test_unauthorized_access(
     response = client.put(
         f"/api/v1/organizations/{test_organization.id}",
         json={"name": "Unauthorized Update"},
-        headers={"Authorization": f"Bearer {regular_token}"}
+        headers={"Authorization": f"Bearer {regular_token}"},
     )
     assert response.status_code == 403
 
 
-def test_invalid_input(
-    client: TestClient,
-    admin_token: str
-):
+def test_invalid_input(client: TestClient, admin_token: str):
     """Test input validation for organization endpoints."""
     # Test empty name
     response = client.post(
         "/api/v1/organizations/",
-        json={
-            "name": "",
-            "description": "Invalid organization"
-        },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        json={"name": "", "description": "Invalid organization"},
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 422
 
     # Test name too long
     response = client.post(
         "/api/v1/organizations/",
-        json={
-            "name": "x" * 256,
-            "description": "Invalid organization"
-        },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        json={"name": "x" * 256, "description": "Invalid organization"},
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 422
 
     # Test invalid UUID format
     response = client.get(
         "/api/v1/organizations/not-a-uuid",
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 422
 
 
 def test_duplicate_organization_name(
-    client: TestClient,
-    db: Session,
-    admin_token: str,
-    test_organization: Organization
+    client: TestClient, db: Session, admin_token: str, test_organization: Organization
 ):
     """Test creating organization with duplicate name."""
     response = client.post(
         "/api/v1/organizations/",
         json={
             "name": test_organization.name,
-            "description": "Duplicate organization name"
+            "description": "Duplicate organization name",
         },
-        headers={"Authorization": f"Bearer {admin_token}"}
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == 400
     assert "already exists" in response.json()["detail"].lower()

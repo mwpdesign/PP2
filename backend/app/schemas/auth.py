@@ -1,4 +1,5 @@
 """Authentication schemas."""
+
 from typing import Dict, Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field, validator
@@ -7,6 +8,7 @@ from app.core.security import PasswordValidator
 
 class UserBase(BaseModel):
     """Base user schema."""
+
     email: EmailStr
     username: str = Field(..., min_length=3, max_length=50)
     first_name: Optional[str] = Field(None, max_length=100)
@@ -16,6 +18,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """User creation schema."""
+
     password: str = Field(..., min_length=8, max_length=100)
     organization_id: str
 
@@ -30,6 +33,7 @@ class UserCreate(UserBase):
 
 class UserLogin(BaseModel):
     """User login schema."""
+
     username: str
     password: str
     mfa_token: Optional[str] = None
@@ -37,23 +41,27 @@ class UserLogin(BaseModel):
 
 class Token(BaseModel):
     """Token schema."""
+
     access_token: str
     token_type: str
 
 
 class TokenData(BaseModel):
     """Token data schema."""
+
     email: Optional[str] = None
 
 
 class Login(BaseModel):
     """Login schema."""
+
     email: EmailStr
     password: str
 
 
 class UserAuth(BaseModel):
     """User authentication schema."""
+
     id: UUID
     email: str
     organization_id: UUID
@@ -64,6 +72,7 @@ class UserAuth(BaseModel):
 
 class AuthResponse(BaseModel):
     """Authentication response schema."""
+
     access_token: str
     token_type: str
     user: UserAuth
@@ -71,11 +80,13 @@ class AuthResponse(BaseModel):
 
 class RefreshToken(BaseModel):
     """Refresh token request schema."""
+
     refresh_token: str
 
 
 class TokenPayload(BaseModel):
     """Token payload schema."""
+
     sub: Optional[str] = None
     exp: Optional[int] = None
     role: Optional[str] = None
@@ -84,6 +95,7 @@ class TokenPayload(BaseModel):
 
 class UserResponse(UserBase):
     """User response schema."""
+
     id: str
     is_active: bool = True
     is_superuser: bool = False
@@ -95,9 +107,11 @@ class UserResponse(UserBase):
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True
 
 
 class LogoutResponse(BaseModel):
     """Logout response schema."""
+
     message: str

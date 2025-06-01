@@ -2,6 +2,7 @@
 Patient search service with HIPAA-compliant search functionality.
 Implements secure search with encryption and audit logging.
 """
+
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Tuple
 from sqlalchemy import or_, and_, func
@@ -10,12 +11,17 @@ from sqlalchemy.sql import select
 
 from app.core.config import get_settings
 from app.api.patients.models import (
-    Patient, PatientAuditLog, MedicalCondition, Medication
+    Patient,
+    PatientAuditLog,
+    MedicalCondition,
+    Medication,
 )
 from app.api.patients.schemas import (
-    PatientSearchRequest, PatientSearchResponse,
-    AdvancedSearchFilters, BulkSearchRequest,
-    PatientResponse
+    PatientSearchRequest,
+    PatientSearchResponse,
+    AdvancedSearchFilters,
+    BulkSearchRequest,
+    PatientResponse,
 )
 from app.api.patients.encryption_service import PatientEncryptionService
 
@@ -27,7 +33,7 @@ class PatientSearchService:
         self,
         db: Session,
         encryption_service: PatientEncryptionService,
-        current_user: Dict[str, Any]
+        current_user: Dict[str, Any],
     ):
         """Initialize the service."""
         self.db = db
@@ -36,10 +42,7 @@ class PatientSearchService:
         self.settings = get_settings()
 
     async def _log_search(
-        self,
-        search_type: str,
-        search_params: Dict[str, Any],
-        results_count: int
+        self, search_type: str, search_params: Dict[str, Any], results_count: int
     ) -> None:
         """Log search operation for HIPAA compliance."""
         log = PatientAuditLog(
@@ -48,16 +51,13 @@ class PatientSearchService:
             action_details={
                 "search_params": search_params,
                 "results_count": results_count,
-                "timestamp": datetime.utcnow().isoformat()
-            }
+                "timestamp": datetime.utcnow().isoformat(),
+            },
         )
         self.db.add(log)
         await self.db.commit()
 
-    async def _build_base_query(
-        self,
-        search_request: PatientSearchRequest
-    ) -> Any:
+    async def _build_base_query(self, search_request: PatientSearchRequest) -> Any:
         """Build base query with territory and access control filters."""
         query = select(Patient)
 
@@ -85,9 +85,7 @@ class PatientSearchService:
         return query
 
     async def _apply_search_filters(
-        self,
-        query: Any,
-        search_request: PatientSearchRequest
+        self, query: Any, search_request: PatientSearchRequest
     ) -> Any:
         """Apply search filters to query."""
         filters = []
@@ -95,8 +93,8 @@ class PatientSearchService:
         # Text search filters
         if search_request.query:
             filters.append(
-                Patient.search_vector.op('@@')(
-                    func.plainto_tsquery('english', search_request.query)
+                Patient.search_vector.op("@@")(
+                    func.plainto_tsquery("english", search_request.query)
                 )
             )
 
@@ -105,25 +103,19 @@ class PatientSearchService:
             encrypted_first_name = self.encryption_service.encrypt(
                 search_request.first_name
             )
-            filters.append(
-                Patient.first_name_encrypted == encrypted_first_name
-            )
+            filters.append(Patient.first_name_encrypted == encrypted_first_name)
 
         if search_request.last_name:
             encrypted_last_name = self.encryption_service.encrypt(
                 search_request.last_name
             )
-            filters.append(
-                Patient.last_name_encrypted == encrypted_last_name
-            )
+            filters.append(Patient.last_name_encrypted == encrypted_last_name)
 
         if search_request.medical_record_number:
             encrypted_mrn = self.encryption_service.encrypt(
                 search_request.medical_record_number
             )
-            filters.append(
-                Patient.medical_record_number_encrypted == encrypted_mrn
-            )
+            filters.append(Patient.medical_record_number_encrypted == encrypted_mrn)
 
         # Apply all filters
         if filters:
@@ -132,9 +124,7 @@ class PatientSearchService:
         return query
 
     async def _apply_advanced_filters(
-        self,
-        query: Any,
-        advanced_filters: AdvancedSearchFilters
+        self, query: Any, advanced_filters: AdvancedSearchFilters
     ) -> Any:
         """Apply advanced search filters."""
         if advanced_filters.age_range:
@@ -144,15 +134,13 @@ class PatientSearchService:
             query = query.filter(
                 and_(
                     Patient.date_of_birth_encrypted >= min_date,
-                    Patient.date_of_birth_encrypted <= max_date
+                    Patient.date_of_birth_encrypted <= max_date,
                 )
             )
 
         if advanced_filters.diagnosis_codes:
             query = query.join(MedicalCondition).filter(
-                MedicalCondition.icd_code.in_(
-                    advanced_filters.diagnosis_codes
-                )
+                MedicalCondition.icd_code.in_(advanced_filters.diagnosis_codes)
             )
 
         if advanced_filters.medication_codes:
@@ -165,7 +153,7 @@ class PatientSearchService:
             query = query.filter(
                 and_(
                     Patient.last_visit_date >= start_date,
-                    Patient.last_visit_date <= end_date
+                    Patient.last_visit_date <= end_date,
                 )
             )
 
@@ -178,12 +166,7 @@ class PatientSearchService:
         return query
 
     async def _apply_sorting_pagination(
-        self,
-        query: Any,
-        sort_by: str,
-        sort_order: str,
-        skip: int,
-        limit: int
+        self, query: Any, sort_by: str, sort_order: str, skip: int, limit: int
     ) -> Tuple[Any, int]:
         """Apply sorting and pagination to query."""
         # Get total count before pagination
@@ -192,7 +175,7 @@ class PatientSearchService:
         )
 
         # Apply sorting
-        if sort_order == 'desc':
+        if sort_order == "desc":
             query = query.order_by(getattr(Patient, sort_by).desc())
         else:
             query = query.order_by(getattr(Patient, sort_by).asc())
@@ -203,8 +186,7 @@ class PatientSearchService:
         return query, total_count
 
     async def search_patients(
-        self,
-        search_request: PatientSearchRequest
+        self, search_request: PatientSearchRequest
     ) -> PatientSearchResponse:
         """
         Perform basic patient search with HIPAA compliance.
@@ -222,7 +204,7 @@ class PatientSearchService:
                 search_request.sort_by,
                 search_request.sort_order,
                 search_request.skip,
-                search_request.limit
+                search_request.limit,
             )
 
             # Execute query
@@ -230,11 +212,7 @@ class PatientSearchService:
             patients = results.scalars().all()
 
             # Log search operation
-            await self._log_search(
-                "basic",
-                search_request.dict(),
-                len(patients)
-            )
+            await self._log_search("basic", search_request.dict(), len(patients))
 
             # Decrypt patient data
             decrypted_patients = [
@@ -246,22 +224,18 @@ class PatientSearchService:
                 items=decrypted_patients,
                 total=total_count,
                 skip=search_request.skip,
-                limit=search_request.limit
+                limit=search_request.limit,
             )
 
         except Exception as e:
             # Log error without exposing PHI
-            await self._log_search(
-                "basic_error",
-                {"error": str(e)},
-                0
-            )
+            await self._log_search("basic_error", {"error": str(e)}, 0)
             raise
 
     async def advanced_search(
         self,
         search_request: PatientSearchRequest,
-        advanced_filters: AdvancedSearchFilters
+        advanced_filters: AdvancedSearchFilters,
     ) -> PatientSearchResponse:
         """
         Perform advanced patient search with additional filters.
@@ -274,10 +248,7 @@ class PatientSearchService:
             query = await self._apply_search_filters(query, search_request)
 
             # Apply advanced filters
-            query = await self._apply_advanced_filters(
-                query,
-                advanced_filters
-            )
+            query = await self._apply_advanced_filters(query, advanced_filters)
 
             # Apply sorting and pagination
             query, total_count = await self._apply_sorting_pagination(
@@ -285,7 +256,7 @@ class PatientSearchService:
                 search_request.sort_by,
                 search_request.sort_order,
                 search_request.skip,
-                search_request.limit
+                search_request.limit,
             )
 
             # Execute query
@@ -295,11 +266,8 @@ class PatientSearchService:
             # Log search operation
             await self._log_search(
                 "advanced",
-                {
-                    **search_request.dict(),
-                    **advanced_filters.dict()
-                },
-                len(patients)
+                {**search_request.dict(), **advanced_filters.dict()},
+                len(patients),
             )
 
             # Decrypt patient data
@@ -312,21 +280,16 @@ class PatientSearchService:
                 items=decrypted_patients,
                 total=total_count,
                 skip=search_request.skip,
-                limit=search_request.limit
+                limit=search_request.limit,
             )
 
         except Exception as e:
             # Log error without exposing PHI
-            await self._log_search(
-                "advanced_error",
-                {"error": str(e)},
-                0
-            )
+            await self._log_search("advanced_error", {"error": str(e)}, 0)
             raise
 
     async def bulk_search(
-        self,
-        bulk_request: BulkSearchRequest
+        self, bulk_request: BulkSearchRequest
     ) -> Dict[str, List[PatientResponse]]:
         """
         Perform bulk search for multiple search terms.
@@ -348,16 +311,12 @@ class PatientSearchService:
             await self._log_search(
                 "bulk",
                 bulk_request.dict(),
-                sum(len(items) for items in results.values())
+                sum(len(items) for items in results.values()),
             )
 
             return results
 
         except Exception as e:
             # Log error without exposing PHI
-            await self._log_search(
-                "bulk_error",
-                {"error": str(e)},
-                0
-            )
+            await self._log_search("bulk_error", {"error": str(e)}, 0)
             raise

@@ -2,6 +2,7 @@
 Patient data schemas for request/response validation.
 Handles data validation and serialization with encryption.
 """
+
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple
 from pydantic import BaseModel, EmailStr, validator, Field
@@ -10,60 +11,67 @@ from enum import Enum
 
 class ConsentType(str, Enum):
     """Types of patient consent."""
-    PHI_ACCESS = 'phi_access'
-    TREATMENT = 'treatment'
-    RESEARCH = 'research'
-    MARKETING = 'marketing'
+
+    PHI_ACCESS = "phi_access"
+    TREATMENT = "treatment"
+    RESEARCH = "research"
+    MARKETING = "marketing"
 
 
 class ConsentStatus(str, Enum):
     """Status of patient consent."""
-    ACTIVE = 'active'
-    REVOKED = 'revoked'
-    EXPIRED = 'expired'
+
+    ACTIVE = "active"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
 
 
 class InsuranceType(str, Enum):
     """Types of insurance coverage."""
-    PRIVATE = 'private'
-    MEDICARE = 'medicare'
-    MEDICAID = 'medicaid'
-    TRICARE = 'tricare'
-    SELF_PAY = 'self_pay'
+
+    PRIVATE = "private"
+    MEDICARE = "medicare"
+    MEDICAID = "medicaid"
+    TRICARE = "tricare"
+    SELF_PAY = "self_pay"
 
 
 class PatientStatus(str, Enum):
     """Patient record status."""
-    ACTIVE = 'active'
-    INACTIVE = 'inactive'
-    ARCHIVED = 'archived'
+
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    ARCHIVED = "archived"
 
 
 class DocumentType(str, Enum):
     """Types of patient documents."""
-    MEDICAL_RECORD = 'medical_record'
-    CONSENT_FORM = 'consent_form'
-    INSURANCE_CARD = 'insurance_card'
-    LAB_RESULT = 'lab_result'
-    PRESCRIPTION = 'prescription'
+
+    MEDICAL_RECORD = "medical_record"
+    CONSENT_FORM = "consent_form"
+    INSURANCE_CARD = "insurance_card"
+    LAB_RESULT = "lab_result"
+    PRESCRIPTION = "prescription"
 
 
 class InsuranceVerificationStatus(str, Enum):
     """Status of insurance verification."""
-    PENDING = 'pending'
-    VERIFIED = 'verified'
-    FAILED = 'failed'
-    EXPIRED = 'expired'
+
+    PENDING = "pending"
+    VERIFIED = "verified"
+    FAILED = "failed"
+    EXPIRED = "expired"
 
 
 class PatientBase(BaseModel):
     """Base schema for patient data."""
+
     first_name: str
     last_name: str
     date_of_birth: datetime
-    ssn: str = Field(..., pattern=r'^\d{3}-?\d{2}-?\d{4}$')
+    ssn: str = Field(..., pattern=r"^\d{3}-?\d{2}-?\d{4}$")
     address: str
-    phone_number: str = Field(..., pattern=r'^\+?1?\d{9,15}$')
+    phone_number: str = Field(..., pattern=r"^\+?1?\d{9,15}$")
     email: EmailStr
 
     insurance_id: Optional[str] = None
@@ -75,26 +83,27 @@ class PatientBase(BaseModel):
     territory_id: int
     organization_id: int
 
-    @validator('ssn')
+    @validator("ssn")
     def format_ssn(cls, v):
         """Format SSN to standard format."""
-        if '-' not in v:
+        if "-" not in v:
             return f"{v[:3]}-{v[3:5]}-{v[5:]}"
         return v
 
-    @validator('phone_number')
+    @validator("phone_number")
     def format_phone(cls, v):
         """Format phone number to E.164 format."""
-        v = ''.join(filter(str.isdigit, v))
+        v = "".join(filter(str.isdigit, v))
         if len(v) == 10:
             v = f"+1{v}"
-        elif len(v) == 11 and v[0] == '1':
+        elif len(v) == 11 and v[0] == "1":
             v = f"+{v}"
         return v
 
 
 class PatientCreate(PatientBase):
     """Schema for creating a new patient."""
+
     consent_type: ConsentType
     consent_given_by: str
     consent_scope: List[str]
@@ -103,6 +112,7 @@ class PatientCreate(PatientBase):
 
 class PatientUpdate(BaseModel):
     """Schema for updating patient data."""
+
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     date_of_birth: Optional[datetime] = None
@@ -120,6 +130,7 @@ class PatientUpdate(BaseModel):
 
 class PatientResponse(PatientBase):
     """Schema for patient response data."""
+
     id: int
     medical_record_number: str
     insurance_verified: bool
@@ -143,6 +154,7 @@ class PatientResponse(PatientBase):
 
 class DocumentBase(BaseModel):
     """Base schema for patient documents."""
+
     patient_id: int
     type: DocumentType
     name: str
@@ -152,6 +164,7 @@ class DocumentBase(BaseModel):
 
 class DocumentCreate(BaseModel):
     """Schema for creating a new document."""
+
     type: DocumentType
     name: str
     description: Optional[str] = None
@@ -159,6 +172,7 @@ class DocumentCreate(BaseModel):
 
 class DocumentUpdate(BaseModel):
     """Schema for updating document metadata."""
+
     name: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
@@ -166,6 +180,7 @@ class DocumentUpdate(BaseModel):
 
 class DocumentResponse(BaseModel):
     """Schema for document response data."""
+
     id: int
     patient_id: int
     type: DocumentType
@@ -187,6 +202,7 @@ class DocumentResponse(BaseModel):
 
 class ConsentBase(BaseModel):
     """Base schema for patient consent."""
+
     patient_id: int
     type: ConsentType
     given_by: str
@@ -198,17 +214,20 @@ class ConsentBase(BaseModel):
 
 class ConsentCreate(ConsentBase):
     """Schema for creating a new consent record."""
+
     document_id: Optional[int] = None
 
 
 class ConsentUpdate(BaseModel):
     """Schema for updating consent data."""
+
     status: ConsentStatus
     revocation_reason: Optional[str] = None
 
 
 class ConsentResponse(ConsentBase):
     """Schema for consent response data."""
+
     id: int
     status: ConsentStatus
     document_id: Optional[int]
@@ -224,6 +243,7 @@ class ConsentResponse(ConsentBase):
 
 class AuditLogResponse(BaseModel):
     """Schema for audit log response data."""
+
     id: int
     patient_id: int
     user_id: int
@@ -244,15 +264,17 @@ class AuditLogResponse(BaseModel):
 
 class InsuranceVerificationRequest(BaseModel):
     """Schema for insurance verification request."""
+
     insurance_id: str
     insurance_provider: str
     insurance_group: Optional[str] = None
     insurance_type: InsuranceType
-    verification_type: str = 'eligibility'
+    verification_type: str = "eligibility"
 
 
 class InsuranceVerificationResponse(BaseModel):
     """Schema for insurance verification response."""
+
     status: InsuranceVerificationStatus
     verified_at: datetime
     verification_id: Optional[str] = None
@@ -267,6 +289,7 @@ class InsuranceVerificationResponse(BaseModel):
 
 class InsuranceUpdateRequest(BaseModel):
     """Schema for updating insurance information."""
+
     insurance_id: Optional[str] = None
     insurance_provider: Optional[str] = None
     insurance_group: Optional[str] = None
@@ -275,6 +298,7 @@ class InsuranceUpdateRequest(BaseModel):
 
 class InsuranceStatusResponse(BaseModel):
     """Schema for insurance status response."""
+
     insurance_verified: bool
     insurance_verified_at: Optional[datetime] = None
     insurance_verification_id: Optional[str] = None
@@ -290,6 +314,7 @@ class InsuranceStatusResponse(BaseModel):
 
 class InsuranceVerificationHistoryResponse(BaseModel):
     """Schema for verification history response."""
+
     id: int
     verification_id: str
     status: InsuranceVerificationStatus
@@ -305,56 +330,63 @@ class InsuranceVerificationHistoryResponse(BaseModel):
 
 class MedicalRecordType(str, Enum):
     """Types of medical records."""
-    CONDITION = 'condition'
-    MEDICATION = 'medication'
-    ALLERGY = 'allergy'
-    PROCEDURE = 'procedure'
-    VITAL = 'vital'
-    LAB_RESULT = 'lab_result'
-    IMMUNIZATION = 'immunization'
-    NOTE = 'note'
+
+    CONDITION = "condition"
+    MEDICATION = "medication"
+    ALLERGY = "allergy"
+    PROCEDURE = "procedure"
+    VITAL = "vital"
+    LAB_RESULT = "lab_result"
+    IMMUNIZATION = "immunization"
+    NOTE = "note"
 
 
 class MedicalRecordStatus(str, Enum):
     """Status of medical records."""
-    ACTIVE = 'active'
-    RESOLVED = 'resolved'
-    INACTIVE = 'inactive'
-    ARCHIVED = 'archived'
+
+    ACTIVE = "active"
+    RESOLVED = "resolved"
+    INACTIVE = "inactive"
+    ARCHIVED = "archived"
 
 
 class ConditionType(str, Enum):
     """Types of medical conditions."""
-    CHRONIC = 'chronic'
-    ACUTE = 'acute'
-    RECURRING = 'recurring'
-    TEMPORARY = 'temporary'
+
+    CHRONIC = "chronic"
+    ACUTE = "acute"
+    RECURRING = "recurring"
+    TEMPORARY = "temporary"
 
 
 class MedicationType(str, Enum):
     """Types of medications."""
-    PRESCRIPTION = 'prescription'
-    OTC = 'otc'
-    SUPPLEMENT = 'supplement'
+
+    PRESCRIPTION = "prescription"
+    OTC = "otc"
+    SUPPLEMENT = "supplement"
 
 
 class AllergyType(str, Enum):
     """Types of allergies."""
-    MEDICATION = 'medication'
-    FOOD = 'food'
-    ENVIRONMENTAL = 'environmental'
+
+    MEDICATION = "medication"
+    FOOD = "food"
+    ENVIRONMENTAL = "environmental"
 
 
 class AllergySeverity(str, Enum):
     """Severity levels for allergies."""
-    MILD = 'mild'
-    MODERATE = 'moderate'
-    SEVERE = 'severe'
-    LIFE_THREATENING = 'life_threatening'
+
+    MILD = "mild"
+    MODERATE = "moderate"
+    SEVERE = "severe"
+    LIFE_THREATENING = "life_threatening"
 
 
 class MedicalRecordBase(BaseModel):
     """Base schema for medical records."""
+
     type: MedicalRecordType
     category: str
     status: MedicalRecordStatus
@@ -368,11 +400,13 @@ class MedicalRecordBase(BaseModel):
 
 class MedicalRecordCreate(MedicalRecordBase):
     """Schema for creating a new medical record."""
+
     pass
 
 
 class MedicalRecordUpdate(BaseModel):
     """Schema for updating medical record."""
+
     status: Optional[MedicalRecordStatus] = None
     details: Optional[Dict[str, Any]] = None
     notes: Optional[str] = None
@@ -381,6 +415,7 @@ class MedicalRecordUpdate(BaseModel):
 
 class MedicalRecordResponse(MedicalRecordBase):
     """Schema for medical record response."""
+
     id: int
     patient_id: int
     version: int
@@ -398,6 +433,7 @@ class MedicalRecordResponse(MedicalRecordBase):
 
 class MedicalConditionBase(BaseModel):
     """Base schema for medical conditions."""
+
     condition_code: str
     condition_type: ConditionType
     status: MedicalRecordStatus
@@ -413,11 +449,13 @@ class MedicalConditionBase(BaseModel):
 
 class MedicalConditionCreate(MedicalConditionBase):
     """Schema for creating a new medical condition."""
+
     pass
 
 
 class MedicalConditionUpdate(BaseModel):
     """Schema for updating medical condition."""
+
     status: Optional[MedicalRecordStatus] = None
     treatment_plan: Optional[Dict[str, Any]] = None
     prognosis: Optional[Dict[str, Any]] = None
@@ -427,6 +465,7 @@ class MedicalConditionUpdate(BaseModel):
 
 class MedicalConditionResponse(MedicalConditionBase):
     """Schema for medical condition response."""
+
     id: int
     patient_id: int
     record_id: int
@@ -441,6 +480,7 @@ class MedicalConditionResponse(MedicalConditionBase):
 
 class MedicationBase(BaseModel):
     """Base schema for medications."""
+
     medication_code: str
     medication_type: MedicationType
     status: MedicalRecordStatus
@@ -457,11 +497,13 @@ class MedicationBase(BaseModel):
 
 class MedicationCreate(MedicationBase):
     """Schema for creating a new medication."""
+
     pass
 
 
 class MedicationUpdate(BaseModel):
     """Schema for updating medication."""
+
     status: Optional[MedicalRecordStatus] = None
     dosage: Optional[Dict[str, Any]] = None
     instructions: Optional[Dict[str, Any]] = None
@@ -472,6 +514,7 @@ class MedicationUpdate(BaseModel):
 
 class MedicationResponse(MedicationBase):
     """Schema for medication response."""
+
     id: int
     patient_id: int
     record_id: int
@@ -486,6 +529,7 @@ class MedicationResponse(MedicationBase):
 
 class AllergyBase(BaseModel):
     """Base schema for allergies."""
+
     allergy_type: AllergyType
     severity: AllergySeverity
     status: MedicalRecordStatus
@@ -499,11 +543,13 @@ class AllergyBase(BaseModel):
 
 class AllergyCreate(AllergyBase):
     """Schema for creating a new allergy."""
+
     pass
 
 
 class AllergyUpdate(BaseModel):
     """Schema for updating allergy."""
+
     severity: Optional[AllergySeverity] = None
     status: Optional[MedicalRecordStatus] = None
     reaction: Optional[Dict[str, Any]] = None
@@ -513,6 +559,7 @@ class AllergyUpdate(BaseModel):
 
 class AllergyResponse(AllergyBase):
     """Schema for allergy response."""
+
     id: int
     patient_id: int
     record_id: int
@@ -527,6 +574,7 @@ class AllergyResponse(AllergyBase):
 
 class MedicalHistorySearch(BaseModel):
     """Schema for medical history search parameters."""
+
     record_type: Optional[MedicalRecordType] = None
     status: Optional[MedicalRecordStatus] = None
     provider_id: Optional[int] = None
@@ -539,23 +587,26 @@ class MedicalHistorySearch(BaseModel):
 
 class RecordType(str, Enum):
     """Medical record types."""
-    VISIT = 'visit'
-    PROCEDURE = 'procedure'
-    TEST = 'test'
-    CONSULTATION = 'consultation'
-    REFERRAL = 'referral'
+
+    VISIT = "visit"
+    PROCEDURE = "procedure"
+    TEST = "test"
+    CONSULTATION = "consultation"
+    REFERRAL = "referral"
 
 
 class RecordStatus(str, Enum):
     """Medical record status."""
-    ACTIVE = 'active'
-    COMPLETED = 'completed'
-    CANCELLED = 'cancelled'
-    ARCHIVED = 'archived'
+
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    ARCHIVED = "archived"
 
 
 class MedicalRecordBase(BaseModel):
     """Base schema for medical records."""
+
     record_type: RecordType
     record_date: datetime
     follow_up_date: Optional[datetime] = None
@@ -568,6 +619,7 @@ class MedicalRecordBase(BaseModel):
 
 class MedicalRecordCreate(MedicalRecordBase):
     """Schema for creating a medical record."""
+
     patient_id: int
     territory_id: int
     organization_id: int
@@ -575,6 +627,7 @@ class MedicalRecordCreate(MedicalRecordBase):
 
 class MedicalRecordUpdate(BaseModel):
     """Schema for updating a medical record."""
+
     record_type: Optional[RecordType] = None
     record_date: Optional[datetime] = None
     follow_up_date: Optional[datetime] = None
@@ -587,6 +640,7 @@ class MedicalRecordUpdate(BaseModel):
 
 class MedicalRecordResponse(MedicalRecordBase):
     """Schema for medical record response."""
+
     id: int
     patient_id: int
     version: int
@@ -602,17 +656,19 @@ class MedicalRecordResponse(MedicalRecordBase):
 
 class MedicalConditionBase(BaseModel):
     """Base schema for medical conditions."""
+
     condition_name: str
     icd10_code: str
     diagnosis_date: datetime
     resolution_date: Optional[datetime] = None
     severity: str
     notes: Optional[str] = None
-    status: str = 'active'
+    status: str = "active"
 
 
 class MedicalConditionCreate(MedicalConditionBase):
     """Schema for creating a medical condition."""
+
     medical_record_id: int
     patient_id: int
     territory_id: int
@@ -621,6 +677,7 @@ class MedicalConditionCreate(MedicalConditionBase):
 
 class MedicalConditionUpdate(BaseModel):
     """Schema for updating a medical condition."""
+
     condition_name: Optional[str] = None
     icd10_code: Optional[str] = None
     diagnosis_date: Optional[datetime] = None
@@ -632,6 +689,7 @@ class MedicalConditionUpdate(BaseModel):
 
 class MedicalConditionResponse(MedicalConditionBase):
     """Schema for medical condition response."""
+
     id: int
     medical_record_id: int
     patient_id: int
@@ -646,6 +704,7 @@ class MedicalConditionResponse(MedicalConditionBase):
 
 class MedicationBase(BaseModel):
     """Base schema for medications."""
+
     medication_name: str
     dosage: str
     frequency: str
@@ -654,11 +713,12 @@ class MedicationBase(BaseModel):
     prescribing_doctor: str
     pharmacy: Optional[str] = None
     notes: Optional[str] = None
-    status: str = 'active'
+    status: str = "active"
 
 
 class MedicationCreate(MedicationBase):
     """Schema for creating a medication."""
+
     medical_record_id: int
     patient_id: int
     territory_id: int
@@ -667,6 +727,7 @@ class MedicationCreate(MedicationBase):
 
 class MedicationUpdate(BaseModel):
     """Schema for updating a medication."""
+
     medication_name: Optional[str] = None
     dosage: Optional[str] = None
     frequency: Optional[str] = None
@@ -680,6 +741,7 @@ class MedicationUpdate(BaseModel):
 
 class MedicationResponse(MedicationBase):
     """Schema for medication response."""
+
     id: int
     medical_record_id: int
     patient_id: int
@@ -694,16 +756,18 @@ class MedicationResponse(MedicationBase):
 
 class AllergyBase(BaseModel):
     """Base schema for allergies."""
+
     allergen: str
     reaction_type: str
     severity: str
     onset_date: datetime
     notes: Optional[str] = None
-    status: str = 'active'
+    status: str = "active"
 
 
 class AllergyCreate(AllergyBase):
     """Schema for creating an allergy."""
+
     medical_record_id: int
     patient_id: int
     territory_id: int
@@ -712,6 +776,7 @@ class AllergyCreate(AllergyBase):
 
 class AllergyUpdate(BaseModel):
     """Schema for updating an allergy."""
+
     allergen: Optional[str] = None
     reaction_type: Optional[str] = None
     severity: Optional[str] = None
@@ -722,6 +787,7 @@ class AllergyUpdate(BaseModel):
 
 class AllergyResponse(AllergyBase):
     """Schema for allergy response."""
+
     id: int
     medical_record_id: int
     patient_id: int
@@ -736,6 +802,7 @@ class AllergyResponse(AllergyBase):
 
 class MedicalHistorySearch(BaseModel):
     """Schema for searching medical history."""
+
     patient_id: Optional[int] = None
     record_type: Optional[RecordType] = None
     status: Optional[RecordStatus] = None
@@ -750,6 +817,7 @@ class MedicalHistorySearch(BaseModel):
 
 class PatientSearchRequest(BaseModel):
     """Schema for patient search request."""
+
     query: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -765,32 +833,36 @@ class PatientSearchRequest(BaseModel):
     facility_id: Optional[int] = None
     status: Optional[PatientStatus] = None
     insurance_verified: Optional[bool] = None
-    sort_by: Optional[str] = 'created_at'
-    sort_order: Optional[str] = 'desc'
+    sort_by: Optional[str] = "created_at"
+    sort_order: Optional[str] = "desc"
     skip: int = 0
     limit: int = 10
 
-    @validator('sort_by')
+    @validator("sort_by")
     def validate_sort_by(cls, v):
         """Validate sort field."""
         allowed_fields = [
-            'created_at', 'updated_at', 'last_name',
-            'date_of_birth', 'medical_record_number'
+            "created_at",
+            "updated_at",
+            "last_name",
+            "date_of_birth",
+            "medical_record_number",
         ]
         if v not in allowed_fields:
             raise ValueError(f"Invalid sort field. Must be one of: {allowed_fields}")
         return v
 
-    @validator('sort_order')
+    @validator("sort_order")
     def validate_sort_order(cls, v):
         """Validate sort order."""
-        if v not in ['asc', 'desc']:
+        if v not in ["asc", "desc"]:
             raise ValueError("Sort order must be 'asc' or 'desc'")
         return v
 
 
 class PatientSearchResponse(BaseModel):
     """Schema for patient search response."""
+
     total: int
     items: List[PatientResponse]
     has_more: bool
@@ -799,6 +871,7 @@ class PatientSearchResponse(BaseModel):
 
 class AdvancedSearchFilters(BaseModel):
     """Schema for advanced search filters."""
+
     age_range: Optional[Tuple[int, int]] = None
     diagnosis_codes: Optional[List[str]] = None
     medication_codes: Optional[List[str]] = None
@@ -813,20 +886,21 @@ class AdvancedSearchFilters(BaseModel):
 
 class BulkSearchRequest(BaseModel):
     """Schema for bulk patient search."""
+
     search_terms: List[str]
     territory_ids: Optional[List[int]] = None
     organization_ids: Optional[List[int]] = None
-    match_type: str = 'exact'  # exact, fuzzy, partial
+    match_type: str = "exact"  # exact, fuzzy, partial
     max_results_per_term: int = 5
 
-    @validator('match_type')
+    @validator("match_type")
     def validate_match_type(cls, v):
         """Validate match type."""
-        if v not in ['exact', 'fuzzy', 'partial']:
+        if v not in ["exact", "fuzzy", "partial"]:
             raise ValueError("Match type must be 'exact', 'fuzzy', or 'partial'")
         return v
 
-    @validator('max_results_per_term')
+    @validator("max_results_per_term")
     def validate_max_results(cls, v):
         """Validate max results per term."""
         if v < 1 or v > 100:
@@ -836,6 +910,7 @@ class BulkSearchRequest(BaseModel):
 
 class SearchAuditLog(BaseModel):
     """Schema for search audit logging."""
+
     search_id: str
     user_id: int
     territory_id: Optional[int]

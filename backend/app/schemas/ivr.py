@@ -1,4 +1,5 @@
 """IVR schemas for the application."""
+
 from datetime import datetime
 from typing import Optional, Dict, Any
 from uuid import UUID
@@ -7,6 +8,7 @@ from pydantic import BaseModel
 
 class IVRRequestBase(BaseModel):
     """Base IVR request schema."""
+
     patient_id: UUID
     provider_id: UUID
     facility_id: UUID
@@ -18,11 +20,13 @@ class IVRRequestBase(BaseModel):
 
 class IVRRequestCreate(IVRRequestBase):
     """Create IVR request schema."""
+
     pass
 
 
 class IVRRequestResponse(IVRRequestBase):
     """Response IVR request schema."""
+
     id: UUID
     status: str
     created_at: datetime
@@ -32,11 +36,13 @@ class IVRRequestResponse(IVRRequestBase):
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True
 
 
 class IVRSessionBase(BaseModel):
     """Base IVR session schema."""
+
     organization_id: UUID
     patient_id: Optional[UUID] = None
     provider_id: Optional[UUID] = None
@@ -47,22 +53,26 @@ class IVRSessionBase(BaseModel):
 
 class IVRSessionCreate(IVRSessionBase):
     """Create IVR session schema."""
+
     pass
 
 
 class IVRSessionResponse(IVRSessionBase):
     """Response IVR session schema."""
+
     id: UUID
     created_at: datetime
     updated_at: datetime
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True
 
 
 class IVRSessionUpdate(BaseModel):
     """Update IVR session schema."""
+
     patient_id: Optional[UUID] = None
     provider_id: Optional[UUID] = None
     status: Optional[str] = None
@@ -71,6 +81,7 @@ class IVRSessionUpdate(BaseModel):
 
 class IVRDocumentBase(BaseModel):
     """Base IVR document schema."""
+
     ivr_request_id: UUID
     document_type: str
     document_key: str
@@ -78,11 +89,13 @@ class IVRDocumentBase(BaseModel):
 
 class IVRDocumentCreate(IVRDocumentBase):
     """Create IVR document schema."""
+
     pass
 
 
 class IVRDocumentResponse(IVRDocumentBase):
     """Response IVR document schema."""
+
     id: UUID
     created_at: datetime
     updated_at: datetime
@@ -90,11 +103,13 @@ class IVRDocumentResponse(IVRDocumentBase):
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True
 
 
 class IVRScriptBase(BaseModel):
     """Base IVR script schema."""
+
     name: str
     content: str
     language: str
@@ -104,11 +119,13 @@ class IVRScriptBase(BaseModel):
 
 class IVRScriptCreate(IVRScriptBase):
     """Create IVR script schema."""
+
     pass
 
 
 class IVRScriptUpdate(BaseModel):
     """Update IVR script schema."""
+
     name: Optional[str] = None
     content: Optional[str] = None
     language: Optional[str] = None
@@ -118,6 +135,7 @@ class IVRScriptUpdate(BaseModel):
 
 class IVRScriptResponse(IVRScriptBase):
     """Response IVR script schema."""
+
     id: UUID
     audio_url: Optional[str] = None
     created_at: datetime
@@ -127,11 +145,13 @@ class IVRScriptResponse(IVRScriptBase):
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True
 
 
 class IVRCallBase(BaseModel):
     """Base IVR call schema."""
+
     script_id: UUID
     phone_number: str
     organization_id: UUID
@@ -140,11 +160,13 @@ class IVRCallBase(BaseModel):
 
 class IVRCallCreate(IVRCallBase):
     """Create IVR call schema."""
+
     pass
 
 
 class IVRCallUpdate(BaseModel):
     """Update IVR call schema."""
+
     status: Optional[str] = None
     duration: Optional[int] = None
     recording_url: Optional[str] = None
@@ -153,6 +175,7 @@ class IVRCallUpdate(BaseModel):
 
 class IVRCallResponse(IVRCallBase):
     """Response IVR call schema."""
+
     id: UUID
     status: str
     duration: Optional[int] = None
@@ -164,4 +187,5 @@ class IVRCallResponse(IVRCallBase):
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True

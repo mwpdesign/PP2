@@ -1,4 +1,5 @@
 """WebSocket service for real-time updates."""
+
 import logging
 from typing import Dict, List, Optional
 from uuid import UUID

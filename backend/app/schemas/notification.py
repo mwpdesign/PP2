@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 class NotificationStatus(str, Enum):
     """Notification delivery status."""
+
     PENDING = "pending"
     DELIVERED = "delivered"
     FAILED = "failed"
@@ -19,6 +20,7 @@ class NotificationStatus(str, Enum):
 
 class NotificationBase(BaseModel):
     """Base notification schema."""
+
     type: str
     title: str
     message: str
@@ -29,16 +31,19 @@ class NotificationBase(BaseModel):
 
 class NotificationCreate(NotificationBase):
     """Schema for creating a notification."""
+
     user_id: UUID
 
 
 class NotificationUpdate(NotificationBase):
     """Schema for updating a notification."""
+
     pass
 
 
 class NotificationResponse(NotificationBase):
     """Schema for notification response."""
+
     id: UUID
     user_id: UUID
     created_at: datetime
