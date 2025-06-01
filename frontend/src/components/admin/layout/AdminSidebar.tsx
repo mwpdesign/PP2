@@ -42,7 +42,7 @@ const AdminSidebar: React.FC = () => {
   ];
 
   return (
-    <div className="fixed inset-y-0 left-0 w-[280px] bg-[#334155] text-white">
+    <div className="hidden md:block fixed inset-y-0 left-0 w-[280px] bg-[#334155] text-white">
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-start p-6 border-b border-slate-700">
           <img 

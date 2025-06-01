@@ -1,0 +1,231 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project-Specific Rules: Python Backend + React Frontend + AWS
+## Local Development + Docker + AWS Deployment
+
+---
+
+## 🎯 **PROJECT ARCHITECTURE**
+
+### Tech Stack Standards
+1. **Backend**: Python (Flask/FastAPI/Django) - maintain existing framework choice
+2. **Frontend**: React with TypeScript preferred
+3. **Database**: PostgreSQL for production, SQLite for quick local testing
+4. **Deployment**: AWS ECS/Fargate with Docker containers
+5. **Infrastructure**: AWS (EC2, RDS, S3, CloudFront as needed)
+
+### Environment Strategy
+6. **Local Primary**: Develop natively with local Python env and npm/yarn
+7. **Docker Secondary**: Use for AWS deployment testing and demos
+8. **AWS Target**: All code must deploy cleanly to AWS services
+
+---
+
+## 🐍 **PYTHON BACKEND RULES**
+
+### Framework Consistency
+9. **Maintain Current Framework**: Don't switch frameworks mid-project
+10. **API Design**: RESTful APIs with consistent error handling
+11. **Database Patterns**: Use existing ORM patterns (SQLAlchemy/Django ORM)
+12. **Virtual Environment**: Always use venv/pipenv for local development
+13. **Requirements Management**: Keep requirements.txt and requirements-dev.txt updated
+
+### Python Code Standards
+14. **Type Hints**: Use type hints for all function parameters and returns
+15. **Error Handling**: Implement proper exception handling with structured logging
+16. **Authentication**: Maintain existing JWT/session-based auth patterns
+17. **API Validation**: Validate all incoming data with Pydantic or marshmallow
+18. **Database Migrations**: Always create migrations for schema changes
+
+### AWS Integration
+19. **Environment Variables**: Use AWS Parameter Store or Secrets Manager
+20. **Database**: AWS RDS PostgreSQL for production
+21. **File Storage**: AWS S3 for static files and uploads
+22. **Logging**: CloudWatch for centralized logging
+
+---
+
+## ⚛️ **REACT FRONTEND RULES**
+
+### Component Architecture
+23. **Functional Components**: Use functional components with hooks
+24. **TypeScript**: Prefer TypeScript for type safety
+25. **State Management**: Maintain existing state approach (Redux/Context/Zustand)
+26. **Component Structure**: Keep components under 200 lines, extract custom hooks
+27. **Props Interface**: Define clear TypeScript interfaces for all props
+
+### Development Workflow
+28. **Hot Reload**: Ensure hot reloading works in local environment
+29. **Bundle Size**: Keep production bundles under reasonable limits
+30. **Performance**: Use React.memo, useMemo, useCallback appropriately
+31. **Error Boundaries**: Implement error boundaries for robust UX
+32. **Testing**: Write tests for critical user flows
+
+### Integration Patterns
+33. **API Communication**: Use consistent API client (axios/fetch wrapper)
+34. **Error Handling**: Implement global error handling for API calls
+35. **Loading States**: Consistent loading and error UI patterns
+36. **Authentication**: Integrate with backend auth seamlessly
+
+---
+
+## 🔄 **BACKEND-FRONTEND INTEGRATION**
+
+### API Design
+37. **Consistent Responses**: Standardized JSON response format
+38. **Error Codes**: HTTP status codes with meaningful error messages
+39. **CORS**: Properly configured CORS for local and production
+40. **Documentation**: Maintain API documentation (OpenAPI/Swagger)
+
+### Data Flow
+41. **Validation**: Validate data on both frontend and backend
+42. **Serialization**: Consistent data serialization patterns
+43. **Real-time**: WebSocket/SSE patterns if needed
+44. **Caching**: Implement appropriate caching strategies
+
+---
+
+## 🐳 **DOCKER & DEPLOYMENT**
+
+### Docker Configuration
+45. **Multi-stage Builds**: Separate build and runtime stages
+46. **Environment Variables**: Use .env files for configuration
+47. **Health Checks**: Implement proper health check endpoints
+48. **Security**: Run containers as non-root user
+
+### Local Docker Setup
+49. **Docker Compose**: Use docker-compose for local multi-service setup
+50. **Volume Mounts**: Mount source code for development
+51. **Port Mapping**: Consistent port mapping (backend: 8000, frontend: 3000)
+52. **Database**: Containerized PostgreSQL for Docker environment
+
+### AWS Deployment
+53. **ECR**: Push images to AWS Elastic Container Registry
+54. **ECS/Fargate**: Deploy using AWS ECS with Fargate
+55. **Load Balancer**: Application Load Balancer for HTTPS termination
+56. **Auto Scaling**: Configure auto-scaling for production loads
+
+---
+
+## 🛡️ **SECURITY & ENVIRONMENT**
+
+### Environment Management
+57. **Local .env**: Use .env files for local configuration
+58. **AWS Secrets**: Use AWS Secrets Manager for production secrets
+59. **API Keys**: Never commit API keys to version control
+60. **Database URLs**: Different database configs for each environment
+
+### Security Implementation
+61. **HTTPS Only**: Force HTTPS in production
+62. **Input Sanitization**: Sanitize all user inputs
+63. **SQL Injection**: Use parameterized queries only
+64. **XSS Protection**: Implement CSP headers and input validation
+65. **Rate Limiting**: Implement rate limiting on API endpoints
+
+---
+
+## 📊 **DATABASE & STORAGE**
+
+### Database Strategy
+66. **Local Development**: SQLite or local PostgreSQL
+67. **Docker Environment**: Containerized PostgreSQL
+68. **Production**: AWS RDS PostgreSQL
+69. **Migrations**: Version-controlled database migrations
+70. **Backups**: Automated backups in production
+
+### File Handling
+71. **Local Storage**: Local filesystem for development
+72. **Production Storage**: AWS S3 for all file uploads
+73. **CDN**: CloudFront for static asset delivery
+74. **Image Processing**: Server-side image optimization
+
+---
+
+## 🧪 **TESTING & QUALITY**
+
+### Testing Strategy
+75. **Backend Tests**: Unit tests with pytest or unittest
+76. **Frontend Tests**: Jest + React Testing Library
+77. **Integration Tests**: API integration tests
+78. **E2E Tests**: Cypress or Playwright for critical flows
+
+### Code Quality
+79. **Linting**: ESLint for React, flake8/black for Python
+80. **Type Checking**: TypeScript for frontend, mypy for Python
+81. **Code Coverage**: Maintain >80% coverage
+82. **Pre-commit Hooks**: Run linting and tests before commits
+
+---
+
+## 🚀 **DEPLOYMENT WORKFLOW**
+
+### Development Flow
+83. **Local First**: Develop and test locally
+84. **Docker Validation**: Test in Docker before deploying
+85. **Staging**: Deploy to staging environment first
+86. **Production**: Deploy to production after staging validation
+
+### CI/CD Pipeline
+87. **Build Process**: Automated building and testing
+88. **Security Scanning**: Scan for vulnerabilities
+89. **Performance Testing**: Basic performance checks
+90. **Deployment Automation**: Automated deployment to AWS
+---
+
+## 🔧 **PROJECT-SPECIFIC COMMANDS**
+
+### Local Development
+```bash
+# Backend
+python -m venv venv
+source venv/bin/activate  # or venv\Scripts\activate on Windows
+pip install -r requirements-dev.txt
+python manage.py runserver  # or uvicorn main:app --reload
+
+# Frontend
+npm install
+npm start
+
+# Database
+python manage.py migrate  # Django
+alembic upgrade head      # SQLAlchemy
+```
+
+### Docker Environment
+```bash
+# Full stack
+docker-compose up --build
+
+# Individual services
+docker-compose up backend
+docker-compose up frontend
+```
+
+### AWS Deployment
+```bash
+# Build and push
+docker build -t your-app .
+aws ecr get-login-password | docker login --username AWS --password-stdin
+docker push your-ecr-url
+
+# Deploy
+aws ecs update-service --cluster your-cluster --service your-service --force-new-deployment
+```
+
+---
+
+## 🎯 **PROJECT SUCCESS METRICS**
+
+- **Local development starts in <2 minutes**
+- **Docker environment mirrors production exactly**
+- **AWS deployment completes without manual configuration**
+- **All environments use same codebase**
+- **Zero secrets in version control**
+- **Fast feedback loops maintained**
+
+---
+
+*"This project deploys seamlessly from local → Docker → AWS with zero configuration drift"*

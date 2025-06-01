@@ -10,6 +10,8 @@ import {
   // TODO: Restore for post-demo - UsersIcon, Cog6ToothIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
+import MobileHeader from '../../shared/layout/MobileHeader';
+import MobileMenu from '../../shared/layout/MobileMenu';
 
 const DistributorLayout: React.FC = () => {
   const location = useLocation();
@@ -42,10 +44,16 @@ const DistributorLayout: React.FC = () => {
     }
   ];
 
+  const userInfo = {
+    name: `${user?.firstName || ''} ${user?.lastName || 'MD'}`,
+    role: 'Master Distributor',
+    avatar: `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || 'MD'}`
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 w-[280px] bg-[#334155] text-white">
+    <div className="min-h-screen bg-gray-100 overflow-x-hidden">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block fixed inset-y-0 left-0 w-[280px] bg-[#334155] text-white">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-start p-6 border-b border-slate-700">
             <img 
@@ -102,16 +110,22 @@ const DistributorLayout: React.FC = () => {
         </div>
       </div>
 
+      {/* Mobile Header */}
+      <MobileHeader userInfo={userInfo} />
+      
+      {/* Mobile Menu */}
+      <MobileMenu navigation={navigation} userInfo={userInfo} />
+
       {/* Main Content Area */}
-      <div className="pl-[280px]">
+      <div className="md:pl-[280px] pt-14 md:pt-0 min-w-0 overflow-x-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
-          <div>
-            <h1 className="text-lg font-medium text-gray-900">
+        <div className="flex items-center justify-between p-4 md:px-4 py-4 bg-white border-b border-gray-200 overflow-x-hidden">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-medium text-gray-900 truncate">
               Welcome, {user?.firstName} {user?.lastName}
             </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4 flex-shrink-0">
             <div className="flex items-center">
               <div className="h-2 w-2 bg-green-500 rounded-full mr-2" />
               <span className="text-sm text-gray-600">System Status: Operational</span>
@@ -120,8 +134,10 @@ const DistributorLayout: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <main className="min-h-screen p-8">
-          <Outlet />
+        <main className="min-h-screen p-4 md:p-8 overflow-x-hidden min-w-0">
+          <div className="max-w-full overflow-x-hidden">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
