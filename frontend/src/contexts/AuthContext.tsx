@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const profileFromApi = await fetchUserProfile(token);
       console.log('[AuthContext] Profile from API:', profileFromApi);
 
-      const comprehensiveUser: UserProfile = {
+            const comprehensiveUser: UserProfile = {
         ...decodedUser,
         ...profileFromApi,
       };

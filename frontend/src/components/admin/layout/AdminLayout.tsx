@@ -35,16 +35,16 @@ const AdminLayout: React.FC = () => {
     { name: 'System Analytics', href: '/admin/analytics', icon: ChartBarIcon },
     { name: 'Audit Logs', href: '/admin/audit-logs', icon: DocumentMagnifyingGlassIcon },
     { name: 'System Settings', href: '/admin/settings', icon: Cog6ToothIcon },
-    { 
-      name: 'Sign Out', 
-      href: '#', 
+    {
+      name: 'Sign Out',
+      href: '#',
       icon: ArrowRightOnRectangleIcon,
-      onClick: handleSignOut 
+      onClick: handleSignOut
     }
   ];
 
   const userInfo = {
-    name: `${user?.firstName || 'System'} ${user?.lastName || 'Admin'}`,
+    name: `${user?.first_name || 'System'} ${user?.last_name || 'Admin'}`,
     role: 'Administrator',
     avatar: 'A'
   };
@@ -53,20 +53,20 @@ const AdminLayout: React.FC = () => {
     <div className="flex h-screen bg-gray-100 overflow-x-hidden">
       {/* Desktop Sidebar */}
       <AdminSidebar />
-      
+
       {/* Mobile Header */}
       <MobileHeader userInfo={userInfo} />
-      
+
       {/* Mobile Menu */}
       <MobileMenu navigation={navigation} userInfo={userInfo} />
-      
+
       {/* Main Content Area */}
       <div className="flex-1 md:ml-[280px] pt-14 md:pt-0 min-w-0 overflow-x-hidden">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 overflow-x-hidden">
           <div className="flex items-center justify-between px-4 md:px-8 py-4 min-w-0">
             <h1 className="text-lg font-medium text-gray-900 truncate">
-              Welcome, {user?.firstName} {user?.lastName}
+              Welcome, {user?.first_name} {user?.last_name}
             </h1>
             <div className="hidden md:flex items-center gap-4 flex-shrink-0">
               <div className="flex items-center">
@@ -88,4 +88,4 @@ const AdminLayout: React.FC = () => {
   );
 };
 
-export default AdminLayout; 
+export default AdminLayout;

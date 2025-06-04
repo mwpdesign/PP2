@@ -52,3 +52,4 @@ class UserProfile(BaseModel):
     phone_number: Optional[str] = None
     email_verified: bool = Field(default=False)
     created_at: Optional[str] = None
+    role: Optional[str] = None  # User role from JWT token

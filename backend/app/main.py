@@ -27,6 +27,8 @@ if IS_DEVELOPMENT:
     allowed_origins = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:3001",  # Alternative frontend port
+        "http://127.0.0.1:3001",   # Alternative frontend port
         "http://localhost:5173",  # Vite frontend
         "http://127.0.0.1:5173",   # Vite frontend
         "http://localhost:8000",
@@ -74,11 +76,15 @@ async def cors_test():
         "allowed_origins": [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3001",
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "http://localhost:8000",
             "http://127.0.0.1:8000",
-        ] if IS_DEVELOPMENT else [os.getenv("FRONTEND_URL", "http://localhost:3000")]
+        ] if IS_DEVELOPMENT else [
+            os.getenv("FRONTEND_URL", "http://localhost:3000")
+        ]
     }
 
 

@@ -231,8 +231,15 @@ export const decodeJwt = (token: string): UserProfile | null => {
       email_verified: decoded.email_verified || false,
     } as UserProfile;
 
-    console.log('[authService] Mapped user profile:', userProfile);
-    console.log('[authService] ================================');
+    console.log('[authService] ===== JWT ROLE MAPPING DEBUG =====');
+    console.log('[authService] Raw decoded.role:', decoded.role);
+    console.log('[authService] Raw decoded.role type:', typeof decoded.role);
+    console.log('[authService] Raw decoded.role JSON:', JSON.stringify(decoded.role));
+    console.log('[authService] Mapped userProfile.role:', userProfile.role);
+    console.log('[authService] Mapped userProfile.role type:', typeof userProfile.role);
+    console.log('[authService] Mapped userProfile.role JSON:', JSON.stringify(userProfile.role));
+    console.log('[authService] Full mapped user profile:', userProfile);
+    console.log('[authService] ============================================');
 
     return userProfile;
   } catch (error) {

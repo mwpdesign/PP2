@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 import { AdminRoute } from './components/auth/AdminRoute';
+import { DashboardRouter } from './components/auth/DashboardRouter';
 import { TestLogin } from './components/auth/TestLogin';
 import { ConfigProvider } from './contexts/ConfigContext';
 import { MobileNavigationProvider } from './contexts/MobileNavigationContext';
@@ -37,6 +38,11 @@ const NetworkManagement = React.lazy(() => import('./components/distributor/netw
 const DistributorAnalytics = React.lazy(() => import('./components/distributor/analytics/DistributorAnalytics'));
 const OrderFulfillmentDashboard = React.lazy(() => import('./components/distributor/orders/OrderFulfillmentDashboard'));
 const ShippingLogistics = React.lazy(() => import('./components/distributor/orders/ShippingLogistics'));
+const SimpleIVRDashboard = React.lazy(() => import('./components/ivr/SimpleIVRDashboard'));
+const SimpleCHPAdminDashboard = React.lazy(() => import('./components/chp/SimpleCHPAdminDashboard'));
+const SimpleDistributorDashboard = React.lazy(() => import('./components/distributor/SimpleDistributorDashboard'));
+const SimpleSalesDashboard = React.lazy(() => import('./components/sales/SimpleSalesDashboard'));
+const SimpleLogisticsDashboard = React.lazy(() => import('./components/logistics/SimpleLogisticsDashboard'));
 
 const App = () => {
   console.log('App component rendering');
@@ -89,46 +95,38 @@ const App = () => {
                   </Route>
                 </Route>
 
+                {/* Role-Based Dashboard Router */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/dashboard" element={<DashboardRouter />} />
+                </Route>
+
+                {/* IVR Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/ivr/dashboard" element={<SimpleIVRDashboard />} />
+                </Route>
+
+                {/* CHP Admin Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/chp/dashboard" element={<SimpleCHPAdminDashboard />} />
+                </Route>
+
+                {/* Distributor Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/distributor-regional/dashboard" element={<SimpleDistributorDashboard />} />
+                </Route>
+
+                {/* Sales Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/sales/dashboard" element={<SimpleSalesDashboard />} />
+                </Route>
+
+                {/* Shipping and Logistics Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/logistics/dashboard" element={<SimpleLogisticsDashboard />} />
+                </Route>
+
                 {/* Doctor Routes */}
                 <Route element={<PrivateRoute />}>
-                  {/* Direct dashboard route for doctor dashboard */}
-                  <Route path="/dashboard" element={<MainLayout />}>
-                    <Route index element={<WoundCareDashboard />} />
-                  </Route>
-
-                  {/* Other doctor standalone routes */}
-                  <Route path="/patients" element={<MainLayout />}>
-                    <Route index element={<PatientSelectionPage />} />
-                    <Route path="select" element={<PatientSelectionPage />} />
-                    <Route path="intake" element={<PatientIntakePage />} />
-                    <Route path=":id" element={<PatientDetailPage />} />
-                  </Route>
-
-                  <Route path="/ivr" element={<MainLayout />}>
-                    <Route index element={<IVRManagementPage />} />
-                    <Route path="submit">
-                      <Route index element={<Navigate to="/patients/select" replace />} />
-                      <Route path="test/:patientId" element={<TestIVRPage />} />
-                      <Route path=":patientId" element={<IVRSubmissionPage />} />
-                    </Route>
-                  </Route>
-
-                  <Route path="/orders" element={<MainLayout />}>
-                    <Route index element={<OrderManagementPage />} />
-                  </Route>
-
-                  <Route path="/shipping" element={<MainLayout />}>
-                    <Route index element={<ShippingPage />} />
-                  </Route>
-
-                  <Route path="/analytics" element={<MainLayout />}>
-                    <Route index element={<AnalyticsPage />} />
-                  </Route>
-
-                  <Route path="/settings" element={<MainLayout />}>
-                    <Route index element={<SettingsPage />} />
-                  </Route>
-
                   <Route path="/doctor" element={<MainLayout />}>
                     <Route index element={<Navigate to="/doctor/dashboard" replace />} />
                     <Route path="dashboard" element={<WoundCareDashboard />} />
@@ -156,6 +154,14 @@ const App = () => {
                     <Route path="analytics" element={<AnalyticsPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                   </Route>
+
+                  {/* Legacy standalone routes for backward compatibility */}
+                  <Route path="/patients" element={<Navigate to="/doctor/patients" replace />} />
+                  <Route path="/patients/*" element={<Navigate to="/doctor/patients" replace />} />
+                  <Route path="/orders" element={<Navigate to="/doctor/orders" replace />} />
+                  <Route path="/shipping" element={<Navigate to="/doctor/orders" replace />} />
+                  <Route path="/analytics" element={<Navigate to="/doctor/analytics" replace />} />
+                  <Route path="/settings" element={<Navigate to="/doctor/settings" replace />} />
                 </Route>
 
                 {/* Root Redirect */}

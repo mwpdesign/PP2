@@ -22,11 +22,11 @@ export default function LoginPage() {
 
   // Monitor authentication state changes
   useEffect(() => {
-    addDebugLog(`Auth state changed - isAuthenticated: ${isAuthenticated}, user: ${user?.email || 'null'}`);
+    addDebugLog(`Auth state changed - isAuthenticated: ${isAuthenticated}, user: ${user?.email || 'null'}, role: ${user?.role || 'null'}`);
 
     if (isAuthenticated && user) {
       const destination = location.state?.from?.pathname || '/dashboard';
-      addDebugLog(`User authenticated, navigating to: ${destination}`);
+      addDebugLog(`User authenticated with role: ${user.role}, navigating to: ${destination}`);
       navigate(destination, { replace: true });
     }
   }, [isAuthenticated, user, navigate, location.state]);

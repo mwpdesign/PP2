@@ -320,6 +320,7 @@ async def get_profile(current_user: TokenData = Depends(get_current_user)):
                         phone_number=mock_user.get("phone_number", ""),
                         email_verified=True,
                         created_at=mock_user.get("created_at", ""),
+                        role=current_user.role,  # Include role from JWT token
                     )
                 else:
                     # Fallback if mock user not found
@@ -330,6 +331,7 @@ async def get_profile(current_user: TokenData = Depends(get_current_user)):
                         phone_number="",
                         email_verified=True,
                         created_at="",
+                        role=current_user.role,  # Include role from JWT token
                     )
             else:
                 # Fallback if no email
@@ -340,6 +342,7 @@ async def get_profile(current_user: TokenData = Depends(get_current_user)):
                     phone_number="",
                     email_verified=True,
                     created_at="",
+                    role=current_user.role if current_user else "",
                 )
 
             logger.info(f"Created profile: {profile}")
