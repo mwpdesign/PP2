@@ -1,29 +1,119 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoading: authLoading, error: authError } = useAuth();
+  const { login, isLoading: authLoading, error: authError, isAuthenticated, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+
+  // Debug logging function
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] ${message}`;
+    console.log(`[LOGIN DEBUG] ${logMessage}`);
+    setDebugLogs(prev => [...prev, logMessage]);
+  };
+
+  // Monitor authentication state changes
+  useEffect(() => {
+    addDebugLog(`Auth state changed - isAuthenticated: ${isAuthenticated}, user: ${user?.email || 'null'}`);
+
+    if (isAuthenticated && user) {
+      const destination = location.state?.from?.pathname || '/dashboard';
+      addDebugLog(`User authenticated, navigating to: ${destination}`);
+      navigate(destination, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, location.state]);
+
+  // Monitor loading states
+  useEffect(() => {
+    addDebugLog(`Loading states - local: ${isLoading}, auth: ${authLoading}`);
+  }, [isLoading, authLoading]);
+
+  // Monitor errors
+  useEffect(() => {
+    if (authError) {
+      addDebugLog(`Auth error: ${authError}`);
+    }
+    if (error) {
+      addDebugLog(`Local error: ${error}`);
+    }
+  }, [authError, error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    addDebugLog('=== LOGIN FORM SUBMISSION STARTED ===');
+    addDebugLog(`Form data - Email: "${email}", Password length: ${password.length}`);
+
     setIsLoading(true);
     setError(null);
-    
+    addDebugLog('Local loading state set to true, error cleared');
+
     try {
-      await login('doctor@example.com', 'password');
-      const destination = location.state?.from?.pathname || '/dashboard';
-      navigate(destination, { replace: true });
-    } catch (error) {
+      addDebugLog('Calling AuthContext.login()...');
+      await login(email, password);
+      addDebugLog('AuthContext.login() completed successfully');
+
+      // Navigation will be handled by the useEffect above
+      addDebugLog('Login successful, waiting for auth state update...');
+
+    } catch (error: any) {
+      addDebugLog('=== LOGIN ERROR CAUGHT ===');
+      addDebugLog(`Error type: ${typeof error}`);
+      addDebugLog(`Error object: ${JSON.stringify(error, null, 2)}`);
+
       console.error('Login failed:', error);
-      setError('Invalid credentials. Use doctor@test.com / password');
+
+      let errorMessage = 'Login failed';
+      if (error?.detail) {
+        errorMessage = typeof error.detail === 'string' ? error.detail : JSON.stringify(error.detail);
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      addDebugLog(`Setting error message: ${errorMessage}`);
+      setError(errorMessage);
     } finally {
+      addDebugLog('Setting local loading state to false');
       setIsLoading(false);
+      addDebugLog('=== LOGIN FORM SUBMISSION COMPLETED ===');
     }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    addDebugLog(`Email field updated: "${newEmail}"`);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    addDebugLog(`Password field updated (length: ${newPassword.length})`);
+  };
+
+  const fillTestCredentials = (userType: 'admin' | 'doctor' | 'ivr') => {
+    const credentials = {
+      admin: { email: 'admin@healthcare.local', password: 'admin123' },
+      doctor: { email: 'doctor@healthcare.local', password: 'doctor123' },
+      ivr: { email: 'ivr@healthcare.local', password: 'ivr123' }
+    };
+
+    const creds = credentials[userType];
+    setEmail(creds.email);
+    setPassword(creds.password);
+    addDebugLog(`Test credentials filled for ${userType}: ${creds.email}`);
+  };
+
+  const clearDebugLogs = () => {
+    setDebugLogs([]);
+    addDebugLog('Debug logs cleared');
   };
 
   return (
@@ -42,6 +132,43 @@ export default function LoginPage() {
           <p className="text-base text-gray-600">
             Secure access to wound care management
           </p>
+        </div>
+
+        {/* Development Credentials Info */}
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-6">
+          <h4 className="text-sm font-medium text-blue-800 mb-2">Development Credentials:</h4>
+          <div className="text-xs text-blue-700 space-y-1">
+            <div className="flex justify-between items-center">
+              <span><strong>Admin:</strong> admin@healthcare.local / admin123</span>
+              <button
+                type="button"
+                onClick={() => fillTestCredentials('admin')}
+                className="text-xs bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded"
+              >
+                Fill
+              </button>
+            </div>
+            <div className="flex justify-between items-center">
+              <span><strong>Doctor:</strong> doctor@healthcare.local / doctor123</span>
+              <button
+                type="button"
+                onClick={() => fillTestCredentials('doctor')}
+                className="text-xs bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded"
+              >
+                Fill
+              </button>
+            </div>
+            <div className="flex justify-between items-center">
+              <span><strong>IVR:</strong> ivr@healthcare.local / ivr123</span>
+              <button
+                type="button"
+                onClick={() => fillTestCredentials('ivr')}
+                className="text-xs bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded"
+              >
+                Fill
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Trust Indicators */}
@@ -92,7 +219,8 @@ export default function LoginPage() {
                 type="email"
                 autoComplete="email"
                 required
-                defaultValue="doctor@example.com"
+                value={email}
+                onChange={handleEmailChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-[#375788] focus:border-[#375788] text-sm"
                 placeholder="Enter your email"
               />
@@ -107,7 +235,8 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
-                defaultValue="password"
+                value={password}
+                onChange={handlePasswordChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-[#375788] focus:border-[#375788] text-sm"
                 placeholder="Enter your password"
               />
@@ -140,6 +269,45 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* Debug Panel */}
+      <div className="w-[440px] bg-gray-900 text-white rounded-xl p-4 mb-4">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-sm font-medium">Login Debug Trace</h3>
+          <button
+            onClick={clearDebugLogs}
+            className="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded"
+          >
+            Clear
+          </button>
+        </div>
+        <div className="max-h-40 overflow-y-auto text-xs font-mono space-y-1">
+          {debugLogs.length === 0 ? (
+            <div className="text-gray-400">No debug logs yet...</div>
+          ) : (
+            debugLogs.map((log, index) => (
+              <div key={index} className="text-green-400">
+                {log}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Auth State Debug */}
+      <div className="w-[440px] bg-gray-800 text-white rounded-xl p-4 mb-4">
+        <h3 className="text-sm font-medium mb-3">Authentication State</h3>
+        <div className="text-xs font-mono space-y-1">
+          <div>isAuthenticated: <span className={isAuthenticated ? 'text-green-400' : 'text-red-400'}>{String(isAuthenticated)}</span></div>
+          <div>isLoading (local): <span className={isLoading ? 'text-yellow-400' : 'text-gray-400'}>{String(isLoading)}</span></div>
+          <div>isLoading (auth): <span className={authLoading ? 'text-yellow-400' : 'text-gray-400'}>{String(authLoading)}</span></div>
+          <div>user: <span className="text-blue-400">{user?.email || 'null'}</span></div>
+          <div>error (local): <span className="text-red-400">{error || 'null'}</span></div>
+          <div>error (auth): <span className="text-red-400">{authError || 'null'}</span></div>
+          <div>current path: <span className="text-purple-400">{location.pathname}</span></div>
+          <div>redirect from: <span className="text-purple-400">{location.state?.from?.pathname || 'null'}</span></div>
+        </div>
+      </div>
+
       {/* Compliance Information Below Card */}
       <div className="w-[440px] flex justify-between text-sm text-white/90">
         <span className="flex items-center">
@@ -163,4 +331,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-} 
+}

@@ -1,16 +1,19 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import App from './App'
+import './styles/tailwind.css'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
-import App from './App'
-import './styles/globals.css'
+import { MobileNavigationProvider } from './contexts/MobileNavigationContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <MobileNavigationProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </MobileNavigationProvider>
     </BrowserRouter>
   </React.StrictMode>,
 ) 

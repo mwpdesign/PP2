@@ -3,6 +3,8 @@
 ## Overview
 The Order Management System handles the creation, tracking, and processing of medical orders with real-time status updates and HIPAA-compliant data handling.
 
+The primary user interface for order management (especially for roles like Master Distributor) presents a streamlined three-stage status progression for core fulfillment: **Pending → Preparing → Shipped**. This UI flow is a simplified representation of the more detailed backend status machine outlined in the workflow diagram below. The detailed workflow encompasses all possible states and transitions managed by the backend system.
+
 ## Core Features
 
 ### Order Workflow

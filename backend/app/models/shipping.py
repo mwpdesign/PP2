@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
-from app.core.security import encrypt_field, decrypt_field
+from app.core.encryption import encrypt_field, decrypt_field
 from app.services.shipping_types import ShippingServiceType, TrackingStatus
 
 

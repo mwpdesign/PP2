@@ -3,7 +3,11 @@
 import os
 import logging
 from typing import AsyncGenerator, Optional
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    create_async_engine,
+    async_sessionmaker,
+)
 from sqlalchemy.orm import DeclarativeBase, declared_attr
 from sqlalchemy import text
 from dotenv import load_dotenv
@@ -105,7 +109,9 @@ async def init_db() -> bool:
 
     # Early return if database not required
     if not db_settings.database_required:
-        logger.info("Database connection disabled - running in no-database mode")
+        logger.info(
+            "Database connection disabled - running in no-database mode"
+        )
         return True
 
     try:
@@ -128,43 +134,56 @@ async def init_db() -> bool:
         # Initialize tables only if database is required and engine exists
         if engine is not None:
             # Import models here to avoid circular imports
-            from app.models import (  # noqa
-                organization,
-                user,
-                rbac,
-                sensitive_data,
-                patient,
-                facility,
-                order,
-                ivr,
-                insurance,
-                audit,
-            )
-            from app.services.shipping_types import (  # noqa
-                ShippingServiceType,
-                TrackingStatus,
-                ShippingProvider,
-                ShippingRate,
-                ShippingLabel,
-                TrackingInfo,
-            )
-            from app.analytics.models import (  # noqa
-                DimTime,
-                DimGeography,
-                DimOrganization,
-                DimPatientDemographics,
-                DimPatientSatisfaction,
-                DimVerificationPerformance,
-                FactIVRCall,
-                FactOrder,
-            )
+            try:
+                from app.models import (  # noqa
+                    organization,
+                    user,
+                    rbac,
+                    sensitive_data,
+                    patient,
+                    facility,
+                    order,
+                    ivr,
+                    insurance,
+                    audit,
+                )
+            except ImportError as e:
+                logger.warning(f"Some models could not be imported: {e}")
+
+            try:
+                from app.services.shipping_types import (  # noqa
+                    ShippingServiceType,
+                    TrackingStatus,
+                    ShippingProvider,
+                    ShippingRate,
+                    ShippingLabel,
+                    TrackingInfo,
+                )
+            except ImportError as e:
+                logger.warning(f"Shipping types could not be imported: {e}")
+
+            try:
+                from app.analytics.models import (  # noqa
+                    DimTime,
+                    DimGeography,
+                    DimOrganization,
+                    DimPatientDemographics,
+                    DimPatientSatisfaction,
+                    DimVerificationPerformance,
+                    FactIVRCall,
+                    FactOrder,
+                )
+            except ImportError as e:
+                logger.warning(f"Analytics models could not be imported: {e}")
 
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
 
             logger.info("Database tables initialized successfully")
 
-        logger.info(f"Database connection successful using {db_settings.database_url}")
+        logger.info(
+            f"Database connection successful using {db_settings.database_url}"
+        )
         return True
 
     except Exception as e:
@@ -207,18 +226,12 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
-
-# Import all models to ensure they are registered with SQLAlchemy
-from app.models import (  # noqa: E402, F401
-    organization,
-    user,
-    rbac,
-    sensitive_data,
-    provider,
-    patient,
-    facility,
-    order,
-    ivr,
-    insurance,
-    audit,
-)
+# Export commonly used objects for easier imports
+__all__ = [
+    "Base",
+    "engine",
+    "AsyncSessionLocal",
+    "get_db",
+    "init_db",
+    "is_database_available"
+]

@@ -10,6 +10,7 @@ import { MobileNavigationProvider } from './contexts/MobileNavigationContext';
 // Import components
 const LoginPage = React.lazy(() => import('./pages/login'));
 const TestPage = React.lazy(() => import('./pages/TestPage'));
+const AuthDebugPage = React.lazy(() => import('./pages/debug/AuthDebugPage'));
 const WoundCareDashboard = React.lazy(() => import('./pages/dashboard/WoundCareDashboard'));
 const AdminDashboard = React.lazy(() => import('./pages/admin/dashboard/index'));
 const IVRReviewQueue = React.lazy(() => import('./components/admin/IVRReviewQueue'));
@@ -55,7 +56,8 @@ const App = () => {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/test" element={<TestPage />} />
                 <Route path="/test-login" element={<TestLogin />} />
-                
+                <Route path="/auth-debug" element={<AuthDebugPage />} />
+
                 {/* Admin Routes */}
                 <Route element={<AdminRoute />}>
                   <Route path="/admin" element={<AdminLayout />}>
@@ -93,7 +95,7 @@ const App = () => {
                   <Route path="/dashboard" element={<MainLayout />}>
                     <Route index element={<WoundCareDashboard />} />
                   </Route>
-                  
+
                   {/* Other doctor standalone routes */}
                   <Route path="/patients" element={<MainLayout />}>
                     <Route index element={<PatientSelectionPage />} />
@@ -101,7 +103,7 @@ const App = () => {
                     <Route path="intake" element={<PatientIntakePage />} />
                     <Route path=":id" element={<PatientDetailPage />} />
                   </Route>
-                  
+
                   <Route path="/ivr" element={<MainLayout />}>
                     <Route index element={<IVRManagementPage />} />
                     <Route path="submit">
@@ -110,19 +112,19 @@ const App = () => {
                       <Route path=":patientId" element={<IVRSubmissionPage />} />
                     </Route>
                   </Route>
-                  
+
                   <Route path="/orders" element={<MainLayout />}>
                     <Route index element={<OrderManagementPage />} />
                   </Route>
-                  
+
                   <Route path="/shipping" element={<MainLayout />}>
                     <Route index element={<ShippingPage />} />
                   </Route>
-                  
+
                   <Route path="/analytics" element={<MainLayout />}>
                     <Route index element={<AnalyticsPage />} />
                   </Route>
-                  
+
                   <Route path="/settings" element={<MainLayout />}>
                     <Route index element={<SettingsPage />} />
                   </Route>
@@ -130,7 +132,7 @@ const App = () => {
                   <Route path="/doctor" element={<MainLayout />}>
                     <Route index element={<Navigate to="/doctor/dashboard" replace />} />
                     <Route path="dashboard" element={<WoundCareDashboard />} />
-                    
+
                     {/* Patient Routes */}
                     <Route path="patients">
                       <Route index element={<Navigate to="/doctor/patients/select" replace />} />
@@ -138,7 +140,7 @@ const App = () => {
                       <Route path="intake" element={<PatientIntakePage />} />
                       <Route path=":id" element={<PatientDetailPage />} />
                     </Route>
-                    
+
                     {/* IVR Routes */}
                     <Route path="ivr">
                       <Route index element={<IVRManagementPage />} />
@@ -148,7 +150,7 @@ const App = () => {
                         <Route path=":patientId" element={<IVRSubmissionPage />} />
                       </Route>
                     </Route>
-                    
+
                     {/* Other Routes */}
                     <Route path="orders" element={<OrderManagementPage />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
@@ -158,7 +160,7 @@ const App = () => {
 
                 {/* Root Redirect */}
                 <Route path="/" element={<Navigate to="/login" replace />} />
-                
+
                 {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>

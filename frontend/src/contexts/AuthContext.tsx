@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useReducer, useEffect, ReactNode, useCallback, useContext } from 'react';
+import { loginUser, fetchUserProfile, decodeJwt, UserProfile } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
 import type { UserRole } from '../types/auth';
 
@@ -13,96 +14,175 @@ interface User {
   is_superuser: boolean;
 }
 
-interface AuthContextType {
-  user: User | null;
-  login: (credentials: { email: string; password: string }) => Promise<{ success: boolean; user: User }>;
-  logout: () => void;
+interface AuthState {
   isAuthenticated: boolean;
+  user: UserProfile | null;
+  token: string | null;
   isLoading: boolean;
+  error: string | null;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+interface AuthContextType extends AuthState {
+  login: (email_in: string, password_in: string) => Promise<void>;
+  logout: () => void;
+  // loadUser is implicitly called on init and after login
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const initialState: AuthState = {
+  isAuthenticated: false,
+  user: null,
+  token: null,
+  isLoading: false, // MODIFIED: Start with isLoading false
+  error: null,
+};
+
+type AuthAction =
+  | { type: 'LOGIN_REQUEST' }
+  | { type: 'LOGIN_SUCCESS'; payload: { token: string; user: UserProfile } }
+  | { type: 'LOGIN_FAILURE'; payload: string }
+  | { type: 'LOAD_USER_SUCCESS'; payload: { token: string; user: UserProfile } }
+  | { type: 'LOAD_USER_FAILURE' }
+  | { type: 'LOGOUT' }
+  | { type: 'SET_LOADING'; payload: boolean };
+
+const authReducer = (state: AuthState, action: AuthAction): AuthState => {
+  console.log(`[AuthContext] Reducer action: ${action.type}`, action);
+
+  switch (action.type) {
+    case 'LOGIN_REQUEST':
+      console.log('[AuthContext] LOGIN_REQUEST - setting loading true, clearing error');
+      return { ...state, isLoading: true, error: null };
+    case 'SET_LOADING':
+      console.log(`[AuthContext] SET_LOADING - setting loading to ${action.payload}`);
+      return { ...state, isLoading: action.payload, error: null };
+    case 'LOGIN_SUCCESS':
+    case 'LOAD_USER_SUCCESS':
+      console.log(`[AuthContext] ${action.type} - user authenticated:`, action.payload.user.email);
+      return {
+        ...state,
+        isAuthenticated: true,
+        user: action.payload.user,
+        token: action.payload.token,
+        isLoading: false,
+        error: null,
+      };
+    case 'LOGIN_FAILURE':
+      console.log(`[AuthContext] LOGIN_FAILURE - error:`, action.payload);
+      return {
+        ...state,
+        isAuthenticated: false,
+        user: null,
+        token: null,
+        isLoading: false,
+        error: action.payload,
+      };
+    case 'LOAD_USER_FAILURE':
+    case 'LOGOUT':
+      console.log(`[AuthContext] ${action.type} - clearing auth state and localStorage`);
+      localStorage.removeItem('authToken');
+      return {
+        ...initialState,
+        isLoading: false,
+      };
+    default:
+      console.log(`[AuthContext] Unknown action type: ${(action as any).type}`);
+      return state;
+  }
+};
+
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
+  const [state, dispatch] = useReducer(authReducer, initialState);
+
+  console.log('[AuthContext] Current state:', {
+    isAuthenticated: state.isAuthenticated,
+    user: state.user?.email || 'null',
+    token: state.token ? 'present' : 'null',
+    isLoading: state.isLoading,
+    error: state.error
   });
 
-  const login = async (credentials: { email: string; password: string }) => {
-    // Simulate different roles based on email
-    let userData: User;
-    
-    if (credentials?.email?.includes('doctor')) {
-      userData = {
-        id: 'doctor-123',
-        email: 'doctor@demo.com',
-        role: 'Doctor',
-        firstName: 'Dr. Sarah',
-        lastName: 'Johnson',
-        organization_id: 'org-123',
-        is_superuser: false,
-        permissions: ['manage_patients', 'submit_ivr', 'place_orders']
+  const loadUserFromToken = useCallback(async (token: string) => {
+    console.log('[AuthContext] loadUserFromToken called with token:', token.substring(0, 20) + '...');
+    dispatch({ type: 'SET_LOADING', payload: true });
+
+    try {
+      console.log('[AuthContext] Decoding JWT token...');
+      const decodedUser = decodeJwt(token);
+      console.log('[AuthContext] Decoded user from JWT:', decodedUser);
+
+      console.log('[AuthContext] Fetching user profile from API...');
+      const profileFromApi = await fetchUserProfile(token);
+      console.log('[AuthContext] Profile from API:', profileFromApi);
+
+      const comprehensiveUser: UserProfile = {
+        ...decodedUser,
+        ...profileFromApi,
       };
-      navigate('/doctor/dashboard');
-    } else if (credentials?.email?.includes('ivr')) {
-      userData = {
-        id: 'ivr-123',
-        email: 'ivr@demo.com',
-        role: 'IVRCompany',
-        firstName: 'IVR',
-        lastName: 'Specialist',
-        organization_id: 'org-123',
-        is_superuser: false,
-        permissions: ['review_ivr', 'approve_requests']
-      };
-      navigate('/ivr/dashboard');
-    } else if (credentials?.email?.includes('distributor')) {
-      userData = {
-        id: 'distributor-123',
-        email: 'distributor@demo.com',
-        role: 'Distributor',
-        firstName: 'Master',
-        lastName: 'Distributor',
-        organization_id: 'org-123',
-        is_superuser: false,
-        permissions: ['manage_orders', 'manage_logistics', 'manage_ivr']
-      };
-      navigate('/distributor/dashboard');
-    } else {
-      userData = {
-        id: 'admin-123',
-        email: 'admin@demo.com',
-        role: 'Admin',
-        firstName: 'Admin',
-        lastName: 'User',
-        organization_id: 'org-123',
-        is_superuser: true,
-        permissions: ['all']
-      };
-      navigate('/admin/dashboard');
+      console.log('[AuthContext] Comprehensive user object:', comprehensiveUser);
+
+      if (comprehensiveUser) {
+        console.log('[AuthContext] Storing token in localStorage and dispatching success');
+        localStorage.setItem('authToken', token);
+        dispatch({ type: 'LOAD_USER_SUCCESS', payload: { token, user: comprehensiveUser } });
+      } else {
+        throw new Error('Failed to process user information from token.');
+      }
+    } catch (error) {
+      console.error('[AuthContext] Error in loadUserFromToken:', error);
+      localStorage.removeItem('authToken');
+      dispatch({ type: 'LOAD_USER_FAILURE' });
     }
-    
-    setUser(userData);
-    localStorage.setItem('token', 'bypass-jwt-token');
-    localStorage.setItem('user', JSON.stringify(userData));
-    return { success: true, user: userData };
+  }, []);
+
+  useEffect(() => {
+    console.log('[AuthContext] useEffect - checking for existing token in localStorage');
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      console.log('[AuthContext] Found existing token, loading user...');
+      loadUserFromToken(token);
+    } else {
+      console.log('[AuthContext] No existing token found, setting loading to false');
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  }, [loadUserFromToken]);
+
+  const login = async (email_in: string, password_in: string) => {
+    console.log('[AuthContext] login called with:', { email: email_in, passwordLength: password_in.length });
+    dispatch({ type: 'LOGIN_REQUEST' });
+
+    try {
+      console.log('[AuthContext] Calling loginUser service...');
+      const tokenData = await loginUser(email_in, password_in);
+      console.log('[AuthContext] loginUser service returned:', tokenData);
+
+      console.log('[AuthContext] Loading user from received token...');
+      await loadUserFromToken(tokenData.access_token);
+      console.log('[AuthContext] Login process completed successfully');
+    } catch (error: any) {
+      console.error('[AuthContext] Login error:', error);
+      const errorMessage = typeof error.detail === 'string' ? error.detail : JSON.stringify(error.detail);
+      console.log('[AuthContext] Dispatching LOGIN_FAILURE with message:', errorMessage);
+      dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage || 'Login failed' });
+      throw error;
+    }
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
+    console.log('[AuthContext] logout called');
+    dispatch({ type: 'LOGOUT' });
   };
 
   const value = {
-    user,
+    ...state,
     login,
     logout,
-    isAuthenticated: !!user,
-    isLoading: false
   };
 
   return (
@@ -120,4 +200,4 @@ export const useAuth = () => {
   return context;
 };
 
-export default AuthContext; 
+export default AuthContext;

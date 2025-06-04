@@ -12,20 +12,22 @@ import base64
 import os
 import re
 import logging
-import bcrypt
 
 from jose import jwt, JWTError
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, TypeDecorator, LargeBinary
+
 from passlib.context import CryptContext
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.encryption import encrypt_field, decrypt_field
+from app.core.password import verify_password, get_password_hash
 from app.models.user import User
 from app.schemas.token import TokenData
+from app.services.mock_auth_service import mock_auth_service
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -42,15 +44,16 @@ __all__ = [
     "sanitize_phi",
     "create_refresh_token",
     "verify_password_reset_token",
+    "verify_password",
+    "get_password_hash",
     "require_roles",
     "require_permissions",
     "PasswordValidator",
+    "password_validator",
     "encrypt_field",
     "decrypt_field",
     "generate_uuid",
     "EncryptedString",
-    "verify_password",
-    "get_password_hash",
 ]
 
 # Security token settings
@@ -86,7 +89,9 @@ def generate_uuid() -> str:
     return str(UUID(bytes=os.urandom(16), version=4))
 
 
-def create_access_token(data: Dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(
+    data: Dict, expires_delta: Optional[timedelta] = None
+) -> str:
     """Create JWT access token."""
     to_encode = data.copy()
     if expires_delta:
@@ -129,35 +134,108 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> TokenData:
     """Get current user from JWT token."""
+    logger.info("=" * 60)
+    logger.info("GET_CURRENT_USER FUNCTION CALLED")
+    logger.info("=" * 60)
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        logger.info(f"Token received: {token[:50]}...")
+
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
+        logger.info(f"JWT payload decoded: {payload}")
+
         email: str = payload.get("sub")
+        logger.info(f"Email from payload: {email}")
+
         if email is None:
+            logger.error("No email found in JWT payload")
             raise credentials_exception
 
-        # Get user from database
-        result = await db.execute(select(User).where(User.email == email))
+        # Check if we're in local development mode with mock auth
+        is_local_mode = settings.AUTH_MODE == "local"
+        is_dev_mode = mock_auth_service.is_development_mode()
+
+        logger.info(f"Is local mode: {is_local_mode}")
+        logger.info(f"Is dev mode: {is_dev_mode}")
+
+        if is_local_mode and is_dev_mode:
+            logger.info("Using mock user authentication path")
+            # For mock users, create TokenData directly from JWT payload
+            logger.info(f"Using mock user data for: {email}")
+            logger.info(f"JWT payload: {payload}")
+
+            # Get mock user data to ensure user exists
+            mock_user = mock_auth_service.get_mock_user(email)
+            logger.info(f"Mock user lookup result: {mock_user}")
+
+            if mock_user:
+                logger.info(f"Found mock user: {mock_user}")
+
+                # Convert string UUIDs to UUID objects
+                user_id = UUID(mock_user["id"])
+                org_id = UUID(mock_user["organization_id"])
+
+                logger.info(f"Converted UUIDs - user_id: {user_id}, org_id: {org_id}")
+
+                token_data = TokenData(
+                    email=email,
+                    id=user_id,
+                    organization_id=org_id,
+                    permissions=[],  # Mock users have empty permissions
+                    role=mock_user["role_id"],
+                )
+                logger.info(f"Created TokenData: {token_data}")
+                logger.info("=" * 60)
+                return token_data
+            else:
+                logger.error(f"Mock user not found for email: {email}")
+                raise credentials_exception
+
+        # Database authentication for non-mock users
+        logger.info(f"Using database authentication for: {email}")
+        stmt = (
+            select(User)
+            .where(User.email == email)
+        )
+        result = await db.execute(stmt)
         user = result.scalar_one_or_none()
         if user is None:
+            logger.error(f"Database user not found for email: {email}")
             raise credentials_exception
 
-        # Create TokenData with all required fields
+        user_role_name = user.role.name if user.role else None
+
+        # Placeholder for permissions; actual logic depends on how they are stored/derived.
+        # For now, an empty list is used as per TokenData schema default.
+        user_permissions = []
+
         token_data = TokenData(
             email=email,
             id=user.id,
             organization_id=user.organization_id,
-            permissions=user.permissions,
-            role=user.role,
+            permissions=user_permissions,
+            role=user_role_name,
         )
+        logger.info(f"Created database TokenData: {token_data}")
+        logger.info("=" * 60)
         return token_data
-    except JWTError:
+    except HTTPException:
+        logger.error("HTTP exception in get_current_user")
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in get_current_user: {str(e)}")
+        logger.error(f"Exception type: {type(e)}")
+        logger.error(f"Exception args: {e.args}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise credentials_exception
 
 
@@ -259,25 +337,108 @@ async def authenticate_user(
     Returns:
         Optional[Dict[str, Any]]: User data if authentication successful
     """
+    logger.info("=" * 60)
+    logger.info("AUTHENTICATE_USER FUNCTION CALLED")
+    logger.info("=" * 60)
+    logger.info(f"Username: '{username}'")
+    password_len = len(password) if password else 0
+    logger.info(f"Password length: {password_len}")
+    logger.info(f"Username type: {type(username)}")
+    logger.info(f"Password type: {type(password)}")
+    logger.info(f"AUTH_MODE: {settings.AUTH_MODE}")
+    logger.info(f"Environment: {os.getenv('ENVIRONMENT', 'not_set')}")
+    logger.info(f"DEBUG: {os.getenv('DEBUG', 'not_set')}")
+
     try:
-        # Query the user
+        # Check if we're in local development mode and should use mock auth
+        is_local_mode = settings.AUTH_MODE == "local"
+        is_dev_mode = mock_auth_service.is_development_mode()
+
+        logger.info(f"Is local mode: {is_local_mode}")
+        logger.info(f"Is development mode: {is_dev_mode}")
+
+        if is_local_mode and is_dev_mode:
+            logger.info("✅ USING MOCK AUTHENTICATION SERVICE")
+
+            # Try mock authentication first
+            auth_func_msg = "Calling mock_auth_service.authenticate_mock_user()"
+            logger.info(auth_func_msg)
+            mock_user = mock_auth_service.authenticate_mock_user(
+                username, password
+            )
+
+            if mock_user:
+                logger.info("✅ MOCK AUTHENTICATION SUCCESSFUL")
+                logger.info(f"Mock user data: {mock_user}")
+                logger.info("=" * 60)
+                return mock_user
+            else:
+                logger.info("❌ MOCK AUTHENTICATION FAILED")
+                fallback_msg = "Falling through to database authentication"
+                logger.info(fallback_msg)
+
+        # Database authentication (fallback or primary for non-local)
+        logger.info("🔍 USING DATABASE AUTHENTICATION")
+        logger.info("Executing database query...")
+
         query = select(User).where(User.email == username)
+        logger.info(f"Query: {query}")
+
         result = await db.execute(query)
         user = result.scalar_one_or_none()
 
         if not user:
+            logger.info("❌ DATABASE AUTH FAILED: User not found")
+            logger.info(f"Searched for email: '{username}'")
+            logger.info("=" * 60)
             return None
 
-        # Verify password
-        if not verify_password(password, user.encrypted_password):
+        logger.info(f"✅ USER FOUND IN DATABASE: {user.email}")
+        logger.info(f"User ID: {user.id}")
+        logger.info(f"User active: {user.is_active}")
+        logger.info(f"User role: {user.role_id}")
+
+        # Verify password using User model's method
+        logger.info("🔐 VERIFYING PASSWORD")
+        password_valid = user.verify_password(password)
+        logger.info(f"Password verification result: {password_valid}")
+
+        if not password_valid:
+            # Increment failed login attempts if user exists but password wrong
+            logger.info("❌ PASSWORD VERIFICATION FAILED")
+            user.increment_failed_login()
+            await db.commit()
+            logger.info("Incremented failed login attempts")
+            logger.info("=" * 60)
             return None
+
+        # Check if account is locked
+        is_locked = user.is_locked()
+        logger.info(f"Account locked status: {is_locked}")
+        if is_locked:
+            logger.info("❌ ACCOUNT IS LOCKED")
+            logger.info("=" * 60)
+            return None
+
+        # Check if account is active
+        logger.info(f"Account active status: {user.is_active}")
+        if not user.is_active:
+            logger.info("❌ ACCOUNT IS NOT ACTIVE")
+            logger.info("=" * 60)
+            return None
+
+        # Reset failed login attempts on successful login
+        logger.info("✅ AUTHENTICATION SUCCESSFUL")
+        logger.info("Resetting failed login attempts")
+        user.reset_failed_login()
 
         # Update last login
-        user.last_login = datetime.utcnow()
+        logger.info("Updating last login timestamp")
+        user.update_last_login()  # Use the model's method
         await db.commit()
 
         # Return user data
-        return {
+        user_data = {
             "id": str(user.id),
             "email": user.email,
             "first_name": user.first_name,
@@ -288,8 +449,20 @@ async def authenticate_user(
             "is_superuser": user.is_superuser,
         }
 
+        logger.info("✅ RETURNING USER DATA")
+        logger.info(f"User data: {user_data}")
+        logger.info("=" * 60)
+        return user_data
+
     except Exception as e:
-        logger.error(f"Authentication error: {str(e)}")
+        logger.error("❌ AUTHENTICATION EXCEPTION OCCURRED")
+        logger.error(f"Exception type: {type(e)}")
+        logger.error(f"Exception message: {str(e)}")
+        logger.error(f"Exception args: {e.args}")
+        import traceback
+        traceback_str = traceback.format_exc()
+        logger.error(f"Traceback: {traceback_str}")
+        logger.error("=" * 60)
         return None
 
 
@@ -424,20 +597,6 @@ class PasswordValidator:
 
 # Global instance
 password_validator = PasswordValidator()
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a stored password against a provided password."""
-    try:
-        return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
-    except Exception as e:
-        logger.error(f"Password verification error: {str(e)}")
-        return False
-
-
-def get_password_hash(password: str) -> str:
-    """Generate password hash."""
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(12)).decode()
 
 
 class EncryptedString(TypeDecorator):

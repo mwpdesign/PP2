@@ -46,7 +46,7 @@ class PasswordResetConfirm(BaseModel):
 class UserProfile(BaseModel):
     """User profile response model."""
 
-    email: EmailStr
+    email: str  # Changed from EmailStr for .local domain compatibility
     first_name: str
     last_name: str
     phone_number: Optional[str] = None

@@ -1,45 +1,95 @@
-"""Models package initialization."""
+"""
+SQLAlchemy database models.
+"""
 
-from app.models.organization import Organization
-from app.models.user import User
-from app.models.rbac import Role, Permission
-from app.models.sensitive_data import SensitiveData
-from app.models.facility import Facility
-from app.models.patient import Patient
-from app.models.provider import Provider
-from app.models.order import Order, OrderStatusHistory
-from app.models.insurance import SecondaryInsurance
-from app.models.logistics import QualityCheck
-from app.models.audit import PHIAccess as PHIAccessLog
-from app.models.product import Product
-from app.models.shipping import (
-    ShippingAddress,
-    Shipment,
-    ShipmentPackage,
-    ShipmentTracking,
-)
-from app.models.ivr import IVRRequest, IVRSession, IVRDocument
+# Import all models for easier access and to ensure they're registered
+from .user import User
+from .organization import Organization
+from .rbac import Role, Permission, RolePermission
+
+# Import other models that exist
+try:
+    from .patient import Patient, PatientDocument
+except ImportError:
+    pass
+
+try:
+    from .provider import Provider
+except ImportError:
+    pass
+
+try:
+    from .orders import Order, OrderItem
+except ImportError:
+    pass
+
+try:
+    from .notification import Notification
+except ImportError:
+    pass
+
+try:
+    from .shipping import (
+        ShippingAddress,
+        Shipment,
+        ShipmentPackage,
+        ShipmentTracking,
+    )
+except ImportError:
+    pass
+
+try:
+    from .ivr import IVRRequest, IVRResponse
+except ImportError:
+    pass
+
+try:
+    from .compliance import AuditLog, ComplianceReport
+except ImportError:
+    pass
+
+try:
+    from .logistics import (
+        Item,
+        FulfillmentOrder,
+        PickingList,
+        QualityCheck,
+        WarehouseLocation,
+        InventoryTransaction,
+        StockLevel,
+        ReturnAuthorization,
+        ReturnInspection,
+    )
+except ImportError:
+    pass
 
 __all__ = [
-    "Organization",
     "User",
+    "Organization",
     "Role",
     "Permission",
-    "SensitiveData",
-    "Facility",
+    "RolePermission",
     "Patient",
+    "PatientDocument",
     "Provider",
     "Order",
-    "OrderStatusHistory",
-    "SecondaryInsurance",
-    "QualityCheck",
-    "PHIAccessLog",
-    "Product",
+    "OrderItem",
+    "Notification",
     "ShippingAddress",
     "Shipment",
     "ShipmentPackage",
     "ShipmentTracking",
     "IVRRequest",
-    "IVRSession",
-    "IVRDocument",
+    "IVRResponse",
+    "AuditLog",
+    "ComplianceReport",
+    "Item",
+    "FulfillmentOrder",
+    "PickingList",
+    "QualityCheck",
+    "WarehouseLocation",
+    "InventoryTransaction",
+    "StockLevel",
+    "ReturnAuthorization",
+    "ReturnInspection",
 ]

@@ -15,6 +15,9 @@ from fastapi import HTTPException
 from app.core.config import settings
 from app.models.audit import AuditLog
 
+# Module-level logger for PHI access logging
+logger = logging.getLogger(__name__)
+
 
 class PHIAccessType(Enum):
     VIEW = "view"

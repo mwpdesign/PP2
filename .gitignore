@@ -56,3 +56,6 @@ terraform.rc
 # Project specific
 fix_formatting.py
 Thursdays Prompt
+
+# Editor Configuration
+!.editorconfig

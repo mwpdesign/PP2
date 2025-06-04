@@ -178,10 +178,10 @@ class QualityCheck(Base):
         "FulfillmentOrder", back_populates="quality_checks"
     )
     inspector = relationship(
-        "User", foreign_keys=[inspector_id], back_populates="quality_checks"
+        "User", foreign_keys=[inspector_id]
     )
     created_by = relationship(
-        "User", foreign_keys=[created_by_id], back_populates="quality_checks"
+        "User", foreign_keys=[created_by_id]
     )
 
 

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -13,33 +12,36 @@ import {
   Paper,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 export const LoginForm: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const { login, isLoading, error: authError } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [formSpecificError, setFormSpecificError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
+    console.log('[LoginForm] handleSubmit triggered');
+    setFormSpecificError(null);
 
     if (!email || !password) {
-      setError('Please enter both email and password');
+      console.log('[LoginForm] Email or password missing');
+      setFormSpecificError('Please enter both email and password');
       return;
     }
 
+    console.log(`[LoginForm] Attempting login for email: ${email}`);
     try {
       await login(email, password);
-    } catch (err) {
-      console.error('Login error:', err);
-      // Error is handled by AuthContext
+      console.log('[LoginForm] login call completed from useAuth');
+    } catch (err: any) {
+      console.error('[LoginForm] Error during login call:', err);
+      const message = err?.detail || err?.message || 'Login failed. Please try again.';
+      setFormSpecificError(typeof message === 'string' ? message : JSON.stringify(message));
     }
   };
 
@@ -82,7 +84,6 @@ export const LoginForm: React.FC = () => {
         Sign in to your account
       </Typography>
 
-      {/* Demo account information */}
       <Alert severity="info" sx={{ mb: 3 }}>
         <Typography variant="body2" sx={{ fontWeight: 500 }}>
           Available Demo Accounts:
@@ -96,9 +97,9 @@ export const LoginForm: React.FC = () => {
         </Box>
       </Alert>
 
-      {(error || authError) && (
+      {(formSpecificError || authError) && (
         <Alert severity="error" sx={{ mb: 3 }}>
-          {error || authError}
+          {formSpecificError || authError}
         </Alert>
       )}
 

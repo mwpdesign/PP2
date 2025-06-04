@@ -32,14 +32,14 @@ const MedicalJustificationStep: React.FC<MedicalJustificationStepProps> = ({
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-medium text-gray-900 mb-4">Medical Justification</h3>
-        
+
         {/* Clinical Notes */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Clinical Notes
           </label>
           <Editor
-            apiKey="your-tinymce-api-key" // Replace with your TinyMCE API key
+            apiKey={process.env.REACT_APP_TINYMCE_API_KEY || "no-api-key"}
             value={medicalJustification.clinicalNotes}
             onEditorChange={(content: string) => {
               onMedicalJustificationChange({
@@ -143,4 +143,4 @@ const MedicalJustificationStep: React.FC<MedicalJustificationStepProps> = ({
   );
 };
 
-export default MedicalJustificationStep; 
+export default MedicalJustificationStep;
