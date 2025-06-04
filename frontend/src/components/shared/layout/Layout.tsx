@@ -17,19 +17,19 @@ import MobileMenu from './MobileMenu';
 import { useAuth } from '../../../contexts/AuthContext';
 
 const Layout: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-    { name: 'Patient Intake', href: '/patients', icon: UserPlusIcon },
-    { name: 'IVR Management', href: '/ivr', icon: ClipboardDocumentCheckIcon },
-    { name: 'Order Management', href: '/orders', icon: DocumentTextIcon },
-    { name: 'Shipping & Logistics', href: '/shipping', icon: TruckIcon },
-    { name: 'Analytics & Reports', href: '/analytics', icon: ChartBarIcon },
-    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
-    { 
-      name: 'Sign Out', 
-      href: '#', 
+    { name: 'Dashboard', href: '/doctor/dashboard', icon: HomeIcon },
+    { name: 'Patient Intake', href: '/doctor/patients', icon: UserPlusIcon },
+    { name: 'IVR Management', href: '/doctor/ivr', icon: ClipboardDocumentCheckIcon },
+    { name: 'Order Management', href: '/doctor/orders', icon: DocumentTextIcon },
+    { name: 'Shipping & Logistics', href: '/doctor/shipping', icon: TruckIcon },
+    { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
+    { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
+    {
+      name: 'Sign Out',
+      href: '#',
       icon: ArrowRightOnRectangleIcon,
       onClick: async () => {
         try {
@@ -43,22 +43,22 @@ const Layout: React.FC = () => {
   ];
 
   const userInfo = {
-    name: 'Dr. John',
-    role: 'Doctor',
-    avatar: 'Dr'
+    name: user?.first_name ? `${user.first_name} ${user.last_name}` : 'Dr. John',
+    role: user?.role || 'Doctor',
+    avatar: user?.first_name?.charAt(0) || 'Dr'
   };
 
   return (
     <div className="min-h-screen bg-gray-100 overflow-x-hidden">
       {/* Desktop Sidebar */}
-      <Sidebar />
-      
+      <Sidebar navigation={navigation} userInfo={userInfo} />
+
       {/* Mobile Header */}
       <MobileHeader userInfo={userInfo} />
-      
+
       {/* Mobile Menu */}
       <MobileMenu navigation={navigation} userInfo={userInfo} />
-      
+
       {/* Main Content */}
       <div className="md:pl-[280px] pt-14 md:pt-0 min-w-0 overflow-x-hidden">
         <SystemHeader />
@@ -72,4 +72,4 @@ const Layout: React.FC = () => {
   );
 };
 
-export default Layout; 
+export default Layout;

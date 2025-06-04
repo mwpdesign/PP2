@@ -34,13 +34,13 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInf
   const { logout } = useAuth();
 
   const defaultNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-    { name: 'Patient Intake', href: '/patients', icon: UserPlusIcon },
-    { name: 'IVR Management', href: '/ivr', icon: ClipboardDocumentCheckIcon },
-    { name: 'Order Management', href: '/orders', icon: DocumentTextIcon },
-    { name: 'Shipping & Logistics', href: '/shipping', icon: TruckIcon },
-    { name: 'Analytics & Reports', href: '/analytics', icon: ChartBarIcon },
-    { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
+    { name: 'Dashboard', href: '/doctor/dashboard', icon: HomeIcon },
+    { name: 'Patient Intake', href: '/doctor/patients', icon: UserPlusIcon },
+    { name: 'IVR Management', href: '/doctor/ivr', icon: ClipboardDocumentCheckIcon },
+    { name: 'Order Management', href: '/doctor/orders', icon: DocumentTextIcon },
+    { name: 'Shipping & Logistics', href: '/doctor/shipping', icon: TruckIcon },
+    { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
+    { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
   ];
 
   const defaultUserInfo = {
@@ -115,7 +115,16 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInf
 
         </nav>
         <div className="mt-auto px-7 pb-4">
-          <div className="border-t border-[rgba(255,255,255,0.1)] pt-4 mt-4">
+          {/* Logout Button - Always available */}
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center px-4 py-3 text-sm font-medium text-[rgba(255,255,255,0.9)] hover:text-white hover:bg-[rgba(255,255,255,0.1)] rounded-lg transition-colors mb-4"
+          >
+            <ArrowRightOnRectangleIcon className="mr-4 h-5 w-5" />
+            Sign Out
+          </button>
+
+          <div className="border-t border-[rgba(255,255,255,0.1)] pt-4">
             <div className="flex items-center px-4">
               <div className="h-10 w-10 rounded-full bg-[#375788] flex items-center justify-center">
                 <span className="text-white font-medium text-lg">{userInfo.avatar}</span>

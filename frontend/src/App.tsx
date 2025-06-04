@@ -64,6 +64,24 @@ const App = () => {
                 <Route path="/test-login" element={<TestLogin />} />
                 <Route path="/auth-debug" element={<AuthDebugPage />} />
 
+                {/* DEBUG ROUTE - Temporary for troubleshooting */}
+                <Route path="/debug-auth-state" element={
+                  <div className="p-8">
+                    <h1 className="text-2xl font-bold mb-4">Auth State Debug</h1>
+                    <pre className="bg-gray-100 p-4 rounded">
+                      {JSON.stringify({
+                        isAuthenticated: 'Check console for auth state',
+                        timestamp: new Date().toISOString()
+                      }, null, 2)}
+                    </pre>
+                  </div>
+                } />
+
+                {/* Role-Based Dashboard Router - MOVED UP to handle /dashboard first */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/dashboard" element={<DashboardRouter />} />
+                </Route>
+
                 {/* Admin Routes */}
                 <Route element={<AdminRoute />}>
                   <Route path="/admin" element={<AdminLayout />}>
@@ -78,54 +96,7 @@ const App = () => {
                   </Route>
                 </Route>
 
-                {/* Distributor Routes */}
-                <Route element={<PrivateRoute />}>
-                  <Route path="/distributor" element={<DistributorLayout />}>
-                    <Route index element={<Navigate to="/distributor/dashboard" replace />} />
-                    <Route path="dashboard" element={<MasterDistributorDashboard />} />
-                    <Route path="ivr/management" element={<SegmentedIVRManagement />} />
-                    <Route path="network" element={<NetworkManagement />} />
-                    <Route path="orders/management" element={<OrderFulfillmentDashboard />} />
-                    <Route path="orders/shipping" element={<ShippingLogistics />} />
-                    <Route path="orders/*" element={<OrderManagementPage />} />
-                    <Route path="shipping/*" element={<ShippingPage />} />
-                    <Route path="logistics/*" element={<ShippingLogistics />} />
-                    <Route path="analytics" element={<DistributorAnalytics />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                  </Route>
-                </Route>
-
-                {/* Role-Based Dashboard Router */}
-                <Route element={<PrivateRoute />}>
-                  <Route path="/dashboard" element={<DashboardRouter />} />
-                </Route>
-
-                {/* IVR Routes */}
-                <Route element={<PrivateRoute />}>
-                  <Route path="/ivr/dashboard" element={<SimpleIVRDashboard />} />
-                </Route>
-
-                {/* CHP Admin Routes */}
-                <Route element={<PrivateRoute />}>
-                  <Route path="/chp/dashboard" element={<SimpleCHPAdminDashboard />} />
-                </Route>
-
-                {/* Distributor Routes */}
-                <Route element={<PrivateRoute />}>
-                  <Route path="/distributor-regional/dashboard" element={<SimpleDistributorDashboard />} />
-                </Route>
-
-                {/* Sales Routes */}
-                <Route element={<PrivateRoute />}>
-                  <Route path="/sales/dashboard" element={<SimpleSalesDashboard />} />
-                </Route>
-
-                {/* Shipping and Logistics Routes */}
-                <Route element={<PrivateRoute />}>
-                  <Route path="/logistics/dashboard" element={<SimpleLogisticsDashboard />} />
-                </Route>
-
-                {/* Doctor Routes */}
+                {/* Doctor Routes - MOVED UP to prevent conflicts */}
                 <Route element={<PrivateRoute />}>
                   <Route path="/doctor" element={<MainLayout />}>
                     <Route index element={<Navigate to="/doctor/dashboard" replace />} />
@@ -162,6 +133,48 @@ const App = () => {
                   <Route path="/shipping" element={<Navigate to="/doctor/orders" replace />} />
                   <Route path="/analytics" element={<Navigate to="/doctor/analytics" replace />} />
                   <Route path="/settings" element={<Navigate to="/doctor/settings" replace />} />
+                </Route>
+
+                {/* Master Distributor Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/distributor" element={<DistributorLayout />}>
+                    <Route index element={<Navigate to="/distributor/dashboard" replace />} />
+                    <Route path="dashboard" element={<MasterDistributorDashboard />} />
+                    <Route path="ivr/management" element={<SegmentedIVRManagement />} />
+                    <Route path="network" element={<NetworkManagement />} />
+                    <Route path="orders/management" element={<OrderFulfillmentDashboard />} />
+                    <Route path="orders/shipping" element={<ShippingLogistics />} />
+                    <Route path="orders/*" element={<OrderManagementPage />} />
+                    <Route path="shipping/*" element={<ShippingPage />} />
+                    <Route path="logistics/*" element={<ShippingLogistics />} />
+                    <Route path="analytics" element={<DistributorAnalytics />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                  </Route>
+                </Route>
+
+                {/* IVR Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/ivr/dashboard" element={<SimpleIVRDashboard />} />
+                </Route>
+
+                {/* CHP Admin Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/chp/dashboard" element={<SimpleCHPAdminDashboard />} />
+                </Route>
+
+                {/* Regional Distributor Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/distributor-regional/dashboard" element={<SimpleDistributorDashboard />} />
+                </Route>
+
+                {/* Sales Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/sales/dashboard" element={<SimpleSalesDashboard />} />
+                </Route>
+
+                {/* Shipping and Logistics Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/logistics/dashboard" element={<SimpleLogisticsDashboard />} />
                 </Route>
 
                 {/* Root Redirect */}
