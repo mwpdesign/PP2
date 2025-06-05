@@ -19,6 +19,16 @@ except ImportError:
     pass
 
 try:
+    from .facility import Facility
+except ImportError:
+    pass
+
+try:
+    from .product import Product
+except ImportError:
+    pass
+
+try:
     from .orders import Order, OrderItem
 except ImportError:
     pass
@@ -39,7 +49,16 @@ except ImportError:
     pass
 
 try:
-    from .ivr import IVRRequest, IVRResponse
+    from .ivr import (
+        IVRRequest,
+        IVRStatusHistory,
+        IVRApproval,
+        IVREscalation,
+        IVRReview,
+        IVRDocument,
+        IVRSession,
+        IVRSessionItem,
+    )
 except ImportError:
     pass
 
@@ -72,6 +91,8 @@ __all__ = [
     "Patient",
     "PatientDocument",
     "Provider",
+    "Facility",
+    "Product",
     "Order",
     "OrderItem",
     "Notification",
@@ -80,7 +101,13 @@ __all__ = [
     "ShipmentPackage",
     "ShipmentTracking",
     "IVRRequest",
-    "IVRResponse",
+    "IVRStatusHistory",
+    "IVRApproval",
+    "IVREscalation",
+    "IVRReview",
+    "IVRDocument",
+    "IVRSession",
+    "IVRSessionItem",
     "AuditLog",
     "ComplianceReport",
     "Item",

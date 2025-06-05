@@ -10,7 +10,7 @@ from sqlalchemy.sql import func
 
 from app.core.database import Base
 from app.core.encrypted_types import (
-    EncryptedString, EncryptedText, EncryptedJSON
+    EncryptedString, EncryptedText
 )
 from app.models.user import User
 
@@ -29,35 +29,54 @@ class Patient(Base):
         String(100), unique=True, nullable=True
     )
     # Encrypted PHI fields using our new encryption types
+    # Map to the actual database column names
     first_name: Mapped[str] = mapped_column(
-        EncryptedString(field_name="first_name"), nullable=False
+        EncryptedString(field_name="first_name"),
+        name="encrypted_first_name",
+        nullable=False
     )
     last_name: Mapped[str] = mapped_column(
-        EncryptedString(field_name="last_name"), nullable=False
+        EncryptedString(field_name="last_name"),
+        name="encrypted_last_name",
+        nullable=False
     )
     date_of_birth: Mapped[str] = mapped_column(
-        EncryptedString(field_name="date_of_birth"), nullable=False
+        EncryptedString(field_name="date_of_birth"),
+        name="encrypted_dob",
+        nullable=False
     )
     ssn: Mapped[Optional[str]] = mapped_column(
-        EncryptedString(field_name="ssn"), nullable=True
+        EncryptedString(field_name="ssn"),
+        name="encrypted_ssn",
+        nullable=True
     )
     phone: Mapped[Optional[str]] = mapped_column(
-        EncryptedString(field_name="phone"), nullable=True
+        EncryptedString(field_name="phone"),
+        name="encrypted_phone",
+        nullable=True
     )
     email: Mapped[Optional[str]] = mapped_column(
-        EncryptedString(field_name="email"), nullable=True
+        EncryptedString(field_name="email"),
+        name="encrypted_email",
+        nullable=True
     )
     address: Mapped[Optional[str]] = mapped_column(
-        EncryptedText(field_name="address"), nullable=True
+        EncryptedText(field_name="address"),
+        name="encrypted_address",
+        nullable=True
     )
-    # Medical history stored as encrypted JSON
-    medical_history: Mapped[Optional[dict]] = mapped_column(
-        EncryptedJSON(field_name="medical_history"), nullable=True
-    )
-    # Insurance information stored as encrypted JSON
-    insurance_info: Mapped[Optional[dict]] = mapped_column(
-        EncryptedJSON(field_name="insurance_info"), nullable=True
-    )
+    # Medical history stored as encrypted JSON - need to add column to database
+    # medical_history: Mapped[Optional[dict]] = mapped_column(
+    #     EncryptedJSON(field_name="medical_history"),
+    #     name="encrypted_medical_history",
+    #     nullable=True
+    # )
+    # Insurance information stored as encrypted JSON - need to add column
+    # insurance_info: Mapped[Optional[dict]] = mapped_column(
+    #     EncryptedJSON(field_name="insurance_info"),
+    #     name="encrypted_insurance_info",
+    #     nullable=True
+    # )
 
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, default="active")
@@ -170,10 +189,14 @@ class PatientDocument(Base):
         back_populates="documents"
     )
     created_by: Mapped[User] = relationship(
-        "User", foreign_keys=[created_by_id], back_populates="created_documents"
+        "User",
+        foreign_keys=[created_by_id],
+        back_populates="created_documents"
     )
     updated_by: Mapped[Optional[User]] = relationship(
-        "User", foreign_keys=[updated_by_id], back_populates="updated_documents"
+        "User",
+        foreign_keys=[updated_by_id],
+        back_populates="updated_documents"
     )
     organization = relationship(
         "Organization",

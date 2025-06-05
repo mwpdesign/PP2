@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { toast } from 'react-hot-toast';
 import PageHeader from '../../../components/shared/layout/PageHeader';
 import PatientCard from '../../../components/patients/PatientCard';
 import { Patient } from '../../../types/ivr';
-import { mockPatientService } from '../../../services/mockPatientService';
+import patientService from '../../../services/patientService';
 
 const PatientSelectionPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,15 +21,38 @@ const PatientSelectionPage: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await mockPatientService.searchPatients({
-        query: query || '',
-        page: currentPage,
-        size: pageSize
-      });
-      setPatients(response.items);
-      setTotalItems(response.total);
+
+      // Use real patient service
+      const response = await patientService.searchPatients(query || '');
+
+      // Transform backend response to match frontend Patient type
+      const transformedPatients: Patient[] = response.map((patient: any) => ({
+        id: patient.id,
+        firstName: patient.first_name || patient.firstName,
+        lastName: patient.last_name || patient.lastName,
+        dateOfBirth: patient.date_of_birth || patient.dateOfBirth,
+        email: patient.email,
+        phone: patient.phone_number || patient.phone,
+        address: patient.address,
+        city: patient.city,
+        state: patient.state,
+        zipCode: patient.zip_code || patient.zipCode,
+        primaryCondition: patient.primary_condition || 'Not specified',
+        lastVisitDate: patient.last_visit_date || patient.lastVisitDate,
+        insuranceInfo: {
+          provider: patient.insurance_provider || 'Not specified',
+          policyNumber: patient.insurance_id || 'Not specified',
+          groupNumber: patient.insurance_group || '',
+          status: patient.insurance_verified ? 'active' : 'pending'
+        }
+      }));
+
+      setPatients(transformedPatients);
+      setTotalItems(transformedPatients.length);
     } catch (err) {
-      setError('Failed to load patients');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load patients';
+      setError(errorMessage);
+      toast.error(errorMessage);
       console.error('Error fetching patients:', err);
     } finally {
       setIsLoading(false);
@@ -55,7 +79,7 @@ const PatientSelectionPage: React.FC = () => {
   };
 
   const handleAddNewPatient = () => {
-    navigate('/patients/intake');
+    navigate('/doctor/patients/intake');
   };
 
   const totalPages = Math.ceil(totalItems / pageSize);
@@ -118,7 +142,7 @@ const PatientSelectionPage: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center space-x-2 mt-6">
@@ -152,4 +176,4 @@ const PatientSelectionPage: React.FC = () => {
   );
 };
 
-export default PatientSelectionPage; 
+export default PatientSelectionPage;

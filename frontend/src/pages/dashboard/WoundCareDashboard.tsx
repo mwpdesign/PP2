@@ -89,25 +89,25 @@ const quickActions = [
   {
     name: 'New Patient Intake',
     description: 'Register a new patient',
-    href: '/patients/intake',
+    href: '/doctor/patients/intake',
     icon: UserPlusIcon,
   },
   {
     name: 'Submit IVR Request',
     description: 'Create insurance verification request',
-    href: '/patients/select',
+    href: '/doctor/patients/select',
     icon: DocumentTextIcon,
   },
   {
     name: 'Track Orders',
     description: 'View and manage patient orders',
-    href: '/orders',
+    href: '/doctor/orders',
     icon: ShoppingCartIcon,
   },
   {
     name: 'Review IVR Queue',
     description: 'Check pending IVR requests',
-    href: '/ivr',
+    href: '/doctor/ivr',
     icon: ClipboardDocumentCheckIcon,
   },
 ];
@@ -240,8 +240,8 @@ const WoundCareDashboard: React.FC = () => {
                 <div key={item.id} className="p-2.5 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <div className={`h-2 w-2 rounded-full mr-2 ${
-                      item.priorityColor === 'red' 
-                        ? 'bg-red-500' 
+                      item.priorityColor === 'red'
+                        ? 'bg-red-500'
                         : item.priorityColor === 'orange'
                         ? 'bg-orange-500'
                         : 'bg-yellow-500'
@@ -321,4 +321,4 @@ const WoundCareDashboard: React.FC = () => {
   );
 };
 
-export default WoundCareDashboard; 
+export default WoundCareDashboard;
