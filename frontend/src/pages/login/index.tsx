@@ -25,7 +25,10 @@ export default function LoginPage() {
     addDebugLog(`Auth state changed - isAuthenticated: ${isAuthenticated}, user: ${user?.email || 'null'}, role: ${user?.role || 'null'}`);
 
     if (isAuthenticated && user) {
-      const destination = location.state?.from?.pathname || '/dashboard';
+      // Always redirect to /dashboard to ensure DashboardRouter handles role-based routing
+      // This prevents issues with cached browser history redirecting to wrong dashboards
+      const destination = '/dashboard';
+
       addDebugLog(`User authenticated with role: ${user.role}, navigating to: ${destination}`);
       navigate(destination, { replace: true });
     }

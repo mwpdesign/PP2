@@ -166,7 +166,7 @@ class LocalEncryptionService:
         context: Optional[Dict] = None
     ) -> Optional[str]:
         """
-        Encrypt a field value for secure storage.
+        Encrypt a field value for secure storage with performance monitoring.
 
         Args:
             data: The data to encrypt (will be converted to string)
@@ -184,6 +184,33 @@ class LocalEncryptionService:
         if not self._fernet:
             raise EncryptionError("Encryption service not initialized")
 
+        # Extract field name for monitoring
+        field_name = (
+            context.get("field_name", "unknown") if context else "unknown"
+        )
+
+        # Performance monitoring
+        try:
+            from ..core.performance import time_encryption_operation
+            with time_encryption_operation(
+                field_name=field_name,
+                data_size=len(str(data)) if data else 0,
+                user_id=context.get("user_id") if context else None,
+                organization_id=(
+                    context.get("organization_id") if context else None
+                )
+            ):
+                return self._perform_encryption(data, context)
+        except ImportError:
+            # Fallback if performance monitoring is not available
+            return self._perform_encryption(data, context)
+
+    def _perform_encryption(
+        self,
+        data: Any,
+        context: Optional[Dict] = None
+    ) -> str:
+        """Perform the actual encryption operation."""
         try:
             # Convert data to string if not already
             if isinstance(data, (dict, list)):
@@ -214,7 +241,7 @@ class LocalEncryptionService:
         context: Optional[Dict] = None
     ) -> Optional[str]:
         """
-        Decrypt a field value from secure storage.
+        Decrypt a field value from secure storage with caching optimization.
 
         Args:
             encrypted_data: Base64-encoded encrypted string
@@ -232,6 +259,80 @@ class LocalEncryptionService:
         if not self._fernet:
             raise EncryptionError("Encryption service not initialized")
 
+                # Extract field name and user context for caching
+        field_name = (
+            context.get("field_name", "unknown") if context else "unknown"
+        )
+        user_context = None
+        if context:
+            user_context = {
+                "user_id": context.get("user_id"),
+                "organization_id": context.get("organization_id")
+            }
+
+        # Try to get from cache first
+        try:
+            from .encryption_cache import get_encryption_cache
+            cache = get_encryption_cache()
+            cached_result = cache.get_cached_decryption(
+                encrypted_data, user_context, field_name
+            )
+            if cached_result is not None:
+                logger.debug(f"Cache hit for field: {field_name}")
+                return cached_result
+        except Exception as e:
+            logger.warning(
+                f"Cache retrieval failed, proceeding with decryption: {str(e)}"
+            )
+
+        # Performance monitoring
+        try:
+            from ..core.performance import time_decryption_operation
+            with time_decryption_operation(
+                field_name=field_name,
+                data_size=len(encrypted_data) if encrypted_data else 0,
+                user_id=context.get("user_id") if context else None,
+                organization_id=(
+                    context.get("organization_id") if context else None
+                )
+            ):
+                # Perform decryption
+                decrypted_str = self._perform_decryption(
+                    encrypted_data, context
+                )
+
+                # Cache the result
+                try:
+                    from .encryption_cache import get_encryption_cache
+                    cache = get_encryption_cache()
+                    data_classification = (
+                        context.get("data_classification", "PHI")
+                        if context else "PHI"
+                    )
+                    cache.cache_decryption(
+                        encrypted_data=encrypted_data,
+                        decrypted_data=decrypted_str,
+                        user_context=user_context,
+                        field_name=field_name,
+                        data_classification=data_classification
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to cache decryption result: {str(e)}"
+                    )
+
+                return decrypted_str
+
+        except ImportError:
+            # Fallback if performance monitoring is not available
+            return self._perform_decryption(encrypted_data, context)
+
+    def _perform_decryption(
+        self,
+        encrypted_data: str,
+        context: Optional[Dict] = None
+    ) -> str:
+        """Perform the actual decryption operation."""
         try:
             # Decode from base64
             encrypted_bytes = base64.urlsafe_b64decode(encrypted_data.encode('utf-8'))

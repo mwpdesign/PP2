@@ -115,15 +115,6 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInf
 
         </nav>
         <div className="mt-auto px-7 pb-4">
-          {/* Logout Button - Always available */}
-          <button
-            onClick={handleSignOut}
-            className="w-full flex items-center px-4 py-3 text-sm font-medium text-[rgba(255,255,255,0.9)] hover:text-white hover:bg-[rgba(255,255,255,0.1)] rounded-lg transition-colors mb-4"
-          >
-            <ArrowRightOnRectangleIcon className="mr-4 h-5 w-5" />
-            Sign Out
-          </button>
-
           <div className="border-t border-[rgba(255,255,255,0.1)] pt-4">
             <div className="flex items-center px-4">
               <div className="h-10 w-10 rounded-full bg-[#375788] flex items-center justify-center">

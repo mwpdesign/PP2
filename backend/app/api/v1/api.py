@@ -9,6 +9,7 @@ from app.api.v1.endpoints import (
     patients,
     providers,
     config,
+    performance,
 )
 from app.api.auth.routes import router as auth_router
 
@@ -32,4 +33,9 @@ api_router.include_router(
     config.router,
     prefix="/config",
     tags=["configuration"]
+)
+api_router.include_router(
+    performance.router,
+    prefix="/performance",
+    tags=["performance"]
 )

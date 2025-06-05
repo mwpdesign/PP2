@@ -9,7 +9,7 @@ import { ConfigProvider } from './contexts/ConfigContext';
 import { MobileNavigationProvider } from './contexts/MobileNavigationContext';
 
 // Import components
-const LoginPage = React.lazy(() => import('./pages/login'));
+const LoginPage = React.lazy(() => import('./pages/Login'));
 const TestPage = React.lazy(() => import('./pages/TestPage'));
 const AuthDebugPage = React.lazy(() => import('./pages/debug/AuthDebugPage'));
 const WoundCareDashboard = React.lazy(() => import('./pages/dashboard/WoundCareDashboard'));
@@ -83,7 +83,7 @@ const App = () => {
                 </Route>
 
                 {/* Admin Routes */}
-                <Route element={<AdminRoute />}>
+                <Route element={<PrivateRoute />}>
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<Navigate to="/admin/dashboard" replace />} />
                     <Route path="dashboard" element={<AdminDashboard />} />

@@ -6,31 +6,40 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'medical-blue': '#4A90A4',  // Updated to Clear Health Pass blue
+        // Professional Healthcare Design System
+        'medical-blue': '#4A90A4',
         'medical-green': '#A8DADC',
         'medical-amber': '#F77F00',
         'medical-red': '#C1121F',
         'medical-gray': '#F1FAEE',
         'medical-neutral': '#457B9D',
+
+        // Dashboard Architecture Colors (matching existing pattern)
+        'sidebar-dark': '#334155',  // Dark slate for sidebar
+        'sidebar-active': '#375788', // Active state for sidebar items
+        'content-bg': '#FFFFFF',    // White content background
+        'text-primary': '#1E293B',  // High contrast text
+
         brand: {
-          primary: '#4A90A4',
+          primary: '#475569',       // Slate-600 for buttons and accents
           secondary: '#A8DADC',
           accent: '#F77F00',
+          success: '#059669',       // Emerald-600 for positive actions
           danger: '#C1121F',
           gray: '#F1FAEE',
           neutral: '#457B9D',
         },
         primary: {
-          50: '#F0F7F9',
-          100: '#E1EFF3',
-          200: '#C3DFE7',
-          300: '#A5CFDB',
-          400: '#87BFCF',
-          500: '#4A90A4',
-          600: '#3B7383',
-          700: '#2C5662',
-          800: '#1D3941',
-          900: '#0E1C20',
+          50: '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B',
+          600: '#475569',           // Primary brand color
+          700: '#334155',           // Sidebar color
+          800: '#1E293B',           // Text primary
+          900: '#0F172A',
         },
       },
       fontFamily: {
@@ -90,4 +99,4 @@ module.exports = {
     },
   },
   plugins: [],
-} 
+}

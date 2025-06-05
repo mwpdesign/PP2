@@ -1,18 +1,7 @@
 import React, { createContext, useReducer, useEffect, ReactNode, useCallback, useContext } from 'react';
-import { loginUser, fetchUserProfile, decodeJwt, UserProfile } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
-import type { UserRole } from '../types/auth';
-
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: UserRole;
-  organization_id: string;
-  permissions: string[];
-  is_superuser: boolean;
-}
+import authService from '../services/authService';
+import type { UserRole, UserProfile, AuthContextType } from '../types/auth';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -22,17 +11,11 @@ interface AuthState {
   error: string | null;
 }
 
-interface AuthContextType extends AuthState {
-  login: (email_in: string, password_in: string) => Promise<void>;
-  logout: () => void;
-  // loadUser is implicitly called on init and after login
-}
-
 const initialState: AuthState = {
   isAuthenticated: false,
   user: null,
   token: null,
-  isLoading: false, // MODIFIED: Start with isLoading false
+  isLoading: false,
   error: null,
 };
 
@@ -43,7 +26,8 @@ type AuthAction =
   | { type: 'LOAD_USER_SUCCESS'; payload: { token: string; user: UserProfile } }
   | { type: 'LOAD_USER_FAILURE' }
   | { type: 'LOGOUT' }
-  | { type: 'SET_LOADING'; payload: boolean };
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'CLEAR_ERROR' };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   console.log(`[AuthContext] Reducer action: ${action.type}`, action);
@@ -52,9 +36,14 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     case 'LOGIN_REQUEST':
       console.log('[AuthContext] LOGIN_REQUEST - setting loading true, clearing error');
       return { ...state, isLoading: true, error: null };
+
     case 'SET_LOADING':
       console.log(`[AuthContext] SET_LOADING - setting loading to ${action.payload}`);
-      return { ...state, isLoading: action.payload, error: null };
+      return { ...state, isLoading: action.payload };
+
+    case 'CLEAR_ERROR':
+      return { ...state, error: null };
+
     case 'LOGIN_SUCCESS':
     case 'LOAD_USER_SUCCESS':
       console.log(`[AuthContext] ${action.type} - user authenticated:`, action.payload.user.email);
@@ -66,6 +55,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isLoading: false,
         error: null,
       };
+
     case 'LOGIN_FAILURE':
       console.log(`[AuthContext] LOGIN_FAILURE - error:`, action.payload);
       return {
@@ -76,14 +66,18 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isLoading: false,
         error: action.payload,
       };
+
     case 'LOAD_USER_FAILURE':
     case 'LOGOUT':
-      console.log(`[AuthContext] ${action.type} - clearing auth state and localStorage`);
-      localStorage.removeItem('authToken');
+      console.log(`🚨 [AuthContext] ${action.type} - CLEARING ALL AUTH STATE 🚨`);
       return {
-        ...initialState,
+        isAuthenticated: false,
+        user: null,
+        token: null,
         isLoading: false,
+        error: null,
       };
+
     default:
       console.log(`[AuthContext] Unknown action type: ${(action as any).type}`);
       return state;
@@ -108,81 +102,160 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error: state.error
   });
 
+  /**
+   * Load user from stored token
+   */
   const loadUserFromToken = useCallback(async (token: string) => {
-    console.log('[AuthContext] loadUserFromToken called with token:', token.substring(0, 20) + '...');
+    console.log('[AuthContext] loadUserFromToken called');
     dispatch({ type: 'SET_LOADING', payload: true });
 
     try {
-      console.log('[AuthContext] Decoding JWT token...');
-      const decodedUser = decodeJwt(token);
-      console.log('[AuthContext] Decoded user from JWT:', decodedUser);
+      // Get user profile from backend
+      const userProfile = await authService.getUserProfile();
+      console.log('[AuthContext] Profile fetched:', userProfile);
 
-      console.log('[AuthContext] Fetching user profile from API...');
-      const profileFromApi = await fetchUserProfile(token);
-      console.log('[AuthContext] Profile from API:', profileFromApi);
-
-            const comprehensiveUser: UserProfile = {
-        ...decodedUser,
-        ...profileFromApi,
+      // Get role from token for consistency
+      const role = authService.getUserRole();
+      const comprehensiveUser: UserProfile = {
+        ...userProfile,
+        role: role || userProfile.role,
       };
-      console.log('[AuthContext] Comprehensive user object:', comprehensiveUser);
 
-      if (comprehensiveUser) {
-        console.log('[AuthContext] Storing token in localStorage and dispatching success');
-        localStorage.setItem('authToken', token);
-        dispatch({ type: 'LOAD_USER_SUCCESS', payload: { token, user: comprehensiveUser } });
-      } else {
-        throw new Error('Failed to process user information from token.');
-      }
-    } catch (error) {
+      console.log('[AuthContext] 🎯 ROLE DEBUG - Final user role:', comprehensiveUser.role);
+
+      dispatch({ type: 'LOAD_USER_SUCCESS', payload: { token, user: comprehensiveUser } });
+    } catch (error: any) {
       console.error('[AuthContext] Error in loadUserFromToken:', error);
-      localStorage.removeItem('authToken');
       dispatch({ type: 'LOAD_USER_FAILURE' });
     }
   }, []);
 
+  /**
+   * Initialize authentication state on mount
+   */
   useEffect(() => {
-    console.log('[AuthContext] useEffect - checking for existing token in localStorage');
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      console.log('[AuthContext] Found existing token, loading user...');
-      loadUserFromToken(token);
+    console.log('[AuthContext] useEffect - checking for existing authentication');
+
+    if (authService.isAuthenticated()) {
+      const token = authService.getToken();
+      if (token) {
+        console.log('[AuthContext] Found valid token, loading user...');
+        loadUserFromToken(token);
+      } else {
+        console.log('[AuthContext] No valid token found');
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
     } else {
-      console.log('[AuthContext] No existing token found, setting loading to false');
+      console.log('[AuthContext] User not authenticated');
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   }, [loadUserFromToken]);
 
-  const login = async (email_in: string, password_in: string) => {
-    console.log('[AuthContext] login called with:', { email: email_in, passwordLength: password_in.length });
+  /**
+   * Listen for authentication events from the service
+   */
+  useEffect(() => {
+    const handleAuthError = (event: CustomEvent) => {
+      console.log('[AuthContext] Auth error event received:', event.detail);
+      dispatch({ type: 'LOGOUT' });
+      navigate('/login');
+    };
+
+    const handleLogout = () => {
+      console.log('[AuthContext] Logout event received');
+      dispatch({ type: 'LOGOUT' });
+      navigate('/login');
+    };
+
+    window.addEventListener('auth:error', handleAuthError as EventListener);
+    window.addEventListener('auth:logout', handleLogout);
+
+    return () => {
+      window.removeEventListener('auth:error', handleAuthError as EventListener);
+      window.removeEventListener('auth:logout', handleLogout);
+    };
+  }, [navigate]);
+
+  /**
+   * Login function
+   */
+  const login = async (email: string, password: string) => {
+    console.log('[AuthContext] login called with:', { email, passwordLength: password.length });
     dispatch({ type: 'LOGIN_REQUEST' });
 
     try {
-      console.log('[AuthContext] Calling loginUser service...');
-      const tokenData = await loginUser(email_in, password_in);
-      console.log('[AuthContext] loginUser service returned:', tokenData);
+      // Use the authentication service
+      const tokenData = await authService.login(email, password);
+      console.log('[AuthContext] Login successful, loading user...');
 
-      console.log('[AuthContext] Loading user from received token...');
+      // Load user profile
       await loadUserFromToken(tokenData.access_token);
       console.log('[AuthContext] Login process completed successfully');
     } catch (error: any) {
       console.error('[AuthContext] Login error:', error);
-      const errorMessage = typeof error.detail === 'string' ? error.detail : JSON.stringify(error.detail);
-      console.log('[AuthContext] Dispatching LOGIN_FAILURE with message:', errorMessage);
-      dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage || 'Login failed' });
+      const errorMessage = error.message || error.detail || 'Login failed';
+      dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
       throw error;
     }
   };
 
+  /**
+   * Logout function
+   */
   const logout = () => {
-    console.log('[AuthContext] logout called');
+    console.log('🚨 [AuthContext] LOGOUT CALLED 🚨');
+
+    // Use the authentication service logout
+    authService.logout();
+
+    // Update local state
     dispatch({ type: 'LOGOUT' });
+
+    // Force redirect to login page
+    window.location.href = '/login';
   };
 
-  const value = {
+  /**
+   * Get current token
+   */
+  const getToken = (): string | null => {
+    return authService.getToken();
+  };
+
+  /**
+   * Get current user role
+   */
+  const getUserRole = (): UserRole | null => {
+    return authService.getUserRole();
+  };
+
+  /**
+   * Refresh token
+   */
+  const refreshToken = async (): Promise<void> => {
+    try {
+      await authService.refreshToken();
+      // Token refresh is handled by the service
+    } catch (error) {
+      console.error('[AuthContext] Token refresh failed:', error);
+      logout();
+    }
+  };
+
+  /**
+   * Clear error state
+   */
+  const clearError = () => {
+    dispatch({ type: 'CLEAR_ERROR' });
+  };
+
+  const value: AuthContextType = {
     ...state,
     login,
     logout,
+    getToken,
+    getUserRole,
+    refreshToken,
   };
 
   return (

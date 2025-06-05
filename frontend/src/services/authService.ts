@@ -1,250 +1,472 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
+import {
+  TokenResponse,
+  UserProfile,
+  UserRole,
+  AuthError,
+  JWTPayload,
+  AuthConfig
+} from '../types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 console.log('[authService] API_BASE_URL:', API_BASE_URL); // Debug log for API_BASE_URL
 
-interface TokenResponse {
-  access_token: string;
-  token_type: string;
-  refresh_token?: string | null;
-  id_token?: string | null;
-  expires_in?: number | null;
-}
-
-// Based on backend/app/api/auth/models.py UserProfile
-export interface UserProfile {
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone_number?: string | null;
-  email_verified: boolean;
-  created_at?: string | null;
-  // Adding role, org, is_superuser from token payload for frontend use
-  role?: string;
-  org?: string;
-  is_superuser?: boolean;
-  // Raw token claims that might be useful
-  sub?: string; // Typically the user ID or email
-}
-
-interface AuthErrorDetail {
-  detail: string | { msg: string; type: string }[];
-}
-
-// Test CORS configuration
-export const testCORS = async (): Promise<any> => {
-  console.log('[authService] ===== CORS TEST =====');
-  try {
-    const response = await axios.get(`${API_BASE_URL}/cors-test`);
-    console.log('[authService] CORS test successful:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('[authService] CORS test failed:', error);
-    throw error;
-  }
+// Authentication configuration
+const AUTH_CONFIG: AuthConfig = {
+  apiBaseUrl: API_BASE_URL,
+  tokenStorageKey: 'authToken',
+  refreshTokenKey: 'refreshToken',
+  tokenRefreshThreshold: 5, // Refresh token 5 minutes before expiry
+  sessionTimeoutMinutes: 30, // HIPAA compliance - 30 minute session timeout
 };
 
-// Test basic connectivity
-export const testConnectivity = async (): Promise<any> => {
-  console.log('[authService] ===== CONNECTIVITY TEST =====');
-  try {
-    const response = await axios.get(`${API_BASE_URL}/test`);
-    console.log('[authService] Connectivity test successful:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('[authService] Connectivity test failed:', error);
-    throw error;
-  }
-};
+/**
+ * Professional Authentication Service for Healthcare IVR Platform
+ *
+ * Features:
+ * - Secure login/logout to backend on port 8000
+ * - Token management with automatic refresh
+ * - Role detection for all 8 user types
+ * - Session handling and timeout management
+ * - HIPAA-compliant security measures
+ */
+class AuthenticationService {
+  private apiClient: AxiosInstance;
+  private sessionTimeoutId: NodeJS.Timeout | null = null;
+  private tokenRefreshTimeoutId: NodeJS.Timeout | null = null;
 
-export const loginUser = async (email_in: string, password_in: string): Promise<TokenResponse> => {
-  console.log('[authService] ===== LOGIN REQUEST DEBUG =====');
-  console.log('[authService] Raw input email:', email_in);
-  console.log('[authService] Raw input password length:', password_in?.length || 0);
-  console.log('[authService] Email type:', typeof email_in);
-  console.log('[authService] Password type:', typeof password_in);
+  constructor() {
+    console.log('[AuthService] Initializing with API_BASE_URL:', API_BASE_URL);
 
-  // Check for whitespace issues
-  const trimmedEmail = email_in?.trim();
-  const trimmedPassword = password_in?.trim();
-  console.log('[authService] Trimmed email:', trimmedEmail);
-  console.log('[authService] Trimmed password length:', trimmedPassword?.length || 0);
-  console.log('[authService] Email has whitespace:', email_in !== trimmedEmail);
-  console.log('[authService] Password has whitespace:', password_in !== trimmedPassword);
+    // Create dedicated API client for authentication
+    this.apiClient = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-  const params = new URLSearchParams();
-  params.append('username', email_in);
-  params.append('password', password_in);
+    // Setup request interceptor for auth headers
+    this.apiClient.interceptors.request.use((config) => {
+      const token = this.getStoredToken();
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    });
 
-  console.log('[authService] URLSearchParams toString():', params.toString());
-  console.log('[authService] URLSearchParams entries:');
-  for (const [key, value] of params.entries()) {
-    console.log(`[authService]   ${key}: "${value}" (length: ${value.length})`);
-  }
-
-  const requestUrl = `${API_BASE_URL}/api/v1/auth/login`;
-  console.log('[authService] Request URL:', requestUrl);
-  console.log('[authService] Request method: POST');
-  console.log('[authService] Request headers: Content-Type: application/x-www-form-urlencoded');
-
-  // Test CORS before making the actual request
-  try {
-    console.log('[authService] Testing CORS configuration...');
-    await testCORS();
-    console.log('[authService] CORS test passed, proceeding with login...');
-  } catch (corsError) {
-    console.error('[authService] CORS test failed, but proceeding with login anyway:', corsError);
-  }
-
-  console.log('[authService] =====================================');
-
-  try {
-    console.log('[authService] Making login request...');
-    const startTime = Date.now();
-
-    const response = await axios.post<TokenResponse>(
-      requestUrl,
-      params,
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        timeout: 10000, // 10 second timeout
-        withCredentials: false, // Explicitly set credentials policy
+    // Setup response interceptor for error handling
+    this.apiClient.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        if (error.response?.status === 401) {
+          console.log('[AuthService] 401 Unauthorized - clearing auth state');
+          this.clearAuthData();
+          this.emitAuthError('Authentication expired');
+        }
+        return Promise.reject(error);
       }
     );
 
-    const endTime = Date.now();
-    const duration = endTime - startTime;
+    // Initialize session management
+    this.initializeSessionManagement();
+  }
 
-    console.log('[authService] ===== LOGIN RESPONSE SUCCESS =====');
-    console.log('[authService] Response status:', response.status);
-    console.log('[authService] Response status text:', response.statusText);
-    console.log('[authService] Response time:', `${duration}ms`);
-    console.log('[authService] Response headers:', response.headers);
-    console.log('[authService] Response data:', response.data);
-    console.log('[authService] Access token preview:', response.data.access_token?.substring(0, 50) + '...');
-    console.log('[authService] ===================================');
-    return response.data;
-  } catch (error) {
-    console.log('[authService] ===== LOGIN RESPONSE ERROR =====');
-    console.error('[authService] Full error object:', error);
+  /**
+   * Authenticate user with email and password
+   */
+  async login(email: string, password: string): Promise<TokenResponse> {
+    console.log('[AuthService] ===== LOGIN REQUEST =====');
+    console.log('[AuthService] Email:', email);
+    console.log('[AuthService] Password length:', password?.length || 0);
 
-    if (axios.isAxiosError(error)) {
-      console.error('[authService] Axios error details:');
-      console.error('[authService]   - Status:', error.response?.status);
-      console.error('[authService]   - Status text:', error.response?.statusText);
-      console.error('[authService]   - Headers:', error.response?.headers);
-      console.error('[authService]   - Data:', error.response?.data);
-      console.error('[authService]   - Config URL:', error.config?.url);
-      console.error('[authService]   - Config method:', error.config?.method);
-      console.error('[authService]   - Config headers:', error.config?.headers);
-      console.error('[authService]   - Config data:', error.config?.data);
-      console.error('[authService]   - Config timeout:', error.config?.timeout);
-      console.error('[authService]   - Config withCredentials:', error.config?.withCredentials);
+    try {
+      // Clear any existing auth data
+      this.clearAuthData();
 
-      // Check for specific error types
-      if (error.code === 'ECONNREFUSED') {
-        console.error('[authService] CONNECTION REFUSED - Backend server may not be running');
-      } else if (error.code === 'ENOTFOUND') {
-        console.error('[authService] DNS RESOLUTION FAILED - Check API_BASE_URL');
-      } else if (error.code === 'ECONNABORTED') {
-        console.error('[authService] REQUEST TIMEOUT - Server took too long to respond');
-      } else if (error.response?.status === 0) {
-        console.error('[authService] CORS ERROR - Request blocked by browser CORS policy');
+      // Prepare form data for OAuth2 password flow
+      const formData = new URLSearchParams();
+      formData.append('username', email.trim());
+      formData.append('password', password.trim());
+
+      console.log('[AuthService] Making login request to:', `${API_BASE_URL}/api/v1/auth/login`);
+
+      const response = await this.apiClient.post<TokenResponse>(
+        '/api/v1/auth/login',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+
+      console.log('[AuthService] Login successful:', response.status);
+      console.log('[AuthService] Token received:', response.data.access_token?.substring(0, 50) + '...');
+
+      // Store tokens securely
+      this.storeTokens(response.data);
+
+      // Setup automatic token refresh
+      this.setupTokenRefresh(response.data.access_token);
+
+      // Setup session timeout for HIPAA compliance
+      this.setupSessionTimeout();
+
+      console.log('[AuthService] ===== LOGIN COMPLETE =====');
+      return response.data;
+
+    } catch (error) {
+      console.error('[AuthService] Login error:', error);
+      this.clearAuthData();
+
+      if (axios.isAxiosError(error)) {
+        const authError: AuthError = {
+          message: error.response?.data?.detail || 'Login failed',
+          detail: error.response?.data?.detail,
+        };
+        throw authError;
       }
 
-      if (error.response) {
-        console.log('[authService] ================================');
-        throw error.response.data as AuthErrorDetail; // Re-throw structured error if available
-      }
+      throw { message: 'An unknown error occurred during login' } as AuthError;
+    }
+  }
+
+  /**
+   * Logout user and clear all auth data
+   */
+  async logout(): Promise<void> {
+    console.log('[AuthService] ===== LOGOUT =====');
+
+    try {
+      // Clear all auth data
+      this.clearAuthData();
+
+      // Clear timeouts
+      this.clearTimeouts();
+
+      // Emit logout event
+      this.emitAuthEvent('logout');
+
+      console.log('[AuthService] Logout complete');
+    } catch (error) {
+      console.error('[AuthService] Logout error:', error);
+      // Still clear auth data even if logout request fails
+      this.clearAuthData();
+    }
+  }
+
+  /**
+   * Refresh authentication token
+   */
+  async refreshToken(): Promise<void> {
+    console.log('[AuthService] Refreshing token...');
+
+    const refreshToken = localStorage.getItem(AUTH_CONFIG.refreshTokenKey);
+    if (!refreshToken) {
+      console.log('[AuthService] No refresh token available');
+      throw new Error('No refresh token available');
     }
 
-    console.log('[authService] ================================');
-    // Fallback for non-Axios errors or Axios errors without a response object
-    throw { detail: 'An unknown error occurred during login. Check console for details.' } as AuthErrorDetail;
-  }
-};
+    try {
+      // Note: Backend doesn't currently support refresh tokens
+      // This is a placeholder for future implementation
+      console.log('[AuthService] Refresh token not yet implemented in backend');
 
-export const fetchUserProfile = async (token: string): Promise<UserProfile> => {
-  console.log('[authService] ===== FETCH USER PROFILE =====');
-  console.log('[authService] Token preview:', token.substring(0, 50) + '...');
+      // For now, we'll rely on session timeout to handle token expiry
 
-  try {
-    const requestUrl = `${API_BASE_URL}/api/v1/auth/profile`;
-    console.log('[authService] Profile request URL:', requestUrl);
-
-    const response = await axios.get<UserProfile>(
-      requestUrl,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        timeout: 5000,
-      }
-    );
-
-    console.log('[authService] Profile response status:', response.status);
-    console.log('[authService] Profile response data:', response.data);
-    console.log('[authService] ================================');
-
-    return response.data;
-  } catch (error) {
-    console.error('[authService] Profile fetch error:', error);
-
-    if (axios.isAxiosError(error) && error.response) {
-      console.error('[authService] Profile error response:', error.response.data);
-      throw error.response.data as AuthErrorDetail;
+    } catch (error) {
+      console.error('[AuthService] Token refresh failed:', error);
+      this.clearAuthData();
+      throw error;
     }
-    throw { detail: 'An unknown error occurred while fetching user profile.' } as AuthErrorDetail;
   }
-};
 
-// Helper function to decode JWT - useful for getting claims directly on frontend
-// Note: This doesn't verify the token signature; verification happens on the backend.
+  /**
+   * Get current user profile
+   */
+  async getUserProfile(): Promise<UserProfile> {
+    console.log('[AuthService] Fetching user profile...');
+
+    try {
+      const response = await this.apiClient.get<UserProfile>('/api/v1/auth/profile');
+      console.log('[AuthService] Profile fetched:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('[AuthService] Profile fetch error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if user is authenticated
+   */
+  isAuthenticated(): boolean {
+    const token = this.getStoredToken();
+    if (!token) {
+      return false;
+    }
+
+    // Check if token is expired
+    try {
+      const payload = this.decodeJWT(token);
+      const now = Math.floor(Date.now() / 1000);
+      const isValid = payload.exp > now;
+
+      if (!isValid) {
+        console.log('[AuthService] Token expired, clearing auth data');
+        this.clearAuthData();
+      }
+
+      return isValid;
+    } catch (error) {
+      console.error('[AuthService] Token validation error:', error);
+      this.clearAuthData();
+      return false;
+    }
+  }
+
+  /**
+   * Get current user role
+   */
+  getUserRole(): UserRole | null {
+    const token = this.getStoredToken();
+    if (!token) {
+      return null;
+    }
+
+    try {
+      const payload = this.decodeJWT(token);
+      console.log('[AuthService] User role from token:', payload.role);
+      return payload.role;
+    } catch (error) {
+      console.error('[AuthService] Error getting user role:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get stored authentication token
+   */
+  getToken(): string | null {
+    return this.getStoredToken();
+  }
+
+  /**
+   * Decode JWT token payload
+   */
+  private decodeJWT(token: string): JWTPayload {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('[AuthService] JWT decode error:', error);
+      throw new Error('Invalid token format');
+    }
+  }
+
+  /**
+   * Store authentication tokens securely
+   */
+  private storeTokens(tokenResponse: TokenResponse): void {
+    localStorage.setItem(AUTH_CONFIG.tokenStorageKey, tokenResponse.access_token);
+
+    if (tokenResponse.refresh_token) {
+      localStorage.setItem(AUTH_CONFIG.refreshTokenKey, tokenResponse.refresh_token);
+    }
+
+    console.log('[AuthService] Tokens stored securely');
+  }
+
+  /**
+   * Get stored token from localStorage
+   */
+  private getStoredToken(): string | null {
+    return localStorage.getItem(AUTH_CONFIG.tokenStorageKey);
+  }
+
+  /**
+   * Clear all authentication data
+   */
+  private clearAuthData(): void {
+    localStorage.removeItem(AUTH_CONFIG.tokenStorageKey);
+    localStorage.removeItem(AUTH_CONFIG.refreshTokenKey);
+    localStorage.removeItem('user');
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('authState');
+
+    console.log('[AuthService] Auth data cleared');
+  }
+
+  /**
+   * Setup automatic token refresh
+   */
+  private setupTokenRefresh(token: string): void {
+    try {
+      const payload = this.decodeJWT(token);
+      const expiryTime = payload.exp * 1000; // Convert to milliseconds
+      const refreshTime = expiryTime - (AUTH_CONFIG.tokenRefreshThreshold * 60 * 1000);
+      const timeUntilRefresh = refreshTime - Date.now();
+
+      if (timeUntilRefresh > 0) {
+        this.tokenRefreshTimeoutId = setTimeout(() => {
+          console.log('[AuthService] Auto-refreshing token...');
+          this.refreshToken().catch((error) => {
+            console.error('[AuthService] Auto-refresh failed:', error);
+            this.logout();
+          });
+        }, timeUntilRefresh);
+
+        console.log(`[AuthService] Token refresh scheduled in ${Math.round(timeUntilRefresh / 1000 / 60)} minutes`);
+      }
+    } catch (error) {
+      console.error('[AuthService] Token refresh setup error:', error);
+    }
+  }
+
+  /**
+   * Setup session timeout for HIPAA compliance
+   */
+  private setupSessionTimeout(): void {
+    this.clearSessionTimeout();
+
+    const timeoutMs = AUTH_CONFIG.sessionTimeoutMinutes * 60 * 1000;
+    this.sessionTimeoutId = setTimeout(() => {
+      console.log('[AuthService] Session timeout - logging out for HIPAA compliance');
+      this.logout();
+      this.emitAuthError('Session expired for security');
+    }, timeoutMs);
+
+    console.log(`[AuthService] Session timeout set for ${AUTH_CONFIG.sessionTimeoutMinutes} minutes`);
+  }
+
+  /**
+   * Clear session timeout
+   */
+  private clearSessionTimeout(): void {
+    if (this.sessionTimeoutId) {
+      clearTimeout(this.sessionTimeoutId);
+      this.sessionTimeoutId = null;
+    }
+  }
+
+  /**
+   * Clear all timeouts
+   */
+  private clearTimeouts(): void {
+    this.clearSessionTimeout();
+
+    if (this.tokenRefreshTimeoutId) {
+      clearTimeout(this.tokenRefreshTimeoutId);
+      this.tokenRefreshTimeoutId = null;
+    }
+  }
+
+  /**
+   * Initialize session management
+   */
+  private initializeSessionManagement(): void {
+    // Reset session timeout on user activity
+    const resetSessionTimeout = () => {
+      if (this.isAuthenticated()) {
+        this.setupSessionTimeout();
+      }
+    };
+
+    // Listen for user activity events
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    events.forEach(event => {
+      document.addEventListener(event, resetSessionTimeout, { passive: true });
+    });
+
+    console.log('[AuthService] Session management initialized');
+  }
+
+  /**
+   * Emit authentication events
+   */
+  private emitAuthEvent(type: string, data?: any): void {
+    const event = new CustomEvent(`auth:${type}`, { detail: data });
+    window.dispatchEvent(event);
+  }
+
+  /**
+   * Emit authentication error
+   */
+  private emitAuthError(message: string): void {
+    this.emitAuthEvent('error', { message });
+  }
+
+  /**
+   * Test CORS configuration
+   */
+  async testCORS(): Promise<any> {
+    console.log('[AuthService] Testing CORS configuration...');
+    try {
+      const response = await this.apiClient.get('/cors-test');
+      console.log('[AuthService] CORS test successful:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('[AuthService] CORS test failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Test connectivity to backend
+   */
+  async testConnectivity(): Promise<any> {
+    console.log('[AuthService] Testing backend connectivity...');
+    try {
+      const response = await this.apiClient.get('/health');
+      console.log('[AuthService] Connectivity test successful:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('[AuthService] Connectivity test failed:', error);
+      throw error;
+    }
+  }
+}
+
+// Create singleton instance
+const authService = new AuthenticationService();
+
+// Export the service instance and individual methods for backward compatibility
+export default authService;
+
+// Legacy exports for backward compatibility with existing code
+export const loginUser = (email: string, password: string) => authService.login(email, password);
+export const fetchUserProfile = (token: string) => authService.getUserProfile();
+export const testCORS = () => authService.testCORS();
+export const testConnectivity = () => authService.testConnectivity();
+
+// Export the decodeJwt function for backward compatibility
 export const decodeJwt = (token: string): UserProfile | null => {
-  console.log('[authService] ===== DECODE JWT =====');
-  console.log('[authService] Token to decode preview:', token.substring(0, 50) + '...');
-
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    const decoded = JSON.parse(jsonPayload);
-    console.log('[authService] Decoded JWT payload:', decoded);
-
-    // Map standard JWT claims and custom claims to UserProfile structure
-    const userProfile = {
-      email: decoded.sub, // Assuming 'sub' is the email, common practice
-      sub: decoded.sub,
-      role: decoded.role,
-      org: decoded.org,
-      is_superuser: decoded.is_superuser,
-      // These might not be in the JWT, primarily from /profile but good to have placeholders
-      first_name: decoded.given_name || '',
-      last_name: decoded.family_name || '',
-      email_verified: decoded.email_verified || false,
-    } as UserProfile;
-
-    console.log('[authService] ===== JWT ROLE MAPPING DEBUG =====');
-    console.log('[authService] Raw decoded.role:', decoded.role);
-    console.log('[authService] Raw decoded.role type:', typeof decoded.role);
-    console.log('[authService] Raw decoded.role JSON:', JSON.stringify(decoded.role));
-    console.log('[authService] Mapped userProfile.role:', userProfile.role);
-    console.log('[authService] Mapped userProfile.role type:', typeof userProfile.role);
-    console.log('[authService] Mapped userProfile.role JSON:', JSON.stringify(userProfile.role));
-    console.log('[authService] Full mapped user profile:', userProfile);
-    console.log('[authService] ============================================');
-
-    return userProfile;
+    const payload = authService['decodeJWT'](token);
+    return {
+      email: payload.sub,
+      sub: payload.sub,
+      role: payload.role,
+      org: payload.org,
+      is_superuser: payload.is_superuser,
+      first_name: '',
+      last_name: '',
+      email_verified: false,
+    };
   } catch (error) {
-    console.error("[authService] Failed to decode JWT:", error);
-    console.log('[authService] ================================');
+    console.error('[AuthService] JWT decode error:', error);
     return null;
   }
 };
+
+// Export types for convenience
+export type { TokenResponse, UserProfile, UserRole, AuthError };

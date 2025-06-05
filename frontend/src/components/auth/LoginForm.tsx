@@ -1,211 +1,344 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  TextField,
-  Button,
-  FormControlLabel,
-  Checkbox,
-  Typography,
-  Alert,
-  InputAdornment,
-  IconButton,
-  Paper,
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useAuth } from '../../hooks/useAuth';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import ProgressiveInput from './ProgressiveInput';
+import { AuthError } from '../../types/auth';
 
-export const LoginForm: React.FC = () => {
-  const { login, isLoading, error: authError } = useAuth();
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberDevice, setRememberDevice] = useState(false);
-  const [formSpecificError, setFormSpecificError] = useState<string | null>(null);
+interface LoginFormProps {
+  onSuccess?: () => void;
+}
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    console.log('[LoginForm] handleSubmit triggered');
-    setFormSpecificError(null);
+type LoginStep = 'email' | 'password' | 'authenticating' | 'success';
 
-    if (!email || !password) {
-      console.log('[LoginForm] Email or password missing');
-      setFormSpecificError('Please enter both email and password');
+interface FormData {
+  email: string;
+  password: string;
+  rememberDevice: boolean;
+}
+
+interface ValidationErrors {
+  email?: string;
+  password?: string;
+  general?: string;
+}
+
+export default function LoginForm({ onSuccess }: LoginFormProps) {
+  const { login, isLoading: authLoading, error: authError } = useAuth();
+
+  // Form state
+  const [currentStep, setCurrentStep] = useState<LoginStep>('email');
+  const [formData, setFormData] = useState<FormData>({
+    email: '',
+    password: '',
+    rememberDevice: false
+  });
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [isValidating, setIsValidating] = useState(false);
+
+  // Clear errors when form data changes
+  useEffect(() => {
+    if (errors.email && formData.email) {
+      setErrors(prev => ({ ...prev, email: undefined }));
+    }
+    if (errors.password && formData.password) {
+      setErrors(prev => ({ ...prev, password: undefined }));
+    }
+  }, [formData.email, formData.password, errors.email, errors.password]);
+
+  // Handle auth errors
+  useEffect(() => {
+    if (authError) {
+      setErrors(prev => ({ ...prev, general: authError }));
+      // Return to appropriate step based on error
+      if (authError.toLowerCase().includes('email') || authError.toLowerCase().includes('user')) {
+        setCurrentStep('email');
+      } else {
+        setCurrentStep('password');
+      }
+    }
+  }, [authError]);
+
+  const validateEmail = (email: string): string | undefined => {
+    if (!email.trim()) {
+      return 'Email address is required for secure access';
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+
+    // Healthcare domain validation (optional enhancement)
+    if (email.length > 254) {
+      return 'Email address is too long';
+    }
+
+    return undefined;
+  };
+
+  const validatePassword = (password: string): string | undefined => {
+    if (!password) {
+      return 'Password is required to access your account';
+    }
+
+    if (password.length < 6) {
+      return 'Password must be at least 6 characters for security';
+    }
+
+    return undefined;
+  };
+
+  const handleEmailNext = async () => {
+    const emailError = validateEmail(formData.email);
+    if (emailError) {
+      setErrors(prev => ({ ...prev, email: emailError }));
       return;
     }
 
-    console.log(`[LoginForm] Attempting login for email: ${email}`);
+    setIsValidating(true);
+    setErrors({});
+
+    // Simulate email validation delay for professional feel
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    setIsValidating(false);
+    setCurrentStep('password');
+  };
+
+  const handlePasswordBack = () => {
+    setCurrentStep('email');
+    setErrors({});
+  };
+
+  const handleSubmit = async () => {
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      setErrors(prev => ({ ...prev, password: passwordError }));
+      return;
+    }
+
+    setCurrentStep('authenticating');
+    setErrors({});
+
     try {
-      await login(email, password);
-      console.log('[LoginForm] login call completed from useAuth');
-    } catch (err: any) {
-      console.error('[LoginForm] Error during login call:', err);
-      const message = err?.detail || err?.message || 'Login failed. Please try again.';
-      setFormSpecificError(typeof message === 'string' ? message : JSON.stringify(message));
+      await login(formData.email, formData.password);
+      setCurrentStep('success');
+
+      // Handle remember device functionality
+      if (formData.rememberDevice) {
+        localStorage.setItem('rememberDevice', 'true');
+        localStorage.setItem('lastEmail', formData.email);
+      }
+
+      onSuccess?.();
+    } catch (error: any) {
+      // Error handling is managed by useEffect above
+      console.error('Login failed:', error);
     }
   };
 
-  const inputStyles = {
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: '#fff',
-      transition: 'all 0.15s ease-in-out',
-      '& fieldset': {
-        borderColor: 'rgb(209 213 219)',
-        borderWidth: '1px',
-      },
-      '&:hover fieldset': {
-        borderColor: 'rgb(156 163 175)',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#375788',
-        borderWidth: '1px',
-        boxShadow: '0 0 0 4px rgb(55 87 136 / 0.1)',
-      }
-    },
-    '& .MuiInputLabel-root': {
-      color: 'rgb(107 114 128)',
-      fontSize: '0.875rem',
-      '&.Mui-focused': {
-        color: '#375788'
-      }
-    },
-    '& .MuiInputBase-input': {
-      fontSize: '0.875rem',
-      '&::placeholder': {
-        color: 'rgb(156 163 175)',
-        opacity: 1
-      }
-    }
+  const handleQuickFill = (userType: 'admin' | 'doctor' | 'distributor') => {
+    const credentials = {
+      admin: { email: 'admin@healthcare.local', password: 'admin123' },
+      doctor: { email: 'doctor@healthcare.local', password: 'doctor123' },
+      distributor: { email: 'distributor@healthcare.local', password: 'distributor123' }
+    };
+
+    const creds = credentials[userType];
+    setFormData(prev => ({ ...prev, ...creds }));
+    setCurrentStep('password');
   };
+
+  const renderEmailStep = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-semibold text-slate-800">
+          Welcome Back
+        </h2>
+        <p className="text-slate-600">
+          Enter your email to access the <strong>wound care portal</strong>
+        </p>
+      </div>
+
+      <ProgressiveInput
+        type="email"
+        value={formData.email}
+        onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+        onNext={handleEmailNext}
+        error={errors.email}
+        isLoading={isValidating}
+        autoFocus
+        placeholder="your.email@healthcare.com"
+        label="Email Address"
+      />
+
+      <button
+        onClick={handleEmailNext}
+        disabled={!formData.email.trim() || isValidating}
+        className="w-full bg-slate-600 hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+      >
+        {isValidating ? (
+          <div className="flex items-center justify-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            <span>Validating...</span>
+          </div>
+        ) : (
+          'Continue'
+        )}
+      </button>
+
+      {/* Development Quick Fill */}
+      <div className="border-t border-slate-200 pt-4">
+        <p className="text-xs text-slate-500 mb-3 text-center">Development Quick Access</p>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { key: 'admin', label: 'Admin' },
+            { key: 'doctor', label: 'Doctor' },
+            { key: 'distributor', label: 'Distributor' }
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => handleQuickFill(key as any)}
+              className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-3 rounded transition-colors duration-200"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPasswordStep = () => (
+    <div className="space-y-6">
+      <div className="text-center space-y-2">
+        <button
+          onClick={handlePasswordBack}
+          className="inline-flex items-center text-sm text-slate-600 hover:text-slate-800 transition-colors duration-200"
+        >
+          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          {formData.email}
+        </button>
+        <h2 className="text-2xl font-semibold text-slate-800">
+          Enter Password
+        </h2>
+        <p className="text-slate-600">
+          Please enter your password to continue
+        </p>
+      </div>
+
+      <ProgressiveInput
+        type="password"
+        value={formData.password}
+        onChange={(value) => setFormData(prev => ({ ...prev, password: value }))}
+        onNext={handleSubmit}
+        onBack={handlePasswordBack}
+        error={errors.password}
+        isLoading={authLoading}
+        autoFocus
+        placeholder="Enter your password"
+        label="Password"
+      />
+
+      <div className="flex items-center">
+        <input
+          id="remember-device"
+          type="checkbox"
+          checked={formData.rememberDevice}
+          onChange={(e) => setFormData(prev => ({ ...prev, rememberDevice: e.target.checked }))}
+          className="h-4 w-4 text-slate-600 focus:ring-slate-500 border-slate-300 rounded"
+        />
+        <label htmlFor="remember-device" className="ml-2 text-sm text-slate-700">
+          Remember this device for 30 days
+        </label>
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={!formData.password || authLoading}
+        className="w-full bg-slate-600 hover:bg-slate-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+      >
+        {authLoading ? (
+          <div className="flex items-center justify-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            <span>Authenticating...</span>
+          </div>
+        ) : (
+          'Sign In Securely'
+        )}
+      </button>
+    </div>
+  );
+
+  const renderAuthenticatingStep = () => (
+    <div className="space-y-6 text-center">
+      <div className="space-y-4">
+        <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-3 border-slate-300 border-t-slate-600"></div>
+        </div>
+        <h2 className="text-2xl font-semibold text-slate-800">
+          Authenticating
+        </h2>
+        <p className="text-slate-600">
+          Verifying your credentials securely...
+        </p>
+      </div>
+    </div>
+  );
+
+  const renderSuccessStep = () => (
+    <div className="space-y-6 text-center">
+      <div className="space-y-4">
+        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+          <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-semibold text-slate-800">
+          Welcome Back
+        </h2>
+        <p className="text-slate-600">
+          Authentication successful. Redirecting to your dashboard...
+        </p>
+      </div>
+    </div>
+  );
 
   return (
-    <Box component={Paper} elevation={3} sx={{ p: 4, maxWidth: 400, mx: 'auto', mt: 4 }}>
-      <Typography variant="h6" component="h2" gutterBottom align="center" sx={{ mb: 3 }}>
-        Sign in to your account
-      </Typography>
-
-      <Alert severity="info" sx={{ mb: 3 }}>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-          Available Demo Accounts:
-        </Typography>
-        <Box component="ul" sx={{ mt: 1, pl: 2 }}>
-          <li>doctor@test.com / demo123 (Doctor role)</li>
-          <li>admin@test.com / demo123 (Admin role)</li>
-          <li>ivr@test.com / demo123 (IVR Company role)</li>
-          <li>logistics@test.com / demo123 (Logistics role)</li>
-          <li>sales@test.com / demo123 (Sales role)</li>
-        </Box>
-      </Alert>
-
-      {(formSpecificError || authError) && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {formSpecificError || authError}
-        </Alert>
+    <div className="w-full max-w-md mx-auto">
+      {/* General error display */}
+      {errors.general && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <svg className="h-5 w-5 text-red-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Authentication Error</h3>
+              <p className="text-sm text-red-700 mt-1">{errors.general}</p>
+            </div>
+          </div>
+        </div>
       )}
 
-      <form onSubmit={handleSubmit}>
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          id="email"
-          label="Email Address"
-          name="email"
-          autoComplete="email"
-          autoFocus
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          size="small"
-          placeholder="Enter your email"
-          helperText="Use one of the demo accounts above"
-          sx={{ 
-            mb: 2,
-            ...inputStyles
-          }}
-        />
+      {/* Step content */}
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200/50 p-8 backdrop-blur-sm">
+        {currentStep === 'email' && renderEmailStep()}
+        {currentStep === 'password' && renderPasswordStep()}
+        {currentStep === 'authenticating' && renderAuthenticatingStep()}
+        {currentStep === 'success' && renderSuccessStep()}
+      </div>
 
-        <TextField
-          margin="normal"
-          required
-          fullWidth
-          name="password"
-          label="Password"
-          type={showPassword ? 'text' : 'password'}
-          id="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          size="small"
-          placeholder="Enter your password"
-          helperText="Default password: demo123"
-          sx={inputStyles}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label="toggle password visibility"
-                  onClick={() => setShowPassword(!showPassword)}
-                  edge="end"
-                  size="small"
-                  sx={{ 
-                    color: 'rgb(107 114 128)',
-                    '&:hover': {
-                      backgroundColor: 'rgb(243 244 246)'
-                    }
-                  }}
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
-
-        <Box sx={{ mt: 1 }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={rememberDevice}
-                onChange={(e) => setRememberDevice(e.target.checked)}
-                size="small"
-                sx={{
-                  color: 'rgb(156 163 175)',
-                  padding: '2px',
-                  '&.Mui-checked': {
-                    color: '#375788'
-                  },
-                  '&:hover': {
-                    backgroundColor: 'rgb(243 244 246)'
-                  }
-                }}
-              />
-            }
-            label={<Typography variant="body2" sx={{ color: 'rgb(75 85 99)', fontSize: '0.875rem' }}>Remember this device</Typography>}
-          />
-        </Box>
-
-        <Button
-          type="submit"
-          fullWidth
-          variant="contained"
-          sx={{ 
-            mt: 3,
-            textTransform: 'none',
-            backgroundColor: '#375788',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: '#2c466d',
-              boxShadow: 'none'
-            }
-          }}
-          disabled={isLoading}
-          size="large"
-        >
-          {isLoading ? 'Signing in...' : 'Sign in'}
-        </Button>
-      </form>
-    </Box>
+      {/* Progress indicator */}
+      <div className="mt-6 flex justify-center space-x-2">
+        <div className={`h-2 w-8 rounded-full transition-colors duration-300 ${
+          currentStep === 'email' ? 'bg-white' : 'bg-slate-400'
+        }`} />
+        <div className={`h-2 w-8 rounded-full transition-colors duration-300 ${
+          ['password', 'authenticating', 'success'].includes(currentStep) ? 'bg-white' : 'bg-slate-400'
+        }`} />
+      </div>
+    </div>
   );
-}; 
+}

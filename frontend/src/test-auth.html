@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Service Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { margin: 5px; padding: 10px 15px; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        select, input { margin: 5px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Healthcare IVR Platform - Authentication Service Test</h1>
+
+    <div class="test-section">
+        <h2>Authentication Service Test</h2>
+        <div>
+            <label for="userSelect">Select User:</label>
+            <select id="userSelect">
+                <option value="admin@healthcare.local:admin123">Admin (admin@healthcare.local)</option>
+                <option value="doctor@healthcare.local:doctor123">Doctor (doctor@healthcare.local)</option>
+                <option value="ivr@healthcare.local:ivr123">IVR (ivr@healthcare.local)</option>
+                <option value="distributor@healthcare.local:distributor123">Master Distributor (distributor@healthcare.local)</option>
+                <option value="chp@healthcare.local:chp123">CHP Admin (chp@healthcare.local)</option>
+                <option value="distributor2@healthcare.local:distributor123">Distributor (distributor2@healthcare.local)</option>
+                <option value="sales@healthcare.local:sales123">Sales (sales@healthcare.local)</option>
+                <option value="logistics@healthcare.local:logistics123">Shipping and Logistics (logistics@healthcare.local)</option>
+            </select>
+        </div>
+        <div>
+            <button onclick="testLogin()">Test Login</button>
+            <button onclick="testProfile()">Test Profile</button>
+            <button onclick="testLogout()">Test Logout</button>
+            <button onclick="testIsAuthenticated()">Check Authentication</button>
+            <button onclick="testGetRole()">Get User Role</button>
+        </div>
+        <div id="authResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Backend Connectivity Test</h2>
+        <button onclick="testBackend()">Test Backend Connection</button>
+        <button onclick="testCORS()">Test CORS</button>
+        <div id="backendResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Authentication State</h2>
+        <button onclick="showAuthState()">Show Current Auth State</button>
+        <div id="authState"></div>
+    </div>
+
+    <script type="module">
+        // Import the authentication service
+        import authService from './services/authService.js';
+
+        // Make authService available globally for testing
+        window.authService = authService;
+
+        console.log('Authentication service loaded:', authService);
+
+        // Test functions
+        window.testLogin = async function() {
+            const resultDiv = document.getElementById('authResult');
+            const userSelect = document.getElementById('userSelect');
+            const [email, password] = userSelect.value.split(':');
+
+            resultDiv.innerHTML = '<p class="info">Testing login...</p>';
+
+            try {
+                const result = await authService.login(email, password);
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <p>✅ Login successful!</p>
+                        <p>Email: ${email}</p>
+                        <p>Token received: ${result.access_token.substring(0, 50)}...</p>
+                        <p>Role: ${authService.getUserRole()}</p>
+                        <p>Authenticated: ${authService.isAuthenticated()}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p>❌ Login failed</p>
+                        <p>Error: ${error.message || error}</p>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    </div>
+                `;
+            }
+        };
+
+        window.testProfile = async function() {
+            const resultDiv = document.getElementById('authResult');
+            resultDiv.innerHTML = '<p class="info">Testing profile fetch...</p>';
+
+            try {
+                const profile = await authService.getUserProfile();
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <p>✅ Profile fetch successful!</p>
+                        <pre>${JSON.stringify(profile, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p>❌ Profile fetch failed</p>
+                        <p>Error: ${error.message || error}</p>
+                    </div>
+                `;
+            }
+        };
+
+        window.testLogout = async function() {
+            const resultDiv = document.getElementById('authResult');
+            resultDiv.innerHTML = '<p class="info">Testing logout...</p>';
+
+            try {
+                await authService.logout();
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <p>✅ Logout successful!</p>
+                        <p>Authenticated: ${authService.isAuthenticated()}</p>
+                        <p>Token: ${authService.getToken() ? 'Present' : 'Cleared'}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p>❌ Logout failed</p>
+                        <p>Error: ${error.message || error}</p>
+                    </div>
+                `;
+            }
+        };
+
+        window.testIsAuthenticated = function() {
+            const resultDiv = document.getElementById('authResult');
+            const isAuth = authService.isAuthenticated();
+            const token = authService.getToken();
+
+            resultDiv.innerHTML = `
+                <div class="${isAuth ? 'success' : 'error'}">
+                    <p>${isAuth ? '✅' : '❌'} Authentication Status: ${isAuth ? 'Authenticated' : 'Not Authenticated'}</p>
+                    <p>Token: ${token ? 'Present (' + token.substring(0, 30) + '...)' : 'None'}</p>
+                </div>
+            `;
+        };
+
+        window.testGetRole = function() {
+            const resultDiv = document.getElementById('authResult');
+            const role = authService.getUserRole();
+
+            resultDiv.innerHTML = `
+                <div class="${role ? 'success' : 'error'}">
+                    <p>${role ? '✅' : '❌'} User Role: ${role || 'None'}</p>
+                </div>
+            `;
+        };
+
+        window.testBackend = async function() {
+            const resultDiv = document.getElementById('backendResult');
+            resultDiv.innerHTML = '<p class="info">Testing backend connectivity...</p>';
+
+            try {
+                const result = await authService.testConnectivity();
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <p>✅ Backend connection successful!</p>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p>❌ Backend connection failed</p>
+                        <p>Error: ${error.message || error}</p>
+                    </div>
+                `;
+            }
+        };
+
+        window.testCORS = async function() {
+            const resultDiv = document.getElementById('backendResult');
+            resultDiv.innerHTML = '<p class="info">Testing CORS configuration...</p>';
+
+            try {
+                const result = await authService.testCORS();
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <p>✅ CORS test successful!</p>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <p>❌ CORS test failed</p>
+                        <p>Error: ${error.message || error}</p>
+                    </div>
+                `;
+            }
+        };
+
+        window.showAuthState = function() {
+            const resultDiv = document.getElementById('authState');
+            const isAuth = authService.isAuthenticated();
+            const token = authService.getToken();
+            const role = authService.getUserRole();
+
+            // Get localStorage items
+            const authToken = localStorage.getItem('authToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+
+            resultDiv.innerHTML = `
+                <div class="info">
+                    <h3>Current Authentication State</h3>
+                    <p><strong>Is Authenticated:</strong> ${isAuth}</p>
+                    <p><strong>User Role:</strong> ${role || 'None'}</p>
+                    <p><strong>Token (service):</strong> ${token ? 'Present' : 'None'}</p>
+                    <p><strong>Token (localStorage):</strong> ${authToken ? 'Present' : 'None'}</p>
+                    <p><strong>Refresh Token:</strong> ${refreshToken ? 'Present' : 'None'}</p>
+
+                    <h4>LocalStorage Contents:</h4>
+                    <pre>${JSON.stringify({
+                        authToken: authToken ? authToken.substring(0, 50) + '...' : null,
+                        refreshToken: refreshToken,
+                        allKeys: Object.keys(localStorage)
+                    }, null, 2)}</pre>
+                </div>
+            `;
+        };
+
+        // Auto-show auth state on load
+        setTimeout(showAuthState, 1000);
+    </script>
+</body>
+</html>
