@@ -102,7 +102,11 @@ class HIPAAComplianceService:
             self.db.commit()
 
             # Check for suspicious patterns
-            await self._check_access_patterns(user_id, patient_id, territory_id)
+            await self._check_access_patterns(
+                user_id,
+                patient_id,
+                territory_id
+            )
 
         except Exception as e:
             self.db.rollback()
@@ -130,7 +134,8 @@ class HIPAAComplianceService:
 
             if check_type == "phi_access":
                 # Check PHI access patterns
-                violations = await self._check_phi_access_compliance(territory_id)
+                violations = await self._check_phi_access_compliance(
+                    territory_id)
                 results["violations"].extend(violations)
 
             elif check_type == "audit_logs":
@@ -281,7 +286,10 @@ class HIPAAComplianceService:
         bulk_access = (
             self.db.query(PHIAccess)
             .filter(
-                and_(PHIAccess.user_id == user_id, PHIAccess.created_at >= hour_ago)
+                and_(
+                    PHIAccess.user_id == user_id,
+                    PHIAccess.created_at >= hour_ago
+                )
             )
             .count()
         )
@@ -300,7 +308,10 @@ class HIPAAComplianceService:
         territories = (
             self.db.query(PHIAccess.territory_id)
             .filter(
-                and_(PHIAccess.user_id == user_id, PHIAccess.created_at >= hour_ago)
+                and_(
+                    PHIAccess.user_id == user_id,
+                    PHIAccess.created_at >= hour_ago
+                )
             )
             .distinct()
             .count()
@@ -391,7 +402,10 @@ class HIPAAComplianceService:
         """Get PHI access statistics."""
         # Base query
         query = self.db.query(PHIAccess).filter(
-            and_(PHIAccess.created_at >= start_date, PHIAccess.created_at <= end_date)
+            and_(
+                PHIAccess.created_at >= start_date,
+                PHIAccess.created_at <= end_date
+            )
         )
 
         if territory_id:

@@ -44,9 +44,14 @@ class CognitoService:
                 "status": "CONFIRMATION_PENDING",
             }
         except ClientError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    async def confirm_registration(self, email: str, confirmation_code: str) -> Dict:
+    async def confirm_registration(
+        self,
+        email: str,
+        confirmation_code: str
+    ) -> Dict:
         """Confirm user registration with verification code."""
         try:
             self.client.confirm_sign_up(
@@ -57,7 +62,10 @@ class CognitoService:
             )
             return {"message": "User confirmed successfully"}
         except ClientError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
 
     async def initiate_auth(self, email: str, password: str) -> Dict:
         """Initiate authentication and handle MFA if required."""
@@ -84,7 +92,10 @@ class CognitoService:
             return self._process_auth_tokens(auth_response["AuthenticationResult"])
 
         except ClientError as e:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(e)
+            )
 
     async def verify_mfa(
         self, email: str, session: str, mfa_code: str, challenge_name: str
@@ -105,7 +116,10 @@ class CognitoService:
             return self._process_auth_tokens(auth_response["AuthenticationResult"])
 
         except ClientError as e:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(e)
+            )
 
     async def refresh_token(self, refresh_token: str) -> Dict:
         """Refresh the access token using a valid refresh token."""
@@ -123,7 +137,10 @@ class CognitoService:
             return self._process_auth_tokens(auth_response["AuthenticationResult"])
 
         except ClientError as e:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=str(e)
+            )
 
     async def setup_totp(self, access_token: str) -> Dict:
         """Set up TOTP MFA for a user."""
@@ -131,9 +148,16 @@ class CognitoService:
             response = self.client.associate_software_token(AccessToken=access_token)
             return {"secret_code": response["SecretCode"]}
         except ClientError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
 
-    async def verify_totp_setup(self, access_token: str, totp_code: str) -> Dict:
+    async def verify_totp_setup(
+        self,
+        access_token: str,
+        totp_code: str
+    ) -> Dict:
         """Verify TOTP setup with the first code."""
         try:
             self.client.verify_software_token(
@@ -141,7 +165,10 @@ class CognitoService:
             )
             return {"message": "TOTP MFA setup completed"}
         except ClientError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
 
     async def initiate_password_reset(self, email: str) -> Dict:
         """Initiate the password reset process."""
@@ -153,7 +180,10 @@ class CognitoService:
             )
             return {"message": "Password reset initiated"}
         except ClientError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
 
     async def complete_password_reset(
         self, email: str, confirmation_code: str, new_password: str
@@ -169,7 +199,10 @@ class CognitoService:
             )
             return {"message": "Password reset completed"}
         except ClientError as e:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
 
     def _compute_secret_hash(self, username: str) -> str:
         """Compute the secret hash for Cognito API calls."""

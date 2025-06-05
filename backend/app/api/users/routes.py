@@ -37,7 +37,8 @@ async def create_role(
 
 @router.get("/roles", response_model=List[RoleResponse])
 async def list_roles(
-    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(
+        get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """List all roles."""
     roles = await db.query(Role).all()

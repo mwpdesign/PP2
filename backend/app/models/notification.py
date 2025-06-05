@@ -4,7 +4,10 @@ from datetime import datetime
 from sqlalchemy import String, DateTime, Integer, JSON, Enum
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
-from app.services.notification_service import NotificationChannel, NotificationPriority
+from app.services.notification_service import (
+    NotificationChannel,
+    NotificationPriority,
+)
 
 
 class NotificationModel(Base):
@@ -13,7 +16,11 @@ class NotificationModel(Base):
     __tablename__ = "notifications"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    recipient_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    recipient_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        index=True
+    )
     channel: Mapped[NotificationChannel] = mapped_column(
         Enum(NotificationChannel), nullable=False
     )

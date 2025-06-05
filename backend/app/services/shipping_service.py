@@ -46,7 +46,8 @@ class ShippingService:
 
             for carrier in carriers:
                 try:
-                    carrier_rates = await carrier.get_rates(package_info, destination)
+                    carrier_rates = await carrier.get_rates(
+                        package_info, destination)
                     rates.extend(carrier_rates)
                 except Exception as e:
                     # Log carrier-specific error but continue with others
@@ -62,7 +63,11 @@ class ShippingService:
                 status_code=500, detail=f"Failed to get shipping rates: {str(e)}"
             )
 
-    async def create_shipping_label(self, carrier: str, shipment_info: Dict) -> Dict:
+    async def create_shipping_label(
+        self,
+        carrier: str,
+        shipment_info: Dict
+    ) -> Dict:
         """Create shipping label with selected carrier."""
         try:
             if carrier not in self.carriers:

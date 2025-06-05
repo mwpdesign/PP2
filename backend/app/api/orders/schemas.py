@@ -31,7 +31,8 @@ class ProductBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
     manufacturer: Optional[str] = Field(None, max_length=200)
-    regulatory_status: str = Field(..., pattern="^(approved|pending|restricted)$")
+    regulatory_status: str = Field(
+        ..., pattern="^(approved|pending|restricted)$")
     requires_authorization: bool = False
     is_active: bool = True
     base_price: float = Field(..., gt=0)
@@ -145,7 +146,10 @@ class ProductComplianceCreate(ProductComplianceBase):
 
 
 class ProductComplianceUpdate(BaseModel):
-    status: Optional[str] = Field(None, pattern="^(compliant|pending|non-compliant)$")
+    status: Optional[str] = Field(
+        None,
+        pattern="^(compliant|pending|non-compliant)$"
+    )
     certification_number: Optional[str] = Field(None, max_length=100)
     certification_date: Optional[datetime] = None
     expiration_date: Optional[datetime] = None

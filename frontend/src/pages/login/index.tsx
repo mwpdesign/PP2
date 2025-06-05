@@ -100,9 +100,18 @@ export default function LoginPage() {
 
   const fillTestCredentials = (userType: 'admin' | 'doctor' | 'ivr') => {
     const credentials = {
-      admin: { email: 'admin@healthcare.local', password: 'admin123' },
-      doctor: { email: 'doctor@healthcare.local', password: 'doctor123' },
-      ivr: { email: 'ivr@healthcare.local', password: 'ivr123' }
+      admin: {
+        email: process.env.REACT_APP_TEST_ADMIN_EMAIL || 'admin@healthcare.local',
+        password: process.env.REACT_APP_TEST_ADMIN_PASSWORD || 'test123'
+      },
+      doctor: {
+        email: process.env.REACT_APP_TEST_DOCTOR_EMAIL || 'doctor@healthcare.local',
+        password: process.env.REACT_APP_TEST_DOCTOR_PASSWORD || 'test123'
+      },
+      ivr: {
+        email: process.env.REACT_APP_TEST_IVR_EMAIL || 'ivr@healthcare.local',
+        password: process.env.REACT_APP_TEST_IVR_PASSWORD || 'test123'
+      }
     };
 
     const creds = credentials[userType];
@@ -139,7 +148,7 @@ export default function LoginPage() {
           <h4 className="text-sm font-medium text-blue-800 mb-2">Development Credentials:</h4>
           <div className="text-xs text-blue-700 space-y-1">
             <div className="flex justify-between items-center">
-              <span><strong>Admin:</strong> admin@healthcare.local / admin123</span>
+              <span><strong>Admin:</strong> {process.env.REACT_APP_TEST_ADMIN_EMAIL || 'admin@healthcare.local'} / {process.env.REACT_APP_TEST_ADMIN_PASSWORD || 'test123'}</span>
               <button
                 type="button"
                 onClick={() => fillTestCredentials('admin')}
@@ -149,7 +158,7 @@ export default function LoginPage() {
               </button>
             </div>
             <div className="flex justify-between items-center">
-              <span><strong>Doctor:</strong> doctor@healthcare.local / doctor123</span>
+              <span><strong>Doctor:</strong> {process.env.REACT_APP_TEST_DOCTOR_EMAIL || 'doctor@healthcare.local'} / {process.env.REACT_APP_TEST_DOCTOR_PASSWORD || 'test123'}</span>
               <button
                 type="button"
                 onClick={() => fillTestCredentials('doctor')}
@@ -159,7 +168,7 @@ export default function LoginPage() {
               </button>
             </div>
             <div className="flex justify-between items-center">
-              <span><strong>IVR:</strong> ivr@healthcare.local / ivr123</span>
+              <span><strong>IVR:</strong> {process.env.REACT_APP_TEST_IVR_EMAIL || 'ivr@healthcare.local'} / {process.env.REACT_APP_TEST_IVR_PASSWORD || 'test123'}</span>
               <button
                 type="button"
                 onClick={() => fillTestCredentials('ivr')}

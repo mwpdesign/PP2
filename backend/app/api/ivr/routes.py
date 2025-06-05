@@ -92,13 +92,17 @@ async def update_ivr_status(
     """Update IVR request status."""
     workflow_service = IVRWorkflowService(db, current_user)
     try:
-        ivr_request = workflow_service.update_ivr_status(request_id, new_status, reason)
+        ivr_request = workflow_service.update_ivr_status(
+            request_id, new_status, reason)
         return ivr_request
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/requests/{request_id}/approve", response_model=IVRRequestResponse)
+@router.post(
+    "/requests/{request_id}/approve",
+    response_model=IVRRequestResponse
+)
 @audit_log("approve_ivr_request")
 async def approve_ivr_request(
     request_id: str,
@@ -109,13 +113,19 @@ async def approve_ivr_request(
     """Approve an IVR request."""
     workflow_service = IVRWorkflowService(db, current_user)
     try:
-        ivr_request = workflow_service.approve_request(request_id, approval_data)
+        ivr_request = workflow_service.approve_request(
+            request_id,
+            approval_data
+        )
         return ivr_request
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/requests/{request_id}/reject", response_model=IVRRequestResponse)
+@router.post(
+    "/requests/{request_id}/reject",
+    response_model=IVRRequestResponse
+)
 @audit_log("reject_ivr_request")
 async def reject_ivr_request(
     request_id: str,
@@ -127,13 +137,19 @@ async def reject_ivr_request(
     workflow_service = IVRWorkflowService(db, current_user)
     try:
         approval_data.decision = "rejected"
-        ivr_request = workflow_service.approve_request(request_id, approval_data)
+        ivr_request = workflow_service.approve_request(
+            request_id,
+            approval_data
+        )
         return ivr_request
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/requests/{request_id}/escalate", response_model=IVRRequestResponse)
+@router.post(
+    "/requests/{request_id}/escalate",
+    response_model=IVRRequestResponse
+)
 @audit_log("escalate_ivr_request")
 async def escalate_ivr_request(
     request_id: str,
@@ -144,7 +160,10 @@ async def escalate_ivr_request(
     """Escalate an IVR request."""
     workflow_service = IVRWorkflowService(db, current_user)
     try:
-        ivr_request = workflow_service.escalate_request(request_id, escalation_data)
+        ivr_request = workflow_service.escalate_request(
+            request_id,
+            escalation_data
+        )
         return ivr_request
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -222,4 +241,8 @@ async def update_session(
 ) -> IVRSessionResponse:
     """Update an existing IVR session."""
     ivr_service = IVRService(db)
-    return await ivr_service.update_session(session_id, session_data, current_user)
+    return await ivr_service.update_session(
+        session_id,
+        session_data,
+        current_user
+    )

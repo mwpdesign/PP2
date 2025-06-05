@@ -20,7 +20,8 @@ class SecondaryInsurance(Base):
     patient_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("patients.id"), nullable=False
     )
-    insurance_provider: Mapped[str] = mapped_column(String(100), nullable=False)
+    insurance_provider: Mapped[str] = mapped_column(
+        String(100), nullable=False)
     insurance_id: Mapped[str] = mapped_column(String(100), nullable=False)
     insurance_group: Mapped[str] = mapped_column(String(100), nullable=True)
     insurance_phone: Mapped[str] = mapped_column(String(20), nullable=True)

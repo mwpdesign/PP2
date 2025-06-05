@@ -123,7 +123,8 @@ class OrderStatusService:
         except Exception:
             # Log error without exposing PHI
             self.db.rollback()
-            raise HTTPException(status_code=500, detail="Error updating order status")
+            raise HTTPException(
+                status_code=500, detail="Error updating order status")
 
     async def get_status_history(
         self,
@@ -205,17 +206,28 @@ class OrderStatusService:
                 )
                 results["successful"].append(result)
             except Exception as e:
-                results["failed"].append({"order_id": order_id, "error": str(e)})
+                results["failed"].append(
+                    {"order_id": order_id,
+                    "error": str(e)}
+                )
 
         return results
 
-    def _is_valid_transition(self, current_status: str, new_status: str) -> bool:
+    def _is_valid_transition(
+        self,
+        current_status: str,
+        new_status: str
+    ) -> bool:
         """Validate status transition based on workflow rules"""
         if current_status not in STATUS_TRANSITIONS:
             return False
         return new_status in STATUS_TRANSITIONS[current_status]
 
-    async def _send_status_notifications(self, order: Order, new_status: str) -> None:
+    async def _send_status_notifications(
+        self,
+        order: Order,
+        new_status: str
+    ) -> None:
         """Send notifications for status changes"""
         notification_data = {
             "order_id": order.id,
@@ -232,7 +244,11 @@ class OrderStatusService:
             territory_id=order.territory_id,
         )
 
-    async def _broadcast_status_update(self, order: Order, new_status: str) -> None:
+    async def _broadcast_status_update(
+        self,
+        order: Order,
+        new_status: str
+    ) -> None:
         """Broadcast status update via WebSocket"""
         message = {
             "type": "ORDER_STATUS_UPDATE",
@@ -241,4 +257,7 @@ class OrderStatusService:
             "description": STATUS_DESCRIPTIONS[new_status],
             "timestamp": datetime.utcnow().isoformat(),
         }
-        await broadcast_to_territory(territory_id=order.territory_id, message=message)
+        await broadcast_to_territory(
+            territory_id=order.territory_id,
+            message=message
+        )

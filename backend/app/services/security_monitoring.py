@@ -82,13 +82,17 @@ class SecurityMonitoringService:
                 end_time = datetime.utcnow()
 
             # Get CloudTrail events
-            trail_events = await self._get_cloudtrail_events(start_time, end_time)
+            trail_events = await self._get_cloudtrail_events(
+                start_time, end_time)
 
             # Get Security Hub findings
             security_findings = await self._get_security_findings()
 
             # Analyze for threats
-            threats = await self._analyze_threats(trail_events, security_findings)
+            threats = await self._analyze_threats(
+                trail_events,
+                security_findings
+            )
 
             # Generate alerts for detected threats
             if threats:
@@ -106,7 +110,10 @@ class SecurityMonitoringService:
 
         except Exception as e:
             self.logger.error(f"Security monitoring failed: {str(e)}")
-            raise HTTPException(status_code=500, detail="Security monitoring failed")
+            raise HTTPException(
+                status_code=500,
+                detail="Security monitoring failed"
+            )
 
     async def _get_cloudtrail_events(
         self, start_time: datetime, end_time: datetime

@@ -120,7 +120,8 @@ class InsuranceVerificationService:
         Encrypts sensitive data and formats request.
         """
         # Encrypt sensitive fields
-        encrypted_fields = await self._encrypt_sensitive_fields(insurance_data, config)
+        encrypted_fields = await self._encrypt_sensitive_fields(
+            insurance_data, config)
 
         return {
             "member_id": encrypted_fields["insurance_id"],
@@ -164,7 +165,11 @@ class InsuranceVerificationService:
             "provider_response": response_data.get("provider_response", {}),
         }
 
-    async def _encrypt_sensitive_fields(self, data: Dict, config: Dict) -> Dict:
+    async def _encrypt_sensitive_fields(
+        self,
+        data: Dict,
+        config: Dict
+    ) -> Dict:
         """
         Encrypt sensitive insurance information.
         Uses AWS KMS for field-level encryption.

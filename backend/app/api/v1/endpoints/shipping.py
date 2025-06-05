@@ -10,7 +10,10 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.core.exceptions import ShippingException
-from app.services.multi_carrier_shipping import MultiCarrierShippingService, CarrierType
+from app.services.multi_carrier_shipping import (
+    MultiCarrierShippingService,
+    CarrierType,
+)
 from app.services.shipping_types import (
     Address,
     Package,
@@ -86,7 +89,10 @@ async def create_shipping_address(
     validation_results = await shipping_service.validate_address(addr)
 
     # Check if at least one carrier validates the address
-    if not any(result.get("valid", False) for result in validation_results.values()):
+    if not any(
+        result.get("valid",
+        False) for result in validation_results.values()
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid shipping address"
         )
@@ -239,7 +245,10 @@ async def create_shipment(
 
     except ShippingException as e:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except Exception:
         db.rollback()
         raise HTTPException(
@@ -324,8 +333,14 @@ async def validate_shipment(
             .filter(ShippingAddress.order_id == shipment.order_id)
             .all()
         )
-        from_address = next((a for a in addresses if a.address_type == "from"), None)
-        to_address = next((a for a in addresses if a.address_type == "to"), None)
+        from_address = next(
+            (a for a in addresses if a.address_type == "from"),
+            None
+        )
+        to_address = next(
+            (a for a in addresses if a.address_type == "to"),
+            None
+        )
 
         if not from_address or not to_address:
             raise HTTPException(
@@ -345,7 +360,10 @@ async def validate_shipment(
 
         return validation_results
     except ShippingException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.post("/shipments/{shipment_id}/rates", response_model=List[dict])
@@ -369,8 +387,14 @@ async def get_shipment_rates(
             .filter(ShippingAddress.order_id == shipment.order_id)
             .all()
         )
-        from_address = next((a for a in addresses if a.address_type == "from"), None)
-        to_address = next((a for a in addresses if a.address_type == "to"), None)
+        from_address = next(
+            (a for a in addresses if a.address_type == "from"),
+            None
+        )
+        to_address = next(
+            (a for a in addresses if a.address_type == "to"),
+            None
+        )
 
         if not from_address or not to_address:
             raise HTTPException(
@@ -388,7 +412,10 @@ async def get_shipment_rates(
 
         return rates
     except ShippingException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.post("/shipments/{shipment_id}/label", response_model=dict)
@@ -412,8 +439,14 @@ async def create_shipping_label(
             .filter(ShippingAddress.order_id == shipment.order_id)
             .all()
         )
-        from_address = next((a for a in addresses if a.address_type == "from"), None)
-        to_address = next((a for a in addresses if a.address_type == "to"), None)
+        from_address = next(
+            (a for a in addresses if a.address_type == "from"),
+            None
+        )
+        to_address = next(
+            (a for a in addresses if a.address_type == "to"),
+            None
+        )
 
         if not from_address or not to_address:
             raise HTTPException(
@@ -438,7 +471,10 @@ async def create_shipping_label(
 
         return {"tracking_number": label.tracking_number, "label_url": label.label_url}
     except ShippingException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.get("/rates", response_model=List[ShippingRate])
@@ -506,7 +542,10 @@ async def get_shipping_rates(
             from_address, to_address, package, service_type, carrier
         )
     except ShippingException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.get("/shipments/{shipment_id}/track", response_model=TrackingInfo)
@@ -536,4 +575,7 @@ async def track_shipment(
 
         return tracking_info
     except ShippingException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

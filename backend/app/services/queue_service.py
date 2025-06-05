@@ -71,7 +71,8 @@ class QueueService:
         """Send message to SQS queue."""
         try:
             # Encrypt message content
-            encrypted_message = self.encryption_service.encrypt(json.dumps(message))
+            encrypted_message = self.encryption_service.encrypt(
+                json.dumps(message))
 
             # Prepare message attributes
             message_attributes = {
@@ -92,7 +93,9 @@ class QueueService:
                 DelaySeconds=delay_seconds,
             )
 
-            logger.info(f"Message sent to queue, MessageId: {response['MessageId']}")
+            logger.info(
+                f"Message sent to queue, MessageId: {response['MessageId']}"
+            )
             return True
 
         except Exception as e:

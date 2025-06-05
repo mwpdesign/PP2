@@ -57,7 +57,10 @@ class PatientSearchService:
         self.db.add(log)
         await self.db.commit()
 
-    async def _build_base_query(self, search_request: PatientSearchRequest) -> Any:
+    async def _build_base_query(
+        self,
+        search_request: PatientSearchRequest
+    ) -> Any:
         """Build base query with territory and access control filters."""
         query = select(Patient)
 
@@ -103,7 +106,8 @@ class PatientSearchService:
             encrypted_first_name = self.encryption_service.encrypt(
                 search_request.first_name
             )
-            filters.append(Patient.first_name_encrypted == encrypted_first_name)
+            filters.append(
+                Patient.first_name_encrypted == encrypted_first_name)
 
         if search_request.last_name:
             encrypted_last_name = self.encryption_service.encrypt(
@@ -212,7 +216,11 @@ class PatientSearchService:
             patients = results.scalars().all()
 
             # Log search operation
-            await self._log_search("basic", search_request.dict(), len(patients))
+            await self._log_search(
+                "basic",
+                search_request.dict(),
+                len(patients)
+            )
 
             # Decrypt patient data
             decrypted_patients = [

@@ -18,14 +18,19 @@ class ShippingSettings(BaseSettings):
     # UPS settings
     ups_api_key: Optional[str] = Field(default=None, description="UPS API key")
     ups_user_id: Optional[str] = Field(default=None, description="UPS user ID")
-    ups_password: Optional[str] = Field(default=None, description="UPS password")
+    ups_password: Optional[str] = Field(
+        default=None, description="UPS password")
     ups_account_number: Optional[str] = Field(
         default=None, description="UPS account number"
     )
 
     # FedEx settings
-    fedex_api_key: Optional[str] = Field(default=None, description="FedEx API key")
-    fedex_client_id: Optional[str] = Field(default=None, description="FedEx client ID")
+    fedex_api_key: Optional[str] = Field(
+        default=None, description="FedEx API key")
+    fedex_client_id: Optional[str] = Field(
+        default=None,
+        description="FedEx client ID"
+    )
     fedex_client_secret: Optional[str] = Field(
         default=None, description="FedEx client secret"
     )
@@ -34,9 +39,18 @@ class ShippingSettings(BaseSettings):
     )
 
     # USPS settings
-    usps_api_key: Optional[str] = Field(default=None, description="USPS API key")
-    usps_user_id: Optional[str] = Field(default=None, description="USPS user ID")
-    usps_password: Optional[str] = Field(default=None, description="USPS password")
+    usps_api_key: Optional[str] = Field(
+        default=None,
+        description="USPS API key"
+    )
+    usps_user_id: Optional[str] = Field(
+        default=None,
+        description="USPS user ID"
+    )
+    usps_password: Optional[str] = Field(
+        default=None,
+        description="USPS password"
+    )
 
     class Config:
         """Pydantic model configuration."""

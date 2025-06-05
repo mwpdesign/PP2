@@ -3,12 +3,15 @@
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID, uuid4
-from sqlalchemy import String, DateTime, ForeignKey, Text, JSON, LargeBinary, ARRAY
+from sqlalchemy import String, DateTime, ForeignKey, Text, JSON, ARRAY
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+from app.core.encrypted_types import (
+    EncryptedString, EncryptedText, EncryptedJSON
+)
 from app.models.user import User
 
 
@@ -25,16 +28,39 @@ class Patient(Base):
     external_id: Mapped[Optional[str]] = mapped_column(
         String(100), unique=True, nullable=True
     )
-    encrypted_first_name: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
-    encrypted_last_name: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
-    encrypted_dob: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
-    encrypted_ssn: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True)
-    encrypted_phone: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True)
-    encrypted_email: Mapped[Optional[bytes]] = mapped_column(LargeBinary, nullable=True)
-    encrypted_address: Mapped[Optional[bytes]] = mapped_column(
-        LargeBinary, nullable=True
+    # Encrypted PHI fields using our new encryption types
+    first_name: Mapped[str] = mapped_column(
+        EncryptedString(field_name="first_name"), nullable=False
     )
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="active")
+    last_name: Mapped[str] = mapped_column(
+        EncryptedString(field_name="last_name"), nullable=False
+    )
+    date_of_birth: Mapped[str] = mapped_column(
+        EncryptedString(field_name="date_of_birth"), nullable=False
+    )
+    ssn: Mapped[Optional[str]] = mapped_column(
+        EncryptedString(field_name="ssn"), nullable=True
+    )
+    phone: Mapped[Optional[str]] = mapped_column(
+        EncryptedString(field_name="phone"), nullable=True
+    )
+    email: Mapped[Optional[str]] = mapped_column(
+        EncryptedString(field_name="email"), nullable=True
+    )
+    address: Mapped[Optional[str]] = mapped_column(
+        EncryptedText(field_name="address"), nullable=True
+    )
+    # Medical history stored as encrypted JSON
+    medical_history: Mapped[Optional[dict]] = mapped_column(
+        EncryptedJSON(field_name="medical_history"), nullable=True
+    )
+    # Insurance information stored as encrypted JSON
+    insurance_info: Mapped[Optional[dict]] = mapped_column(
+        EncryptedJSON(field_name="insurance_info"), nullable=True
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="active")
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     patient_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
     tags: Mapped[List[str]] = mapped_column(ARRAY(String), default=list)
@@ -115,7 +141,10 @@ class PatientDocument(Base):
     document_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
 
     # Add timestamp fields directly
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
@@ -136,16 +165,22 @@ class PatientDocument(Base):
     )
 
     # Relationships
-    patient: Mapped["Patient"] = relationship("Patient", back_populates="documents")
+    patient: Mapped["Patient"] = relationship(
+        "Patient",
+        back_populates="documents"
+    )
     created_by: Mapped[User] = relationship(
         "User", foreign_keys=[created_by_id], back_populates="created_documents"
     )
     updated_by: Mapped[Optional[User]] = relationship(
         "User", foreign_keys=[updated_by_id], back_populates="updated_documents"
     )
-    organization = relationship("Organization", back_populates="patient_documents")
+    organization = relationship(
+        "Organization",
+        back_populates="patient_documents"
+    )
 
     @property
     def full_name(self) -> str:
-        """Get patient's full name."""
+        """Get patient's full name from encrypted fields."""
         return f"{self.first_name} {self.last_name}"

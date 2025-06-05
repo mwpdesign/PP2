@@ -47,9 +47,13 @@ class InsuranceVerificationService:
             )
 
             # Get and validate patient
-            patient = self.db.query(Patient).filter(Patient.id == patient_id).first()
+            patient = self.db.query(
+                Patient).filter(Patient.id == patient_id).first()
             if not patient:
-                raise HTTPException(status_code=404, detail="Patient not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail="Patient not found"
+                )
 
             # Verify territory access
             if patient.territory_id != territory_id:

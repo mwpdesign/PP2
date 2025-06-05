@@ -18,7 +18,8 @@ class OrderBase(BaseModel):
     order_type: str = Field(
         ..., pattern="^(prescription|medical_equipment|lab_test|referral)$"
     )
-    priority: str = Field(default="routine", pattern="^(routine|urgent|emergency)$")
+    priority: str = Field(
+        default="routine", pattern="^(routine|urgent|emergency)$")
     notes: Optional[str] = None
 
 
@@ -39,7 +40,10 @@ class OrderUpdate(BaseModel):
     order_type: Optional[str] = Field(
         None, pattern="^(prescription|medical_equipment|lab_test|referral)$"
     )
-    priority: Optional[str] = Field(None, pattern="^(routine|urgent|emergency)$")
+    priority: Optional[str] = Field(
+        None,
+        pattern="^(routine|urgent|emergency)$"
+    )
     notes: Optional[str] = None
 
 

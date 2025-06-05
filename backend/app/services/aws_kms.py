@@ -18,7 +18,8 @@ class AWSKMSService:
         """Initialize AWS KMS client and configure key settings."""
         self.kms_client = boto3.client("kms")
         self.key_id = os.getenv("AWS_KMS_KEY_ID")
-        self.key_alias = os.getenv("AWS_KMS_KEY_ALIAS", "alias/healthcare-ivr-phi")
+        self.key_alias = os.getenv(
+            "AWS_KMS_KEY_ALIAS", "alias/healthcare-ivr-phi")
         self.region = os.getenv("AWS_REGION", "us-east-1")
 
         # Encryption context for additional security
@@ -82,7 +83,10 @@ class AWSKMSService:
                 "encrypted_at": datetime.utcnow().isoformat(),
             }
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Encryption failed: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Encryption failed: {str(e)}"
+            )
 
     async def decrypt_field(
         self, encrypted_data: str, encrypted_key: str, context: Optional[Dict] = None
@@ -106,7 +110,10 @@ class AWSKMSService:
 
             return decrypted_data.decode("utf-8")
         except ClientError as e:
-            raise HTTPException(status_code=500, detail=f"Decryption failed: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Decryption failed: {str(e)}"
+            )
 
     async def rotate_key(self, old_key_id: str) -> Dict:
         """

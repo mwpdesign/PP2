@@ -45,16 +45,25 @@ async def add_sample_data():
                 await db.commit()
                 await db.refresh(organization)
 
-            # Create a user if it doesn't exist
+                        # Create a user if it doesn't exist
             user_query = select(User).filter(User.email == "admin@demo.com")
             user_result = await db.execute(user_query)
             user = user_result.scalar_one_or_none()
 
             if not user:
+                import os
+                from app.core.security import get_password_hash
+
+                # Use environment variable or generate a secure default
+                demo_password = os.getenv(
+                    "DEMO_USER_PASSWORD",
+                    "secure_demo_password_123!"
+                )
+
                 user = User(
                     organization_id=organization.id,
                     email="admin@demo.com",
-                    encrypted_password="password",  # In production, use proper hashing
+                    encrypted_password=get_password_hash(demo_password),
                     first_name="Admin",
                     last_name="User",
                     is_active=True,

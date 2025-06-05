@@ -38,8 +38,12 @@ class PHIAccess(Base, AuditMixin):
     access_type: Mapped[str] = mapped_column(String(50), nullable=False)
     # patient, order, etc.
     resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    resource_id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), nullable=False)
-    accessed_fields: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
+    resource_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False)
+    accessed_fields: Mapped[list[str]] = mapped_column(
+        ARRAY(String),
+        nullable=False
+    )
 
     # Request Context
     ip_address: Mapped[str] = mapped_column(String(50))
@@ -77,7 +81,10 @@ class AuditLog(Base, AuditMixin):
     )
     action: Mapped[str] = mapped_column(String(100), nullable=False)
     resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    resource_id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    resource_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=False
+    )
     details: Mapped[dict] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
@@ -91,7 +98,11 @@ class AuditLog(Base, AuditMixin):
 
     # Relationships
     organization = relationship("Organization", back_populates="audit_logs")
-    user = relationship("User", foreign_keys=[user_id], back_populates="audit_logs")
+    user = relationship(
+        "User",
+        foreign_keys=[user_id],
+        back_populates="audit_logs"
+    )
     created_by = relationship(
         "User", foreign_keys=[created_by_id], back_populates="created_audit_logs"
     )
@@ -146,7 +157,10 @@ class AuditReport(Base, AuditMixin):
     start_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False
+    )
     report_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow

@@ -45,7 +45,8 @@ class Role(Base):
     parent_role_id: Mapped[Optional[PyUUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("roles.id"), nullable=True
     )
-    permissions: Mapped[dict] = mapped_column(JSON, nullable=False, server_default="{}")
+    permissions: Mapped[dict] = mapped_column(
+        JSON, nullable=False, server_default="{}")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
@@ -81,7 +82,11 @@ class Permission(Base):
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     resource_type: Mapped[str] = mapped_column(String(50), nullable=False)
     action: Mapped[str] = mapped_column(String(50), nullable=False)
-    conditions: Mapped[dict] = mapped_column(JSON, nullable=False, server_default="{}")
+    conditions: Mapped[dict] = mapped_column(
+        JSON,
+        nullable=False,
+        server_default="{}"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )

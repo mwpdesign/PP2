@@ -15,14 +15,23 @@ export const AuthDebugTest: React.FC = () => {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunningTests, setIsRunningTests] = useState(false);
   const [selectedCredentials, setSelectedCredentials] = useState({
-    email: 'admin@healthcare.local',
-    password: 'admin123'
+    email: process.env.REACT_APP_TEST_ADMIN_EMAIL || 'admin@healthcare.local',
+    password: process.env.REACT_APP_TEST_ADMIN_PASSWORD || 'test123'
   });
 
   const credentials = {
-    admin: { email: 'admin@healthcare.local', password: 'admin123' },
-    doctor: { email: 'doctor@healthcare.local', password: 'doctor123' },
-    ivr: { email: 'ivr@healthcare.local', password: 'ivr123' }
+    admin: {
+      email: process.env.REACT_APP_TEST_ADMIN_EMAIL || 'admin@healthcare.local',
+      password: process.env.REACT_APP_TEST_ADMIN_PASSWORD || 'test123'
+    },
+    doctor: {
+      email: process.env.REACT_APP_TEST_DOCTOR_EMAIL || 'doctor@healthcare.local',
+      password: process.env.REACT_APP_TEST_DOCTOR_PASSWORD || 'test123'
+    },
+    ivr: {
+      email: process.env.REACT_APP_TEST_IVR_EMAIL || 'ivr@healthcare.local',
+      password: process.env.REACT_APP_TEST_IVR_PASSWORD || 'test123'
+    }
   };
 
   const updateTestResult = (name: string, status: 'pending' | 'success' | 'error', data?: any, error?: any, duration?: number) => {

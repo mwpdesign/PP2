@@ -1,7 +1,6 @@
 """AWS SES service for HIPAA-compliant email notifications."""
 
 import boto3
-import json
 import logging
 from typing import Dict, Optional
 from botocore.exceptions import ClientError

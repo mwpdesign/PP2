@@ -44,7 +44,12 @@ class SMSService:
             logger.error(f"Failed to configure SNS: {str(e)}")
             raise
 
-    async def send_sms(self, recipient_id: str, content: str, metadata: Dict) -> bool:
+    async def send_sms(
+        self,
+        recipient_id: str,
+        content: str,
+        metadata: Dict
+    ) -> bool:
         """Send HIPAA-compliant SMS."""
         try:
             # Get recipient phone from user service
@@ -138,7 +143,11 @@ class SMSService:
             logger.error(f"Failed to process opt-out: {str(e)}")
             raise
 
-    async def _update_user_preferences(self, phone_number: str, opted_out: bool):
+    async def _update_user_preferences(
+        self,
+        phone_number: str,
+        opted_out: bool
+    ):
         """Update user notification preferences."""
         # TODO: Implement user preferences update
         pass

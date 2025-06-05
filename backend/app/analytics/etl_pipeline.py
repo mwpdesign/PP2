@@ -16,7 +16,6 @@ from app.analytics.models import (
     DailyMetrics,
     GeographicMetrics,
     HourlyMetrics,
-    VerificationPerformanceDimension,
 )
 from app.services.redis_cache import RedisCache
 

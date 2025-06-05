@@ -75,7 +75,8 @@ class NotificationService:
 
         for category, patterns in self.phi_patterns.items():
             for pattern in patterns:
-                filtered_content = self._redact_pattern(filtered_content, pattern)
+                filtered_content = self._redact_pattern(
+                    filtered_content, pattern)
 
         return filtered_content
 
@@ -153,22 +154,38 @@ class NotificationService:
                 from app.services.ses_service import SESService
 
                 self.email_service = SESService()
-            return await self.email_service.send_email(recipient_id, content, metadata)
+            return await self.email_service.send_email(
+                recipient_id,
+                content,
+                metadata
+            )
 
         elif channel == NotificationChannel.SMS:
             if not self.sms_service:
                 from app.services.sms_service import SMSService
 
                 self.sms_service = SMSService()
-            return await self.sms_service.send_sms(recipient_id, content, metadata)
+            return await self.sms_service.send_sms(
+                recipient_id,
+                content,
+                metadata
+            )
 
         elif channel == NotificationChannel.IN_APP:
             # Implement in-app notification logic
-            return await self._send_in_app_notification(recipient_id, content, metadata)
+            return await self._send_in_app_notification(
+                recipient_id,
+                content,
+                metadata
+            )
 
         elif channel == NotificationChannel.PUSH:
             # Implement push notification logic
-            return await self._send_push_notification(recipient_id, content, metadata)
+            return await self._send_push_notification(
+                recipient_id,
+                content,
+                metadata
+            )
 
         return False
 
@@ -179,14 +196,20 @@ class NotificationService:
             return
 
         # Calculate next retry time using exponential backoff
-        retry_index = min(notification.retry_count, len(self.retry_intervals) - 1)
+        retry_index = min(
+            notification.retry_count,
+            len(self.retry_intervals) - 1
+        )
         next_retry_delay = self.retry_intervals[retry_index]
 
         notification.retry_count += 1
         notification.next_retry_at = datetime.utcnow() + next_retry_delay
         notification.status = NotificationStatus.RETRY_PENDING
 
-    async def get_notification_status(self, notification_id: str) -> NotificationStatus:
+    async def get_notification_status(
+        self,
+        notification_id: str
+    ) -> NotificationStatus:
         """Get current status of a notification."""
         notification = (
             self.db.query(NotificationModel)

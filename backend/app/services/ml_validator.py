@@ -49,7 +49,8 @@ class MLValidator:
         )
 
         # Generate recommendations
-        recommendations = await self._generate_recommendations(aspect, risk_assessment)
+        recommendations = await self._generate_recommendations(
+            aspect, risk_assessment)
 
         return {
             "risk_assessment": risk_assessment,
@@ -61,7 +62,10 @@ class MLValidator:
         self, aspect: str, limit: int = 1000
     ) -> List[AuditLog]:
         """Retrieve relevant historical audit logs"""
-        return await self.audit_service.get_logs_by_aspect(aspect=aspect, limit=limit)
+        return await self.audit_service.get_logs_by_aspect(
+            aspect=aspect,
+            limit=limit
+        )
 
     def _extract_features(
         self, audit_logs: List[AuditLog], current_data: Dict[str, Any]

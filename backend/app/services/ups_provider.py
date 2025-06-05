@@ -143,7 +143,10 @@ class UPSProvider(ShippingProvider):
             "transactionSrc": "testing" if self.test_mode else "production",
         }
 
-    def _mock_label_response(self, service_type: ShippingServiceType) -> ShippingLabel:
+    def _mock_label_response(
+        self,
+        service_type: ShippingServiceType
+    ) -> ShippingLabel:
         """Generate mock label response for test mode."""
         return ShippingLabel(
             carrier="UPS",
@@ -162,7 +165,8 @@ class UPSProvider(ShippingProvider):
             tracking_number=tracking_number,
             status=TrackingStatus.IN_TRANSIT,
             location="Test Location",
-            estimated_delivery=current_time.replace(hour=17, minute=0, second=0),
+            estimated_delivery=current_time.replace(
+                hour=17, minute=0, second=0),
             history=[
                 TrackingEvent(
                     status=TrackingStatus.IN_TRANSIT,
@@ -173,6 +177,10 @@ class UPSProvider(ShippingProvider):
             ],
         )
 
-    def _parse_tracking_response(self, response: Dict[str, Any]) -> TrackingInfo:
+    def _parse_tracking_response(
+        self,
+        response: Dict[str,
+        Any]
+    ) -> TrackingInfo:
         """Parse UPS tracking response into TrackingInfo."""
         raise NotImplementedError()

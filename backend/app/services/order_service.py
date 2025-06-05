@@ -25,7 +25,11 @@ from app.services.inventory_service import InventoryService
 from app.services.shipping_service import ShippingService, Package, Address
 from app.services.ivr_service import IVRService
 from app.core.security import verify_territory_access
-from app.core.exceptions import NotFoundException, ValidationError, UnauthorizedError
+from app.core.exceptions import (
+    NotFoundException,
+    ValidationError,
+    UnauthorizedError,
+)
 
 
 class OrderService:
@@ -75,7 +79,10 @@ class OrderService:
     async def create_order(self, order_data: OrderCreate) -> Order:
         """Create a new order with items."""
         # Verify territory access
-        if not verify_territory_access(self.current_user, order_data.territory_id):
+        if not verify_territory_access(
+            self.current_user,
+            order_data.territory_id
+        ):
             raise UnauthorizedError("No access to specified territory")
 
         # Generate unique order number
@@ -166,7 +173,11 @@ class OrderService:
                 status_code=500, detail=f"Failed to create order: {str(e)}"
             )
 
-    async def update_order(self, order_id: UUID, order_data: OrderUpdate) -> Order:
+    async def update_order(
+        self,
+        order_id: UUID,
+        order_data: OrderUpdate
+    ) -> Order:
         """Update an existing order."""
         # Get order
         order = self.db.query(Order).filter(Order.id == order_id).first()
@@ -296,7 +307,10 @@ class OrderService:
                 status_code=500, detail=f"Failed to update approval: {str(e)}"
             )
 
-    async def search_orders(self, search_params: OrderSearchParams) -> Dict[str, Any]:
+    async def search_orders(
+        self,
+        search_params: OrderSearchParams
+    ) -> Dict[str, Any]:
         """Search orders with filtering and pagination."""
         # Base query
         query = self.db.query(Order)
@@ -330,7 +344,10 @@ class OrderService:
 
         # Apply sorting
         if search_params.sort_order == "desc":
-            query = query.order_by(getattr(Order, search_params.sort_by).desc())
+            query = query.order_by(
+                getattr(Order,
+                search_params.sort_by).desc()
+            )
         else:
             query = query.order_by(getattr(Order, search_params.sort_by).asc())
 
@@ -347,7 +364,11 @@ class OrderService:
             "limit": search_params.limit,
         }
 
-    async def _validate_status_transition(self, order: Order, new_status: str) -> None:
+    async def _validate_status_transition(
+        self,
+        order: Order,
+        new_status: str
+    ) -> None:
         """Validate if status transition is allowed."""
         valid_transitions = {
             "pending": ["verified", "cancelled"],
@@ -363,7 +384,11 @@ class OrderService:
                 f"Invalid status transition from {order.status} to {new_status}"
             )
 
-    async def _handle_status_change(self, order: Order, new_status: str) -> None:
+    async def _handle_status_change(
+        self,
+        order: Order,
+        new_status: str
+    ) -> None:
         """Handle side effects of status changes."""
         if new_status == "verified":
             # Verify insurance coverage

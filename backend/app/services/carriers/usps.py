@@ -27,7 +27,11 @@ class USPSCarrier(BaseCarrier):
         )
         self.client = httpx.AsyncClient()
 
-    async def get_rates(self, package_info: Dict, destination: Dict) -> List[Dict]:
+    async def get_rates(
+        self,
+        package_info: Dict,
+        destination: Dict
+    ) -> List[Dict]:
         """Get shipping rates from USPS."""
         try:
             response = await self.client.get(
@@ -62,7 +66,8 @@ class USPSCarrier(BaseCarrier):
         try:
             response = await self.client.get(
                 self.base_url,
-                params={"API": "eVS", "XML": self._build_label_xml(shipment_info)},
+                params={"API": "eVS", "XML": self._build_label_xml(
+                    shipment_info)},
             )
             response.raise_for_status()
             data = self._parse_xml_response(response.text)

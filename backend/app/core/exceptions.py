@@ -6,7 +6,8 @@ from fastapi import HTTPException, status
 class BaseAppException(HTTPException):
     """Base exception for all application exceptions."""
 
-    def __init__(self, status_code: int, detail: str, headers: dict = None) -> None:
+    def __init__(
+        self, status_code: int, detail: str, headers: dict = None) -> None:
         """Initialize exception."""
         super().__init__(status_code=status_code, detail=detail)
         self.headers = headers
@@ -63,7 +64,10 @@ class ShippingException(BaseAppException):
 
     def __init__(self, detail: str = "Shipping error") -> None:
         """Initialize exception."""
-        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+        super(
+            ).__init__(status_code=status.HTTP_400_BAD_REQUEST,
+            detail=detail
+        )
 
 
 class ValidationError(HTTPException):

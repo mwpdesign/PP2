@@ -67,14 +67,20 @@ class S3Service:
                 status_code=500, detail=f"Failed to upload file: {str(e)}"
             )
 
-    async def download_file(self, s3_key: str, user_id: int, territory_id: int) -> Dict:
+    async def download_file(
+        self,
+        s3_key: str,
+        user_id: int,
+        territory_id: int
+    ) -> Dict:
         """
         Download and decrypt a file from S3.
         Includes access logging context.
         """
         try:
             # Get file with encryption context
-            response = self.s3_client.get_object(Bucket=self.bucket, Key=s3_key)
+            response = self.s3_client.get_object(
+                Bucket=self.bucket, Key=s3_key)
 
             return {
                 "content": response["Body"].read(),

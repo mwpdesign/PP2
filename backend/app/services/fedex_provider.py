@@ -41,7 +41,8 @@ class FedExProvider(ShippingProvider):
         )
         self._token = None
         self._token_expires = None
-        self._rate_limit = httpx.Limits(max_keepalive_connections=5, max_connections=10)
+        self._rate_limit = httpx.Limits(
+            max_keepalive_connections=5, max_connections=10)
         self.client = httpx.AsyncClient(limits=self._rate_limit)
 
     async def _get_token(self) -> str:
@@ -116,14 +117,24 @@ class FedExProvider(ShippingProvider):
 
             if response.status_code == 401 and retry_count < 3:
                 self._token = None  # Force token refresh
-                return await self._make_request(method, endpoint, data, retry_count + 1)
+                return await self._make_request(
+                    method,
+                    endpoint,
+                    data,
+                    retry_count + 1
+                )
 
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 429:  # Rate limit exceeded
                 await asyncio.sleep(2**retry_count)  # Exponential backoff
-                return await self._make_request(method, endpoint, data, retry_count + 1)
+                return await self._make_request(
+                    method,
+                    endpoint,
+                    data,
+                    retry_count + 1
+                )
             msg = f"FedEx API request failed: {str(e)}"
             raise ShippingException(msg)
         except Exception as e:
@@ -186,7 +197,11 @@ class FedExProvider(ShippingProvider):
         try:
             data = {"addressesToValidate": [{"address": self._format_address(address)}]}
 
-            result = await self._make_request("POST", "addresses/validation", data)
+            result = await self._make_request(
+                "POST",
+                "addresses/validation",
+                data
+            )
 
             validation_result = result["output"][0]
             is_valid = validation_result["resolved"] == "YES"
@@ -242,7 +257,11 @@ class FedExProvider(ShippingProvider):
             for rate_detail in rate_details:
                 service = rate_detail["serviceType"]
                 mapping = self.SERVICE_MAPPING.items()
-                service_type = next((k for k, v in mapping if v == service), None)
+                service_type = next(
+                    (k for k,
+                    v in mapping if v == service),
+                    None
+                )
                 if service_type:
                     total_charge = rate_detail["ratedShipmentDetails"][0]
                     total_charge = total_charge["totalNetCharge"]
@@ -359,7 +378,11 @@ class FedExProvider(ShippingProvider):
             tracking_info = {"trackingNumberInfo": {"trackingNumber": tracking_number}}
             data = {"trackingInfo": [tracking_info]}
 
-            result = await self._make_request("POST", "track/v1/trackingnumbers", data)
+            result = await self._make_request(
+                "POST",
+                "track/v1/trackingnumbers",
+                data
+            )
 
             if not result.get("output", {}).get("completeTrackResults", []):
                 raise ShippingException("No tracking data found")

@@ -63,7 +63,8 @@ class USPSProvider(ShippingProvider):
 
         return ET.tostring(root, encoding="unicode")
 
-    async def _make_request(self, api: str, data: Dict, retry_count: int = 0) -> Dict:
+    async def _make_request(
+        self, api: str, data: Dict, retry_count: int = 0) -> Dict:
         """Make request to USPS API with retry logic."""
         if retry_count >= 3:
             raise ShippingException("Max retries exceeded for USPS API request")
@@ -195,7 +196,10 @@ class USPSProvider(ShippingProvider):
             for rate in result.get("Package", {}).get("Postage", []):
                 service_name = rate.get("MailService", "")
                 service_type = next(
-                    (k for k, v in self.SERVICE_MAPPING.items() if v in service_name),
+                    (
+                        k for k,
+                        v in self.SERVICE_MAPPING.items() if v in service_name
+                    ),
                     None,
                 )
                 if service_type:
@@ -366,7 +370,10 @@ class USPSProvider(ShippingProvider):
                     track_info["Status"], TrackingStatus.IN_TRANSIT
                 ),
                 estimated_delivery=(
-                    datetime.strptime(track_info["ExpectedDeliveryDate"], "%B %d, %Y")
+                    datetime.strptime(
+                        track_info["ExpectedDeliveryDate"],
+                        "%B %d, %Y"
+                    )
                     if "ExpectedDeliveryDate" in track_info
                     else None
                 ),

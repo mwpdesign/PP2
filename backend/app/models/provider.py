@@ -15,7 +15,8 @@ class Provider(Base):
     __table_args__ = {"extend_existing": True}
 
     id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False
+        UUID(
+            as_uuid=True), primary_key=True, default=uuid4, unique=True, nullable=False
     )
     # Organization
     organization_id: Mapped[PyUUID] = mapped_column(
@@ -56,7 +57,11 @@ class Provider(Base):
     )
 
     # Metadata
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -132,7 +137,11 @@ class ProviderCredentials(Base):
     expiration_date: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    status: Mapped[str] = mapped_column(String(20), default="active", nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="active",
+        nullable=False
+    )
     document_key: Mapped[Optional[str]] = mapped_column(
         String(255), nullable=True, comment="S3 key for stored document"
     )

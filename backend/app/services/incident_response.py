@@ -9,7 +9,11 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from app.core.config import get_settings
-from app.models.security import SecurityIncident, ForensicData, IncidentTimeline
+from app.models.security import (
+    SecurityIncident,
+    ForensicData,
+    IncidentTimeline,
+)
 from app.services.notification_service import NotificationService
 from app.services.security_monitoring import SecurityMonitoringService
 
@@ -49,7 +53,10 @@ class IncidentResponseService:
             )
 
             if not incident:
-                raise HTTPException(status_code=404, detail="Incident not found")
+                raise HTTPException(
+                    status_code=404,
+                    detail="Incident not found"
+                )
 
             # Create incident timeline
             timeline = IncidentTimeline(
@@ -116,7 +123,10 @@ class IncidentResponseService:
                 status_code=500, detail=f"Error collecting forensic data: {str(e)}"
             )
 
-    async def _apply_automated_response(self, incident: SecurityIncident) -> None:
+    async def _apply_automated_response(
+        self,
+        incident: SecurityIncident
+    ) -> None:
         """Apply automated response based on incident type."""
         try:
             response_actions = {
@@ -137,7 +147,10 @@ class IncidentResponseService:
                 status_code=500, detail=f"Error applying automated response: {str(e)}"
             )
 
-    async def _handle_unauthorized_access(self, incident: SecurityIncident) -> None:
+    async def _handle_unauthorized_access(
+        self,
+        incident: SecurityIncident
+    ) -> None:
         """Handle unauthorized access incidents."""
         try:
             # Lock affected accounts
@@ -165,7 +178,10 @@ class IncidentResponseService:
                 status_code=500, detail=f"Error handling unauthorized access: {str(e)}"
             )
 
-    async def _handle_suspicious_activity(self, incident: SecurityIncident) -> None:
+    async def _handle_suspicious_activity(
+        self,
+        incident: SecurityIncident
+    ) -> None:
         """Handle suspicious activity incidents."""
         try:
             # Increase monitoring
@@ -217,7 +233,10 @@ class IncidentResponseService:
                 status_code=500, detail=f"Error handling data breach: {str(e)}"
             )
 
-    async def _check_escalation_needs(self, incident: SecurityIncident) -> None:
+    async def _check_escalation_needs(
+        self,
+        incident: SecurityIncident
+    ) -> None:
         """Check if incident needs escalation."""
         try:
             # Get incident age
@@ -274,7 +293,10 @@ class IncidentResponseService:
                 status_code=500, detail=f"Error escalating incident: {str(e)}"
             )
 
-    async def _send_incident_notifications(self, incident: SecurityIncident) -> None:
+    async def _send_incident_notifications(
+        self,
+        incident: SecurityIncident
+    ) -> None:
         """Send incident notifications to relevant parties."""
         try:
             # Get notification recipients

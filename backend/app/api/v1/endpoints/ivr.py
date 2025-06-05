@@ -363,7 +363,10 @@ async def create_ivr_call(
     """Create a new IVR call."""
     ivr_service = IVRService(db)
 
-    call = await ivr_service.create_call(call_in, created_by_id=current_user["id"])
+    call = await ivr_service.create_call(
+        call_in,
+        created_by_id=current_user["id"]
+    )
     return call
 
 

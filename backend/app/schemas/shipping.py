@@ -160,7 +160,9 @@ class ShipmentUpdate(BaseModel):
     actual_delivery: Optional[datetime] = None
     status: Optional[str] = Field(
         None,
-        pattern="^(pending|label_created|picked_up|" "in_transit|delivered|exception)$",
+        pattern=(
+            "^(pending|label_created|picked_up|in_transit|delivered|exception)$"
+        )
     )
 
 

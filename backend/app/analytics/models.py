@@ -32,7 +32,8 @@ class DimTime(Base):
     __tablename__ = "dim_time"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    date: Mapped[datetime] = mapped_column(DateTime, nullable=False, unique=True)
+    date: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, unique=True)
     year: Mapped[int] = mapped_column(Integer, nullable=False)
     month: Mapped[int] = mapped_column(Integer, nullable=False)
     day: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -75,7 +76,11 @@ class DimOrganization(Base):
     __tablename__ = "dim_organization"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    org_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
+    org_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     # hospital, clinic, pharmacy, etc.
     type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -95,7 +100,11 @@ class DimInsuranceProvider(Base):
     __tablename__ = "dim_insurance_provider"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    provider_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
+    provider_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     # private, medicare, medicaid
     type: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -157,7 +166,10 @@ class DimVerificationPerformance(Base):
     # real-time, batch, manual
     verification_type: Mapped[str] = mapped_column(String(50), nullable=False)
     # fast, medium, slow
-    response_time_category: Mapped[str] = mapped_column(String(20), nullable=False)
+    response_time_category: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False
+    )
     # timeout, invalid data, system error
     error_type: Mapped[Optional[str]] = mapped_column(String(50))
     retry_count: Mapped[int] = mapped_column(Integer, default=0)
@@ -179,7 +191,11 @@ class FactIVRCall(Base):
     __tablename__ = "fact_ivr_call"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    call_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
+    call_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True
+    )
     time_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("dim_time.id"), nullable=False
     )
@@ -203,7 +219,10 @@ class FactIVRCall(Base):
         Integer, ForeignKey("dim_insurance_provider.id"), nullable=False
     )
     approval_status: Mapped[str] = mapped_column(String(50), nullable=False)
-    verification_time_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    verification_time_seconds: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False
+    )
     patient_demographics_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("dim_patient_demographics.id")
     )
@@ -236,7 +255,11 @@ class FactOrder(Base):
     __tablename__ = "fact_order"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    order_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True)
+    order_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        unique=True
+    )
     time_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("dim_time.id"), nullable=False
     )
@@ -251,7 +274,10 @@ class FactOrder(Base):
     total_amount: Mapped[float] = mapped_column(Float, nullable=False)
     item_count: Mapped[int] = mapped_column(Integer, nullable=False)
     shipping_cost: Mapped[float] = mapped_column(Float, nullable=False)
-    processing_time_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    processing_time_seconds: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False
+    )
     status: Mapped[str] = mapped_column(String(50), nullable=False)
     carrier: Mapped[str] = mapped_column(String(50), nullable=False)
     delivery_sla_met: Mapped[bool] = mapped_column(Boolean, nullable=False)

@@ -84,7 +84,10 @@ class IVRWorkflowService:
 
         # Validate status transition
         if request_data.get("status"):
-            await self._validate_status_transition(request, request_data["status"])
+            await self._validate_status_transition(
+                request,
+                request_data["status"]
+            )
 
         # Update fields
         for field, value in request_data.items():
@@ -251,7 +254,8 @@ class IVRWorkflowService:
 
         # Apply filters
         if queue_params.facility_id:
-            query = query.filter(IVRRequest.facility_id == queue_params.facility_id)
+            query = query.filter(
+                IVRRequest.facility_id == queue_params.facility_id)
 
         if queue_params.status:
             query = query.filter(IVRRequest.status == queue_params.status)
@@ -324,16 +328,30 @@ class IVRWorkflowService:
         self, ivr_request: IVRRequest, status_history: IVRStatusHistory
     ):
         """Send notifications for IVR status changes."""
-        self.notification_service.notify_status_change(ivr_request, status_history)
+        self.notification_service.notify_status_change(
+            ivr_request,
+            status_history
+        )
 
-    def _notify_reviewer_assignment(self, ivr_request: IVRRequest, reviewer_id: str):
+    def _notify_reviewer_assignment(
+        self,
+        ivr_request: IVRRequest,
+        reviewer_id: str
+    ):
         """Send notifications for reviewer assignment."""
-        self.notification_service.notify_reviewer_assignment(ivr_request, reviewer_id)
+        self.notification_service.notify_reviewer_assignment(
+            ivr_request,
+            reviewer_id
+        )
 
     def _notify_approval(self, ivr_request: IVRRequest, approval: IVRApproval):
         """Send notifications for IVR approval/rejection."""
         self.notification_service.notify_approval(ivr_request, approval)
 
-    def _notify_escalation(self, ivr_request: IVRRequest, escalation: IVREscalation):
+    def _notify_escalation(
+        self,
+        ivr_request: IVRRequest,
+        escalation: IVREscalation
+    ):
         """Send notifications for IVR escalation."""
         self.notification_service.notify_escalation(ivr_request, escalation)

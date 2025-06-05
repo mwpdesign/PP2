@@ -37,7 +37,8 @@ class SensitiveData(Base):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="sensitive_data")
+    user: Mapped["User"] = relationship(
+        "User", back_populates="sensitive_data")
 
     def __init__(self, **kwargs):
         """Initialize with encryption support."""

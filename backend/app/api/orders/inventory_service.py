@@ -6,7 +6,12 @@ from sqlalchemy import and_, or_
 from app.core.security import verify_territory_access
 from app.core.exceptions import InventoryException, AccessDeniedException
 from app.core.audit import audit_inventory_change
-from .models import Product, ProductInventory, ProductPricing, ProductCompliance
+from .models import (
+    Product,
+    ProductInventory,
+    ProductPricing,
+    ProductCompliance,
+)
 
 
 class InventoryService:
@@ -143,7 +148,12 @@ class InventoryService:
 
             self.db.commit()
 
-            await audit_inventory_change(self.db, operation, product_id, quantity)
+            await audit_inventory_change(
+                self.db,
+                operation,
+                product_id,
+                quantity
+            )
             return inventory
         except Exception as e:
             self.db.rollback()
@@ -171,7 +181,11 @@ class InventoryService:
 
         return alerts
 
-    async def get_territory_pricing(self, product_id: str, territory_id: str) -> float:
+    async def get_territory_pricing(
+        self,
+        product_id: str,
+        territory_id: str
+    ) -> float:
         """Get territory-specific pricing for a product."""
         pricing = (
             self.db.query(ProductPricing)
@@ -179,7 +193,7 @@ class InventoryService:
                 and_(
                     ProductPricing.product_id == product_id,
                     ProductPricing.territory_id == territory_id,
-                    ProductPricing.is_active == True,
+                    ProductPricing.is_active is True,
                     or_(
                         ProductPricing.effective_to.is_(None),
                         ProductPricing.effective_to > datetime.utcnow(),
@@ -207,7 +221,7 @@ class InventoryService:
         in_stock_only: bool = False,
     ) -> List[Product]:
         """Search products with various filters."""
-        base_query = self.db.query(Product).filter(Product.is_active == True)
+        base_query = self.db.query(Product).filter(Product.is_active is True)
 
         if query:
             base_query = base_query.filter(

@@ -239,9 +239,13 @@ async def get_product_compliance(
     return product.compliance
 
 
-@router.get("/products/categories", response_model=List[ProductCategoryResponse])
+@router.get(
+    "/products/categories", response_model=List[ProductCategoryResponse])
 async def list_categories(
-    db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)
+    db: Session = Depends(
+        get_db),
+        current_user: dict = Depends(get_current_user
+    )
 ):
     """List all product categories."""
     return db.query(ProductCategory).filter(ProductCategory.parent_id.is_(None)).all()
@@ -267,7 +271,11 @@ async def create_category(
     return db_category
 
 
-@router.post("", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=OrderResponse,
+    status_code=status.HTTP_201_CREATED
+)
 async def create_order(
     order_data: OrderCreate,
     db: Session = Depends(get_db),
@@ -318,7 +326,10 @@ async def update_order_status(
     return await order_service.update_order_status(order_id, status_data)
 
 
-@router.put("/{order_id}/approvals/{approval_id}", response_model=OrderApprovalResponse)
+@router.put(
+    "/{order_id}/approvals/{approval_id}",
+    response_model=OrderApprovalResponse
+)
 async def update_order_approval(
     order_id: UUID,
     approval_id: UUID,

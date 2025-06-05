@@ -19,9 +19,9 @@ from ...core.security import (
     get_current_user,
     password_validator,
     create_access_token,
-    authenticate_user,
 )
 from ...services.security_service import security_service
+from .service import authentication_service
 from ...core.database import get_db
 from ...core.config import settings
 from ...schemas.token import TokenData
@@ -89,12 +89,14 @@ async def debug_test_login(
     """Debug endpoint to test login functionality."""
     try:
         logger.info(f"Debug test login for: {email}")
-        user = await authenticate_user(db, email, password)
-        if user:
+        result = await authentication_service.authenticate_user(
+            email, password, db=db
+        )
+        if result:
             return {
                 "status": "success",
                 "message": "Authentication successful",
-                "user_data": user
+                "user_data": result
             }
         else:
             return {
@@ -163,8 +165,8 @@ async def login(
             logger.info(f"Cleaned username: '{clean_username}'")
             logger.info(f"Cleaned password length: {len(clean_password)}")
 
-            user = await authenticate_user(
-                db, clean_username, clean_password
+            user = await authentication_service.authenticate_user(
+                clean_username, clean_password, db=db
             )
             if not user:
                 error_msg = f"Authentication failed for user: {clean_username}"

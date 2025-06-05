@@ -62,7 +62,8 @@ class FulfillmentService:
         except Exception as e:
             self.db.rollback()
             raise HTTPException(
-                status_code=500, detail=f"Failed to create fulfillment order: {str(e)}"
+                status_code=500, detail=f"Failed to create fulfillment order: {str(
+                    e)}"
             )
 
     async def generate_picking_list(
@@ -97,7 +98,13 @@ class FulfillmentService:
         self, locations: List[WarehouseLocation]
     ) -> List[WarehouseLocation]:
         """Optimize warehouse picking route."""
-        return sorted(locations, key=lambda x: (x.zone, x.aisle, x.shelf, x.bin))
+        return sorted(
+            locations,
+            key=lambda x: (x.zone,
+            x.aisle,
+            x.shelf,
+            x.bin)
+        )
 
     async def process_quality_check(
         self, fulfillment_order_id: UUID, inspector_id: UUID, results: Dict

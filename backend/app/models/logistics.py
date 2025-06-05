@@ -5,7 +5,16 @@ Implements HIPAA-compliant data models.
 
 from datetime import datetime
 from uuid import UUID as PyUUID, uuid4
-from sqlalchemy import String, DateTime, Enum, Integer, JSON, ForeignKey, Float, Boolean
+from sqlalchemy import (
+    String,
+    DateTime,
+    Enum,
+    Integer,
+    JSON,
+    ForeignKey,
+    Float,
+    Boolean,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
@@ -26,9 +35,21 @@ class Item(Base):
     category: Mapped[str] = mapped_column(String(100), nullable=False)
     unit_price: Mapped[float] = mapped_column(Float, nullable=False)
     unit_cost: Mapped[float] = mapped_column(Float, nullable=False)
-    min_stock_level: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    max_stock_level: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    reorder_point: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    min_stock_level: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+    max_stock_level: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
+    reorder_point: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0
+    )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     item_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -42,9 +63,15 @@ class Item(Base):
     )
 
     # Relationships
-    warehouse_locations = relationship("WarehouseLocation", back_populates="item")
+    warehouse_locations = relationship(
+        "WarehouseLocation",
+        back_populates="item"
+    )
     stock_levels = relationship("StockLevel", back_populates="item")
-    inventory_transactions = relationship("InventoryTransaction", back_populates="item")
+    inventory_transactions = relationship(
+        "InventoryTransaction",
+        back_populates="item"
+    )
 
 
 class FulfillmentOrder(Base):
@@ -90,8 +117,14 @@ class FulfillmentOrder(Base):
 
     # Relationships
     order = relationship("Order", back_populates="fulfillment_orders")
-    picking_lists = relationship("PickingList", back_populates="fulfillment_order")
-    quality_checks = relationship("QualityCheck", back_populates="fulfillment_order")
+    picking_lists = relationship(
+        "PickingList",
+        back_populates="fulfillment_order"
+    )
+    quality_checks = relationship(
+        "QualityCheck",
+        back_populates="fulfillment_order"
+    )
 
 
 class PickingList(Base):
@@ -106,7 +139,13 @@ class PickingList(Base):
         UUID(as_uuid=True), ForeignKey("fulfillment_orders.id"), nullable=False
     )
     status: Mapped[str] = mapped_column(
-        Enum("pending", "in_progress", "completed", "cancelled", name="picking_status"),
+        Enum(
+            "pending",
+            "in_progress",
+            "completed",
+            "cancelled",
+            name="picking_status"
+        ),
         nullable=False,
         default="pending",
     )
@@ -115,7 +154,10 @@ class PickingList(Base):
     )
     items: Mapped[dict] = mapped_column(JSON, nullable=False)
     notes: Mapped[str] = mapped_column(String(1000), nullable=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
     completed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -130,7 +172,10 @@ class PickingList(Base):
     )
 
     # Relationships
-    fulfillment_order = relationship("FulfillmentOrder", back_populates="picking_lists")
+    fulfillment_order = relationship(
+        "FulfillmentOrder",
+        back_populates="picking_lists"
+    )
     picker = relationship("User", foreign_keys=[picker_id])
 
 
@@ -152,14 +197,23 @@ class QualityCheck(Base):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     status: Mapped[str] = mapped_column(
-        Enum("pending", "in_progress", "passed", "failed", name="quality_check_status"),
+        Enum(
+            "pending",
+            "in_progress",
+            "passed",
+            "failed",
+            name="quality_check_status"
+        ),
         nullable=False,
         default="pending",
     )
     items_checked: Mapped[dict] = mapped_column(JSON, nullable=False)
     issues_found: Mapped[dict] = mapped_column(JSON, nullable=True)
     notes: Mapped[str] = mapped_column(String(1000), nullable=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
     completed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -244,14 +298,26 @@ class InventoryTransaction(Base):
         UUID(as_uuid=True), ForeignKey("items.id"), nullable=False
     )
     location_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("warehouse_locations.id"), nullable=False
+        UUID(
+            as_uuid=True),
+            ForeignKey("warehouse_locations.id"
+        ), nullable=False
     )
     type: Mapped[str] = mapped_column(
-        Enum("addition", "removal", "transfer", "adjustment", name="transaction_type"),
+        Enum(
+            "addition",
+            "removal",
+            "transfer",
+            "adjustment",
+            name="transaction_type"
+        ),
         nullable=False,
     )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    reference_id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), nullable=True)
+    reference_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True
+    )
     reference_type: Mapped[str] = mapped_column(String, nullable=True)
     notes: Mapped[str] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -277,7 +343,10 @@ class StockLevel(Base):
         UUID(as_uuid=True), ForeignKey("items.id"), nullable=False
     )
     location_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("warehouse_locations.id"), nullable=False
+        UUID(
+            as_uuid=True),
+            ForeignKey("warehouse_locations.id"
+        ), nullable=False
     )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     condition: Mapped[str] = mapped_column(
@@ -311,7 +380,10 @@ class ReturnAuthorization(Base):
     order_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("orders.id")
     )
-    item_id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), ForeignKey("items.id"))
+    item_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("items.id")
+    )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     reason: Mapped[str] = mapped_column(String, nullable=False)
     condition: Mapped[str] = mapped_column(

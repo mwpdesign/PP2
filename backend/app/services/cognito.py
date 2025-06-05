@@ -101,11 +101,18 @@ class CognitoService:
         except ClientError as e:
             raise Exception(f"Failed to delete user: {str(e)}")
 
-    async def update_user_attributes(self, access_token: str, attributes: Dict) -> Dict:
+    async def update_user_attributes(
+        self,
+        access_token: str,
+        attributes: Dict
+    ) -> Dict:
         """Update user attributes in Cognito"""
         try:
             user_attributes = [
-                {"Name": key, "Value": str(value)} for key, value in attributes.items()
+                {"Name": key, "Value": str(
+                    value)} for key,
+                    value in attributes.items(
+                )
             ]
 
             response = self.client.update_user_attributes(

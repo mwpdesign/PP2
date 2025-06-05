@@ -1,28 +1,28 @@
 """Provider schema definitions."""
 
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, UUID4, constr, Json
-from typing import Optional, List
+from pydantic import BaseModel, EmailStr, UUID4, Field
+from typing import Optional, List, Any
 
 
 class ProviderBase(BaseModel):
     """Base provider schema"""
 
     name: str
-    npi: constr(pattern=r"^\d{10}$")
-    tax_id: constr(pattern=r"^\d{2}-\d{7}$")
+    npi: str = Field(..., pattern=r"^\d{10}$")
+    tax_id: str = Field(..., pattern=r"^\d{2}-\d{7}$")
     email: EmailStr
-    phone: constr(pattern=r"^\+?1?\d{9,15}$")
+    phone: str = Field(..., pattern=r"^\+?1?\d{9,15}$")
     fax: Optional[str] = None
     address_line1: str
     address_line2: Optional[str] = None
     city: str
-    state: constr(pattern=r"^[A-Z]{2}$")
-    zip_code: constr(pattern=r"^\d{5}(-\d{4})?$")
+    state: str = Field(..., pattern=r"^[A-Z]{2}$")
+    zip_code: str = Field(..., pattern=r"^\d{5}(-\d{4})?$")
     specialty: Optional[str] = None
     accepting_new_patients: bool = True
-    insurance_networks: Optional[Json] = None
-    office_hours: Optional[Json] = None
+    insurance_networks: Optional[Any] = None
+    office_hours: Optional[Any] = None
     is_active: bool = True
 
 
@@ -36,20 +36,20 @@ class ProviderUpdate(BaseModel):
     """Schema for updating a provider"""
 
     name: Optional[str] = None
-    npi: Optional[constr(pattern=r"^\d{10}$")] = None
-    tax_id: Optional[constr(pattern=r"^\d{2}-\d{7}$")] = None
+    npi: Optional[str] = Field(None, pattern=r"^\d{10}$")
+    tax_id: Optional[str] = Field(None, pattern=r"^\d{2}-\d{7}$")
     email: Optional[EmailStr] = None
-    phone: Optional[constr(pattern=r"^\+?1?\d{9,15}$")] = None
+    phone: Optional[str] = Field(None, pattern=r"^\+?1?\d{9,15}$")
     fax: Optional[str] = None
     address_line1: Optional[str] = None
     address_line2: Optional[str] = None
     city: Optional[str] = None
-    state: Optional[constr(pattern=r"^[A-Z]{2}$")] = None
-    zip_code: Optional[constr(pattern=r"^\d{5}(-\d{4})?$")] = None
+    state: Optional[str] = Field(None, pattern=r"^[A-Z]{2}$")
+    zip_code: Optional[str] = Field(None, pattern=r"^\d{5}(-\d{4})?$")
     specialty: Optional[str] = None
     accepting_new_patients: Optional[bool] = None
-    insurance_networks: Optional[Json] = None
-    office_hours: Optional[Json] = None
+    insurance_networks: Optional[Any] = None
+    office_hours: Optional[Any] = None
     is_active: Optional[bool] = None
 
 
@@ -72,7 +72,7 @@ class ProviderSearchResults(BaseModel):
     """Schema for provider search results"""
 
     total: int
-    providers: list[ProviderResponse]
+    providers: List[ProviderResponse]
 
     class Config:
         from_attributes = True

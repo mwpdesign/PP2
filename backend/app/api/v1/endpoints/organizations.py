@@ -130,7 +130,8 @@ async def get_organization(
 
 @router.get("/", response_model=List[OrganizationResponse])
 async def list_organizations(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+    db: Session = Depends(
+        get_db), current_user: User = Depends(get_current_user)
 ) -> List[Organization]:
     """
     List organizations based on user's permissions.

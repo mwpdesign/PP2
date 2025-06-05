@@ -50,7 +50,8 @@ class PatientUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None
-    date_of_birth: Optional[str] = Field(None, description="Date in YYYY-MM-DD format")
+    date_of_birth: Optional[str] = Field(
+        None, description="Date in YYYY-MM-DD format")
     phone: Optional[str] = None
     address: Optional[str] = None
     ssn: Optional[str] = None

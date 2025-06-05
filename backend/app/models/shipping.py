@@ -27,11 +27,19 @@ class ShippingAddress(Base):
     address_type: Mapped[str] = mapped_column(
         Enum("from", "to", name="address_type_enum"), nullable=False
     )
-    _street1: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
+    _street1: Mapped[str] = mapped_column(
+        String(500), nullable=False)  # Encrypted
     _street2: Mapped[str] = mapped_column(String(500))  # Encrypted
-    _city: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
-    _state: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
-    _zip_code: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
+    _city: Mapped[str] = mapped_column(
+        String(500), nullable=False)  # Encrypted
+    _state: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )  # Encrypted
+    _zip_code: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )  # Encrypted
     _country: Mapped[str] = mapped_column(
         String(500), nullable=False, default="US"
     )  # Encrypted
@@ -179,7 +187,10 @@ class ShipmentPackage(Base):
     shipment_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("shipments.id"), nullable=False
     )
-    weight: Mapped[str] = mapped_column(String(500), nullable=False)  # Encrypted
+    weight: Mapped[str] = mapped_column(
+        String(500),
+        nullable=False
+    )  # Encrypted
     length: Mapped[str] = mapped_column(String(500))  # Encrypted
     width: Mapped[str] = mapped_column(String(500))  # Encrypted
     height: Mapped[str] = mapped_column(String(500))  # Encrypted
@@ -249,7 +260,10 @@ class ShipmentTracking(Base):
     shipment_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("shipments.id"), nullable=False
     )
-    status: Mapped[TrackingStatus] = mapped_column(Enum(TrackingStatus), nullable=False)
+    status: Mapped[TrackingStatus] = mapped_column(
+        Enum(TrackingStatus),
+        nullable=False
+    )
     location: Mapped[str] = mapped_column(String(255))
     description: Mapped[str] = mapped_column(String(500))
     occurred_at: Mapped[datetime] = mapped_column(

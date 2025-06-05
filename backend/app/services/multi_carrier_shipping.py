@@ -55,7 +55,8 @@ class MultiCarrierShippingService:
                 api_key=settings.usps_api_key, test_mode=settings.shipping_test_mode
             )
 
-    def _get_provider(self, carrier: Optional[CarrierType] = None) -> ShippingProvider:
+    def _get_provider(
+        self, carrier: Optional[CarrierType] = None) -> ShippingProvider:
         """Get shipping provider by carrier type."""
         if carrier and carrier not in self.providers:
             raise ShippingException(f"Carrier {carrier} not configured")

@@ -25,7 +25,8 @@ class Order(Base, AuditMixin):
     organization_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False
     )
-    order_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    order_number: Mapped[str] = mapped_column(
+        String(50), unique=True, nullable=False)
     patient_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("patients.id"), nullable=False
     )

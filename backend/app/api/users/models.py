@@ -45,7 +45,8 @@ class Role(Base):
 
     # Relationships
     organization = relationship("Organization", back_populates="roles")
-    users = relationship("User", secondary="user_roles", back_populates="roles")
+    users = relationship(
+        "User", secondary="user_roles", back_populates="roles")
 
 
 class User(Base):
@@ -65,8 +66,12 @@ class User(Base):
     )
     email: Mapped[str] = mapped_column(String(255), unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255))
-    first_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    last_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    first_name: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True)
+    last_name: Mapped[Optional[str]] = mapped_column(
+        String(100),
+        nullable=True
+    )
     is_active: Mapped[bool] = mapped_column(default=True)
     is_superuser: Mapped[bool] = mapped_column(default=False)
     user_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -82,7 +87,11 @@ class User(Base):
 
     # Relationships
     organization = relationship("Organization", back_populates="users")
-    roles = relationship("Role", secondary="user_roles", back_populates="users")
+    roles = relationship(
+        "Role",
+        secondary="user_roles",
+        back_populates="users"
+    )
     audit_logs = relationship("AuditLog", back_populates="user")
 
     def has_permission(self, permission: str) -> bool:

@@ -39,7 +39,8 @@ router = APIRouter()
     "/compliance/check", response_model=ComplianceCheckResponse, tags=["compliance"]
 )
 async def run_compliance_check(
-    check_type: str = Query(..., description="Type of compliance check to run"),
+    check_type: str = Query(
+        ..., description="Type of compliance check to run"),
     territory_id: Optional[int] = Query(
         None, description="Territory to scope check to"
     ),
@@ -64,7 +65,10 @@ async def run_compliance_check(
 )
 async def generate_audit_report(
     report_type: str = Query(..., description="Type of report to generate"),
-    start_date: datetime = Query(..., description="Start date for report period"),
+    start_date: datetime = Query(
+        ...,
+        description="Start date for report period"
+    ),
     end_date: datetime = Query(..., description="End date for report period"),
     territory_id: Optional[int] = Query(
         None, description="Territory to scope report to"
@@ -123,13 +127,19 @@ async def report_security_incident(
     tags=["compliance"],
 )
 async def list_security_incidents(
-    territory_id: Optional[int] = Query(None, description="Territory to filter by"),
+    territory_id: Optional[int] = Query(
+        None,
+        description="Territory to filter by"
+    ),
     status: Optional[str] = Query(None, description="Status to filter by"),
     severity: Optional[str] = Query(None, description="Severity to filter by"),
     start_date: Optional[datetime] = Query(
         None, description="Start date for filtering"
     ),
-    end_date: Optional[datetime] = Query(None, description="End date for filtering"),
+    end_date: Optional[datetime] = Query(
+        None,
+        description="End date for filtering"
+    ),
     skip: int = Query(0, description="Number of records to skip"),
     limit: int = Query(10, description="Number of records to return"),
     db: Session = Depends(get_db),
@@ -314,7 +324,10 @@ async def create_compliance_log(
 ) -> ComplianceLogResponse:
     """Create a new compliance log entry."""
     compliance_service = ComplianceService(db)
-    log = await compliance_service.create_log(log_in, created_by_id=current_user["id"])
+    log = await compliance_service.create_log(
+        log_in,
+        created_by_id=current_user["id"]
+    )
     return log
 
 

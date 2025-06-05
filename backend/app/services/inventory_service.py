@@ -9,7 +9,11 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from app.models.logistics import WarehouseLocation, InventoryTransaction, StockLevel
+from app.models.logistics import (
+    WarehouseLocation,
+    InventoryTransaction,
+    StockLevel,
+)
 from app.core.exceptions import ValidationError
 
 
@@ -17,7 +21,10 @@ class InventoryService:
     def __init__(self, db: Session):
         self.db = db
 
-    async def get_item_locations(self, items: List[Dict]) -> List[WarehouseLocation]:
+    async def get_item_locations(
+        self,
+        items: List[Dict]
+    ) -> List[WarehouseLocation]:
         """Get warehouse locations for items."""
         try:
             locations = []

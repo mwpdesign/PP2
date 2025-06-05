@@ -617,7 +617,6 @@ class MedicalRecordBase(BaseModel):
     status: RecordStatus = RecordStatus.ACTIVE
 
 
-class MedicalRecordCreate(MedicalRecordBase):
     """Schema for creating a medical record."""
 
     patient_id: int
@@ -625,7 +624,6 @@ class MedicalRecordCreate(MedicalRecordBase):
     organization_id: int
 
 
-class MedicalRecordUpdate(BaseModel):
     """Schema for updating a medical record."""
 
     record_type: Optional[RecordType] = None
@@ -638,7 +636,6 @@ class MedicalRecordUpdate(BaseModel):
     status: Optional[RecordStatus] = None
 
 
-class MedicalRecordResponse(MedicalRecordBase):
     """Schema for medical record response."""
 
     id: int
@@ -666,7 +663,6 @@ class MedicalConditionBase(BaseModel):
     status: str = "active"
 
 
-class MedicalConditionCreate(MedicalConditionBase):
     """Schema for creating a medical condition."""
 
     medical_record_id: int
@@ -675,7 +671,6 @@ class MedicalConditionCreate(MedicalConditionBase):
     organization_id: int
 
 
-class MedicalConditionUpdate(BaseModel):
     """Schema for updating a medical condition."""
 
     condition_name: Optional[str] = None
@@ -687,7 +682,6 @@ class MedicalConditionUpdate(BaseModel):
     status: Optional[str] = None
 
 
-class MedicalConditionResponse(MedicalConditionBase):
     """Schema for medical condition response."""
 
     id: int
@@ -716,7 +710,6 @@ class MedicationBase(BaseModel):
     status: str = "active"
 
 
-class MedicationCreate(MedicationBase):
     """Schema for creating a medication."""
 
     medical_record_id: int
@@ -725,7 +718,6 @@ class MedicationCreate(MedicationBase):
     organization_id: int
 
 
-class MedicationUpdate(BaseModel):
     """Schema for updating a medication."""
 
     medication_name: Optional[str] = None
@@ -739,7 +731,6 @@ class MedicationUpdate(BaseModel):
     status: Optional[str] = None
 
 
-class MedicationResponse(MedicationBase):
     """Schema for medication response."""
 
     id: int
@@ -765,7 +756,6 @@ class AllergyBase(BaseModel):
     status: str = "active"
 
 
-class AllergyCreate(AllergyBase):
     """Schema for creating an allergy."""
 
     medical_record_id: int
@@ -774,7 +764,6 @@ class AllergyCreate(AllergyBase):
     organization_id: int
 
 
-class AllergyUpdate(BaseModel):
     """Schema for updating an allergy."""
 
     allergen: Optional[str] = None
@@ -785,7 +774,6 @@ class AllergyUpdate(BaseModel):
     status: Optional[str] = None
 
 
-class AllergyResponse(AllergyBase):
     """Schema for allergy response."""
 
     id: int
@@ -800,7 +788,6 @@ class AllergyResponse(AllergyBase):
         from_attributes = True
 
 
-class MedicalHistorySearch(BaseModel):
     """Schema for searching medical history."""
 
     patient_id: Optional[int] = None
@@ -897,7 +884,9 @@ class BulkSearchRequest(BaseModel):
     def validate_match_type(cls, v):
         """Validate match type."""
         if v not in ["exact", "fuzzy", "partial"]:
-            raise ValueError("Match type must be 'exact', 'fuzzy', or 'partial'")
+            raise ValueError(
+                "Match type must be 'exact', 'fuzzy', or 'partial'"
+            )
         return v
 
     @validator("max_results_per_term")

@@ -54,4 +54,5 @@ class NotificationService:
             )
 
         except Exception as e:
-            logger.error("Error sending notification: %s", str(e), exc_info=True)
+            logger.error(
+                "Error sending notification: %s", str(e), exc_info=True)

@@ -1,7 +1,7 @@
 
 services:
   frontend:
-    build: 
+    build:
       context: ./frontend
       dockerfile: Dockerfile.dev
     ports:
@@ -25,12 +25,12 @@ services:
     environment:
       - ENVIRONMENT=development
       - DEBUG=true
-      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/healthcare_ivr
+      - DATABASE_URL=postgresql+asyncpg://postgres:${DB_PASSWORD:-password}@db:5432/healthcare_ivr
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=healthcare_ivr
       - DB_USER=postgres
-      - DB_PASSWORD=password
+      - DB_PASSWORD=${DB_PASSWORD:-password}
       - REDIS_URL=redis://redis:6379/0
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-dummy_access_key}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-dummy_secret_key}
@@ -61,7 +61,7 @@ services:
     environment:
       - POSTGRES_DB=healthcare_ivr
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./backend/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -179,7 +179,7 @@ services:
     ports:
       - "9187:9187"
     environment:
-      - DATA_SOURCE_NAME=postgresql://postgres:password@db:5432/healthcare_ivr?sslmode=disable
+      - DATA_SOURCE_NAME=postgresql://postgres:${DB_PASSWORD:-password}@db:5432/healthcare_ivr?sslmode=disable
     depends_on:
       - db
 
@@ -188,4 +188,4 @@ volumes:
   redis_data:
   prometheus_data:
   grafana_data:
-  localstack_data: 
+  localstack_data:

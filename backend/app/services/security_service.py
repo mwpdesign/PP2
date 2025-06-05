@@ -36,13 +36,18 @@ class SecurityService:
         else:
             expire = datetime.utcnow() + timedelta(minutes=15)
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+        encoded_jwt = jwt.encode(
+            to_encode, self.secret_key, algorithm=self.algorithm)
         return encoded_jwt
 
     def verify_token(self, token: str) -> Dict:
         """Verify JWT token."""
         try:
-            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            payload = jwt.decode(
+                token,
+                self.secret_key,
+                algorithms=[self.algorithm]
+            )
             return payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(

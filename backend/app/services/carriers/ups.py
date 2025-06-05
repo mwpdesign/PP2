@@ -27,7 +27,11 @@ class UPSCarrier(BaseCarrier):
         )
         self.client = httpx.AsyncClient()
 
-    async def get_rates(self, package_info: Dict, destination: Dict) -> List[Dict]:
+    async def get_rates(
+        self,
+        package_info: Dict,
+        destination: Dict
+    ) -> List[Dict]:
         """Get shipping rates from UPS."""
         try:
             response = await self.client.post(
@@ -185,7 +189,11 @@ class UPSCarrier(BaseCarrier):
                     current_status["Status"]["Code"]
                 ),
                 "location": (
-                    current_status.get("Location", {}).get("Address", {}).get("City")
+                    current_status.get(
+                        "Location",
+                        {}).get("Address",
+                        {}).get("City"
+                    )
                 ),
                 "estimated_delivery": (
                     data["TrackResponse"]["Shipment"][0].get("ScheduledDeliveryDate")
@@ -197,7 +205,11 @@ class UPSCarrier(BaseCarrier):
                             activity["Status"]["Code"]
                         ),
                         "location": (
-                            activity.get("Location", {}).get("Address", {}).get("City")
+                            activity.get(
+                                "Location",
+                                {}).get("Address",
+                                {}).get("City"
+                            )
                         ),
                         "description": activity["Status"]["Description"],
                     }

@@ -1,7 +1,13 @@
 """Real-time WebSocket API endpoints."""
 
 from typing import Optional, Dict, Any
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from fastapi import (
+    APIRouter,
+    WebSocket,
+    WebSocketDisconnect,
+    Depends,
+    HTTPException,
+)
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -57,7 +63,11 @@ async def websocket_endpoint(
         await websocket.close(code=4000)
 
 
-async def handle_websocket_message(data: dict, user_id: str, websocket: WebSocket):
+async def handle_websocket_message(
+    data: dict,
+    user_id: str,
+    websocket: WebSocket
+):
     """Handle incoming WebSocket messages."""
     try:
         message_type = data.get("type")
@@ -68,21 +78,30 @@ async def handle_websocket_message(data: dict, user_id: str, websocket: WebSocke
             channels = content.get("channels", [])
             for channel in channels:
                 await manager.subscribe(user_id, channel)
-            await websocket.send_json({"type": "subscribed", "channels": channels})
+            await websocket.send_json(
+                {"type": "subscribed",
+                "channels": channels}
+            )
 
         elif message_type == "unsubscribe":
             # Handle unsubscribe requests
             channels = content.get("channels", [])
             for channel in channels:
                 await manager.unsubscribe(user_id, channel)
-            await websocket.send_json({"type": "unsubscribed", "channels": channels})
+            await websocket.send_json(
+                {"type": "unsubscribed",
+                "channels": channels}
+            )
 
         elif message_type == "status":
             # Handle status update requests
             status = content.get("status")
             if status:
                 await manager.update_user_status(user_id, status)
-                await websocket.send_json({"type": "status_updated", "status": status})
+                await websocket.send_json(
+                    {"type": "status_updated",
+                    "status": status}
+                )
 
     except Exception as e:
         await websocket.send_json({"type": "error", "message": str(e)})
@@ -98,7 +117,10 @@ async def send_notification(
         await queue_service.send_message(message=message, user_id=user_id)
 
         # Attempt immediate delivery if user is connected
-        success = await manager.send_personal_message(message=message, user_id=user_id)
+        success = await manager.send_personal_message(
+            message=message,
+            user_id=user_id
+        )
 
         return {"status": "delivered" if success else "queued", "user_id": user_id}
 

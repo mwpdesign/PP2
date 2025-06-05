@@ -15,7 +15,11 @@ class BaseCarrier(ABC):
         self.name = name
 
     @abstractmethod
-    async def get_rates(self, package_info: Dict, destination: Dict) -> List[Dict]:
+    async def get_rates(
+        self,
+        package_info: Dict,
+        destination: Dict
+    ) -> List[Dict]:
         """Get shipping rates from carrier."""
         pass
 

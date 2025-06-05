@@ -63,7 +63,8 @@ async def update_document(
         if not document:
             return None
 
-        for field, value in document_data.model_dump(exclude_unset=True).items():
+        for field, value in document_data.model_dump(
+            exclude_unset=True).items():
             setattr(document, field, value)
         document.updated_at = datetime.utcnow()
 

@@ -43,7 +43,8 @@ class SecurityIncident(BaseModel):
     id: str = Field(..., description="Unique identifier for the incident")
     timestamp: datetime = Field(..., description="When the incident occurred")
     type: SecurityEventType = Field(..., description="Type of security event")
-    severity: SecurityIncidentSeverity = Field(..., description="Incident severity")
+    severity: SecurityIncidentSeverity = Field(
+        ..., description="Incident severity")
     source: str = Field(..., description="Source of the incident")
     details: Dict = Field(..., description="Detailed incident information")
     status: str = Field(..., description="Current incident status")
@@ -73,12 +74,18 @@ class ComplianceMetrics(BaseModel):
     unauthorized_access_attempts: int = Field(
         ..., description="Count of unauthorized access attempts"
     )
-    security_incidents: int = Field(..., description="Total security incidents")
+    security_incidents: int = Field(
+        ...,
+        description="Total security incidents"
+    )
     open_incidents: int = Field(..., description="Number of open incidents")
     average_incident_resolution_time: float = Field(
         ..., description="Average time to resolve incidents (hours)"
     )
-    compliance_score: float = Field(..., description="Overall compliance score (0-100)")
+    compliance_score: float = Field(
+        ...,
+        description="Overall compliance score (0-100)"
+    )
     territory_metrics: Dict[str, Dict] = Field(
         ..., description="Territory-specific metrics"
     )
@@ -102,14 +109,24 @@ class ComplianceMetrics(BaseModel):
 class ComplianceReport(BaseModel):
     """Schema for comprehensive compliance reports."""
 
-    report_id: str = Field(..., description="Unique identifier for the report")
-    generated_at: datetime = Field(..., description="Report generation timestamp")
-    period_start: datetime = Field(..., description="Start of reporting period")
+    report_id: str = Field(
+        ..., description="Unique identifier for the report")
+    generated_at: datetime = Field(
+        ...,
+        description="Report generation timestamp"
+    )
+    period_start: datetime = Field(
+        ...,
+        description="Start of reporting period"
+    )
     period_end: datetime = Field(..., description="End of reporting period")
     territory_id: Optional[int] = Field(
         None, description="Territory ID if territory-specific"
     )
-    metrics: Optional[ComplianceMetrics] = Field(None, description="Compliance metrics")
+    metrics: Optional[ComplianceMetrics] = Field(
+        None,
+        description="Compliance metrics"
+    )
     incidents: Optional[List[SecurityIncident]] = Field(
         None, description="Security incidents"
     )
@@ -117,7 +134,10 @@ class ComplianceReport(BaseModel):
         None, description="PHI access audit logs"
     )
     summary: Dict = Field(..., description="Executive summary of findings")
-    recommendations: List[str] = Field(..., description="Compliance recommendations")
+    recommendations: List[str] = Field(
+        ...,
+        description="Compliance recommendations"
+    )
 
     class Config:
         schema_extra = {

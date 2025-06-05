@@ -72,7 +72,8 @@ class ComplianceService:
 
         except Exception as e:
             self.logger.error(f"PHI access logging failed: {str(e)}")
-            raise HTTPException(status_code=500, detail="Failed to log PHI access")
+            raise HTTPException(
+                status_code=500, detail="Failed to log PHI access")
 
     async def report_security_incident(
         self,

@@ -170,7 +170,8 @@ async def search_providers(
         )
 
     # Get total count
-    total = await db.scalar(select(func.count()).select_from(query_filter.subquery()))
+    total = await db.scalar(
+        select(func.count()).select_from(query_filter.subquery()))
 
     # Apply pagination
     query_filter = query_filter.offset(skip).limit(limit)

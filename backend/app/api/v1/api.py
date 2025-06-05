@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     orders,
     patients,
     providers,
+    config,
 )
 from app.api.auth.routes import router as auth_router
 
@@ -20,5 +21,15 @@ api_router.include_router(auth_router)
 # Always include core v1 endpoints
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
-api_router.include_router(patients.router, prefix="/patients", tags=["patients"])
-api_router.include_router(providers.router, prefix="/providers", tags=["providers"])
+api_router.include_router(
+    patients.router, prefix="/patients", tags=["patients"])
+api_router.include_router(
+    providers.router,
+    prefix="/providers",
+    tags=["providers"]
+)
+api_router.include_router(
+    config.router,
+    prefix="/config",
+    tags=["configuration"]
+)

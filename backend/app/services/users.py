@@ -21,7 +21,11 @@ class UserService:
         """
         self.db = db
 
-    async def create_user(self, user_data: UserCreate, created_by_id: UUID) -> User:
+    async def create_user(
+        self,
+        user_data: UserCreate,
+        created_by_id: UUID
+    ) -> User:
         """Create a new user.
 
         Args:
@@ -37,7 +41,8 @@ class UserService:
         # Check if user already exists
         result = await self.db.execute(
             select(User).where(
-                or_(User.email == user_data.email, User.username == user_data.username)
+                or_(
+                    User.email == user_data.email, User.username == user_data.username)
             )
         )
         existing_user = result.scalar_one_or_none()
@@ -204,7 +209,11 @@ class UserService:
         result = await self.db.execute(select(User).where(User.username == username))
         return result.scalar_one_or_none()
 
-    async def update_user_password(self, user: User, new_password: str) -> User:
+    async def update_user_password(
+        self,
+        user: User,
+        new_password: str
+    ) -> User:
         """Update user password.
 
         Args:

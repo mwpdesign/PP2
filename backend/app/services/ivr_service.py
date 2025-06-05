@@ -12,7 +12,11 @@ from sqlalchemy.future import select
 
 from app.models.ivr import IVRSession, IVRRequest
 from app.schemas.ivr import IVRSessionCreate, IVRSessionUpdate
-from app.core.exceptions import NotFoundException, ValidationError, UnauthorizedError
+from app.core.exceptions import (
+    NotFoundException,
+    ValidationError,
+    UnauthorizedError,
+)
 from app.core.security import verify_territory_access
 
 logger = logging.getLogger(__name__)
@@ -123,7 +127,10 @@ class IVRService:
             if filters:
                 for field, value in filters.items():
                     if hasattr(IVRSession, field):
-                        query = query.where(getattr(IVRSession, field) == value)
+                        query = query.where(
+                            getattr(IVRSession,
+                            field) == value
+                        )
 
             result = await self.db.execute(query)
             return result.scalars().all()

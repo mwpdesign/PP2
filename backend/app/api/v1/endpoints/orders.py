@@ -15,7 +15,8 @@ from app.models.order import Order
 router = APIRouter()
 
 
-@router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(
     order: OrderCreate,
     db: Session = Depends(get_db),

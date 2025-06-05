@@ -92,7 +92,8 @@ class CognitoConfig:
                 return False
 
             # Test API call
-            client.describe_user_pool(UserPoolId=self.settings.cognito_user_pool_id)
+            client.describe_user_pool(
+                UserPoolId=self.settings.cognito_user_pool_id)
             return True
         except Exception as e:
             logger.error(f"Cognito configuration validation failed: {str(e)}")

@@ -38,7 +38,7 @@ __all__ = [
     "create_access_token",
     "verify_token",
     "get_current_user",
-    "authenticate_user",
+
     "encrypt_phi",
     "decrypt_phi",
     "sanitize_phi",
@@ -182,7 +182,9 @@ async def get_current_user(
                 user_id = UUID(mock_user["id"])
                 org_id = UUID(mock_user["organization_id"])
 
-                logger.info(f"Converted UUIDs - user_id: {user_id}, org_id: {org_id}")
+                logger.info(
+                    f"Converted UUIDs - user_id: {user_id}, org_id: {org_id}"
+                )
 
                 token_data = TokenData(
                     email=email,
@@ -314,7 +316,8 @@ def create_password_reset_token(email: str) -> str:
 def verify_password_reset_token(token: str) -> Optional[str]:
     """Verify password reset token and return email if valid."""
     try:
-        decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        decoded_token = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=["HS256"])
         token_exp = datetime.fromtimestamp(decoded_token["exp"])
         is_valid = (
             decoded_token["type"] == "password_reset" and token_exp > datetime.utcnow()
@@ -604,13 +607,21 @@ class EncryptedString(TypeDecorator):
 
     impl = LargeBinary
 
-    def process_bind_param(self, value: Optional[str], dialect) -> Optional[bytes]:
+    def process_bind_param(
+        self,
+        value: Optional[str],
+        dialect
+    ) -> Optional[bytes]:
         """Encrypt string value before storing."""
         if value is not None:
             return encrypt_field(value)
         return None
 
-    def process_result_value(self, value: Optional[bytes], dialect) -> Optional[str]:
+    def process_result_value(
+        self,
+        value: Optional[bytes],
+        dialect
+    ) -> Optional[str]:
         """Decrypt bytes value when retrieving."""
         if value is not None:
             return decrypt_field(value)

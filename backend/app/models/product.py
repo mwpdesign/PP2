@@ -23,7 +23,8 @@ class Product(Base):
     hcpcs_code: Mapped[str] = mapped_column(String(20), nullable=True)
     category: Mapped[str] = mapped_column(String(100))
     unit_price: Mapped[float] = mapped_column(Float, nullable=False)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True)
     product_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
@@ -33,7 +34,10 @@ class Product(Base):
     )
 
     # Relationships
-    ivr_session_items = relationship("IVRSessionItem", back_populates="product")
+    ivr_session_items = relationship(
+        "IVRSessionItem",
+        back_populates="product"
+    )
 
     def __repr__(self):
         """String representation of the product."""

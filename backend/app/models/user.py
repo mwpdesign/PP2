@@ -22,7 +22,8 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
     username = Column(String(50), unique=True, index=True)
     email = Column(String(255), unique=True, index=True)
     encrypted_password = Column(String(255))
@@ -34,7 +35,11 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
 
     # Role fields
-    role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False)
+    role_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("roles.id"),
+        nullable=False
+    )
     role = relationship("Role", back_populates="users")
 
     # Audit fields
@@ -59,7 +64,11 @@ class User(Base):
     organization = relationship("Organization", back_populates="users")
 
     # Sensitive data relationship
-    sensitive_data = relationship("SensitiveData", back_populates="user", uselist=False)
+    sensitive_data = relationship(
+        "SensitiveData",
+        back_populates="user",
+        uselist=False
+    )
 
     # IVR relationships
     current_ivr_reviews = relationship(

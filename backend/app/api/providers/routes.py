@@ -102,7 +102,8 @@ async def create_relationship(
     """Create a relationship between providers."""
     provider_service = ProviderService(db, current_user)
     try:
-        relationship = provider_service.create_provider_relationship(relationship_data)
+        relationship = provider_service.create_provider_relationship(
+            relationship_data)
         return relationship
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

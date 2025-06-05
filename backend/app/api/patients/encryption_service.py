@@ -71,7 +71,8 @@ class PatientEncryptionService:
             return encrypted_data
         except Exception as e:
             raise HTTPException(
-                status_code=500, detail=f"Failed to encrypt patient data: {str(e)}"
+                status_code=500, detail=f"Failed to encrypt patient data: {str(
+                    e)}"
             )
 
     async def decrypt_patient_data(
@@ -140,7 +141,10 @@ class PatientEncryptionService:
                         "key_id": new_key_id,
                         **(context or {}),
                     }
-                    rotated_field = await self.kms.reencrypt_data(value, new_context)
+                    rotated_field = await self.kms.reencrypt_data(
+                        value,
+                        new_context
+                    )
                     rotated_data[field] = rotated_field
                 else:
                     rotated_data[field] = value
@@ -174,4 +178,7 @@ class PatientEncryptionService:
                             raise ValueError(f"Field {field} missing encrypted key")
             return True
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=f"Invalid encryption: {str(e)}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid encryption: {str(e)}"
+            )

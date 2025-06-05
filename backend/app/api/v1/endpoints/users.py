@@ -8,7 +8,12 @@ from uuid import UUID
 from app.core.database import get_db
 from app.core.security import get_current_user, require_permissions
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPreferences
+from app.schemas.user import (
+    UserCreate,
+    UserUpdate,
+    UserResponse,
+    UserPreferences,
+)
 from app.services.users import UserService
 
 router = APIRouter()
@@ -25,7 +30,10 @@ async def create_user(
     """Create a new user."""
     user_service = UserService(db)
 
-    user = await user_service.create_user(user_in, created_by_id=current_user["id"])
+    user = await user_service.create_user(
+        user_in,
+        created_by_id=current_user["id"]
+    )
     return user
 
 

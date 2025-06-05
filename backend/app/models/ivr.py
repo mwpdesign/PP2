@@ -58,7 +58,8 @@ class IVRRequest(Base):
     current_reviewer = relationship(
         "User", foreign_keys=[current_reviewer_id], back_populates="current_ivr_reviews"
     )
-    status_history = relationship("IVRStatusHistory", back_populates="ivr_request")
+    status_history = relationship(
+        "IVRStatusHistory", back_populates="ivr_request")
     approvals = relationship("IVRApproval", back_populates="ivr_request")
     escalations = relationship("IVREscalation", back_populates="ivr_request")
     reviews = relationship("IVRReview", back_populates="ivr_request")
@@ -74,8 +75,12 @@ class IVRStatusHistory(Base):
     ivr_request_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ivr_requests.id"), nullable=False
     )
-    from_status: Mapped[IVRStatus] = mapped_column(Enum(IVRStatus), nullable=True)
-    to_status: Mapped[IVRStatus] = mapped_column(Enum(IVRStatus), nullable=False)
+    from_status: Mapped[IVRStatus] = mapped_column(
+        Enum(IVRStatus), nullable=True)
+    to_status: Mapped[IVRStatus] = mapped_column(
+        Enum(IVRStatus),
+        nullable=False
+    )
     changed_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
@@ -101,7 +106,11 @@ class IVRApproval(Base):
     approver_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
-    approval_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    approval_level: Mapped[int] = mapped_column(
+        Integer,
+        default=1,
+        nullable=False
+    )
     decision: Mapped[str] = mapped_column(String(20), nullable=False)
     reason: Mapped[str] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -129,7 +138,11 @@ class IVREscalation(Base):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     reason: Mapped[str] = mapped_column(String(500), nullable=False)
-    resolved: Mapped[str] = mapped_column(String(10), default="pending", nullable=False)
+    resolved: Mapped[str] = mapped_column(
+        String(10),
+        default="pending",
+        nullable=False
+    )
     resolution_notes: Mapped[str] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
@@ -162,9 +175,16 @@ class IVRReview(Base):
     reviewer_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
-    status: Mapped[str] = mapped_column(String(20), default="assigned", nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="assigned",
+        nullable=False
+    )
     notes: Mapped[str] = mapped_column(String(1000), nullable=True)
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
     completed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -191,7 +211,11 @@ class IVRDocument(Base):
     uploaded_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
-    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="pending",
+        nullable=False
+    )
     verification_notes: Mapped[str] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
@@ -222,7 +246,11 @@ class IVRSession(Base):
     provider_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("providers.id"), nullable=False
     )
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="pending"
+    )
     insurance_data: Mapped[dict] = mapped_column(JSON, nullable=True)
     session_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(

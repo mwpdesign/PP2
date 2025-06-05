@@ -158,7 +158,8 @@ async def get_role(
 
 @router.get("/roles/", response_model=List[RoleResponse])
 async def list_roles(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+    db: Session = Depends(
+        get_db), current_user: User = Depends(get_current_user)
 ) -> List[Role]:
     """
     List roles based on user's permissions.
@@ -229,7 +230,10 @@ async def update_role(
 
     try:
         # Update basic fields
-        update_data = role_update.dict(exclude={"permission_ids"}, exclude_unset=True)
+        update_data = role_update.dict(
+            exclude={"permission_ids"},
+            exclude_unset=True
+        )
         for field, value in update_data.items():
             setattr(role, field, value)
 
@@ -386,7 +390,10 @@ async def get_permission(
 
 @router.get("/permissions/", response_model=List[PermissionResponse])
 async def list_permissions(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+    db: Session = Depends(
+        get_db),
+        current_user: User = Depends(get_current_user
+    )
 ) -> List[Permission]:
     """
     List all permissions.
