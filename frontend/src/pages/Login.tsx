@@ -62,11 +62,11 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Main content - Professional spacing */}
+      <div className="flex-1 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8 -mt-5">
         <div className="w-full max-w-md">
                                         {/* Clean Logo Placement */}
-          <div className="mb-10 text-center">
+          <div className="mb-16 text-center -mt-5">
             <img
               src="/logo2.png"
               alt="Clear Health Pass"
