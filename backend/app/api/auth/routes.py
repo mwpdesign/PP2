@@ -513,3 +513,21 @@ if settings.AUTH_MODE == "cognito" and settings.USE_COGNITO:
         return await cognito_service.verify_totp_setup(
             credentials.credentials, totp_code
         )
+
+
+@router.get("/debug-config")
+async def debug_config():
+    """Debug endpoint to check current authentication configuration."""
+    from app.services.mock_auth_service import mock_auth_service
+
+    return {
+        "auth_mode": settings.AUTH_MODE,
+        "use_cognito": settings.USE_COGNITO,
+        "use_mock_auth": getattr(settings, 'USE_MOCK_AUTH', False),
+        "is_development_mode": mock_auth_service.is_development_mode(),
+        "environment": os.getenv("ENVIRONMENT", "not_set"),
+        "debug": os.getenv("DEBUG", "not_set"),
+        "secret_key_preview": (
+            settings.SECRET_KEY[:20] + "..." if settings.SECRET_KEY else "not_set"
+        )
+    }

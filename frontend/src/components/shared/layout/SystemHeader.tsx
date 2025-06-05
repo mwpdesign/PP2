@@ -9,7 +9,7 @@ const SystemHeader: React.FC = () => {
     <div className="hidden md:flex items-center justify-between p-4 bg-white border-b border-gray-200">
       <div>
         <h1 className="text-lg font-medium text-gray-900">
-          Welcome, {user?.firstName} {user?.lastName}
+          Welcome, {user?.first_name} {user?.last_name}
         </h1>
       </div>
       <div className="flex items-center gap-4">
@@ -22,4 +22,4 @@ const SystemHeader: React.FC = () => {
   );
 };
 
-export default SystemHeader; 
+export default SystemHeader;

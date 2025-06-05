@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import DocumentUpload from '../shared/DocumentUpload';
 import PhoneInput from '../shared/PhoneInput';
+import patientService from '../../services/patientService';
 
 interface PatientIntakeFormData {
   // Personal Information
@@ -10,17 +12,19 @@ interface PatientIntakeFormData {
   lastName: string;
   dateOfBirth: string;
   gender: string;
-  
+  email: string;
+  phone: string;
+
   // Address Information
   address: string;
   city: string;
   state: string;
   zipCode: string;
-  
+
   // Skilled Nursing Facility
   inSkilledNursingFacility: boolean;
   coveredUnderPartA: boolean;
-  
+
   // Insurance Information
   primaryInsurance: string;
   primaryPolicyNumber: string;
@@ -28,7 +32,7 @@ interface PatientIntakeFormData {
   secondaryInsurance: string;
   secondaryPolicyNumber: string;
   secondaryPayerPhone: string;
-  
+
   // Additional Information
   notes: string;
 }
@@ -53,6 +57,8 @@ const initialFormData: PatientIntakeFormData = {
   lastName: '',
   dateOfBirth: '',
   gender: '',
+  email: '',
+  phone: '',
   address: '',
   city: '',
   state: '',
@@ -84,7 +90,7 @@ const PatientIntakeForm: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checkbox = e.target as HTMLInputElement;
       setFormData(prev => ({
@@ -106,7 +112,7 @@ const PatientIntakeForm: React.FC = () => {
     }
 
     const previewUrl = URL.createObjectURL(file);
-    
+
     if (type === 'additionalDocs') {
       setDocumentFiles(prev => ({
         ...prev,
@@ -134,19 +140,52 @@ const PatientIntakeForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-      // TODO: Implement API call to save patient data and upload documents
-      console.log('Submitting patient data:', formData);
-      console.log('Uploading documents:', documentFiles);
-      
+      // Prepare patient data for API
+      const patientData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip: formData.zipCode,
+        governmentIdType: 'drivers_license', // Default for now
+        governmentId: documentFiles.identification.file,
+        primaryInsurance: {
+          provider: formData.primaryInsurance,
+          policyNumber: formData.primaryPolicyNumber,
+          payerPhone: formData.primaryPayerPhone,
+          cardFront: documentFiles.insuranceFront.file,
+          cardBack: documentFiles.insuranceBack.file,
+        },
+        secondaryInsurance: {
+          provider: formData.secondaryInsurance || '',
+          policyNumber: formData.secondaryPolicyNumber || '',
+          payerPhone: formData.secondaryPayerPhone || '',
+          cardFront: null,
+          cardBack: null,
+        },
+      };
+
+      // Submit patient data to backend
+      const response = await patientService.registerPatient(patientData);
+
+      toast.success('Patient registered successfully!');
+      console.log('Patient created:', response);
+
       // Navigate to patient list after successful submission
-      navigate('/patients');
+      navigate('/doctor/patients/select');
     } catch (error) {
       console.error('Error submitting patient data:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to register patient');
     } finally {
       setIsSubmitting(false);
     }
@@ -231,6 +270,34 @@ const PatientIntakeForm: React.FC = () => {
               <option value="other">Other</option>
               <option value="prefer-not-to-say">Prefer not to say</option>
             </select>
+          </div>
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email Address <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              id="email"
+              required
+              value={formData.email}
+              onChange={handleInputChange}
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              id="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              placeholder="(555) 123-4567"
+              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
           </div>
         </div>
       </div>
@@ -378,7 +445,7 @@ const PatientIntakeForm: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="secondaryInsurance" className="block text-sm font-medium text-gray-700">
@@ -443,7 +510,7 @@ const PatientIntakeForm: React.FC = () => {
                 maxSizeMB={10}
                 showCamera={true}
               />
-              
+
               <DocumentUpload
                 label="Face Sheet"
                 description="Upload patient face sheet"
@@ -456,7 +523,7 @@ const PatientIntakeForm: React.FC = () => {
                 showCamera={false}
               />
             </div>
-            
+
             <div className="space-y-6">
               <DocumentUpload
                 label="Insurance Card (Front)"
@@ -469,7 +536,7 @@ const PatientIntakeForm: React.FC = () => {
                 maxSizeMB={10}
                 showCamera={true}
               />
-              
+
               <DocumentUpload
                 label="Insurance Card (Back)"
                 description="Upload the back side of insurance card"
@@ -483,7 +550,7 @@ const PatientIntakeForm: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900">Additional Documents</h3>
             <div className="grid grid-cols-1 gap-4">
@@ -503,7 +570,7 @@ const PatientIntakeForm: React.FC = () => {
                         const previewUrl = URL.createObjectURL(file);
                         setDocumentFiles(prev => ({
                           ...prev,
-                          additionalDocs: prev.additionalDocs.map((d, i) => 
+                          additionalDocs: prev.additionalDocs.map((d, i) =>
                             i === index ? { file, previewUrl } : d
                           )
                         }));
@@ -516,7 +583,7 @@ const PatientIntakeForm: React.FC = () => {
                   />
                 </div>
               ))}
-              
+
               <DocumentUpload
                 label="Add Document"
                 description="Upload additional supporting document"
@@ -577,4 +644,4 @@ const PatientIntakeForm: React.FC = () => {
   );
 };
 
-export default PatientIntakeForm; 
+export default PatientIntakeForm;

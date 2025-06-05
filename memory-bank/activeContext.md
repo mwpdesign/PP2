@@ -171,8 +171,10 @@ With the frontend workflow/UI/UX, complete authentication/routing system, AND na
 - **MAJOR**: Updated welcome text to emphasize "wound care portal" with proper styling
 - **MAJOR**: Rebranded footer to "© 2025 Clear Health Pass" with professional styling
 - **TESTING**: Fixed progress indicator visibility by changing active state to white against blue background
-- **TESTING**: Verified all branding elements display correctly and authentication remains functional
-- **DOCUMENTATION**: Updated memory bank with comprehensive login branding documentation
+- **TESTING**: Verified all branding elements working correctly with professional spacing
+- **BUG FIX**: Fixed user name display in header welcome messages across all components
+- **BUG FIX**: Corrected property names from firstName/lastName to first_name/last_name in SystemHeader, DistributorLayout, Header, and AdminLayout components
+- **TESTING**: Verified user names now display correctly as "Welcome, [First Name] [Last Name]" for all logged-in users
 
 ## Previous Major Changes
 - **CRITICAL**: Fixed route order conflicts in App.tsx that were causing incorrect dashboard routing

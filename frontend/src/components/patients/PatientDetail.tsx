@@ -6,6 +6,7 @@ import PageHeader from '../shared/layout/PageHeader';
 import DocumentCard from './DocumentCard';
 import DocumentUpload from './DocumentUpload';
 import { Patient, Document } from '../../types/ivr';
+import patientService from '../../services/patientService';
 
 const PatientDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -20,46 +21,42 @@ const PatientDetail: React.FC = () => {
     const fetchPatient = async () => {
       setIsLoading(true);
       try {
-        // TODO: Replace with actual API call
-        // Simulating API call with mock data
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const mockPatient: Patient = {
-          id: id || '1',
-          firstName: 'John',
-          lastName: 'Doe',
-          dateOfBirth: '1980-01-15',
-          email: 'john.doe@example.com',
-          phone: '(555) 123-4567',
-          address: '123 Main St',
-          city: 'Los Angeles',
-          state: 'CA',
-          zipCode: '90001',
-          primaryCondition: 'Type 2 Diabetes',
-          lastVisit: '2024-05-20',
+        if (!id) {
+          setError('Patient ID is required');
+          return;
+        }
+
+        // Use real patient service
+        const response = await patientService.getPatient(id);
+
+        // Transform backend response to match frontend Patient type
+        const transformedPatient: Patient = {
+          id: response.id,
+          firstName: response.first_name || response.firstName,
+          lastName: response.last_name || response.lastName,
+          dateOfBirth: response.date_of_birth || response.dateOfBirth,
+          email: response.email,
+          phone: response.phone_number || response.phone,
+          address: response.address,
+          city: response.city,
+          state: response.state,
+          zipCode: response.zip_code || response.zipCode,
+          primaryCondition: response.primary_condition || 'Not specified',
+          lastVisitDate: response.last_visit_date || response.lastVisitDate,
           insuranceInfo: {
-            provider: 'Blue Cross Blue Shield',
-            policyNumber: 'BCBS123456789',
-            groupNumber: 'GRP123',
-            status: 'active'
+            provider: response.insurance_provider || 'Not specified',
+            policyNumber: response.insurance_id || 'Not specified',
+            groupNumber: response.insurance_group || '',
+            status: response.insurance_verified ? 'active' : 'pending'
           },
-          documents: [{
-            id: '1',
-            name: 'Insurance Card',
-            type: 'image/jpeg',
-            size: 1024,
-            url: '/uploads/insurance-card.jpg',
-            uploadedAt: new Date().toISOString(),
-            status: 'uploaded',
-            category: 'insurance',
-            metadata: {
-              side: 'front'
-            }
-          }]
+          documents: response.documents || []
         };
-        setPatient(mockPatient);
-        setEditedPatient(mockPatient);
+
+        setPatient(transformedPatient);
+        setEditedPatient(transformedPatient);
       } catch (err) {
-        setError('Failed to load patient data');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load patient data';
+        setError(errorMessage);
         console.error('Error fetching patient:', err);
       } finally {
         setIsLoading(false);
@@ -73,7 +70,7 @@ const PatientDetail: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!editedPatient) return;
-    
+
     const { name, value } = e.target;
     setEditedPatient(prev => prev ? {
       ...prev,
@@ -83,7 +80,7 @@ const PatientDetail: React.FC = () => {
 
   const handleSave = async () => {
     if (!editedPatient) return;
-    
+
     try {
       // TODO: Replace with actual API call
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -102,7 +99,7 @@ const PatientDetail: React.FC = () => {
 
   const handleDocumentUpload = async (files: File[]) => {
     if (!editedPatient) return;
-    
+
     // TODO: Replace with actual API call
     const newDocuments: Document[] = files.map((file, index) => ({
       id: `temp-${Date.now()}-${index}`,
@@ -121,7 +118,7 @@ const PatientDetail: React.FC = () => {
 
   const handleDocumentDelete = (documentId: string) => {
     if (!editedPatient) return;
-    
+
     setEditedPatient(prev => prev ? {
       ...prev,
       documents: prev.documents?.filter(doc => doc.id !== documentId) || []
@@ -161,7 +158,7 @@ const PatientDetail: React.FC = () => {
 
   return (
     <div className="space-y-8 px-8 pt-6">
-      <PageHeader 
+      <PageHeader
         title={`${patient.firstName} ${patient.lastName}`}
         subtitle="Patient Details and Medical Information"
       />
@@ -174,7 +171,7 @@ const PatientDetail: React.FC = () => {
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
           Back to Patient List
         </button>
-        
+
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
@@ -479,4 +476,4 @@ const PatientDetail: React.FC = () => {
   );
 };
 
-export default PatientDetail; 
+export default PatientDetail;

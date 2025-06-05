@@ -36,18 +36,18 @@ const DistributorLayout: React.FC = () => {
     { name: 'Order Processing', href: '/distributor/orders/management', icon: ArchiveBoxIcon },
     { name: 'Shipping & Logistics', href: '/distributor/orders/shipping', icon: TruckIcon },
     { name: 'Analytics & Reports', href: '/distributor/analytics', icon: ChartBarIcon },
-    { 
-      name: 'Sign Out', 
-      href: '#', 
+    {
+      name: 'Sign Out',
+      href: '#',
       icon: ArrowRightOnRectangleIcon,
-      onClick: handleSignOut 
+      onClick: handleSignOut
     }
   ];
 
   const userInfo = {
-    name: `${user?.firstName || ''} ${user?.lastName || 'MD'}`,
+    name: `${user?.first_name || ''} ${user?.last_name || 'MD'}`,
     role: 'Master Distributor',
-    avatar: `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || 'MD'}`
+    avatar: `${user?.first_name?.[0] || ''}${user?.last_name?.[0] || 'MD'}`
   };
 
   return (
@@ -56,9 +56,9 @@ const DistributorLayout: React.FC = () => {
       <div className="hidden md:block fixed inset-y-0 left-0 w-[280px] bg-[#334155] text-white">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-start p-6 border-b border-slate-700">
-            <img 
-              src="/logo2.png" 
-              alt="Healthcare IVR Platform" 
+            <img
+              src="/logo2.png"
+              alt="Healthcare IVR Platform"
               className="h-24 w-auto"
               onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                 const target = e.currentTarget;
@@ -81,8 +81,8 @@ const DistributorLayout: React.FC = () => {
                   className={`
                     flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
                     focus:outline-none focus:ring-2 focus:ring-[#375788] focus:ring-offset-2 focus:ring-offset-slate-900
-                    ${isActive 
-                      ? 'bg-[#375788] text-white' 
+                    ${isActive
+                      ? 'bg-[#375788] text-white'
                       : 'text-slate-300 hover:bg-slate-600 hover:text-white'}
                   `}
                 >
@@ -97,11 +97,11 @@ const DistributorLayout: React.FC = () => {
               <div className="flex items-center px-4">
                 <div className="h-10 w-10 rounded-full bg-slate-600 flex items-center justify-center">
                   <span className="text-white font-medium text-lg">
-                    {user?.firstName?.[0]}{user?.lastName?.[0] || 'MD'}
+                    {user?.first_name?.[0]}{user?.last_name?.[0] || 'MD'}
                   </span>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-white">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-sm font-medium text-white">{user?.first_name} {user?.last_name}</p>
                   <p className="text-xs text-slate-400">Master Distributor</p>
                 </div>
               </div>
@@ -112,7 +112,7 @@ const DistributorLayout: React.FC = () => {
 
       {/* Mobile Header */}
       <MobileHeader userInfo={userInfo} />
-      
+
       {/* Mobile Menu */}
       <MobileMenu navigation={navigation} userInfo={userInfo} />
 
@@ -122,7 +122,7 @@ const DistributorLayout: React.FC = () => {
         <div className="flex items-center justify-between p-4 md:px-4 py-4 bg-white border-b border-gray-200 overflow-x-hidden">
           <div className="min-w-0 flex-1">
             <h1 className="text-lg font-medium text-gray-900 truncate">
-              Welcome, {user?.firstName} {user?.lastName}
+              Welcome, {user?.first_name} {user?.last_name}
             </h1>
           </div>
           <div className="hidden md:flex items-center gap-4 flex-shrink-0">
@@ -144,4 +144,4 @@ const DistributorLayout: React.FC = () => {
   );
 };
 
-export default DistributorLayout; 
+export default DistributorLayout;

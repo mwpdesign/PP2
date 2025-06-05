@@ -11,14 +11,16 @@ from fastapi import (
     File,
     Form,
 )
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import logging
+import os
 
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.patient import Patient, PatientDocument
+from app.models.user import User
 from app.schemas.patient import (
     Patient as PatientSchema,
     PatientUpdate,
@@ -27,6 +29,10 @@ from app.schemas.patient import (
     PatientRegistration,
 )
 from app.schemas.token import TokenData
+from app.services.s3_service import S3Service
+from app.core.config import settings
+from app.models.rbac import Role
+from app.models.organization import Organization
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -91,11 +97,33 @@ async def register_patient(
 ) -> PatientSchema:
     """Register a new patient."""
     try:
+        # Get default facility and provider for the organization
+        # For now, use the first available ones
+        facility_query = select(Patient.__table__.c.facility_id).limit(1)
+        facility_result = await db.execute(facility_query)
+        default_facility_id = facility_result.scalar()
+
+        if not default_facility_id:
+            # Use our test facility
+            default_facility_id = "11111111-1111-1111-1111-111111111111"
+
+        provider_query = select(Patient.__table__.c.provider_id).limit(1)
+        provider_result = await db.execute(provider_query)
+        default_provider_id = provider_result.scalar()
+
+        if not default_provider_id:
+            # Use our test provider
+            default_provider_id = "22222222-2222-2222-2222-222222222222"
+
         # Create patient instance with organization
         db_patient = Patient(
             **patient_data.dict(),
             status="active",
+            patient_metadata={},  # Required field with NOT NULL constraint
+            tags=[],  # Required field with NOT NULL constraint
             organization_id=current_user.organization_id,
+            facility_id=default_facility_id,
+            provider_id=default_provider_id,
             created_by_id=current_user.id,
             updated_by_id=current_user.id,
         )
@@ -217,23 +245,173 @@ async def upload_patient_document(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to upload documents for this patient",
+                )
+
+    try:
+        # Read file content
+        file_content = await document.read()
+
+        # Generate S3 key
+        s3_key = (
+            f"patients/{patient_id}/documents/"
+            f"{document_category}_{document.filename}"
         )
 
-    # Create document
-    db_document = PatientDocument(
-        patient_id=patient_id,
-        document_type=document_type,
-        document_category=document_category,
-        file_name=document.filename,
-        display_name=display_name or document.filename,
-        organization_id=current_user.organization_id,
-        created_by_id=current_user.id,
-        updated_by_id=current_user.id,
-    )
+        # Upload to S3
+        s3_service = S3Service()
+        await s3_service.upload_file(
+            file_content=file_content,
+            s3_key=s3_key,
+            content_type=document.content_type or "application/octet-stream",
+            metadata={
+                "patient_id": str(patient_id),
+                "document_type": document_type,
+                "document_category": document_category,
+                "uploaded_by": str(current_user.id),
+                "organization_id": str(current_user.organization_id),
+            }
+        )
 
-    # Save document
-    db.add(db_document)
-    await db.commit()
-    await db.refresh(db_document)
+        # Create document record in database
+        db_document = PatientDocument(
+            patient_id=patient_id,
+            document_type=document_type,
+            document_category=document_category,
+            file_name=document.filename,
+            display_name=display_name or document.filename,
+            file_path=s3_key,  # Store S3 key in file_path field
+            s3_key=s3_key,
+            file_size=len(file_content),
+            content_type=document.content_type,
+            organization_id=current_user.organization_id,
+            created_by_id=current_user.id,
+            updated_by_id=current_user.id,
+        )
 
-    return PatientDocumentSchema.from_orm(db_document)
+        # Save document
+        db.add(db_document)
+        await db.commit()
+        await db.refresh(db_document)
+
+        logger.info(f"Document uploaded successfully: {s3_key}")
+        return PatientDocumentSchema.from_orm(db_document)
+
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Document upload failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload document: {str(e)}"
+        )
+
+
+@router.get("/debug/user-check")
+async def debug_user_check(
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """Debug endpoint to check if current user exists in database"""
+    try:
+        # Try raw SQL query
+        raw_query = text("SELECT id, email FROM users WHERE id = :user_id")
+        raw_result = await db.execute(raw_query, {"user_id": str(current_user.id)})
+        raw_user = raw_result.fetchone()
+
+        # Try ORM query
+        orm_user = await db.get(User, current_user.id)
+
+        # List all users
+        all_users_query = text("SELECT id, email FROM users")
+        all_users_result = await db.execute(all_users_query)
+        all_users = all_users_result.fetchall()
+
+        # Check current database name
+        current_db_query = text("SELECT current_database()")
+        current_db_result = await db.execute(current_db_query)
+        current_db = current_db_result.scalar()
+
+        # Get database connection info
+        db_url = getattr(settings, 'DATABASE_URL', 'Not set')
+        db_host = os.getenv('DB_HOST', 'Not set')
+        db_name = os.getenv('DB_NAME', 'Not set')
+
+        return {
+            "current_user_id": str(current_user.id),
+            "raw_sql_result": dict(raw_user) if raw_user else None,
+            "orm_result": {"id": str(orm_user.id), "email": orm_user.email} if orm_user else None,
+            "all_users": [{"id": str(row[0]), "email": row[1]} for row in all_users],
+            "total_users": len(all_users),
+            "database_url": db_url,
+            "db_host": db_host,
+            "db_name": db_name,
+            "current_db": current_db
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.post("/debug/create-doctor")
+async def debug_create_doctor(
+    db: AsyncSession = Depends(get_db),
+):
+    """Debug endpoint to create doctor user directly through application"""
+    from app.models.user import User
+    from app.models.rbac import Role
+    from app.models.organization import Organization
+    from uuid import UUID
+
+    try:
+        # Check if doctor already exists
+        doctor_id = UUID("43d8ebd3-efe8-4aee-98b5-0a77ba7003e8")
+        existing_doctor = await db.get(User, doctor_id)
+        if existing_doctor:
+            return {"message": "Doctor user already exists", "user_id": str(doctor_id)}
+
+        # Get or create organization
+        org_id = UUID("2276e0c1-6a32-470e-b7e7-dcdbb286d76b")
+        org = await db.get(Organization, org_id)
+        if not org:
+            org = Organization(
+                id=org_id,
+                name="Healthcare Local Development Org",
+                description="Mock organization for local development",
+                is_active=True,
+                status="active"
+            )
+            db.add(org)
+            await db.flush()
+
+        # Get or create Doctor role
+        role_query = select(Role).where(Role.name == "Doctor", Role.organization_id == org_id)
+        role_result = await db.execute(role_query)
+        role = role_result.scalar_one_or_none()
+        if not role:
+            role = Role(
+                name="Doctor",
+                description="Doctor role for healthcare providers",
+                organization_id=org_id,
+                permissions={}
+            )
+            db.add(role)
+            await db.flush()
+
+        # Create doctor user
+        doctor = User(
+            id=doctor_id,
+            username="doctor@healthcare.local",
+            email="doctor@healthcare.local",
+            first_name="Dr. John",
+            last_name="Smith",
+            role_id=role.id,
+            organization_id=org_id,
+            is_active=True,
+            is_superuser=False
+        )
+        doctor.set_password("doctor123")
+        db.add(doctor)
+        await db.commit()
+
+        return {"message": "Doctor user created successfully", "user_id": str(doctor_id)}
+    except Exception as e:
+        await db.rollback()
+        return {"error": str(e)}

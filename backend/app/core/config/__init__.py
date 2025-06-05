@@ -42,13 +42,30 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = Field(
-        default="postgresql://postgres:CHANGE_DB_PASSWORD@localhost:5432/healthcare_ivr",
+        default=(
+            "postgresql://postgres:CHANGE_DB_PASSWORD@localhost:5432/"
+            "healthcare_ivr"
+        ),
         description="Database connection URL - configure in .env file"
     )
+
+    # AWS Configuration
+    aws_access_key_id: str = Field(default="dummy_access_key")
+    aws_secret_access_key: str = Field(default="dummy_secret_key")
+    aws_region: str = Field(default="us-east-1")
+    aws_s3_bucket: str = Field(default="healthcare-ivr-local")
+    aws_kms_key_id: str = Field(
+        default="19c444c8-b145-41ba-b081-e0ba3cb5b6b2"
+    )
+    aws_endpoint_url: str = Field(default="http://localhost:4566")
 
     # Authentication
     AUTH_MODE: str = Field(default="local")  # local or cognito
     USE_COGNITO: bool = Field(default=False)
+    USE_MOCK_AUTH: bool = Field(
+        default=True,
+        description="Enable mock auth for development authentication"
+    )
 
     # Role constants
     ROLE_ADMIN: str = "Admin"

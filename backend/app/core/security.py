@@ -161,10 +161,16 @@ async def get_current_user(
         # Check if we're in local development mode with mock auth
         is_local_mode = settings.AUTH_MODE == "local"
         is_dev_mode = mock_auth_service.is_development_mode()
+        use_mock_auth = getattr(settings, 'USE_MOCK_AUTH', True)
+        # Default to True for development
 
         logger.info(f"Is local mode: {is_local_mode}")
         logger.info(f"Is dev mode: {is_dev_mode}")
+        logger.info(f"Use mock auth: {use_mock_auth}")
 
+        # Use mock auth if we're in local mode AND development mode
+        # This ensures mock users work in development regardless of
+        # USE_MOCK_AUTH setting
         if is_local_mode and is_dev_mode:
             logger.info("Using mock user authentication path")
             # For mock users, create TokenData directly from JWT payload
@@ -199,6 +205,10 @@ async def get_current_user(
             else:
                 logger.error(f"Mock user not found for email: {email}")
                 raise credentials_exception
+
+        # Use real database authentication
+        logger.info("Using real database authentication")
+        return await _authenticate_database_user(email, db)
 
         # Database authentication for non-mock users
         logger.info(f"Using database authentication for: {email}")
@@ -239,6 +249,50 @@ async def get_current_user(
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise credentials_exception
+
+
+async def _authenticate_database_user(
+    email: str, db: AsyncSession
+) -> TokenData:
+    """Authenticate user against database."""
+    logger.info(f"Database authentication for: {email}")
+
+    # Query user from database
+    query = select(User).where(User.email == email)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+
+    if not user:
+        logger.error(f"Database user not found: {email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.is_active:
+        logger.error(f"User account is inactive: {email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Inactive user account",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Update last login
+    user.update_last_login()
+    await db.commit()
+
+    # Create TokenData from database user
+    token_data = TokenData(
+        email=user.email,
+        id=user.id,
+        organization_id=user.organization_id,
+        permissions=[],  # Will be populated from role
+        role=user.role.name if user.role else "Unknown",
+    )
+
+    logger.info(f"Database authentication successful: {token_data}")
+    return token_data
 
 
 def encrypt_phi(value: str) -> str:

@@ -8,8 +8,9 @@ Integrates with the local encryption service for HIPAA-compliant data protection
 import json
 import logging
 from typing import Any, Optional
-from sqlalchemy import String, Text, TypeDecorator
+from sqlalchemy import String, Text, TypeDecorator, LargeBinary
 from sqlalchemy.engine import Dialect
+import base64
 
 from app.services.encryption_service import (
     get_encryption_service,
@@ -44,7 +45,7 @@ class EncryptedType(TypeDecorator):
         self,
         value: Any,
         dialect: Dialect
-    ) -> Optional[str]:
+    ) -> Optional[bytes]:
         """
         Encrypt value before storing in database.
 
@@ -53,7 +54,7 @@ class EncryptedType(TypeDecorator):
             dialect: SQLAlchemy database dialect
 
         Returns:
-            Encrypted string or None if value is None/empty
+            Encrypted bytes or None if value is None/empty
         """
         if value is None or value == "":
             return None
@@ -70,40 +71,47 @@ class EncryptedType(TypeDecorator):
 
             encrypted_value = encryption_service.encrypt_field(value, context)
 
+            # Convert base64 string to bytes for bytea storage
+            encrypted_bytes = base64.b64decode(encrypted_value)
+
             logger.debug(
                 f"Encrypted field '{self.field_name}' for database storage"
             )
 
-            return encrypted_value
+            return encrypted_bytes
 
         except Exception as e:
             logger.error(
                 f"Failed to encrypt field '{self.field_name}': {str(e)}"
             )
             raise EncryptionError(
-                f"Database encryption failed for field '{self.field_name}': {str(e)}"
+                f"Database encryption failed for field "
+                f"'{self.field_name}': {str(e)}"
             )
 
     def process_result_value(
         self,
-        value: Optional[str],
+        value: Optional[bytes],
         dialect: Dialect
     ) -> Any:
         """
         Decrypt value after loading from database.
 
         Args:
-            value: The encrypted value from database
+            value: The encrypted bytes from database
             dialect: SQLAlchemy database dialect
 
         Returns:
             Decrypted value or None if value is None/empty
         """
-        if value is None or value == "":
+        if value is None or value == b"":
             return None
 
         try:
             encryption_service = get_encryption_service()
+
+            # Convert bytes back to base64 string for decryption
+            encrypted_string = base64.b64encode(value).decode('utf-8')
 
             # Create context for audit logging
             context = {
@@ -112,7 +120,9 @@ class EncryptedType(TypeDecorator):
                 "data_classification": "PHI"
             }
 
-            decrypted_value = encryption_service.decrypt_field(value, context)
+            decrypted_value = encryption_service.decrypt_field(
+                encrypted_string, context
+            )
 
             logger.debug(
                 f"Decrypted field '{self.field_name}' from database"
@@ -125,7 +135,8 @@ class EncryptedType(TypeDecorator):
                 f"Failed to decrypt field '{self.field_name}': {str(e)}"
             )
             raise EncryptionError(
-                f"Database decryption failed for field '{self.field_name}': {str(e)}"
+                f"Database decryption failed for field "
+                f"'{self.field_name}': {str(e)}"
             )
 
 
@@ -141,7 +152,7 @@ class EncryptedString(EncryptedType):
             ssn = Column(EncryptedString(field_name="ssn"))
     """
 
-    impl = String
+    impl = LargeBinary
 
     def __init__(
         self,
@@ -167,14 +178,14 @@ class EncryptedText(EncryptedType):
     Encrypted text field type for SQLAlchemy.
 
     Similar to EncryptedString but for longer text content.
-    Uses Text as the underlying SQL type.
+    Uses LargeBinary as the underlying SQL type.
 
     Usage:
         class Patient(Base):
             medical_history = Column(EncryptedText(field_name="medical_history"))
     """
 
-    impl = Text
+    impl = LargeBinary
 
     def __init__(self, field_name: str = "text_field", **kwargs):
         """

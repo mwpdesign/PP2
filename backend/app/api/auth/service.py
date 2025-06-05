@@ -141,6 +141,8 @@ class AuthenticationService:
         self.logger.info("Using local authentication")
 
         # Check if we're in development mode and should use mock auth
+        # Use mock auth if we're in development mode, regardless of
+        # USE_MOCK_AUTH setting
         if mock_auth_service.is_development_mode():
             self.logger.info("Attempting mock authentication")
             mock_user = mock_auth_service.authenticate_mock_user(
@@ -215,7 +217,7 @@ class AuthenticationService:
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-                "role_id": user.role_id,
+                "role_id": str(user.role_id),
                 "organization_id": str(user.organization_id),
                 "is_active": user.is_active,
                 "is_superuser": user.is_superuser,

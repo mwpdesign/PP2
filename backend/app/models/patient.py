@@ -155,7 +155,15 @@ class PatientDocument(Base):
     )
     document_type: Mapped[str] = mapped_column(String(50))
     file_name: Mapped[str] = mapped_column(String(255))
+    display_name: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
     file_path: Mapped[str] = mapped_column(Text)
+    s3_key: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    file_size: Mapped[Optional[int]] = mapped_column(nullable=True)
+    content_type: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True
+    )
     document_category: Mapped[str] = mapped_column(String(50))
     document_metadata: Mapped[dict] = mapped_column(JSON, nullable=True)
 

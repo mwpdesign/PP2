@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
-import { 
-  BellIcon, 
+import {
+  BellIcon,
   Cog6ToothIcon,
   ChevronDownIcon,
   ArrowRightOnRectangleIcon
@@ -48,11 +48,11 @@ const Header: React.FC = () => {
           <Menu as="div" className="relative">
             <Menu.Button className="flex items-center space-x-3 hover:bg-gray-100 rounded-lg p-2">
               <div className="w-8 h-8 rounded-full bg-[#375788] flex items-center justify-center text-white font-medium">
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                {user?.first_name?.[0]}{user?.last_name?.[0]}
               </div>
               <div className="text-left">
                 <p className="text-sm font-medium text-gray-700">
-                  {user?.firstName} {user?.lastName}
+                  {user?.first_name} {user?.last_name}
                 </p>
                 <p className="text-xs text-gray-500">
                   {user?.role}
@@ -107,4 +107,4 @@ const Header: React.FC = () => {
   );
 };
 
-export default Header; 
+export default Header;

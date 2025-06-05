@@ -17,12 +17,20 @@ class S3Service:
     def __init__(self):
         """Initialize S3 client with settings."""
         self.settings = get_settings()
-        self.s3_client = boto3.client(
-            "s3",
-            aws_access_key_id=self.settings.aws_access_key_id,
-            aws_secret_access_key=self.settings.aws_secret_access_key,
-            region_name=self.settings.aws_region,
-        )
+
+        # Configure S3 client with optional endpoint URL for LocalStack
+        client_config = {
+            "aws_access_key_id": self.settings.aws_access_key_id,
+            "aws_secret_access_key": self.settings.aws_secret_access_key,
+            "region_name": self.settings.aws_region,
+        }
+
+                        # Add endpoint URL if configured (for LocalStack)
+        endpoint_url = getattr(self.settings, 'aws_endpoint_url', None)
+        if endpoint_url:
+            client_config["endpoint_url"] = endpoint_url
+
+        self.s3_client = boto3.client("s3", **client_config)
         self.bucket = self.settings.aws_s3_bucket
         self.kms_service = AWSKMSService()
 

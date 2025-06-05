@@ -13,16 +13,18 @@ interface PatientFormData {
   city: string;
   state: string;
   zip: string;
-  governmentIdType: string;
-  governmentId: File | null;
-  primaryInsurance: {
+  email?: string;
+  phone?: string;
+  governmentIdType?: string;
+  governmentId?: File | null;
+  primaryInsurance?: {
     provider: string;
     policyNumber: string;
     payerPhone: string;
     cardFront: File | null;
     cardBack: File | null;
   };
-  secondaryInsurance: {
+  secondaryInsurance?: {
     provider: string;
     policyNumber: string;
     payerPhone: string;
@@ -45,50 +47,63 @@ class PatientService {
 
   async registerPatient(patientData: PatientFormData): Promise<any> {
     try {
-      const formData = new FormData();
-      
-      // Add patient info
-      formData.append('firstName', patientData.firstName);
-      formData.append('lastName', patientData.lastName);
-      formData.append('dateOfBirth', patientData.dateOfBirth);
-      formData.append('gender', patientData.gender);
-      formData.append('address', patientData.address);
-      formData.append('city', patientData.city);
-      formData.append('state', patientData.state);
-      formData.append('zip', patientData.zip);
-      formData.append('governmentIdType', patientData.governmentIdType);
-      
+      // First, register the patient with basic info
+      const payload = {
+        first_name: patientData.firstName,
+        last_name: patientData.lastName,
+        email: patientData.email || `${patientData.firstName.toLowerCase()}.${patientData.lastName.toLowerCase()}@temp.com`,
+        date_of_birth: patientData.dateOfBirth,
+        phone: patientData.phone || '',
+        address: `${patientData.address}, ${patientData.city}, ${patientData.state} ${patientData.zip}`,
+      };
+
+      const response = await api.post(`${PATIENTS_ENDPOINT}/register`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const patient = response.data;
+
+      // Upload documents if they exist
       if (patientData.governmentId) {
-        formData.append('governmentId', patientData.governmentId);
-      }
-      
-      // Add primary insurance info
-      formData.append('primaryInsurance.provider', patientData.primaryInsurance.provider);
-      formData.append('primaryInsurance.policyNumber', patientData.primaryInsurance.policyNumber);
-      formData.append('primaryInsurance.payerPhone', patientData.primaryInsurance.payerPhone);
-      
-      if (patientData.primaryInsurance.cardFront) {
-        formData.append('primaryInsurance.cardFront', patientData.primaryInsurance.cardFront);
-      }
-      if (patientData.primaryInsurance.cardBack) {
-        formData.append('primaryInsurance.cardBack', patientData.primaryInsurance.cardBack);
-      }
-      
-      // Add secondary insurance info if present
-      if (patientData.secondaryInsurance.provider) {
-        formData.append('secondaryInsurance.provider', patientData.secondaryInsurance.provider);
-        formData.append('secondaryInsurance.policyNumber', patientData.secondaryInsurance.policyNumber);
-        formData.append('secondaryInsurance.payerPhone', patientData.secondaryInsurance.payerPhone);
-        
-        if (patientData.secondaryInsurance.cardFront) {
-          formData.append('secondaryInsurance.cardFront', patientData.secondaryInsurance.cardFront);
-        }
-        if (patientData.secondaryInsurance.cardBack) {
-          formData.append('secondaryInsurance.cardBack', patientData.secondaryInsurance.cardBack);
-        }
+        await this.uploadDocument(patient.id, patientData.governmentId, 'identification', 'government_id', 'Government ID');
       }
 
-      const response = await api.post(`${PATIENTS_ENDPOINT}/register`, formData, {
+      if (patientData.primaryInsurance?.cardFront) {
+        await this.uploadDocument(patient.id, patientData.primaryInsurance.cardFront, 'insurance', 'primary_front', 'Primary Insurance Card (Front)');
+      }
+
+      if (patientData.primaryInsurance?.cardBack) {
+        await this.uploadDocument(patient.id, patientData.primaryInsurance.cardBack, 'insurance', 'primary_back', 'Primary Insurance Card (Back)');
+      }
+
+      return patient;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        throw new Error(error.response?.data?.detail || 'Failed to register patient');
+      }
+      throw error;
+    }
+  }
+
+  async uploadDocument(
+    patientId: string,
+    file: File,
+    documentType: string,
+    documentCategory: string,
+    displayName?: string
+  ): Promise<any> {
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('document_type', documentType);
+      formData.append('document_category', documentCategory);
+      if (displayName) {
+        formData.append('display_name', displayName);
+      }
+
+      const response = await api.post(`${PATIENTS_ENDPOINT}/${patientId}/documents`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -97,7 +112,7 @@ class PatientService {
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError) {
-        throw new Error(error.response?.data?.detail || 'Failed to register patient');
+        throw new Error(error.response?.data?.detail || 'Failed to upload document');
       }
       throw error;
     }
@@ -132,4 +147,4 @@ class PatientService {
 
 // Export the singleton instance
 const patientService = PatientService.getInstance();
-export default patientService; 
+export default patientService;

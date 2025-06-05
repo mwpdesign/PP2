@@ -6,6 +6,7 @@ SQLAlchemy database models.
 from .user import User
 from .organization import Organization
 from .rbac import Role, Permission, RolePermission
+from .sensitive_data import SensitiveData
 
 # Import other models that exist
 try:
@@ -29,7 +30,7 @@ except ImportError:
     pass
 
 try:
-    from .orders import Order, OrderItem
+    from .order import Order, OrderStatusHistory
 except ImportError:
     pass
 
@@ -68,6 +69,11 @@ except ImportError:
     pass
 
 try:
+    from .insurance import SecondaryInsurance
+except ImportError:
+    pass
+
+try:
     from .logistics import (
         Item,
         FulfillmentOrder,
@@ -88,13 +94,14 @@ __all__ = [
     "Role",
     "Permission",
     "RolePermission",
+    "SensitiveData",
     "Patient",
     "PatientDocument",
     "Provider",
     "Facility",
     "Product",
     "Order",
-    "OrderItem",
+    "OrderStatusHistory",
     "Notification",
     "ShippingAddress",
     "Shipment",
@@ -110,6 +117,7 @@ __all__ = [
     "IVRSessionItem",
     "AuditLog",
     "ComplianceReport",
+    "SecondaryInsurance",
     "Item",
     "FulfillmentOrder",
     "PickingList",

@@ -7,7 +7,6 @@ NEVER USE IN PRODUCTION - This is for development convenience only.
 
 import os
 from typing import Dict, Optional, Any
-from uuid import uuid4
 import logging
 
 logger = logging.getLogger(__name__)
@@ -21,13 +20,13 @@ class MockAuthService:
     Do not use in production environments.
     """
 
-    # Mock organization ID for development
-    MOCK_ORG_ID = str(uuid4())
+    # Mock organization ID for development - FIXED UUID for consistency
+    MOCK_ORG_ID = "2276e0c1-6a32-470e-b7e7-dcdbb286d76b"
 
     # Mock user database - DEVELOPMENT ONLY
     MOCK_USERS = {
         "admin@healthcare.local": {
-            "id": str(uuid4()),
+            "id": "21bebfe9-a6a9-4208-a623-87db7ca8d935",
             "email": "admin@healthcare.local",
             "password": "admin123",
             "first_name": "Admin",
@@ -40,7 +39,7 @@ class MockAuthService:
             "created_at": "2024-01-01T00:00:00Z",
         },
         "doctor@healthcare.local": {
-            "id": str(uuid4()),
+            "id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
             "email": "doctor@healthcare.local",
             "password": "doctor123",
             "first_name": "Dr. John",
@@ -53,7 +52,7 @@ class MockAuthService:
             "created_at": "2024-01-01T00:00:00Z",
         },
         "ivr@healthcare.local": {
-            "id": str(uuid4()),
+            "id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
             "email": "ivr@healthcare.local",
             "password": "ivr123",
             "first_name": "IVR",
@@ -66,7 +65,7 @@ class MockAuthService:
             "created_at": "2024-01-01T00:00:00Z",
         },
         "distributor@healthcare.local": {
-            "id": str(uuid4()),
+            "id": "baf64777-cf09-4277-8c35-4cf7939f2acd",
             "email": "distributor@healthcare.local",
             "password": "distributor123",
             "first_name": "Master",
@@ -79,7 +78,7 @@ class MockAuthService:
             "created_at": "2024-01-01T00:00:00Z",
         },
         "chp@healthcare.local": {
-            "id": str(uuid4()),
+            "id": "de129f89-7a0c-4493-80c7-e2ab32051bbe",
             "email": "chp@healthcare.local",
             "password": "chp123",
             "first_name": "CHP",
@@ -92,7 +91,7 @@ class MockAuthService:
             "created_at": "2024-01-01T00:00:00Z",
         },
         "distributor2@healthcare.local": {
-            "id": str(uuid4()),
+            "id": "3b0a4415-08f6-47ae-abff-5e90a554566a",
             "email": "distributor2@healthcare.local",
             "password": "distributor123",
             "first_name": "Regional",
@@ -105,7 +104,7 @@ class MockAuthService:
             "created_at": "2024-01-01T00:00:00Z",
         },
         "sales@healthcare.local": {
-            "id": str(uuid4()),
+            "id": "f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
             "email": "sales@healthcare.local",
             "password": "sales123",
             "first_name": "Sales",
@@ -118,7 +117,7 @@ class MockAuthService:
             "created_at": "2024-01-01T00:00:00Z",
         },
         "logistics@healthcare.local": {
-            "id": str(uuid4()),
+            "id": "a1eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
             "email": "logistics@healthcare.local",
             "password": "logistics123",
             "first_name": "Shipping",
