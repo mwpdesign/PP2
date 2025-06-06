@@ -8,7 +8,7 @@ from datetime import datetime
 from botocore.exceptions import ClientError
 
 from app.core.config import settings
-from app.services.encryption import EncryptionService
+from app.services.encryption_service import LocalEncryptionService
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class QueueService:
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
-        self.encryption_service = EncryptionService()
+        self.encryption_service = LocalEncryptionService()
 
         # Queue URLs
         self.main_queue_url = settings.SQS_MAIN_QUEUE_URL

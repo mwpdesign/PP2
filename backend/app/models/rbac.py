@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional
 from uuid import UUID as PyUUID, uuid4
-from sqlalchemy import String, DateTime, ForeignKey, JSON
+from sqlalchemy import String, DateTime, ForeignKey, JSON, Boolean, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
@@ -93,9 +93,130 @@ class Permission(Base):
 
     # Relationships
     roles = relationship(
-        "Role", secondary="role_permissions", back_populates="assigned_permissions"
+        "Role", secondary="role_permissions",
+        back_populates="assigned_permissions"
     )
 
     def __repr__(self):
         """String representation of the permission."""
         return f"<Permission(name='{self.name}')>"
+
+
+class DelegationPermission(Base):
+    """Model for delegation permissions allowing proxy user actions."""
+
+    __tablename__ = "delegation_permissions"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+
+    # Who is delegating (e.g., doctor)
+    delegator_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+
+    # Who is receiving delegation (e.g., office administrator)
+    delegate_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+
+    # Organization context
+    organization_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False
+    )
+
+    # Delegation details
+    permissions: Mapped[list] = mapped_column(
+        JSON, nullable=False, default=list,
+        comment="List of permissions being delegated "
+                "(e.g., ['ivr:submit', 'patient:view'])"
+    )
+
+    # Delegation scope and constraints
+    scope_restrictions: Mapped[dict] = mapped_column(
+        JSON, nullable=False, server_default="{}",
+        comment="Restrictions on delegation scope "
+                "(e.g., specific patients, territories)"
+    )
+
+    # Status and validity
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+        comment="When this delegation expires (null = no expiration)"
+    )
+
+    # Approval workflow
+    requires_approval: Mapped[bool] = mapped_column(
+        Boolean, default=False,
+        comment="Whether delegated actions require approval"
+    )
+    approved_by_id: Mapped[Optional[PyUUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    approved_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    # Audit fields
+    created_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+    )
+
+    # Additional metadata
+    delegation_reason: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True,
+        comment="Reason for delegation (e.g., 'Vacation coverage', "
+                "'Administrative support')"
+    )
+    notes: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True,
+        comment="Additional notes about the delegation"
+    )
+
+    # Relationships
+    delegator = relationship(
+        "User", foreign_keys=[delegator_id],
+        back_populates="delegations_given"
+    )
+    delegate = relationship(
+        "User", foreign_keys=[delegate_id],
+        back_populates="delegations_received"
+    )
+    organization = relationship(
+        "Organization", back_populates="delegation_permissions"
+    )
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    approved_by = relationship("User", foreign_keys=[approved_by_id])
+
+    def __repr__(self):
+        """String representation of the delegation permission."""
+        return (f"<DelegationPermission(delegator={self.delegator_id}, "
+                f"delegate={self.delegate_id})>")
+
+    def is_valid(self) -> bool:
+        """Check if delegation is currently valid."""
+        if not self.is_active:
+            return False
+
+        if self.expires_at and self.expires_at < datetime.utcnow():
+            return False
+
+        if self.requires_approval and not self.approved_at:
+            return False
+
+        return True
+
+    def has_permission(self, permission: str) -> bool:
+        """Check if this delegation includes a specific permission."""
+        return permission in self.permissions or "*" in self.permissions

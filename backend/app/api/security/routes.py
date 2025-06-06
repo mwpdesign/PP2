@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.auth import get_current_user, get_current_territory
+from app.core.security import get_current_user
 from app.services.security_monitoring import SecurityMonitoringService
 from app.api.security.schemas import (
     SecurityMetricsResponse,
@@ -34,12 +34,11 @@ async def get_security_metrics(
     end_date: datetime = Query(default_factory=lambda: datetime.utcnow()),
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """Get security metrics for the dashboard."""
     service = SecurityMonitoringService(db)
     metrics = await service.get_security_metrics(
-        start_date=start_date, end_date=end_date, territory_id=territory_id
+        start_date=start_date, end_date=end_date
     )
     return metrics
 
@@ -57,7 +56,6 @@ async def get_security_alerts(
     end_date: datetime = Query(default_factory=lambda: datetime.utcnow()),
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """Get security alerts."""
     service = SecurityMonitoringService(db)
@@ -66,7 +64,6 @@ async def get_security_alerts(
         alert_type=alert_type,
         start_date=start_date,
         end_date=end_date,
-        territory_id=territory_id,
     )
     return alerts
 
@@ -86,7 +83,6 @@ async def get_security_incidents(
     end_date: datetime = Query(default_factory=lambda: datetime.utcnow()),
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """Get security incidents."""
     service = SecurityMonitoringService(db)
@@ -95,7 +91,6 @@ async def get_security_incidents(
         severity=severity,
         start_date=start_date,
         end_date=end_date,
-        territory_id=territory_id,
     )
     return incidents
 
@@ -108,7 +103,6 @@ async def create_security_incident(
     incident_data: CreateIncidentRequest,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """Create a new security incident."""
     service = SecurityMonitoringService(db)
@@ -117,7 +111,6 @@ async def create_security_incident(
         severity=incident_data.severity,
         description=incident_data.description,
         user_id=current_user["id"],
-        territory_id=territory_id,
         details=incident_data.details,
     )
     return incident
@@ -134,7 +127,6 @@ async def update_security_incident(
     update_data: UpdateIncidentRequest,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """Update a security incident."""
     service = SecurityMonitoringService(db)
@@ -143,7 +135,6 @@ async def update_security_incident(
         status=update_data.status,
         resolution=update_data.resolution,
         user_id=current_user["id"],
-        territory_id=territory_id,
     )
     return incident
 
@@ -161,7 +152,6 @@ async def get_security_events(
     end_date: datetime = Query(default_factory=lambda: datetime.utcnow()),
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """Get security events."""
     service = SecurityMonitoringService(db)
@@ -170,7 +160,6 @@ async def get_security_events(
         severity=severity,
         start_date=start_date,
         end_date=end_date,
-        territory_id=territory_id,
     )
     return events
 
@@ -184,7 +173,6 @@ async def get_compliance_status(
     request: Request,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """Get current compliance status."""
     service = SecurityMonitoringService(db)

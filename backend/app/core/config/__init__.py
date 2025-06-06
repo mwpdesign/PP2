@@ -82,8 +82,16 @@ class Settings(BaseSettings):
             "orders:read",
             "orders:write",
             "ivr:read",
+            "ivr:submit",
+            "delegation:create",
+            "delegation:manage",
         ],
-        ROLE_IVR: ["ivr:read", "ivr:write", "patients:read"],
+        ROLE_IVR: [
+            "ivr:read",
+            "ivr:write",
+            "patients:read",
+            "delegation:receive",
+        ],
         ROLE_LOGISTICS: [
             "orders:read",
             "orders:write",

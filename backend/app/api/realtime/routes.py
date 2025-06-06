@@ -11,7 +11,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.auth import get_current_user, verify_token
+from app.core.security import get_current_user, verify_token
 from app.services.websocket_service import ConnectionManager
 from app.services.queue_service import QueueService
 

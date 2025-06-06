@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.auth import get_current_user, get_current_territory
+from app.core.security import get_current_user
 from app.api.orders.insurance_service import InsuranceVerificationService
 from app.services.order_status_service import OrderStatusService
 from app.api.orders.order_schemas import (
@@ -30,7 +30,6 @@ async def verify_insurance_coverage(
     verification_data: InsuranceVerificationRequest,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """
     Verify insurance coverage for an order
@@ -41,7 +40,6 @@ async def verify_insurance_coverage(
         patient_id=verification_data.patient_id,
         insurance_data=verification_data.insurance_data,
         user_id=current_user["id"],
-        territory_id=territory_id,
     )
     return result
 
@@ -55,20 +53,21 @@ async def get_verification_status(
     order_id: int,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """
     Get the current insurance verification status for an order
     """
     service = InsuranceVerificationService(db)
     result = await service.get_verification_status(
-        order_id=order_id, user_id=current_user["id"], territory_id=territory_id
+        order_id=order_id, user_id=current_user["id"]
     )
     return result
 
 
 @router.put(
-    "/orders/{order_id}/status", response_model=OrderStatusResponse, tags=["orders"]
+    "/orders/{order_id}/status",
+    response_model=OrderStatusResponse,
+    tags=["orders"]
 )
 async def update_order_status(
     order_id: int,
@@ -76,7 +75,6 @@ async def update_order_status(
     request: Request,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """
     Update the status of an order
@@ -97,7 +95,6 @@ async def update_order_status(
         order_id=order_id,
         new_status=status_update.status,
         user_id=current_user["id"],
-        territory_id=territory_id,
         notes=status_update.notes,
         request_metadata=request_metadata,
     )
@@ -114,7 +111,6 @@ async def get_order_status_history(
     request: Request,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """
     Get the complete status history for an order
@@ -134,7 +130,6 @@ async def get_order_status_history(
     result = await service.get_status_history(
         order_id=order_id,
         user_id=current_user["id"],
-        territory_id=territory_id,
         request_metadata=request_metadata,
     )
     return {"history": result}
@@ -150,7 +145,6 @@ async def bulk_update_order_status(
     request: Request,
     db: Session = Depends(get_db),
     current_user: Dict = Depends(get_current_user),
-    territory_id: int = Depends(get_current_territory),
 ):
     """
     Update status for multiple orders at once
@@ -171,7 +165,6 @@ async def bulk_update_order_status(
         order_ids=update_data.order_ids,
         new_status=update_data.status,
         user_id=current_user["id"],
-        territory_id=territory_id,
         notes=update_data.notes,
         request_metadata=request_metadata,
     )

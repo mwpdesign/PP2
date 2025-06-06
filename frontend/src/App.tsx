@@ -7,7 +7,7 @@ import { AdminRoute } from './components/auth/AdminRoute';
 import { DashboardRouter } from './components/auth/DashboardRouter';
 import { TestLogin } from './components/auth/TestLogin';
 import { ConfigProvider } from './contexts/ConfigContext';
-import { MobileNavigationProvider } from './contexts/MobileNavigationContext';
+
 
 // Import components
 const LoginPage = React.lazy(() => import('./pages/Login'));
@@ -50,9 +50,8 @@ const App = () => {
 
   return (
     <ConfigProvider>
-      <MobileNavigationProvider>
-        <ErrorBoundary>
-          <div className="min-h-screen bg-gray-50">
+      <ErrorBoundary>
+        <div className="min-h-screen bg-gray-50">
             <Toaster
               position="top-right"
               toastOptions={{
@@ -212,7 +211,6 @@ const App = () => {
             </Suspense>
           </div>
         </ErrorBoundary>
-      </MobileNavigationProvider>
     </ConfigProvider>
   );
 };

@@ -79,7 +79,7 @@ const IVRSubmission: React.FC<IVRSubmissionProps> = ({ onSubmit, onSaveDraft }) 
   );
 
   const debouncedSaveDraft = useMemo(
-    () => debounce(saveDraft, 2000),
+    () => debounce(saveDraft, 10000),
     [saveDraft]
   );
 
@@ -427,4 +427,4 @@ const IVRSubmission: React.FC<IVRSubmissionProps> = ({ onSubmit, onSaveDraft }) 
   );
 };
 
-export default IVRSubmission; 
+export default IVRSubmission;

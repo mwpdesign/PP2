@@ -205,6 +205,18 @@ class User(Base):
         back_populates="updated_by",
     )
 
+    # Delegation relationships
+    delegations_given = relationship(
+        "DelegationPermission",
+        foreign_keys="DelegationPermission.delegator_id",
+        back_populates="delegator",
+    )
+    delegations_received = relationship(
+        "DelegationPermission",
+        foreign_keys="DelegationPermission.delegate_id",
+        back_populates="delegate",
+    )
+
     def __repr__(self) -> str:
         """String representation of the user."""
         return f"<User(username='{self.username}')>"

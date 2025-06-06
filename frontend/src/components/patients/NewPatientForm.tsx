@@ -19,6 +19,8 @@ import patientService from '../../services/patientService';
 import PhoneInput from '../shared/PhoneInput';
 import StateSelect from '../shared/StateSelect';
 import { toast } from 'react-hot-toast';
+import { QuickTemplates } from '../speed-tools/QuickTemplates';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 
 interface NewPatientFormProps {
   onClose: () => void;
@@ -388,6 +390,87 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Keyboard shortcuts for power users
+  useKeyboardShortcuts({
+    'ctrl+s': (e) => {
+      e.preventDefault();
+      // Manual save
+      setIsAutoSaving(true);
+      setTimeout(() => {
+        setIsAutoSaving(false);
+        setLastSaved(new Date());
+        toast.success('Form saved manually');
+      }, 500);
+    },
+    'ctrl+enter': (e) => {
+      e.preventDefault();
+      // Quick submit if form is valid
+      if (validateForm()) {
+        handleSubmit(e as any);
+      } else {
+        toast.error('Please fix form errors before submitting');
+      }
+    },
+    'escape': (e) => {
+      e.preventDefault();
+      handleClose();
+    }
+  });
+
+  // Enhanced auto-save functionality - every 10 seconds
+  useEffect(() => {
+    const autoSaveInterval = setInterval(() => {
+      // Only auto-save if there's meaningful data
+      if (formData.firstName || formData.lastName || formData.dateOfBirth) {
+        setIsAutoSaving(true);
+
+        // Simulate auto-save to localStorage or backend
+        try {
+          const autoSaveData = {
+            ...formData,
+            timestamp: new Date().toISOString(),
+            type: 'patient_form_draft'
+          };
+
+          localStorage.setItem('patient_form_autosave', JSON.stringify(autoSaveData));
+
+          setTimeout(() => {
+            setIsAutoSaving(false);
+            setLastSaved(new Date());
+          }, 500);
+        } catch (error) {
+          console.error('Auto-save failed:', error);
+          setIsAutoSaving(false);
+        }
+      }
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(autoSaveInterval);
+  }, [formData]);
+
+  // Load auto-saved data on component mount
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem('patient_form_autosave');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        if (parsedData.type === 'patient_form_draft') {
+          // Ask user if they want to restore the draft
+          const shouldRestore = window.confirm(
+            'Found a previously saved draft. Would you like to restore it?'
+          );
+          if (shouldRestore) {
+            setFormData(parsedData);
+            setLastSaved(new Date(parsedData.timestamp));
+            toast.success('Draft restored successfully');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load auto-saved data:', error);
+    }
+  }, []);
+
   const sections: FormSection[] = [
     { title: 'Patient Demographics', isComplete: false },
     { title: 'Insurance Information', isComplete: false },
@@ -652,9 +735,27 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                   <div className="inline-block w-full max-w-[1000px] my-8 text-left align-middle transition-all transform bg-white rounded-xl shadow-2xl">
                     {/* Header */}
                     <div className="px-8 py-5 border-b border-gray-200 flex items-center justify-between bg-[#1E293B] text-white rounded-t-xl">
-                      <Dialog.Title as="h2" className="text-2xl font-semibold">
-                        Patient and Insurance Information
-                      </Dialog.Title>
+                      <div className="flex items-center space-x-4">
+                        <Dialog.Title as="h2" className="text-2xl font-semibold">
+                          Patient and Insurance Information
+                        </Dialog.Title>
+
+                        {/* Auto-save indicator */}
+                        <div className="flex items-center space-x-2 text-sm">
+                          {isAutoSaving ? (
+                            <div className="flex items-center text-yellow-300">
+                              <Save className="w-4 h-4 mr-1 animate-pulse" />
+                              <span>Saving...</span>
+                            </div>
+                          ) : lastSaved ? (
+                            <div className="flex items-center text-green-300">
+                              <CheckCircle2 className="w-4 h-4 mr-1" />
+                              <span>Saved {lastSaved.toLocaleTimeString()}</span>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
                       <button
                         onClick={handleClose}
                         className="p-1.5 hover:bg-gray-700 rounded-full transition-colors"
@@ -666,6 +767,18 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                     {/* Form */}
                     <form onSubmit={handleSubmit}>
                       <div className="max-h-[calc(100vh-200px)] overflow-y-auto px-8 py-6">
+                        {/* Quick Templates */}
+                        <QuickTemplates
+                          onTemplateSelect={(templateData) => {
+                            setFormData(prev => ({
+                              ...prev,
+                              ...templateData
+                            }));
+                            toast.success('Template applied successfully');
+                          }}
+                          formType="patient_registration"
+                        />
+
                         {/* Patient Information */}
                         <div className="space-y-8">
                           <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">

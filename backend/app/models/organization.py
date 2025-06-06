@@ -55,6 +55,9 @@ class Organization(Base):
         "PatientDocument",
         back_populates="organization"
     )
+    delegation_permissions = relationship(
+        "DelegationPermission", back_populates="organization"
+    )
 
     def __repr__(self):
         """String representation of the organization."""

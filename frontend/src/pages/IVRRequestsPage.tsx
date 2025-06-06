@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BatchProcessor } from '../components/speed-tools/BatchProcessor';
 
 interface IVRRequest {
   id: string;
@@ -15,6 +16,8 @@ const IVRRequestsPage: React.FC = () => {
   const [showNewRequest, setShowNewRequest] = useState(false);
   const [selectedPriority, setSelectedPriority] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
+  const [showBatchProcessor, setShowBatchProcessor] = useState(false);
 
   const requests: IVRRequest[] = [
     {
@@ -85,29 +88,46 @@ const IVRRequestsPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="mt-6 flex gap-4">
-          <select
-            value={selectedPriority}
-            onChange={(e) => setSelectedPriority(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] bg-white"
-          >
-            <option value="">All Priorities</option>
-            <option value="high">High Priority</option>
-            <option value="medium">Medium Priority</option>
-            <option value="low">Low Priority</option>
-          </select>
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] bg-white"
-          >
-            <option value="">All Statuses</option>
-            <option value="new">New</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="escalated">Escalated</option>
-          </select>
+        {/* Filters and Batch Actions */}
+        <div className="mt-6 flex justify-between items-center">
+          <div className="flex gap-4">
+            <select
+              value={selectedPriority}
+              onChange={(e) => setSelectedPriority(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] bg-white"
+            >
+              <option value="">All Priorities</option>
+              <option value="high">High Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="low">Low Priority</option>
+            </select>
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] bg-white"
+            >
+              <option value="">All Statuses</option>
+              <option value="new">New</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="escalated">Escalated</option>
+            </select>
+          </div>
+
+          {/* Batch Actions */}
+          {selectedRequests.length > 0 && (
+            <div className="flex gap-2">
+              <span className="text-sm text-gray-600 self-center">
+                {selectedRequests.length} selected
+              </span>
+              <button
+                onClick={() => setShowBatchProcessor(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Batch Process ({selectedRequests.length})
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -117,6 +137,20 @@ const IVRRequestsPage: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50">
+                <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={selectedRequests.length === requests.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRequests(requests.map(r => r.id));
+                      } else {
+                        setSelectedRequests([]);
+                      }
+                    }}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
                 <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Request ID</th>
                 <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Patient</th>
                 <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Type</th>
@@ -129,6 +163,20 @@ const IVRRequestsPage: React.FC = () => {
             <tbody className="divide-y divide-gray-200">
               {requests.map((request) => (
                 <tr key={request.id} className="hover:bg-gray-50">
+                  <td className="py-3 px-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedRequests.includes(request.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRequests(prev => [...prev, request.id]);
+                        } else {
+                          setSelectedRequests(prev => prev.filter(id => id !== request.id));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </td>
                   <td className="py-3 px-4">{request.id}</td>
                   <td className="py-3 px-4">
                     <div className="font-medium">{request.patientName}</div>
@@ -180,7 +228,7 @@ const IVRRequestsPage: React.FC = () => {
                 ✕
               </button>
             </div>
-            
+
             <form className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -255,8 +303,43 @@ const IVRRequestsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Batch Processor Modal */}
+      {showBatchProcessor && (
+        <BatchProcessor
+          selectedItems={selectedRequests.map(id => {
+            const request = requests.find(r => r.id === id);
+            return {
+              id,
+              type: 'ivr_request',
+              title: `${request?.patientName} - ${request?.type}`,
+              status: request?.status || 'New',
+              priority: request?.priority || 'Medium',
+              metadata: {
+                patientName: request?.patientName,
+                phoneNumber: request?.phoneNumber,
+                timestamp: request?.timestamp
+              }
+            };
+          })}
+          onClose={() => setShowBatchProcessor(false)}
+          onComplete={(results) => {
+            console.log('Batch processing completed:', results);
+            setSelectedRequests([]);
+            setShowBatchProcessor(false);
+            // TODO: Refresh the requests list
+          }}
+          availableActions={[
+            { id: 'approve', label: 'Approve All', icon: '✓', color: 'green' },
+            { id: 'reject', label: 'Reject All', icon: '✗', color: 'red' },
+            { id: 'escalate', label: 'Escalate All', icon: '⬆', color: 'yellow' },
+            { id: 'assign', label: 'Assign to User', icon: '👤', color: 'blue' },
+            { id: 'priority', label: 'Change Priority', icon: '!', color: 'orange' }
+          ]}
+        />
+      )}
     </div>
   );
 };
 
-export default IVRRequestsPage; 
+export default IVRRequestsPage;

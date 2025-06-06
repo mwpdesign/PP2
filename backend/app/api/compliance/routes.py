@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
 from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.core.security import get_current_user
 from app.services.hipaa_audit_service import HIPAAComplianceService
 from app.api.compliance.schemas import (
     ComplianceCheckResponse,

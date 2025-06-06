@@ -10,6 +10,9 @@ from app.api.v1.endpoints import (
     providers,
     config,
     performance,
+    templates,
+    auto_population,
+    voice,
 )
 from app.api.auth.routes import router as auth_router
 
@@ -38,4 +41,19 @@ api_router.include_router(
     performance.router,
     prefix="/performance",
     tags=["performance"]
+)
+api_router.include_router(
+    templates.router,
+    prefix="/templates",
+    tags=["templates"]
+)
+api_router.include_router(
+    auto_population.router,
+    prefix="/auto-population",
+    tags=["auto-population"]
+)
+api_router.include_router(
+    voice.router,
+    prefix="/voice",
+    tags=["voice-transcription"]
 )

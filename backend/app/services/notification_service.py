@@ -8,7 +8,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from app.services.aws_kms import KMSService
-from app.services.encryption import EncryptionService
+from app.services.encryption_service import LocalEncryptionService
 from app.core.config import settings
 from app.models.notification import NotificationModel
 from app.schemas.notification import NotificationCreate, NotificationStatus
@@ -41,7 +41,7 @@ class NotificationService:
         """Initialize notification service."""
         self.db = db
         self.kms_service = KMSService()
-        self.encryption_service = EncryptionService()
+        self.encryption_service = LocalEncryptionService()
 
         # Initialize channel-specific services
         self.email_service = None  # Will be initialized on demand

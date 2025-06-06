@@ -88,6 +88,35 @@ try:
 except ImportError:
     pass
 
+try:
+    from .templates import (
+        WoundCareTemplate,
+        TemplateUsageLog,
+        TemplateCategory,
+        TemplateField,
+    )
+except ImportError:
+    pass
+
+try:
+    from .auto_population import (
+        AutoPopulationSource,
+        AutoPopulationRecord,
+        InsuranceDatabase,
+        PatientHistoryCache,
+    )
+except ImportError:
+    pass
+
+try:
+    from .voice_transcription import (
+        VoiceTranscription,
+        VoiceTranscriptionSettings,
+        VoiceTranscriptionAnalytics,
+    )
+except ImportError:
+    pass
+
 __all__ = [
     "User",
     "Organization",
@@ -127,4 +156,15 @@ __all__ = [
     "StockLevel",
     "ReturnAuthorization",
     "ReturnInspection",
+    "WoundCareTemplate",
+    "TemplateUsageLog",
+    "TemplateCategory",
+    "TemplateField",
+    "AutoPopulationSource",
+    "AutoPopulationRecord",
+    "InsuranceDatabase",
+    "PatientHistoryCache",
+    "VoiceTranscription",
+    "VoiceTranscriptionSettings",
+    "VoiceTranscriptionAnalytics",
 ]
