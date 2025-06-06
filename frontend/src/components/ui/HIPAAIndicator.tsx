@@ -1,6 +1,5 @@
-import React from 'react';
-import { Box, Tooltip, Typography } from '@mui/material';
-import { Shield, Lock, InfoOutlined } from '@mui/icons-material';
+import React, { useState } from 'react';
+import { ShieldCheckIcon, LockClosedIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
 
 interface HIPAAIndicatorProps {
   type: 'section' | 'field' | 'form';
@@ -13,16 +12,18 @@ export const HIPAAIndicator: React.FC<HIPAAIndicatorProps> = ({
   message,
   encrypted = true,
 }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   const getIcon = () => {
     switch (type) {
       case 'section':
-        return <Shield sx={{ fontSize: 16 }} />;
+        return <ShieldCheckIcon className="h-4 w-4" />;
       case 'field':
-        return <Lock sx={{ fontSize: 16 }} />;
+        return <LockClosedIcon className="h-4 w-4" />;
       case 'form':
-        return <InfoOutlined sx={{ fontSize: 16 }} />;
+        return <InformationCircleIcon className="h-4 w-4" />;
       default:
-        return <Shield sx={{ fontSize: 16 }} />;
+        return <ShieldCheckIcon className="h-4 w-4" />;
     }
   };
 
@@ -41,34 +42,28 @@ export const HIPAAIndicator: React.FC<HIPAAIndicatorProps> = ({
     }
   };
 
+  const tooltipMessage = message || getDefaultMessage();
+
   return (
-    <Tooltip title={message || getDefaultMessage()}>
-      <Box
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 0.5,
-          px: 1,
-          py: 0.5,
-          borderRadius: 1,
-          bgcolor: 'rgba(46, 134, 171, 0.08)',
-          color: 'primary.main',
-          border: '1px solid',
-          borderColor: 'rgba(46, 134, 171, 0.2)',
-        }}
+    <div className="relative inline-flex">
+      <div
+        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-50 text-blue-700 border border-blue-200 cursor-help"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
       >
         {getIcon()}
-        <Typography
-          variant="caption"
-          component="span"
-          sx={{
-            fontWeight: 500,
-            display: { xs: 'none', sm: 'inline' },
-          }}
-        >
+        <span className="text-xs font-medium hidden sm:inline">
           HIPAA
-        </Typography>
-      </Box>
-    </Tooltip>
+        </span>
+      </div>
+
+      {/* Tooltip */}
+      {showTooltip && (
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 text-xs text-white bg-gray-900 rounded-lg shadow-lg whitespace-nowrap z-50">
+          {tooltipMessage}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+        </div>
+      )}
+    </div>
   );
-}; 
+};

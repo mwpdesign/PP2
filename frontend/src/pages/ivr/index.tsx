@@ -164,7 +164,7 @@ const IVRManagementPage: React.FC = () => {
   const [newReviewNote, setNewReviewNote] = useState('');
 
   // Role checks
-  const isIVRSpecialist = user?.role === 'IVRCompany';
+  const isIVRSpecialist = user?.role === 'IVR';
   const isDoctor = user?.role === 'Doctor';
 
   useEffect(() => {
@@ -172,13 +172,32 @@ const IVRManagementPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+
+        console.log('🚀 Loading IVR requests...');
+        console.log('👤 Current user:', user);
+        console.log('🩺 Is doctor:', isDoctor);
+        console.log('📧 User email:', user?.email);
+
         const response = await mockIVRService.getQueue({ page: 1, size: 20 });
-        
+
+        console.log('📥 Raw response items:', response.items.length);
+        console.log('📋 All IVR requests:', response.items.map(req => ({
+          id: req.id,
+          providerId: req.provider?.id,
+          providerName: req.provider?.name,
+          patientName: `${req.patient?.firstName} ${req.patient?.lastName}`
+        })));
+
         // Filter requests based on role
         const filteredRequests = isDoctor
-          ? response.items.filter(req => req.provider?.id === user?.id)
+          ? response.items.filter(req => {
+              const match = req.provider?.id === user?.email;
+              console.log(`🔍 IVR ${req.id}: provider ${req.provider?.id} === user ${user?.email} = ${match}`);
+              return match;
+            })
           : response.items;
-          
+
+        console.log('✅ Filtered requests for doctor:', filteredRequests.length);
         setRequests(filteredRequests);
       } catch (err) {
         console.error('Failed to load IVR requests:', err);
@@ -189,7 +208,7 @@ const IVRManagementPage: React.FC = () => {
     };
 
     loadRequests();
-  }, [isDoctor, user?.id]);
+  }, [isDoctor, user?.email]);
 
   const handleUpdateStatus = async (id: string, newStatus: IVRStatus, note?: string) => {
     if (!isIVRSpecialist || !user) {
@@ -198,18 +217,20 @@ const IVRManagementPage: React.FC = () => {
     }
 
     try {
-      const updatedRequest = await mockIVRService.updateStatus(id, newStatus, user.id);
-      
+      const updatedRequest = await mockIVRService.updateStatus(id, newStatus, user.email || 'unknown');
+
       // Add review note if provided
       if (note) {
         const userWithName: User = {
-          ...user,
-          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email
+          id: user.email || 'unknown',
+          email: user.email,
+          role: user.role || 'Doctor',
+          name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email
         };
         await mockIVRService.addReviewNote(id, note, userWithName, false);
       }
-      
-      setRequests(prev => prev.map(req => 
+
+      setRequests(prev => prev.map(req =>
         req.id === updatedRequest.id ? updatedRequest : req
       ));
       toast.success(`Request ${newStatus.toLowerCase()} successfully`);
@@ -225,11 +246,13 @@ const IVRManagementPage: React.FC = () => {
 
     try {
       const userWithName: User = {
-        ...user,
-        name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email
+        id: user.email || 'unknown',
+        email: user.email,
+        role: user.role || 'Doctor',
+        name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email
       };
       const updatedRequest = await mockIVRService.addCommunication(requestId, newMessage, userWithName);
-      setRequests(prev => prev.map(req => 
+      setRequests(prev => prev.map(req =>
         req.id === updatedRequest.id ? updatedRequest : req
       ));
       setNewMessage('');
@@ -245,11 +268,13 @@ const IVRManagementPage: React.FC = () => {
 
     try {
       const userWithName: User = {
-        ...user,
-        name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email
+        id: user.email || 'unknown',
+        email: user.email,
+        role: user.role || 'Doctor',
+        name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email
       };
       const updatedRequest = await mockIVRService.addReviewNote(requestId, newReviewNote, userWithName, true);
-      setRequests(prev => prev.map(req => 
+      setRequests(prev => prev.map(req =>
         req.id === updatedRequest.id ? updatedRequest : req
       ));
       setNewReviewNote('');
@@ -364,7 +389,7 @@ const IVRManagementPage: React.FC = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {requests.map((request) => (
               <React.Fragment key={request.id}>
-                <tr 
+                <tr
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => setExpandedRow(expandedRow === request.id ? null : request.id)}
                 >
@@ -449,8 +474,8 @@ const IVRManagementPage: React.FC = () => {
                           <h4 className="text-lg font-semibold mb-4">Review Notes</h4>
                           <div className="space-y-4 max-h-60 overflow-y-auto">
                             {request.reviewNotes.map((note) => (
-                              <div 
-                                key={note.id} 
+                              <div
+                                key={note.id}
                                 className={`p-4 rounded-lg ${note.isInternal ? 'bg-yellow-50' : 'bg-[#2C3E50] bg-opacity-5'}`}
                               >
                                 <div className="flex justify-between items-start mb-2">
@@ -525,7 +550,7 @@ const IVRManagementPage: React.FC = () => {
                           <h4 className="text-lg font-semibold mb-4">Communication</h4>
                           <div className="space-y-4 max-h-60 overflow-y-auto">
                             {request.communication.map((msg) => (
-                              <div 
+                              <div
                                 key={msg.id}
                                 className={`p-4 rounded-lg ${
                                   msg.author.role === 'IVRCompany' ? 'bg-[#2C3E50] bg-opacity-5 ml-8' : 'bg-green-50 mr-8'
@@ -578,4 +603,4 @@ const IVRManagementPage: React.FC = () => {
   );
 };
 
-export default IVRManagementPage; 
+export default IVRManagementPage;

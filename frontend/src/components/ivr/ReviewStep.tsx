@@ -77,7 +77,9 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ patient, formData }) => {
             </dd>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            {renderField('Q Code', formData.treatmentInfo.qCode)}
+            {renderField('Q Code Product', formData.treatmentInfo.qCodeProduct)}
+            {renderField('Product Size', formData.treatmentInfo.qCodeSize)}
+            {renderField('Full Q Code', formData.treatmentInfo.qCode)}
             {renderField('Start Date', formData.treatmentInfo.startDate && format(new Date(formData.treatmentInfo.startDate), 'MMM d, yyyy'))}
             {renderField('Number of Applications', formData.treatmentInfo.numberOfApplications)}
             {renderField('Frequency', formData.treatmentInfo.frequency)}
@@ -170,4 +172,4 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ patient, formData }) => {
   );
 };
 
-export default ReviewStep; 
+export default ReviewStep;

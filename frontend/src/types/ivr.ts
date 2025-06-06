@@ -220,6 +220,8 @@ export interface PhysicianInfo {
 export interface TreatmentInfo {
   skinSubstituteAcknowledged: boolean;
   qCode: string;
+  qCodeProduct: string; // Product type: 'Q4347' or 'Q4250'
+  qCodeSize: string; // Size: '2X2', '2X3', etc.
   startDate: string;
   numberOfApplications: number;
   frequency: 'weekly' | 'bi-weekly' | 'monthly' | 'other';
@@ -330,18 +332,38 @@ export const mockProducts: Product[] = [
   }
 ];
 
-// Add Q Code options
+// Q Code product types
+export const QCodeProductOptions = [
+  { value: 'Q4347', label: 'Q4347 - RAMPART Wound Care Matrix' },
+  { value: 'Q4250', label: 'Q4250 - AMNIO-AMP Amniotic Membrane' }
+];
+
+// Q Code size options
+export const QCodeSizeOptions = [
+  { value: '2X2', label: '2X2 (4 cm²)', surfaceArea: 4 },
+  { value: '2X3', label: '2X3 (6 cm²)', surfaceArea: 6 },
+  { value: '2X4', label: '2X4 (8 cm²)', surfaceArea: 8 },
+  { value: '4X4', label: '4X4 (16 cm²)', surfaceArea: 16 },
+  { value: '4X6', label: '4X6 (24 cm²)', surfaceArea: 24 },
+  { value: '4X8', label: '4X8 (32 cm²)', surfaceArea: 32 }
+];
+
+// Legacy QCodeOptions for backward compatibility
 export const QCodeOptions = [
-  { value: 'Q4101', label: 'Q4101 - Apligraf' },
-  { value: 'Q4102', label: 'Q4102 - Oasis Wound Matrix' },
-  { value: 'Q4106', label: 'Q4106 - Dermagraft' },
-  { value: 'Q4110', label: 'Q4110 - PriMatrix' },
-  { value: 'Q4116', label: 'Q4116 - Alloderm' },
-  { value: 'Q4121', label: 'Q4121 - TheraSkin' },
-  { value: 'Q4124', label: 'Q4124 - OASIS Ultra Tri-Layer Matrix' },
-  { value: 'Q4128', label: 'Q4128 - FlexHD' },
-  { value: 'Q4132', label: 'Q4132 - Grafix Core' },
-  { value: 'Q4133', label: 'Q4133 - Grafix Prime' }
+  // RAMPART Q-4347 Wound Care Matrix
+  { value: 'Q4347-2X2', label: 'Q4347 - RAMPART 2X2 (4 cm²)' },
+  { value: 'Q4347-2X3', label: 'Q4347 - RAMPART 2X3 (6 cm²)' },
+  { value: 'Q4347-2X4', label: 'Q4347 - RAMPART 2X4 (8 cm²)' },
+  { value: 'Q4347-4X4', label: 'Q4347 - RAMPART 4X4 (16 cm²)' },
+  { value: 'Q4347-4X6', label: 'Q4347 - RAMPART 4X6 (24 cm²)' },
+  { value: 'Q4347-4X8', label: 'Q4347 - RAMPART 4X8 (32 cm²)' },
+  // AMNIO-AMP Q-4250 Amniotic Membrane
+  { value: 'Q4250-2X2', label: 'Q4250 - AMNIO-AMP 2X2 (4 cm²)' },
+  { value: 'Q4250-2X3', label: 'Q4250 - AMNIO-AMP 2X3 (6 cm²)' },
+  { value: 'Q4250-2X4', label: 'Q4250 - AMNIO-AMP 2X4 (8 cm²)' },
+  { value: 'Q4250-4X4', label: 'Q4250 - AMNIO-AMP 4X4 (16 cm²)' },
+  { value: 'Q4250-4X6', label: 'Q4250 - AMNIO-AMP 4X6 (24 cm²)' },
+  { value: 'Q4250-4X8', label: 'Q4250 - AMNIO-AMP 4X8 (32 cm²)' }
 ];
 
 export const FrequencyOptions = [

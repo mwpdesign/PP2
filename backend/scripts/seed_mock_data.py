@@ -40,6 +40,7 @@ from app.models.provider import Provider
 from app.models.ivr import IVRRequest, IVRStatusHistory
 from app.models.audit import AuditLog
 from app.models.sensitive_data import SensitiveData
+from app.models.product import Product
 
 # Configure logging
 logging.basicConfig(
@@ -62,6 +63,7 @@ class MockDataSeeder:
             'facilities': [],
             'providers': [],
             'patients': [],
+            'products': [],
             'ivr_requests': [],
             'orders': [],
             'audit_logs': []
@@ -507,6 +509,43 @@ class MockDataSeeder:
 
         return ivr_requests
 
+    async def create_products(self, session) -> List[Product]:
+        """Create Q code wound care products."""
+        products_data = self.load_json_data("mock_products.json")
+        products = []
+
+        for product_data in products_data:
+            product_id = UUID(product_data["id"])
+
+            # Check if product exists
+            result = await session.execute(
+                select(Product).where(Product.id == product_id)
+            )
+            product = result.scalar_one_or_none()
+
+            if not product:
+                logger.info(f"Creating product: {product_data['name']}")
+
+                product = Product(
+                    id=product_id,
+                    name=product_data["name"],
+                    description=product_data["description"],
+                    sku=product_data["sku"],
+                    hcpcs_code=product_data.get("hcpcs_code"),
+                    category=product_data["category"],
+                    unit_price=product_data["unit_price"],
+                    is_active=product_data["is_active"],
+                    product_metadata=product_data.get("product_metadata", {})
+                )
+
+                session.add(product)
+                await session.flush()
+                self.created_entities['products'].append(product.id)
+
+            products.append(product)
+
+        return products
+
     async def create_audit_logs(self, session, org: Organization, users: Dict[str, User]) -> None:
         """Create sample audit logs for HIPAA compliance demonstration."""
         admin_user = users.get("Admin")
@@ -594,10 +633,13 @@ class MockDataSeeder:
                     # 6. Create patients
                     patients = await self.create_patients(session, org, users, facilities, providers)
 
-                    # 7. Create IVR requests
+                    # 7. Create products
+                    products = await self.create_products(session)
+
+                    # 8. Create IVR requests
                     ivr_requests = await self.create_ivr_requests(session, patients, users, providers, facilities)
 
-                    # 8. Create audit logs
+                    # 9. Create audit logs
                     await self.create_audit_logs(session, org, users)
 
                     logger.info("All mock data seeded successfully!")

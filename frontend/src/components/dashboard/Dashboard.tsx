@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Home,
   Users,
@@ -388,6 +389,7 @@ const PatientManagement: React.FC = () => {
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
+  const navigate = useNavigate();
   const [currentPath, setCurrentPath] = useState('/dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
@@ -397,7 +399,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
   };
 
   const handleNavigation = (path: string) => {
-    setCurrentPath(path);
+    navigate(path);
   };
 
   const handleAddNewPatient = (patientData: any) => {

@@ -11,7 +11,8 @@ import {
   Eye,
   FileText,
   Camera,
-  RotateCcw
+  RotateCcw,
+  Zap
 } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
@@ -19,12 +20,14 @@ import patientService from '../../services/patientService';
 import PhoneInput from '../shared/PhoneInput';
 import StateSelect from '../shared/StateSelect';
 import { toast } from 'react-hot-toast';
-import { QuickTemplates } from '../speed-tools/QuickTemplates';
+import QuickTemplates from '../speed-tools/QuickTemplates';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 
 interface NewPatientFormProps {
   onClose: () => void;
   onSave: (patientData: any) => void;
+  editMode?: boolean;
+  initialData?: any;
 }
 
 interface FormSection {
@@ -346,7 +349,7 @@ const UploadArea: React.FC<UploadAreaProps> = ({
   );
 };
 
-export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave }) => {
+export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave, editMode = false, initialData }) => {
   const navigate = useNavigate();
   const [currentSection, setCurrentSection] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
@@ -357,35 +360,71 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
   const [isPartAStay, setIsPartAStay] = useState(false);
   const [medicalNotes, setMedicalNotes] = useState('');
   const [isAutoSaving, setIsAutoSaving] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    firstName: '',
-    middleName: '',
-    lastName: '',
-    dateOfBirth: '',
-    gender: '',
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [formData, setFormData] = useState<FormData>(() => {
+    if (editMode && initialData) {
+      return {
+        firstName: initialData.firstName || '',
+        middleName: '',
+        lastName: initialData.lastName || '',
+        dateOfBirth: initialData.dateOfBirth || '',
+        gender: '',
 
-    address: '',
-    city: '',
-    state: '',
-    zip: '',
+        address: initialData.address || '',
+        city: initialData.city || '',
+        state: initialData.state || '',
+        zip: initialData.zipCode || '',
 
-    governmentIdType: '',
-    governmentId: null,
+        governmentIdType: '',
+        governmentId: null,
 
-    primaryInsurance: {
-      provider: '',
-      policyNumber: '',
-      payerPhone: '',
-      cardFront: null,
-      cardBack: null
-    },
-    secondaryInsurance: {
-      provider: '',
-      policyNumber: '',
-      payerPhone: '',
-      cardFront: null,
-      cardBack: null
+        primaryInsurance: {
+          provider: initialData.insuranceInfo?.provider || '',
+          policyNumber: initialData.insuranceInfo?.policyNumber || '',
+          payerPhone: '',
+          cardFront: null,
+          cardBack: null
+        },
+        secondaryInsurance: {
+          provider: '',
+          policyNumber: '',
+          payerPhone: '',
+          cardFront: null,
+          cardBack: null
+        }
+      };
     }
+
+    return {
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      dateOfBirth: '',
+      gender: '',
+
+      address: '',
+      city: '',
+      state: '',
+      zip: '',
+
+      governmentIdType: '',
+      governmentId: null,
+
+      primaryInsurance: {
+        provider: '',
+        policyNumber: '',
+        payerPhone: '',
+        cardFront: null,
+        cardBack: null
+      },
+      secondaryInsurance: {
+        provider: '',
+        policyNumber: '',
+        payerPhone: '',
+        cardFront: null,
+        cardBack: null
+      }
+    };
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -706,38 +745,44 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
   };
 
   return (
-    <div className="fixed inset-0 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center">
+    <>
+      <Transition appear show={true} as={Fragment}>
         <Dialog
           as="div"
           className="fixed inset-0 z-10 overflow-y-auto"
           onClose={handleClose}
           open={true}
         >
-          <div className="min-h-screen px-4 text-center">
-            <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+        <div className="min-h-screen px-4 text-center">
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50" />
+          </Transition.Child>
 
-            <div className="inline-block w-full max-w-4xl my-8 p-6 text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
-              <Transition appear show={true} as={Fragment}>
-                <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" />
+          <span className="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
 
-                <span className="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
-
-                <Transition.Child
-                  as={Fragment}
-                  enter="ease-out duration-300"
-                  enterFrom="opacity-0 scale-95"
-                  enterTo="opacity-100 scale-100"
-                  leave="ease-in duration-200"
-                  leaveFrom="opacity-100 scale-100"
-                  leaveTo="opacity-0 scale-95"
-                >
-                  <div className="inline-block w-full max-w-[1000px] my-8 text-left align-middle transition-all transform bg-white rounded-xl shadow-2xl">
+          <Transition.Child
+            as="div"
+            className="inline-block w-full max-w-[1000px] my-8 text-left align-middle transition-all transform bg-white rounded-xl shadow-2xl"
+            enter="ease-out duration-300"
+            enterFrom="opacity-0 scale-95"
+            enterTo="opacity-100 scale-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100 scale-100"
+            leaveTo="opacity-0 scale-95"
+          >
                     {/* Header */}
                     <div className="px-8 py-5 border-b border-gray-200 flex items-center justify-between bg-[#1E293B] text-white rounded-t-xl">
                       <div className="flex items-center space-x-4">
                         <Dialog.Title as="h2" className="text-2xl font-semibold">
-                          Patient and Insurance Information
+                          {editMode ? 'Edit Patient Information' : 'Patient and Insurance Information'}
                         </Dialog.Title>
 
                         {/* Auto-save indicator */}
@@ -767,17 +812,23 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                     {/* Form */}
                     <form onSubmit={handleSubmit}>
                       <div className="max-h-[calc(100vh-200px)] overflow-y-auto px-8 py-6">
-                        {/* Quick Templates */}
-                        <QuickTemplates
-                          onTemplateSelect={(templateData) => {
-                            setFormData(prev => ({
-                              ...prev,
-                              ...templateData
-                            }));
-                            toast.success('Template applied successfully');
-                          }}
-                          formType="patient_registration"
-                        />
+                        {/* Quick Templates Button */}
+                        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-sm font-medium text-blue-900">Speed up your workflow</h3>
+                              <p className="text-sm text-blue-700">Use pre-built templates for common wound care scenarios</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setShowTemplates(true)}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                            >
+                              <Zap className="w-4 h-4" />
+                              <span>Quick Templates</span>
+                            </button>
+                          </div>
+                        </div>
 
                         {/* Patient Information */}
                         <div className="space-y-8">
@@ -1410,7 +1461,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                               ) : (
                                 <>
                                   <Save className="w-5 h-5 mr-2" />
-                                  Save Patient
+                                  {isSaving ? (editMode ? 'Saving...' : 'Registering...') : (editMode ? 'Save Changes' : 'Save Patient')}
                                 </>
                               )}
                             </button>
@@ -1418,13 +1469,26 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                         </div>
                       </div>
                     </form>
-                  </div>
-                </Transition.Child>
-              </Transition>
-            </div>
-          </div>
-        </Dialog>
-      </div>
-    </div>
-  );
+                  </Transition.Child>
+                </div>
+              </Dialog>
+            </Transition>
+
+            {/* Quick Templates Modal */}
+            {showTemplates && (
+              <QuickTemplates
+                onTemplateSelect={(templateData) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    ...templateData
+                  }));
+                  toast.success('Template applied successfully');
+                  setShowTemplates(false);
+                }}
+                onClose={() => setShowTemplates(false)}
+                currentFormData={formData}
+              />
+            )}
+          </>
+        );
 };

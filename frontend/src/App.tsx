@@ -147,6 +147,7 @@ const App = () => {
 
                     {/* Other Routes */}
                     <Route path="orders" element={<OrderManagementPage />} />
+                    <Route path="shipping" element={<ShippingPage />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                   </Route>

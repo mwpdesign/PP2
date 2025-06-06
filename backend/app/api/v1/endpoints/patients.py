@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import logging
 import os
+import re
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
@@ -37,6 +38,155 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def get_mock_patient_data(patient_id: str) -> dict:
+    """Return mock patient data for development/testing purposes"""
+    mock_patients = {
+        "P-1234": {
+            "id": "P-1234",
+            "first_name": "John",
+            "last_name": "Smith",
+            "email": "john.smith@email.com",
+            "phone_number": "(555) 123-4567",
+            "date_of_birth": "1980-05-15",
+            "address": "123 Main St",
+            "city": "Boston",
+            "state": "MA",
+            "zip_code": "02101",
+            "primary_condition": "Chronic wound care",
+            "last_visit_date": "2024-03-15",
+            "insurance_provider": "Blue Cross Blue Shield",
+            "insurance_id": "BCBS123456",
+            "insurance_group": "GRP001",
+            "insurance_verified": True,
+            "status": "active",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-03-15T00:00:00Z",
+            "documents": [
+                {
+                    "id": "doc-1",
+                    "display_name": "Insurance Card Front",
+                    "file_name": "insurance_front.jpg",
+                    "document_type": "insurance",
+                    "created_at": "2024-01-01T00:00:00Z",
+                    "file_size": 1024000
+                },
+                {
+                    "id": "doc-2",
+                    "display_name": "Medical Records",
+                    "file_name": "medical_records.pdf",
+                    "document_type": "medical",
+                    "created_at": "2024-02-01T00:00:00Z",
+                    "file_size": 2048000
+                }
+            ]
+        },
+        "P-1235": {
+            "id": "P-1235",
+            "first_name": "Sarah",
+            "last_name": "Johnson",
+            "email": "sarah.johnson@email.com",
+            "phone_number": "(555) 234-5678",
+            "date_of_birth": "1992-08-21",
+            "address": "456 Oak Ave",
+            "city": "Boston",
+            "state": "MA",
+            "zip_code": "02102",
+            "primary_condition": "Post-surgical wound",
+            "last_visit_date": "2024-03-14",
+            "insurance_provider": "UnitedHealthcare",
+            "insurance_id": "UHC789012",
+            "insurance_group": "GRP002",
+            "insurance_verified": True,
+            "status": "active",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-03-14T00:00:00Z",
+            "documents": []
+        },
+        "P-1236": {
+            "id": "P-1236",
+            "first_name": "Michael",
+            "last_name": "Brown",
+            "email": "michael.brown@email.com",
+            "phone_number": "(555) 345-6789",
+            "date_of_birth": "1975-12-03",
+            "address": "789 Pine St",
+            "city": "Boston",
+            "state": "MA",
+            "zip_code": "02103",
+            "primary_condition": "Diabetic ulcer",
+            "last_visit_date": "2024-03-10",
+            "insurance_provider": "Aetna",
+            "insurance_id": "AET345678",
+            "insurance_group": "GRP003",
+            "insurance_verified": True,
+            "status": "active",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-03-10T00:00:00Z",
+            "documents": []
+        },
+        "P-1237": {
+            "id": "P-1237",
+            "first_name": "Emily",
+            "last_name": "Davis",
+            "email": "emily.davis@email.com",
+            "phone_number": "(555) 456-7890",
+            "date_of_birth": "1988-03-30",
+            "address": "321 Elm St",
+            "city": "Boston",
+            "state": "MA",
+            "zip_code": "02104",
+            "primary_condition": "Pressure sore",
+            "last_visit_date": "2024-02-28",
+            "insurance_provider": "Cigna",
+            "insurance_id": "CIG901234",
+            "insurance_group": "GRP004",
+            "insurance_verified": False,
+            "status": "active",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-02-28T00:00:00Z",
+            "documents": []
+        },
+        "P-1238": {
+            "id": "P-1238",
+            "first_name": "David",
+            "last_name": "Wilson",
+            "email": "david.wilson@email.com",
+            "phone_number": "(555) 567-8901",
+            "date_of_birth": "1965-09-12",
+            "address": "654 Maple Ave",
+            "city": "Boston",
+            "state": "MA",
+            "zip_code": "02105",
+            "primary_condition": "Venous leg ulcer",
+            "last_visit_date": "2024-03-18",
+            "insurance_provider": "Medicare",
+            "insurance_id": "MED567890",
+            "insurance_group": "GRP005",
+            "insurance_verified": True,
+            "status": "active",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-03-18T00:00:00Z",
+            "documents": []
+        }
+    }
+
+    return mock_patients.get(patient_id)
+
+
+def is_mock_patient_id(patient_id: str) -> bool:
+    """Check if the patient ID is a mock ID (format: P-XXXX)"""
+    return bool(re.match(r'^P-\d{4}$', patient_id))
+
+
+def is_valid_uuid(patient_id: str) -> bool:
+    """Check if the patient ID is a valid UUID"""
+    try:
+        UUID(patient_id)
+        return True
+    except ValueError:
+        return False
 
 
 @router.get("", response_model=PatientSearchResults)
@@ -142,18 +292,46 @@ async def register_patient(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get("/{patient_id}", response_model=PatientSchema)
+@router.get("/{patient_id}")
 async def get_patient(
-    patient_id: UUID,
+    patient_id: str,  # Changed from UUID to str to handle both formats
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
-) -> Patient:
-    """Get patient by ID with documents"""
+):
+    """Get patient by ID with documents - supports both UUID and mock IDs"""
+
+    # Check if it's a mock patient ID
+    if is_mock_patient_id(patient_id):
+        mock_data = get_mock_patient_data(patient_id)
+        if not mock_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Mock patient not found"
+            )
+        return mock_data
+
+    # Validate as UUID for production IDs
+    if not is_valid_uuid(patient_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid patient ID format. Expected UUID or mock ID "
+            "(P-XXXX)"
+        )
+
+    # Convert to UUID for database query
+    try:
+        patient_uuid = UUID(patient_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid UUID format"
+        )
+
     # Use selectinload to eagerly load documents
     query = (
         select(Patient)
         .options(selectinload(Patient.documents))
-        .where(Patient.id == patient_id)
+        .where(Patient.id == patient_uuid)
     )
     result = await db.execute(query)
     patient = result.scalar_one_or_none()
@@ -177,12 +355,28 @@ async def get_patient(
 async def update_patient(
     *,
     db: AsyncSession = Depends(get_db),
-    patient_id: UUID,
+    patient_id: str,  # Changed from UUID to str
     patient_in: PatientUpdate,
     current_user: TokenData = Depends(get_current_user),
 ) -> Patient:
     """Update patient"""
-    patient = await db.get(Patient, patient_id)
+
+    # Mock patients cannot be updated
+    if is_mock_patient_id(patient_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mock patients cannot be updated"
+        )
+
+    # Validate as UUID
+    if not is_valid_uuid(patient_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid patient ID format"
+        )
+
+    patient_uuid = UUID(patient_id)
+    patient = await db.get(Patient, patient_uuid)
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
@@ -209,12 +403,28 @@ async def update_patient(
 
 @router.delete("/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_patient(
-    patient_id: UUID,
+    patient_id: str,  # Changed from UUID to str
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
 ):
     """Delete patient"""
-    patient = await db.get(Patient, patient_id)
+
+    # Mock patients cannot be deleted
+    if is_mock_patient_id(patient_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mock patients cannot be deleted"
+        )
+
+    # Validate as UUID
+    if not is_valid_uuid(patient_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid patient ID format"
+        )
+
+    patient_uuid = UUID(patient_id)
+    patient = await db.get(Patient, patient_uuid)
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
@@ -233,7 +443,7 @@ async def delete_patient(
 
 @router.post("/{patient_id}/documents", response_model=PatientDocumentSchema)
 async def upload_patient_document(
-    patient_id: UUID,
+    patient_id: str,  # Changed from UUID to str
     document: UploadFile = File(...),
     document_type: str = Form(...),
     document_category: str = Form(...),
@@ -242,8 +452,25 @@ async def upload_patient_document(
     current_user: TokenData = Depends(get_current_user),
 ):
     """Upload patient document"""
+
+    # Mock patients cannot have documents uploaded
+    if is_mock_patient_id(patient_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot upload documents for mock patients"
+        )
+
+    # Validate as UUID
+    if not is_valid_uuid(patient_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid patient ID format"
+        )
+
+    patient_uuid = UUID(patient_id)
+
     # Verify patient exists
-    patient = await db.get(Patient, patient_id)
+    patient = await db.get(Patient, patient_uuid)
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
@@ -262,7 +489,7 @@ async def upload_patient_document(
 
         # Generate S3 key
         s3_key = (
-            f"patients/{patient_id}/documents/"
+            f"patients/{patient_uuid}/documents/"
             f"{document_category}_{document.filename}"
         )
 
@@ -273,7 +500,7 @@ async def upload_patient_document(
             s3_key=s3_key,
             content_type=document.content_type or "application/octet-stream",
             metadata={
-                "patient_id": str(patient_id),
+                "patient_id": str(patient_uuid),
                 "document_type": document_type,
                 "document_category": document_category,
                 "uploaded_by": str(current_user.id),
@@ -283,7 +510,7 @@ async def upload_patient_document(
 
         # Create document record in database
         db_document = PatientDocument(
-            patient_id=patient_id,
+            patient_id=patient_uuid,
             document_type=document_type,
             document_category=document_category,
             file_name=document.filename,
@@ -316,14 +543,37 @@ async def upload_patient_document(
 
 @router.get("/{patient_id}/documents/{document_id}/download")
 async def download_patient_document(
-    patient_id: UUID,
+    patient_id: str,  # Changed from UUID to str
     document_id: UUID,
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
 ):
     """Download patient document"""
+
+    # Mock patients have mock document downloads
+    if is_mock_patient_id(patient_id):
+        # Return a mock download response
+        base_url = "https://mock-storage.example.com"
+        download_url = (f"{base_url}/patients/{patient_id}/documents/"
+                        f"{document_id}")
+        return {
+            "download_url": download_url,
+            "filename": f"mock_document_{document_id}.pdf",
+            "content_type": "application/pdf",
+            "size": 1024000
+        }
+
+    # Validate as UUID
+    if not is_valid_uuid(patient_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid patient ID format"
+        )
+
+    patient_uuid = UUID(patient_id)
+
     # Verify patient exists and user has access
-    patient = await db.get(Patient, patient_id)
+    patient = await db.get(Patient, patient_uuid)
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
@@ -338,7 +588,7 @@ async def download_patient_document(
 
     # Get document
     document = await db.get(PatientDocument, document_id)
-    if not document or document.patient_id != patient_id:
+    if not document or document.patient_id != patient_uuid:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Document not found"
         )

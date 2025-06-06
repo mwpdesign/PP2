@@ -1,9 +1,9 @@
 import { IVRRequest, IVRStatus, IVRPriority, IVRQueueParams, IVRQueueResponse, IVRCommunicationMessage, IVRReviewNote, User } from '../types/ivr';
 import { mockPatients } from './mockPatientService';
 
-// Create mock providers
+// Create mock providers - using email as ID for reliable filtering
 const mockProviders = [
-  { id: 'P1', name: 'Dr. James Wilson', speciality: 'Internal Medicine', npi: '1234567890' },
+  { id: 'doctor@healthcare.local', name: 'Dr. John Smith', speciality: 'Wound Care', npi: '1234567890' },
   { id: 'P2', name: 'Dr. Lisa Chen', speciality: 'Cardiology', npi: '2345678901' },
   { id: 'P3', name: 'Dr. Michael Scott', speciality: 'Family Medicine', npi: '3456789012' }
 ];
@@ -46,7 +46,7 @@ export const mockIVRRequests: IVRRequest[] = [
   {
     id: 'IVR-002',
     patient: mockPatients[1],
-    provider: mockProviders[1],
+    provider: mockProviders[0], // Use Dr. John Smith (doctor user)
     serviceType: 'Follow-up',
     priority: IVRPriority.MEDIUM,
     status: IVRStatus.APPROVED,
@@ -107,7 +107,7 @@ export const mockIVRRequests: IVRRequest[] = [
   {
     id: 'IVR-003',
     patient: mockPatients[3],
-    provider: mockProviders[2],
+    provider: mockProviders[0], // Use Dr. John Smith (doctor user)
     serviceType: 'Procedure Authorization',
     priority: IVRPriority.URGENT,
     status: IVRStatus.IN_REVIEW,
@@ -163,15 +163,178 @@ export const mockIVRRequests: IVRRequest[] = [
         createdAt: new Date().toISOString()
       }
     ]
+  },
+  {
+    id: 'IVR-004',
+    patient: mockPatients[4],
+    provider: mockProviders[0], // Dr. John Smith (doctor user)
+    serviceType: 'Wound Care Authorization',
+    priority: IVRPriority.HIGH,
+    status: IVRStatus.APPROVED,
+    documents: [],
+    statusHistory: [
+      {
+        id: 'SH6',
+        ivrRequestId: 'IVR-004',
+        fromStatus: IVRStatus.DRAFT,
+        toStatus: IVRStatus.SUBMITTED,
+        userId: 'USER1',
+        createdAt: new Date(Date.now() - 172800000).toISOString()
+      },
+      {
+        id: 'SH7',
+        ivrRequestId: 'IVR-004',
+        fromStatus: IVRStatus.SUBMITTED,
+        toStatus: IVRStatus.APPROVED,
+        userId: 'IVR1',
+        createdAt: new Date(Date.now() - 86400000).toISOString()
+      }
+    ],
+    approvals: [
+      {
+        id: 'APP2',
+        ivrRequestId: 'IVR-004',
+        approvalLevel: 1,
+        decision: 'approved',
+        userId: 'IVR1',
+        createdAt: new Date(Date.now() - 86400000).toISOString()
+      }
+    ],
+    escalations: [],
+    facilityId: 'FAC1',
+    createdAt: new Date(Date.now() - 172800000).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+    reviewNotes: [
+      {
+        id: 'RN3',
+        ivrRequestId: 'IVR-004',
+        note: 'Wound care treatment approved. Patient meets all criteria for advanced wound care products.',
+        author: mockIVRSpecialists[0],
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        status: IVRStatus.APPROVED,
+        isInternal: false
+      }
+    ],
+    communication: [
+      {
+        id: 'CM3',
+        author: mockIVRSpecialists[0],
+        message: 'Wound care authorization approved. Products can be ordered.',
+        createdAt: new Date(Date.now() - 86400000).toISOString()
+      }
+    ],
+    reviews: []
+  },
+  {
+    id: 'IVR-005',
+    patient: mockPatients[2],
+    provider: mockProviders[0], // Dr. John Smith (doctor user)
+    serviceType: 'Skin Graft Authorization',
+    priority: IVRPriority.MEDIUM,
+    status: IVRStatus.SUBMITTED,
+    documents: [],
+    statusHistory: [
+      {
+        id: 'SH8',
+        ivrRequestId: 'IVR-005',
+        fromStatus: IVRStatus.DRAFT,
+        toStatus: IVRStatus.SUBMITTED,
+        userId: 'USER1',
+        createdAt: new Date(Date.now() - 21600000).toISOString()
+      }
+    ],
+    approvals: [],
+    escalations: [],
+    facilityId: 'FAC1',
+    createdAt: new Date(Date.now() - 21600000).toISOString(),
+    updatedAt: new Date(Date.now() - 21600000).toISOString(),
+    reviewNotes: [],
+    communication: [],
+    reviews: []
+  },
+  {
+    id: 'IVR-006',
+    patient: mockPatients[1],
+    provider: mockProviders[0], // Dr. John Smith (doctor user)
+    serviceType: 'Negative Pressure Therapy',
+    priority: IVRPriority.HIGH,
+    status: IVRStatus.REJECTED,
+    documents: [],
+    statusHistory: [
+      {
+        id: 'SH9',
+        ivrRequestId: 'IVR-006',
+        fromStatus: IVRStatus.DRAFT,
+        toStatus: IVRStatus.SUBMITTED,
+        userId: 'USER1',
+        createdAt: new Date(Date.now() - 259200000).toISOString()
+      },
+      {
+        id: 'SH10',
+        ivrRequestId: 'IVR-006',
+        fromStatus: IVRStatus.SUBMITTED,
+        toStatus: IVRStatus.REJECTED,
+        userId: 'IVR2',
+        createdAt: new Date(Date.now() - 172800000).toISOString()
+      }
+    ],
+    approvals: [],
+    escalations: [],
+    facilityId: 'FAC1',
+    createdAt: new Date(Date.now() - 259200000).toISOString(),
+    updatedAt: new Date(Date.now() - 172800000).toISOString(),
+    reviewNotes: [
+      {
+        id: 'RN4',
+        ivrRequestId: 'IVR-006',
+        note: 'Request rejected. Patient does not meet criteria for negative pressure therapy. Alternative treatments recommended.',
+        author: mockIVRSpecialists[1],
+        createdAt: new Date(Date.now() - 172800000).toISOString(),
+        status: IVRStatus.REJECTED,
+        isInternal: false
+      }
+    ],
+    communication: [
+      {
+        id: 'CM4',
+        author: mockIVRSpecialists[1],
+        message: 'Request rejected. Please consider alternative wound care options.',
+        createdAt: new Date(Date.now() - 172800000).toISOString()
+      }
+    ],
+    reviews: []
   }
 ];
 
 export const mockIVRService = {
+    getDoctorIVRs: async (doctorEmail: string): Promise<IVRRequest[]> => {
+    console.log('🔍 Fetching IVRs for doctor email:', doctorEmail);
+
+    // Get the current user from localStorage for debugging
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const currentDoctorEmail = user?.email || doctorEmail;
+
+    console.log('👨‍⚕️ Current doctor email from localStorage:', currentDoctorEmail);
+    console.log('📋 Total IVR requests available:', mockIVRRequests.length);
+
+    // Filter IVRs for this doctor
+    const doctorIVRs = mockIVRRequests.filter(ivr => {
+      console.log(`🏥 IVR ${ivr.id} provider_id: ${ivr.provider?.id} vs doctor: ${currentDoctorEmail}`);
+      return ivr.provider?.id === currentDoctorEmail;
+    });
+
+    console.log(`✅ Found ${doctorIVRs.length} IVRs for doctor ${currentDoctorEmail}`);
+    console.log('📊 IVR statuses:', doctorIVRs.map(ivr => `${ivr.id}: ${ivr.status}`));
+
+    return doctorIVRs;
+  },
+
   getQueue: async (params: IVRQueueParams): Promise<IVRQueueResponse> => {
     await new Promise(resolve => setTimeout(resolve, 400)); // Simulate network delay
-    
+
     let filtered = [...mockIVRRequests];
-    
+
     // Apply filters
     if (params.status) {
       filtered = filtered.filter(r => r.status === params.status);
@@ -182,13 +345,13 @@ export const mockIVRService = {
     if (params.facilityId) {
       filtered = filtered.filter(r => r.facilityId === params.facilityId);
     }
-    
+
     // Apply pagination
     const page = params.page || 1;
     const size = params.size || 10;
     const start = (page - 1) * size;
     const end = start + size;
-    
+
     return {
       items: filtered.slice(start, end),
       total: filtered.length,
@@ -196,16 +359,16 @@ export const mockIVRService = {
       size
     };
   },
-  
+
   updateStatus: async (id: string, status: IVRStatus, userId: string = 'USER1'): Promise<IVRRequest> => {
     await new Promise(resolve => setTimeout(resolve, 300));
     const request = mockIVRRequests.find(r => r.id === id);
     if (!request) throw new Error('IVR request not found');
-    
+
     const oldStatus = request.status;
     request.status = status;
     request.updatedAt = new Date().toISOString();
-    
+
     // Add status history
     request.statusHistory.push({
       id: `SH${request.statusHistory.length + 1}`,
@@ -215,7 +378,7 @@ export const mockIVRService = {
       userId,
       createdAt: new Date().toISOString()
     });
-    
+
     return request;
   },
 
@@ -257,7 +420,7 @@ export const mockIVRService = {
 
     return request;
   },
-  
+
   createRequest: async (data: Partial<IVRRequest>): Promise<IVRRequest> => {
     await new Promise(resolve => setTimeout(resolve, 500));
     const newRequest: IVRRequest = {
@@ -274,8 +437,8 @@ export const mockIVRService = {
       communication: [],
       ...data
     } as IVRRequest;
-    
+
     mockIVRRequests.push(newRequest);
     return newRequest;
   }
-}; 
+};

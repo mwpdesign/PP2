@@ -1,6 +1,7 @@
 import React from 'react';
-import { Bars3Icon, BellIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon } from '@heroicons/react/24/outline';
 import { useMobileNavigation } from '../../../contexts/MobileNavigationContext';
+import { MobileNotificationBell } from '../MobileNotificationBell';
 
 interface MobileHeaderProps {
   userInfo?: {
@@ -33,9 +34,9 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ userInfo }) => {
 
         {/* Center - Logo */}
         <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
-          <img 
-            src="/logo2.png" 
-            alt="Healthcare IVR" 
+          <img
+            src="/logo2.png"
+            alt="Healthcare IVR"
             className="h-8 w-auto"
             onError={(e) => {
               const target = e.target as HTMLElement;
@@ -51,9 +52,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ userInfo }) => {
         {/* Right side - User info and notifications */}
         <div className="flex items-center space-x-3">
           {/* Notifications */}
-          <button className="p-1 rounded-full hover:bg-slate-600 transition-colors">
-            <BellIcon className="h-5 w-5" />
-          </button>
+          <MobileNotificationBell />
 
           {/* User info - condensed */}
           {userInfo && (
@@ -74,4 +73,4 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({ userInfo }) => {
   );
 };
 
-export default MobileHeader; 
+export default MobileHeader;

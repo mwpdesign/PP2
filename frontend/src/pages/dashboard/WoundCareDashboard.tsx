@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { ChartCard } from '../../components/shared/DashboardWidgets/ChartCard';
 import {
   UserPlusIcon,
@@ -8,7 +8,8 @@ import {
   DocumentTextIcon,
   ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { NotificationDropdown } from '../../components/shared/NotificationDropdown';
 
 // Mock data for IVR processing trends
 const ivrTrendData = [
@@ -22,13 +23,14 @@ const ivrTrendData = [
 ];
 
 // Mock data for urgent IVR reviews (notifications)
-const urgentItems = [
+const initialUrgentItems = [
   {
     id: 1,
     title: 'Skin Graft IVR Missing Clinical Photos',
     priority: 'Critical',
     time: '10 mins ago',
     priorityColor: 'red',
+    isRead: false,
   },
   {
     id: 2,
@@ -36,6 +38,7 @@ const urgentItems = [
     priority: 'High',
     time: '25 mins ago',
     priorityColor: 'orange',
+    isRead: false,
   },
   {
     id: 3,
@@ -43,6 +46,7 @@ const urgentItems = [
     priority: 'Medium',
     time: '1 hour ago',
     priorityColor: 'yellow',
+    isRead: true,
   },
   {
     id: 4,
@@ -50,6 +54,7 @@ const urgentItems = [
     priority: 'Medium',
     time: '2 hours ago',
     priorityColor: 'yellow',
+    isRead: true,
   },
 ];
 
@@ -61,6 +66,8 @@ const recentActivity = [
     description: 'Submitted by Dr. Johnson',
     time: '5 mins ago',
     color: 'blue',
+    type: 'ivr',
+    itemId: '2847',
   },
   {
     id: 2,
@@ -68,6 +75,8 @@ const recentActivity = [
     description: 'Approved by Insurance Team',
     time: '12 mins ago',
     color: 'green',
+    type: 'order',
+    itemId: '1923',
   },
   {
     id: 3,
@@ -75,6 +84,8 @@ const recentActivity = [
     description: 'En route to patient #4567',
     time: '18 mins ago',
     color: 'purple',
+    type: 'order',
+    itemId: '4567',
   },
   {
     id: 4,
@@ -82,6 +93,8 @@ const recentActivity = [
     description: 'Pending clinical review',
     time: '25 mins ago',
     color: 'yellow',
+    type: 'ivr',
+    itemId: '4821',
   },
 ];
 
@@ -113,7 +126,45 @@ const quickActions = [
 ];
 
 const WoundCareDashboard: React.FC = () => {
-  const urgentNotifications = 2; // Number of new urgent items
+  const navigate = useNavigate();
+  const [urgentItems, setUrgentItems] = useState(initialUrgentItems);
+  const [selectedNotification, setSelectedNotification] = useState<number | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
+  const notificationRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+
+  const urgentNotifications = urgentItems.filter(item => !item.isRead).length;
+
+  const handleNotificationClick = (notificationId: number, event: React.MouseEvent) => {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setDropdownPosition({
+      top: rect.bottom + 8,
+      left: rect.left
+    });
+    setSelectedNotification(notificationId);
+  };
+
+  const handleMarkAsRead = (notificationId: number) => {
+    setUrgentItems(prev =>
+      prev.map(item =>
+        item.id === notificationId ? { ...item, isRead: true } : item
+      )
+    );
+    setSelectedNotification(null);
+  };
+
+  const handleCloseDropdown = () => {
+    setSelectedNotification(null);
+  };
+
+  const handleActivityClick = (activity: typeof recentActivity[0]) => {
+    if (activity.type === 'ivr') {
+      navigate(`/doctor/ivr/${activity.itemId}`);
+    } else if (activity.type === 'order') {
+      navigate(`/doctor/orders/${activity.itemId}`);
+    }
+  };
+
+  const selectedNotificationData = urgentItems.find(item => item.id === selectedNotification);
 
   return (
     <div className="bg-gray-50">
@@ -237,7 +288,16 @@ const WoundCareDashboard: React.FC = () => {
             </div>
             <div className="space-y-2">
               {urgentItems.map((item) => (
-                <div key={item.id} className="p-2.5 bg-gray-50 rounded-lg">
+                <div
+                  key={item.id}
+                  ref={el => notificationRefs.current[item.id] = el}
+                  className={`p-2.5 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+                    item.isRead
+                      ? 'bg-slate-50 hover:bg-slate-100'
+                      : 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-400'
+                  }`}
+                  onClick={(e) => handleNotificationClick(item.id, e)}
+                >
                   <div className="flex items-center">
                     <div className={`h-2 w-2 rounded-full mr-2 ${
                       item.priorityColor === 'red'
@@ -246,8 +306,17 @@ const WoundCareDashboard: React.FC = () => {
                         ? 'bg-orange-500'
                         : 'bg-yellow-500'
                     }`} />
-                    <div>
-                      <p className="font-medium text-sm text-gray-900">{item.title}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className={`font-medium text-sm ${
+                          item.isRead ? 'text-slate-700' : 'text-slate-900'
+                        }`}>
+                          {item.title}
+                        </p>
+                        {!item.isRead && (
+                          <div className="h-2 w-2 bg-blue-500 rounded-full ml-2" />
+                        )}
+                      </div>
                       <div className="flex items-center mt-0.5">
                         <span className={`text-xs ${
                           item.priorityColor === 'red'
@@ -258,8 +327,8 @@ const WoundCareDashboard: React.FC = () => {
                         }`}>
                           {item.priority} Priority
                         </span>
-                        <span className="mx-2 text-gray-300">•</span>
-                        <span className="text-xs text-gray-500">{item.time}</span>
+                        <span className="mx-2 text-slate-300">•</span>
+                        <span className="text-xs text-slate-500">{item.time}</span>
                       </div>
                     </div>
                   </div>
@@ -297,13 +366,19 @@ const WoundCareDashboard: React.FC = () => {
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="space-y-4">
               {recentActivity.map((activity) => (
-                <div key={activity.id} className="p-4 bg-gray-50 rounded-lg">
+                <div
+                  key={activity.id}
+                  className="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 hover:shadow-md transition-all duration-200"
+                  onClick={() => handleActivityClick(activity)}
+                >
                   <div className="flex items-center">
                     <div className={`p-2 rounded-lg bg-${activity.color}-50`}>
                       <div className={`h-2 w-2 rounded-full bg-${activity.color}-500`} />
                     </div>
                     <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                      <p className="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                        {activity.title}
+                      </p>
                       <div className="flex items-center mt-1">
                         <span className="text-sm text-gray-500">{activity.description}</span>
                         <span className="mx-2 text-gray-300">•</span>
@@ -317,6 +392,17 @@ const WoundCareDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Notification Dropdown */}
+      {selectedNotificationData && (
+        <NotificationDropdown
+          notification={selectedNotificationData}
+          isOpen={selectedNotification !== null}
+          onClose={handleCloseDropdown}
+          onMarkAsRead={handleMarkAsRead}
+          position={dropdownPosition}
+        />
+      )}
     </div>
   );
 };

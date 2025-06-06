@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Patient, TreatmentInfo, QCodeOptions, FrequencyOptions, Document } from '../../types/ivr';
+import { Patient, TreatmentInfo, QCodeProductOptions, QCodeSizeOptions, FrequencyOptions, Document } from '../../types/ivr';
 import { ExclamationCircleIcon, CheckCircleIcon, DocumentIcon, TrashIcon } from '@heroicons/react/24/outline';
 import UniversalFileUpload from '../shared/UniversalFileUpload';
 import { toast } from 'react-toastify';
@@ -15,6 +15,8 @@ interface PatientAndTreatmentStepProps {
 
 interface ValidationErrors {
   qCode?: string;
+  qCodeProduct?: string;
+  qCodeSize?: string;
   startDate?: string;
   numberOfApplications?: string;
   frequency?: string;
@@ -38,6 +40,10 @@ const PatientAndTreatmentStep: React.FC<PatientAndTreatmentStepProps> = ({
     switch (field) {
       case 'qCode':
         return !value ? 'Q Code selection is required' : undefined;
+      case 'qCodeProduct':
+        return !value ? 'Q Code product selection is required' : undefined;
+      case 'qCodeSize':
+        return !value ? 'Q Code size selection is required' : undefined;
       case 'startDate':
         if (!value) return 'Treatment start date is required';
         const selectedDate = new Date(value);
@@ -76,7 +82,7 @@ const PatientAndTreatmentStep: React.FC<PatientAndTreatmentStepProps> = ({
 
     // Validate individual fields
     Object.keys(treatmentInfo).forEach(field => {
-      if (field !== 'diagnosisCodes' && field !== 'clinicalNotes' && field !== 'skinSubstituteAcknowledged') {
+      if (field !== 'diagnosisCodes' && field !== 'clinicalNotes' && field !== 'skinSubstituteAcknowledged' && field !== 'qCode') {
         const error = validateField(field, treatmentInfo[field as keyof TreatmentInfo]);
         if (error) {
           (newErrors as any)[field] = error;
@@ -99,10 +105,24 @@ const PatientAndTreatmentStep: React.FC<PatientAndTreatmentStepProps> = ({
   }, [treatmentInfo]);
 
   const handleInputChange = (field: keyof TreatmentInfo, value: any) => {
-    onTreatmentInfoChange({
+    const updatedTreatmentInfo = {
       ...treatmentInfo,
       [field]: value
-    });
+    };
+
+    // Auto-update combined qCode when product or size changes
+    if (field === 'qCodeProduct' || field === 'qCodeSize') {
+      const product = field === 'qCodeProduct' ? value : treatmentInfo.qCodeProduct;
+      const size = field === 'qCodeSize' ? value : treatmentInfo.qCodeSize;
+
+      if (product && size) {
+        updatedTreatmentInfo.qCode = `${product}-${size}`;
+      } else {
+        updatedTreatmentInfo.qCode = '';
+      }
+    }
+
+    onTreatmentInfoChange(updatedTreatmentInfo);
 
     // Mark field as touched
     setTouched(prev => ({ ...prev, [field]: true }));
@@ -291,37 +311,82 @@ const PatientAndTreatmentStep: React.FC<PatientAndTreatmentStepProps> = ({
           {/* Treatment Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="qCode" className="block text-sm font-medium text-gray-700">
-                Q Code Selection *
+              <label htmlFor="qCodeProduct" className="block text-sm font-medium text-gray-700">
+                Q Code Product *
               </label>
               <div className="mt-1 relative">
                 <select
-                  id="qCode"
-                  value={treatmentInfo.qCode}
-                  onChange={(e) => handleInputChange('qCode', e.target.value)}
-                  onBlur={() => handleBlur('qCode')}
+                  id="qCodeProduct"
+                  value={treatmentInfo.qCodeProduct}
+                  onChange={(e) => handleInputChange('qCodeProduct', e.target.value)}
+                  onBlur={() => handleBlur('qCodeProduct')}
                   required
                   className={`block w-full rounded-md border py-2 px-3 shadow-sm focus:ring-[#2C3E50] sm:text-sm ${
-                    touched.qCode && errors.qCode
+                    touched.qCodeProduct && errors.qCodeProduct
                       ? 'border-red-300 focus:border-red-500'
-                      : touched.qCode && !errors.qCode
+                      : touched.qCodeProduct && !errors.qCodeProduct
                       ? 'border-green-300 focus:border-green-500'
                       : 'border-gray-300 focus:border-[#2C3E50]'
                   }`}
                 >
-                  <option value="">Select Q Code</option>
-                  {QCodeOptions.map(option => (
+                  <option value="">Select Product Type</option>
+                  {QCodeProductOptions.map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
                 </select>
                 <div className="absolute inset-y-0 right-8 flex items-center">
-                  {renderFieldIcon('qCode', treatmentInfo.qCode)}
+                  {renderFieldIcon('qCodeProduct', treatmentInfo.qCodeProduct)}
                 </div>
               </div>
-              {touched.qCode && errors.qCode && (
-                <p className="mt-1 text-xs text-red-600">{errors.qCode}</p>
+              {touched.qCodeProduct && errors.qCodeProduct && (
+                <p className="mt-1 text-xs text-red-600">{errors.qCodeProduct}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="qCodeSize" className="block text-sm font-medium text-gray-700">
+                Product Size *
+              </label>
+              <div className="mt-1 relative">
+                <select
+                  id="qCodeSize"
+                  value={treatmentInfo.qCodeSize}
+                  onChange={(e) => handleInputChange('qCodeSize', e.target.value)}
+                  onBlur={() => handleBlur('qCodeSize')}
+                  required
+                  disabled={!treatmentInfo.qCodeProduct}
+                  className={`block w-full rounded-md border py-2 px-3 shadow-sm focus:ring-[#2C3E50] sm:text-sm ${
+                    !treatmentInfo.qCodeProduct
+                      ? 'bg-gray-100 cursor-not-allowed'
+                      : touched.qCodeSize && errors.qCodeSize
+                      ? 'border-red-300 focus:border-red-500'
+                      : touched.qCodeSize && !errors.qCodeSize
+                      ? 'border-green-300 focus:border-green-500'
+                      : 'border-gray-300 focus:border-[#2C3E50]'
+                  }`}
+                >
+                  <option value="">
+                    {treatmentInfo.qCodeProduct ? 'Select Size' : 'Select Product Type First'}
+                  </option>
+                  {treatmentInfo.qCodeProduct && QCodeSizeOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-8 flex items-center">
+                  {renderFieldIcon('qCodeSize', treatmentInfo.qCodeSize)}
+                </div>
+              </div>
+              {touched.qCodeSize && errors.qCodeSize && (
+                <p className="mt-1 text-xs text-red-600">{errors.qCodeSize}</p>
+              )}
+              {treatmentInfo.qCodeProduct && treatmentInfo.qCodeSize && (
+                <p className="mt-1 text-xs text-green-600">
+                  Selected: {treatmentInfo.qCodeProduct}-{treatmentInfo.qCodeSize}
+                </p>
               )}
             </div>
 

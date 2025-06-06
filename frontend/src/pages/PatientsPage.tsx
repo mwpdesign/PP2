@@ -1,396 +1,406 @@
-import React, { useState, useEffect } from 'react';
-import Button from '../components/ui/Button';
-import { showNotification } from '../components/ui/Notification';
-import ConfirmationDialog from '../components/ui/ConfirmationDialog';
-import PhoneInput from '../components/shared/PhoneInput';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Patient {
   id: string;
   name: string;
+  dateOfBirth: string;
+  insurance: string;
+  lastVisit: string;
+  condition: string;
+  status: 'active' | 'inactive';
   email: string;
   phone: string;
-  dateOfBirth: string;
-  status: string;
-  lastVisit: string;
-  medicalConditions?: string[];
-  upcomingAppointment?: string;
-  insuranceProvider?: string;
 }
 
+interface QuickStats {
+  totalPatients: number;
+  pendingIVRs: number;
+  activeOrders: number;
+}
+
+// Memoized patient row component for performance
+const PatientRow = React.memo(({
+  patient,
+  index,
+  onRowClick,
+  onSubmitIVR
+}: {
+  patient: Patient;
+  index: number;
+  onRowClick: (patient: Patient) => void;
+  onSubmitIVR: (patientId: string) => void;
+}) => {
+  const [showActions, setShowActions] = useState(false);
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) return '1d ago';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.ceil(diffDays / 7)}w ago`;
+    return `${Math.ceil(diffDays / 30)}mo ago`;
+  };
+
+  const getInsuranceAbbreviation = (insurance: string) => {
+    const abbrevMap: Record<string, string> = {
+      'Blue Cross Blue Shield': 'BCBS',
+      'UnitedHealthcare': 'UHC',
+      'Aetna': 'AET',
+      'Cigna': 'CIG',
+      'Humana': 'HUM',
+      'Medicare': 'MED'
+    };
+    return abbrevMap[insurance] || insurance.substring(0, 4).toUpperCase();
+  };
+
+  return (
+    <tr
+      className={`h-12 cursor-pointer transition-colors hover:bg-slate-100 ${
+        index % 2 === 1 ? 'bg-slate-50' : 'bg-white'
+      }`}
+      onClick={() => onRowClick(patient)}
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onRowClick(patient);
+      }}
+    >
+      <td className="px-4 py-3">
+        <div
+          className={`w-2 h-2 rounded-full ${
+            patient.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+          }`}
+        />
+      </td>
+      <td className="px-4 py-3 font-medium text-gray-900 truncate max-w-[200px]">
+        {patient.name}
+      </td>
+      <td className="px-4 py-3 text-gray-600 text-sm">
+        {new Date(patient.dateOfBirth).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        })}
+      </td>
+      <td className="px-4 py-3">
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          {getInsuranceAbbreviation(patient.insurance)}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-gray-600 text-sm">
+        {formatRelativeTime(patient.lastVisit)}
+      </td>
+      <td className="px-4 py-3 text-gray-600 text-sm truncate max-w-[150px]">
+        {patient.condition}
+      </td>
+      <td className="px-4 py-3">
+        <div className={`flex items-center space-x-2 transition-opacity ${
+          showActions ? 'opacity-100' : 'opacity-0'
+        }`}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRowClick(patient);
+            }}
+            className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+            title="View Details"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSubmitIVR(patient.id);
+            }}
+            className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+            title="Submit IVR"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
+
 const PatientsPage: React.FC = () => {
-  const [showAddForm, setShowAddForm] = useState(false);
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [recentlyViewed, setRecentlyViewed] = useState<Patient[]>([]);
 
-  const patients: Patient[] = [
+  // Mock data - replace with actual API calls
+  const [patients] = useState<Patient[]>([
     {
       id: 'P-1234',
       name: 'John Smith',
-      email: 'john@example.com',
-      phone: '(555) 123-4567',
       dateOfBirth: '1980-05-15',
-      status: 'Active',
+      insurance: 'Blue Cross Blue Shield',
       lastVisit: '2024-03-15',
-      medicalConditions: ['Hypertension', 'Type 2 Diabetes'],
-      upcomingAppointment: '2024-04-01 10:00 AM',
-      insuranceProvider: 'Blue Cross'
+      condition: 'Chronic wound care',
+      status: 'active',
+      email: 'john@example.com',
+      phone: '(555) 123-4567'
     },
     {
       id: 'P-1235',
       name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      phone: '(555) 234-5678',
       dateOfBirth: '1992-08-21',
-      status: 'Scheduled',
+      insurance: 'UnitedHealthcare',
       lastVisit: '2024-03-14',
-      medicalConditions: ['Asthma'],
-      upcomingAppointment: '2024-03-25 2:30 PM',
-      insuranceProvider: 'Aetna'
+      condition: 'Post-surgical wound',
+      status: 'active',
+      email: 'sarah@example.com',
+      phone: '(555) 234-5678'
     },
     {
       id: 'P-1236',
       name: 'Michael Brown',
-      email: 'michael@example.com',
-      phone: '(555) 345-6789',
       dateOfBirth: '1975-12-03',
-      status: 'Active',
+      insurance: 'Aetna',
       lastVisit: '2024-03-10',
-      medicalConditions: ['Arthritis', 'High Cholesterol'],
-      upcomingAppointment: '2024-04-05 11:15 AM',
-      insuranceProvider: 'UnitedHealth'
+      condition: 'Diabetic ulcer',
+      status: 'active',
+      email: 'michael@example.com',
+      phone: '(555) 345-6789'
     },
     {
       id: 'P-1237',
       name: 'Emily Davis',
-      email: 'emily@example.com',
-      phone: '(555) 456-7890',
       dateOfBirth: '1988-03-30',
-      status: 'Inactive',
+      insurance: 'Cigna',
       lastVisit: '2024-02-28',
-      medicalConditions: ['Migraine'],
-      insuranceProvider: 'Cigna'
+      condition: 'Pressure sore',
+      status: 'inactive',
+      email: 'emily@example.com',
+      phone: '(555) 456-7890'
     },
     {
       id: 'P-1238',
       name: 'David Wilson',
-      email: 'david@example.com',
-      phone: '(555) 567-8901',
       dateOfBirth: '1965-09-12',
-      status: 'Active',
+      insurance: 'Medicare',
       lastVisit: '2024-03-18',
-      medicalConditions: ['COPD', 'Osteoporosis'],
-      upcomingAppointment: '2024-03-28 9:00 AM',
-      insuranceProvider: 'Medicare'
+      condition: 'Venous leg ulcer',
+      status: 'active',
+      email: 'david@example.com',
+      phone: '(555) 567-8901'
     }
-  ];
+  ]);
 
+  const [quickStats] = useState<QuickStats>({
+    totalPatients: 247,
+    pendingIVRs: 12,
+    activeOrders: 34
+  });
+
+  // Load recently viewed from localStorage
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    const stored = localStorage.getItem('recentlyViewedPatients');
+    if (stored) {
+      setRecentlyViewed(JSON.parse(stored));
+    }
+    setLoading(false);
   }, []);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Debounced search
+  const filteredPatients = useMemo(() => {
+    if (!searchTerm) return patients;
+    return patients.filter(patient =>
+      patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.condition.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [patients, searchTerm]);
+
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-  };
+  }, []);
 
-  const handleAddPatient = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      showNotification.success('Patient added successfully');
-      setShowAddForm(false);
-    } catch (error) {
-      showNotification.error('Failed to add patient');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const handleRowClick = useCallback((patient: Patient) => {
+    // Update recently viewed
+    const updated = [patient, ...recentlyViewed.filter(p => p.id !== patient.id)].slice(0, 3);
+    setRecentlyViewed(updated);
+    localStorage.setItem('recentlyViewedPatients', JSON.stringify(updated));
 
-  const handleDeleteClick = (patient: Patient) => {
-    setSelectedPatient(patient);
-    setShowDeleteConfirm(true);
-  };
+    // Navigate to patient details
+    navigate(`/patients/${patient.id}`);
+  }, [recentlyViewed, navigate]);
 
-  const handleDeleteConfirm = async () => {
-    if (!selectedPatient) return;
-    setIsSubmitting(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      showNotification.success('Patient deleted successfully');
-      setShowDeleteConfirm(false);
-    } catch (error) {
-      showNotification.error('Failed to delete patient');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const handleSubmitIVR = useCallback((patientId: string) => {
+    navigate(`/ivr/new?patientId=${patientId}`);
+  }, [navigate]);
 
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-100 p-6">
+        <div className="animate-pulse space-y-6">
+          <div className="grid grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg p-6 h-24" />
+            ))}
+          </div>
+          <div className="bg-white rounded-lg p-6 h-96" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">Patient Directory</h1>
-            <p className="text-gray-600 mt-1">Manage and view patient information</p>
-          </div>
-          <Button
-            onClick={() => setShowAddForm(true)}
-            icon="+"
-          >
-            Add New Patient
-          </Button>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="mt-6 flex gap-4">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search patients..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB]"
-            />
-          </div>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] bg-white">
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Patient List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Patient ID</th>
-                <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Name</th>
-                <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Contact</th>
-                <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Medical Info</th>
-                <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Status</th>
-                <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Next Appointment</th>
-                <th className="text-left py-3 px-4 text-gray-600 text-sm font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {loading ? (
-                Array(3).fill(0).map((_, index) => (
-                  <tr key={`skeleton-${index}`} className="animate-pulse">
-                    <td className="py-3 px-4"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
-                    <td className="py-3 px-4"><div className="h-4 bg-gray-200 rounded w-32"></div></td>
-                    <td className="py-3 px-4">
-                      <div className="h-4 bg-gray-200 rounded w-40 mb-2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-32"></div>
-                    </td>
-                    <td className="py-3 px-4"><div className="h-4 bg-gray-200 rounded w-36"></div></td>
-                    <td className="py-3 px-4"><div className="h-6 bg-gray-200 rounded w-24"></div></td>
-                    <td className="py-3 px-4"><div className="h-4 bg-gray-200 rounded w-28"></div></td>
-                    <td className="py-3 px-4"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
-                  </tr>
-                ))
-              ) : filteredPatients.map((patient) => (
-                <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-3 px-4">{patient.id}</td>
-                  <td className="py-3 px-4 font-medium">{patient.name}</td>
-                  <td className="py-3 px-4">
-                    <div>{patient.email}</div>
-                    <div className="text-gray-500 text-sm">{patient.phone}</div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex flex-wrap gap-1">
-                      {patient.medicalConditions?.map((condition, index) => (
-                        <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs">
-                          {condition}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-sm ${
-                      patient.status === 'Active' ? 'bg-green-100 text-green-800' :
-                      patient.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {patient.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    {patient.upcomingAppointment || 'No appointment scheduled'}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                      >
-                        View
-                      </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDeleteClick(patient)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Add Patient Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center animate-fade-in">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl animate-slide-up">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Add New Patient</h2>
-              <button
-                onClick={() => setShowAddForm(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
+    <div className="min-h-screen bg-slate-100 p-6">
+      {/* Quick Stats Header */}
+      <div className="grid grid-cols-3 gap-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Patients</p>
+              <p className="text-3xl font-bold text-gray-900">{quickStats.totalPatients}</p>
             </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
 
-            <form onSubmit={handleAddPatient} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB]"
-                  />
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending IVRs</p>
+              <p className="text-3xl font-bold text-orange-600">{quickStats.pendingIVRs}</p>
+            </div>
+            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Orders</p>
+              <p className="text-3xl font-bold text-green-600">{quickStats.activeOrders}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recently Viewed Section */}
+      {recentlyViewed.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Recently Viewed</h3>
+          <div className="flex space-x-4">
+            {recentlyViewed.map((patient) => (
+              <button
+                key={patient.id}
+                onClick={() => handleRowClick(patient)}
+                className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+              >
+                <div className={`w-2 h-2 rounded-full ${
+                  patient.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                }`} />
+                <div className="text-left">
+                  <p className="text-sm font-medium text-gray-900">{patient.name}</p>
+                  <p className="text-xs text-gray-500">{patient.condition}</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB]"
-                />
-              </div>
-
-              <div>
-                <PhoneInput
-                  value={phoneNumber}
-                  onChange={setPhoneNumber}
-                  label="Phone Number"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date of Birth
-                </label>
-                <input
-                  type="date"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Insurance Provider
-                </label>
-                <select
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB]"
-                >
-                  <option value="">Select Provider</option>
-                  <option value="bluecross">Blue Cross</option>
-                  <option value="aetna">Aetna</option>
-                  <option value="unitedhealth">UnitedHealth</option>
-                  <option value="cigna">Cigna</option>
-                  <option value="medicare">Medicare</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Medical Conditions
-                </label>
-                <textarea
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB]"
-                  rows={3}
-                  placeholder="Enter any existing medical conditions..."
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAddForm(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  loading={isSubmitting}
-                  loadingText="Adding Patient..."
-                >
-                  Add Patient
-                </Button>
-              </div>
-            </form>
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Patient"
-        message={`Are you sure you want to delete ${selectedPatient?.name}? This action cannot be undone.`}
-        confirmText="Delete Patient"
-        type="danger"
-        loading={isSubmitting}
-      />
+      {/* Search and Patient Table */}
+      <div className="bg-white rounded-lg shadow-sm">
+        {/* Search Header */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Patient Directory</h2>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search patients..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* High-Density Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Name
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  DOB
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Insurance
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Last Visit
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Condition
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPatients.map((patient, index) => (
+                <PatientRow
+                  key={patient.id}
+                  patient={patient}
+                  index={index}
+                  onRowClick={handleRowClick}
+                  onSubmitIVR={handleSubmitIVR}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {filteredPatients.length === 0 && (
+          <div className="text-center py-12">
+            <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <p className="text-gray-500">No patients found matching your search.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

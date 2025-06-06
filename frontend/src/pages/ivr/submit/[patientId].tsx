@@ -213,6 +213,8 @@ const IVRSubmissionPage: React.FC = () => {
           treatmentInfo: {
             skinSubstituteAcknowledged: false,
             qCode: '',
+            qCodeProduct: '',
+            qCodeSize: '',
             startDate: '',
             numberOfApplications: 1,
             frequency: 'weekly',
