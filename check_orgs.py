@@ -4,13 +4,16 @@ import sys
 import os
 
 # Add the backend directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend'))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+backend_path = os.path.join(current_dir, 'backend')
+sys.path.insert(0, backend_path)
 
-from app.core.database import async_session_factory
-from app.models.organization import Organization
-from app.models.facility import Facility
-from app.models.provider import Provider
-from sqlalchemy import select
+from app.core.database import async_session_factory  # noqa: E402
+from app.models.organization import Organization  # noqa: E402
+from app.models.facility import Facility  # noqa: E402
+from app.models.provider import Provider  # noqa: E402
+from sqlalchemy import select  # noqa: E402
+
 
 async def check_data():
     async with async_session_factory() as session:
@@ -34,6 +37,7 @@ async def check_data():
         print('\nAvailable providers:')
         for provider in providers:
             print(f'  - {provider.name} ({provider.id})')
+
 
 if __name__ == "__main__":
     asyncio.run(check_data())
