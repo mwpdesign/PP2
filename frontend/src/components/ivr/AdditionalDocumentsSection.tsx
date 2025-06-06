@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
-import { DocumentIcon, XMarkIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { DocumentIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-toastify';
-import DocumentUpload from '../shared/DocumentUpload';
+import UniversalFileUpload from '../shared/UniversalFileUpload';
 
 interface Document {
   id: string;
@@ -53,8 +53,8 @@ const AdditionalDocumentsSection: React.FC<AdditionalDocumentsSectionProps> = ({
     }
 
     // Validate file size
-    if (file.size > 10 * 1024 * 1024) { // 10MB
-      toast.error('File size must be less than 10MB');
+    if (file.size > 25 * 1024 * 1024) { // 25MB
+      toast.error('File size must be less than 25MB');
       return;
     }
 
@@ -64,7 +64,7 @@ const AdditionalDocumentsSection: React.FC<AdditionalDocumentsSectionProps> = ({
 
     // Simulate file upload with progress
     setUploadProgress(prev => ({ ...prev, [documentType]: 0 }));
-    
+
     // TODO: Replace with actual file upload API call
     for (let progress = 0; progress <= 100; progress += 10) {
       setUploadProgress(prev => ({ ...prev, [documentType]: progress }));
@@ -83,7 +83,7 @@ const AdditionalDocumentsSection: React.FC<AdditionalDocumentsSectionProps> = ({
 
     onDocumentsChange([...documents, newDocument]);
     setDescription('');
-    
+
     // Clear progress after upload
     setUploadProgress(prev => {
       const { [documentType]: removed, ...rest } = prev;
@@ -174,7 +174,7 @@ const AdditionalDocumentsSection: React.FC<AdditionalDocumentsSectionProps> = ({
         </div>
 
         <div className="space-y-4">
-          <DocumentUpload
+          <UniversalFileUpload
             label="Upload Additional Document"
             description="Upload additional documentation (PDF or medical images only)"
             value={null}
@@ -182,7 +182,7 @@ const AdditionalDocumentsSection: React.FC<AdditionalDocumentsSectionProps> = ({
             onUploadProgress={(progress) => setUploadProgress(prev => ({ ...prev, additional: progress }))}
             status={uploadProgress['additional'] ? 'uploading' : 'pending'}
             acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.tiff']}
-            maxSizeMB={10}
+            maxSizeMB={25}
             showCamera={true}
           />
 
@@ -213,4 +213,4 @@ const AdditionalDocumentsSection: React.FC<AdditionalDocumentsSectionProps> = ({
   );
 };
 
-export default AdditionalDocumentsSection; 
+export default AdditionalDocumentsSection;

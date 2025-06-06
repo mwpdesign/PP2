@@ -20,7 +20,7 @@ interface DocumentCardProps {
 
 const formatDate = (dateValue: string | null | undefined): string => {
   if (!dateValue) return 'N/A';
-  
+
   try {
     const date = new Date(dateValue);
     if (isNaN(date.getTime())) return 'N/A';
@@ -52,9 +52,9 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
     }
   };
 
-  const formatFileSize = (file: File | undefined) => {
-    if (!file) return 'N/A';
-    const bytes = file.size;
+  const formatFileSize = (sizeInBytes: number | undefined) => {
+    if (!sizeInBytes) return 'N/A';
+    const bytes = sizeInBytes;
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -78,7 +78,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
               {getDocumentIcon(document.type)}
             </div>
           )}
-          
+
           {/* Hover Actions */}
           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
             <div className="flex space-x-2">
@@ -108,7 +108,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
             {document.name}
           </h4>
           <div className="mt-1 text-xs text-gray-500 space-y-0.5">
-            <p>{formatFileSize(document.file)}</p>
+            <p>{formatFileSize(document.size)}</p>
             <p>{formatDate(document.uploadedAt)}</p>
           </div>
         </div>
@@ -117,4 +117,4 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
   );
 };
 
-export default DocumentCard; 
+export default DocumentCard;

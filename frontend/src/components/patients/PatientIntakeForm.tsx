@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
-import DocumentUpload from '../shared/DocumentUpload';
+import UniversalFileUpload from '../shared/UniversalFileUpload';
+import { toast } from 'react-toastify';
 import PhoneInput from '../shared/PhoneInput';
+import StateSelect from '../shared/StateSelect';
 import patientService from '../../services/patientService';
 
 interface PatientIntakeFormData {
@@ -286,17 +287,17 @@ const PatientIntakeForm: React.FC = () => {
             />
           </div>
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              id="phone"
+            <PhoneInput
               value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="(555) 123-4567"
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              onChange={(value) => {
+                setFormData(prev => ({
+                  ...prev,
+                  phone: value
+                }));
+              }}
+              label="Phone Number"
+              id="phone"
+              name="phone"
             />
           </div>
         </div>
@@ -333,16 +334,17 @@ const PatientIntakeForm: React.FC = () => {
             />
           </div>
           <div>
-            <label htmlFor="state" className="block text-sm font-medium text-gray-700">
-              State
-            </label>
-            <input
-              type="text"
-              name="state"
-              id="state"
+            <StateSelect
               value={formData.state}
-              onChange={handleInputChange}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              onChange={(value) => {
+                setFormData(prev => ({
+                  ...prev,
+                  state: value
+                }));
+              }}
+              label="State"
+              id="state"
+              name="state"
             />
           </div>
           <div>
@@ -499,53 +501,53 @@ const PatientIntakeForm: React.FC = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-6">
-              <DocumentUpload
+              <UniversalFileUpload
                 label="Government ID"
                 description="Upload a valid government-issued ID"
                 required
                 value={documentFiles.identification.file}
                 onChange={handleFileSelect.bind(null, 'identification')}
                 status="pending"
-                acceptedFileTypes={['.jpg', '.jpeg', '.png', '.pdf']}
-                maxSizeMB={10}
+                acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.tiff']}
+                maxSizeMB={25}
                 showCamera={true}
               />
 
-              <DocumentUpload
+              <UniversalFileUpload
                 label="Face Sheet"
                 description="Upload patient face sheet"
                 required
                 value={documentFiles.faceSheet.file}
                 onChange={handleFileSelect.bind(null, 'faceSheet')}
                 status="pending"
-                acceptedFileTypes={['.jpg', '.jpeg', '.png', '.pdf']}
-                maxSizeMB={10}
-                showCamera={false}
+                acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.tiff']}
+                maxSizeMB={25}
+                showCamera={true}
               />
             </div>
 
             <div className="space-y-6">
-              <DocumentUpload
+              <UniversalFileUpload
                 label="Insurance Card (Front)"
-                description="Upload the front side of insurance card"
+                description="Upload front side of insurance card"
                 required
                 value={documentFiles.insuranceFront.file}
                 onChange={handleFileSelect.bind(null, 'insuranceFront')}
                 status="pending"
-                acceptedFileTypes={['.jpg', '.jpeg', '.png']}
-                maxSizeMB={10}
+                acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.tiff']}
+                maxSizeMB={25}
                 showCamera={true}
               />
 
-              <DocumentUpload
+              <UniversalFileUpload
                 label="Insurance Card (Back)"
-                description="Upload the back side of insurance card"
+                description="Upload back side of insurance card"
                 required
                 value={documentFiles.insuranceBack.file}
                 onChange={handleFileSelect.bind(null, 'insuranceBack')}
                 status="pending"
-                acceptedFileTypes={['.jpg', '.jpeg', '.png']}
-                maxSizeMB={10}
+                acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.tiff']}
+                maxSizeMB={25}
                 showCamera={true}
               />
             </div>
@@ -556,7 +558,7 @@ const PatientIntakeForm: React.FC = () => {
             <div className="grid grid-cols-1 gap-4">
               {documentFiles.additionalDocs.map((doc, index) => (
                 <div key={index} className="relative">
-                  <DocumentUpload
+                  <UniversalFileUpload
                     label={`Additional Document ${index + 1}`}
                     description="Additional supporting document"
                     value={doc.file}
@@ -577,14 +579,14 @@ const PatientIntakeForm: React.FC = () => {
                       }
                     }}
                     status="pending"
-                    acceptedFileTypes={['.jpg', '.jpeg', '.png', '.pdf']}
-                    maxSizeMB={10}
-                    showCamera={false}
+                    acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.tiff']}
+                    maxSizeMB={25}
+                    showCamera={true}
                   />
                 </div>
               ))}
 
-              <DocumentUpload
+              <UniversalFileUpload
                 label="Add Document"
                 description="Upload additional supporting document"
                 value={null}
@@ -598,9 +600,9 @@ const PatientIntakeForm: React.FC = () => {
                   }
                 }}
                 status="pending"
-                acceptedFileTypes={['.jpg', '.jpeg', '.png', '.pdf']}
-                maxSizeMB={10}
-                showCamera={false}
+                acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.tiff']}
+                maxSizeMB={25}
+                showCamera={true}
               />
             </div>
           </div>

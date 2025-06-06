@@ -12,15 +12,30 @@ from botocore.exceptions import ClientError
 from cryptography.fernet import Fernet
 from fastapi import HTTPException
 
+from app.core.config import get_settings
+
 
 class AWSKMSService:
     def __init__(self):
         """Initialize AWS KMS client and configure key settings."""
-        self.kms_client = boto3.client("kms")
-        self.key_id = os.getenv("AWS_KMS_KEY_ID")
+        self.settings = get_settings()
+
+        # Configure KMS client with proper region and endpoint
+        client_config = {
+            "aws_access_key_id": self.settings.aws_access_key_id,
+            "aws_secret_access_key": self.settings.aws_secret_access_key,
+            "region_name": self.settings.aws_region,
+        }
+
+        # Add endpoint URL if configured (for LocalStack)
+        if self.settings.aws_endpoint_url:
+            client_config["endpoint_url"] = self.settings.aws_endpoint_url
+
+        self.kms_client = boto3.client("kms", **client_config)
+        self.key_id = self.settings.aws_kms_key_id
         self.key_alias = os.getenv(
             "AWS_KMS_KEY_ALIAS", "alias/healthcare-ivr-phi")
-        self.region = os.getenv("AWS_REGION", "us-east-1")
+        self.region = self.settings.aws_region
 
         # Encryption context for additional security
         self.base_encryption_context = {

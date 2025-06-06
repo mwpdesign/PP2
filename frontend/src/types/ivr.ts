@@ -41,6 +41,7 @@ export interface Patient {
     groupNumber: string;
     status: string;
   };
+  documents?: Document[];
 }
 
 export interface Provider {
@@ -135,7 +136,7 @@ export interface IVRRequest {
   facilityId: string;
   createdAt: string;
   updatedAt: string;
-  
+
   // Add new fields
   reviewNotes: IVRReviewNote[];
   communication: IVRCommunicationMessage[];
@@ -248,6 +249,7 @@ export interface Document {
   url: string;
   uploadedAt: string;
   status: 'pending' | 'verified' | 'rejected';
+  size?: number;
   file?: File;
 }
 
@@ -347,4 +349,4 @@ export const FrequencyOptions = [
   { value: 'bi-weekly', label: 'Bi-weekly' },
   { value: 'monthly', label: 'Monthly' },
   { value: 'other', label: 'Other' }
-]; 
+];

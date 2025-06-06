@@ -17,6 +17,7 @@ import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
 import patientService from '../../services/patientService';
 import PhoneInput from '../shared/PhoneInput';
+import StateSelect from '../shared/StateSelect';
 import { toast } from 'react-hot-toast';
 
 interface NewPatientFormProps {
@@ -70,18 +71,18 @@ interface FormData {
   lastName: string;
   dateOfBirth: string;
   gender: string;
-  
+
   address: string;
   city: string;
   state: string;
   zip: string;
-  
+
   governmentIdType: string;
   governmentId: {
     file: File | null;
     preview: string | null;
   } | null;
-  
+
   primaryInsurance: {
     provider: string;
     policyNumber: string;
@@ -264,7 +265,7 @@ const UploadArea: React.FC<UploadAreaProps> = ({
     <div className={className}>
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer bg-gray-50 
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer bg-gray-50
           ${isDragActive ? 'border-[#4A6FA5] bg-blue-50' : 'border-gray-300 hover:border-[#4A6FA5]'}`}
       >
         <input {...getInputProps()} />
@@ -324,7 +325,7 @@ const UploadArea: React.FC<UploadAreaProps> = ({
           </div>
         )}
       </div>
-      
+
       {cameraSupport.hasCamera && (
         <input
           type="file"
@@ -360,15 +361,15 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
     lastName: '',
     dateOfBirth: '',
     gender: '',
-    
+
     address: '',
     city: '',
     state: '',
     zip: '',
-    
+
     governmentIdType: '',
     governmentId: null,
-    
+
     primaryInsurance: {
       provider: '',
       policyNumber: '',
@@ -474,7 +475,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     // Required fields
     ['firstName', 'lastName', 'dateOfBirth', 'gender', 'primaryInsurance'].forEach(field => {
       const error = validateField(field, formData[field as keyof typeof formData] as string);
@@ -487,13 +488,13 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSaving(true);
-    
+
     try {
       // Convert form data to match PatientFormData interface
       const patientFormData: PatientFormData = {
@@ -522,19 +523,19 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
           cardBack: formData.secondaryInsurance.cardBack?.file || null
         }
       };
-      
+
       // Register the patient
       const response = await patientService.registerPatient(patientFormData);
-      
+
       // Call the onSave prop with the form data
       onSave(formData);
-      
+
       // Show success message
       toast.success('Patient registered successfully');
-      
+
       // Close the form
       onClose();
-      
+
       // Navigate to the patient list page
       navigate('/patients/select');
     } catch (error) {
@@ -551,7 +552,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     // Handle nested fields (e.g., primaryInsurance.provider)
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
@@ -592,7 +593,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
   const handleMedicalNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMedicalNotes(e.target.value);
     setIsAutoSaving(true);
-    
+
     // Simulate auto-save
     setTimeout(() => {
       setIsAutoSaving(false);
@@ -671,7 +672,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                             <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
                               Patient Information
                             </h3>
-                            
+
                             <div className="grid grid-cols-3 gap-6 mt-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -785,7 +786,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                             <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
                               Address
                             </h3>
-                            
+
                             <div className="space-y-6 mt-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -815,20 +816,17 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                                 </div>
 
                                 <div className="col-span-2">
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    State
-                                  </label>
-                                  <select
-                                    name="state"
+                                  <StateSelect
                                     value={formData.state}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-[#4A6FA5] transition-colors"
-                                  >
-                                    <option value="">Select State</option>
-                                    {states.map(state => (
-                                      <option key={state} value={state}>{state}</option>
-                                    ))}
-                                  </select>
+                                    onChange={(value) => {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        state: value
+                                      }));
+                                    }}
+                                    label="State"
+                                    name="state"
+                                  />
                                 </div>
 
                                 <div>
@@ -853,7 +851,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                             <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
                               Patient Identification
                             </h3>
-                            
+
                             <div className="space-y-6 mt-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -894,7 +892,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                             <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
                               Skilled Nursing Questions
                             </h3>
-                            
+
                             <div className="space-y-6 mt-6">
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -957,7 +955,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                             <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
                               Insurance Information
                             </h3>
-                            
+
                             <div className="space-y-6 mt-6">
                               <div className="grid grid-cols-3 gap-6">
                                 <div>
@@ -1145,7 +1143,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                             <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
                               Medical Notes
                             </h3>
-                            
+
                             <div className="mt-6">
                               <div className="relative">
                                 <textarea
@@ -1183,7 +1181,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
                             <h3 className="text-lg font-semibold text-gray-900 pb-4 border-b border-gray-200">
                               Additional Documents
                             </h3>
-                            
+
                             <div className="space-y-6 mt-6">
                               <UploadArea
                                 onDrop={handleDocumentDrop}
@@ -1316,4 +1314,4 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave 
       </div>
     </div>
   );
-}; 
+};

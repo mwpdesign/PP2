@@ -75,7 +75,7 @@ const PatientSelectionPage: React.FC = () => {
   }, [searchTerm]);
 
   const handleViewDetails = (patientId: string) => {
-    navigate(`/patients/${patientId}`);
+    navigate(`/doctor/patients/${patientId}`);
   };
 
   const handleAddNewPatient = () => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card } from '../../shared/ui/Card';
-import DocumentUpload from './DocumentUpload';
+import UniversalFileUpload from '../../shared/UniversalFileUpload';
 import ProductDisplay from './ProductDisplay';
 
 interface Order {
@@ -106,7 +106,7 @@ const OrderDetailsView: React.FC<OrderDetailsViewProps> = ({ order, onBack, onUp
   const handleStatusChange = (newStatus: Order['status']) => {
     const now = new Date().toISOString().split('T')[0];
     const updates: Partial<Order> = { status: newStatus };
-    
+
     switch (newStatus) {
       case 'Processed':
         updates.processedDate = now;
@@ -125,7 +125,7 @@ const OrderDetailsView: React.FC<OrderDetailsViewProps> = ({ order, onBack, onUp
         updates.deliveredDate = now;
         break;
     }
-    
+
     const updatedOrder = { ...currentOrder, ...updates };
     setCurrentOrder(updatedOrder);
     onUpdate(updatedOrder);
@@ -133,7 +133,7 @@ const OrderDetailsView: React.FC<OrderDetailsViewProps> = ({ order, onBack, onUp
 
   const handleShippingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const updatedOrder = {
       ...currentOrder,
       status: 'Shipped' as const,
@@ -144,40 +144,121 @@ const OrderDetailsView: React.FC<OrderDetailsViewProps> = ({ order, onBack, onUp
       notes,
       documents
     };
-    
+
     setCurrentOrder(updatedOrder);
     onUpdate(updatedOrder);
-    
+
     // Simulate doctor notification
     alert(`Order ${currentOrder.orderNumber} has been marked as shipped!
-    
+
 Doctor Notification Sent:
 ✓ Email sent to ${currentOrder.doctor.email}
 ✓ In-app notification created
 ✓ Tracking details included: ${carrier} ${trackingNumber}
 ✓ Expected delivery: ${estimatedDelivery}
 ✓ ${documents.length} document(s) attached
-    
+
 The doctor can now track the shipment and will be notified of any delivery issues.`);
   };
 
-  const handleDocumentUpload = (newDocument: any) => {
+  const [documentType, setDocumentType] = useState('');
+  const [customName, setCustomName] = useState('');
+  const [uploadingFile, setUploadingFile] = useState<File | null>(null);
+
+  const documentTypes = [
+    'Skin Graph Bar Codes',
+    'Shipping Label',
+    'Packing Slip',
+    'Invoice',
+    'Certificate of Analysis',
+    'Temperature Log',
+    'Chain of Custody',
+    'Product Insert',
+    'Photo Documentation',
+    'Damage Report',
+    'Other'
+  ];
+
+  const handleDocumentUpload = async (file: File | null) => {
+    if (!file) return;
+
+    setUploadingFile(file);
+
+    // Simulate upload process
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const newDocument = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: customName || file.name,
+      type: documentType || getFileType(file.name),
+      url: URL.createObjectURL(file),
+      uploadedAt: new Date().toISOString()
+    };
+
     const updatedDocuments = [...documents, newDocument];
     setDocuments(updatedDocuments);
+
+    // Reset form
+    setCustomName('');
+    setDocumentType('');
+    setUploadingFile(null);
+  };
+
+  const getFileType = (filename: string): string => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'pdf':
+        return 'PDF Document';
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+        return 'Image';
+      case 'doc':
+      case 'docx':
+        return 'Word Document';
+      case 'xls':
+      case 'xlsx':
+        return 'Excel Document';
+      default:
+        return 'Document';
+    }
+  };
+
+  const handleQuickAction = (type: string) => {
+    setDocumentType(type);
+    // The UniversalFileUpload will handle the actual file selection
+  };
+
+  const handleRemoveDocument = (documentId: string) => {
+    if (confirm('Are you sure you want to remove this document?')) {
+      setDocuments(documents.filter(doc => doc.id !== documentId));
+    }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatDate = (isoString: string): string => {
+    return new Date(isoString).toLocaleString();
   };
 
   const handleReportDeliveryIssue = () => {
     const issue = prompt('Describe the delivery issue:');
     if (issue) {
-      const updatedOrder = { 
-        ...currentOrder, 
+      const updatedOrder = {
+        ...currentOrder,
         deliveryIssues: issue,
         // Keep as shipped if there are issues
         status: 'Shipped' as const
       };
       setCurrentOrder(updatedOrder);
       onUpdate(updatedOrder);
-      
+
       alert('Delivery issue reported. Order status maintained as "Shipped" pending resolution.');
     }
   };
@@ -298,7 +379,7 @@ The doctor can now track the shipment and will be notified of any delivery issue
                     <p className="text-xs text-slate-600">{currentOrder.date} at {currentOrder.time}</p>
                   </div>
                 </div>
-                
+
                 {currentOrder.processedDate && (
                   <div className="flex items-center space-x-3">
                     <div className={`w-3 h-3 rounded-full ${['Processed', 'Ready to Ship', 'Shipped', 'Delivered'].includes(currentOrder.status) ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
@@ -308,7 +389,7 @@ The doctor can now track the shipment and will be notified of any delivery issue
                     </div>
                   </div>
                 )}
-                
+
                 {currentOrder.readyToShipDate && (
                   <div className="flex items-center space-x-3">
                     <div className={`w-3 h-3 rounded-full ${['Ready to Ship', 'Shipped', 'Delivered'].includes(currentOrder.status) ? 'bg-purple-500' : 'bg-slate-300'}`}></div>
@@ -318,7 +399,7 @@ The doctor can now track the shipment and will be notified of any delivery issue
                     </div>
                   </div>
                 )}
-                
+
                 {currentOrder.shipDate && (
                   <div className="flex items-center space-x-3">
                     <div className={`w-3 h-3 rounded-full ${['Shipped', 'Delivered'].includes(currentOrder.status) ? 'bg-green-500' : 'bg-slate-300'}`}></div>
@@ -331,7 +412,7 @@ The doctor can now track the shipment and will be notified of any delivery issue
                     </div>
                   </div>
                 )}
-                
+
                 {currentOrder.deliveredDate && (
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
@@ -366,7 +447,7 @@ The doctor can now track the shipment and will be notified of any delivery issue
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Patient</label>
                 <p className="text-base font-semibold text-slate-800 mt-1 leading-tight">
-                  {currentOrder.patient.initials} 
+                  {currentOrder.patient.initials}
                   <span className="text-slate-500 ml-2">({currentOrder.patient.patientId})</span>
                 </p>
               </div>
@@ -416,9 +497,9 @@ The doctor can now track the shipment and will be notified of any delivery issue
                   <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Current Status</span>
                   <span className={getStatusBadge(currentOrder.status)}>{currentOrder.status}</span>
                 </div>
-                
+
                 {getNextStageButton()}
-                
+
                 {currentOrder.status === 'Shipped' && (
                   <button
                     onClick={handleReportDeliveryIssue}
@@ -495,7 +576,7 @@ The doctor can now track the shipment and will be notified of any delivery issue
                       />
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2">
                       Notes & Special Instructions
@@ -521,17 +602,137 @@ The doctor can now track the shipment and will be notified of any delivery issue
             </Card>
           )}
 
-          {/* Document Upload */}
+                    {/* Document Upload */}
           <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
               <h3 className="text-lg font-bold text-slate-800 leading-tight">Document Upload</h3>
             </div>
-            <div className="p-4">
-              <DocumentUpload 
-                orderId={currentOrder.id}
-                onDocumentUpload={handleDocumentUpload}
-                existingDocuments={documents}
+            <div className="p-4 space-y-4">
+              {/* Document Type and Name Input */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Document Type
+                  </label>
+                  <select
+                    value={documentType}
+                    onChange={(e) => setDocumentType(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                  >
+                    <option value="">Auto-detect from file</option>
+                    {documentTypes.map((type) => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">
+                    Custom Document Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="Enter custom name for uploaded files"
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Special Notice for Skin Graph Bar Codes */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <svg className="w-5 h-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-blue-800 mb-1 leading-tight">Skin Graph Bar Codes - Critical Requirement</h4>
+                    <p className="text-xs text-blue-700 leading-normal">
+                      Please upload clear, high-resolution images of all skin graph bar codes. These are critical for patient safety and tracking.
+                      Use the camera feature for best quality when capturing barcodes on mobile devices.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Universal File Upload */}
+              <UniversalFileUpload
+                label="Upload Order Document"
+                description="Upload shipping labels, packing slips, barcodes, or other order-related documents"
+                value={uploadingFile}
+                onChange={handleDocumentUpload}
+                acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.xls', '.xlsx']}
+                maxSizeMB={10}
+                showCamera={true}
               />
+
+              {/* Quick Actions for Common Documents */}
+              <div className="border-t border-slate-200 pt-4">
+                <h4 className="text-base font-bold text-slate-800 mb-3 leading-tight">Quick Actions</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {['Skin Graph Bar Codes', 'Shipping Label', 'Packing Slip', 'Temperature Log'].map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => handleQuickAction(type)}
+                      className="text-xs px-3 py-2 border-2 border-slate-600 text-slate-600 bg-white hover:bg-slate-50 font-semibold rounded-lg transition-all duration-200 ease-in-out hover:shadow-md"
+                    >
+                      {type === 'Skin Graph Bar Codes' ? '📷 ' : ''}
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Existing Documents */}
+              {documents.length > 0 && (
+                <div className="space-y-4 border-t border-slate-200 pt-4">
+                  <h4 className="text-base font-bold text-slate-800 leading-tight">Uploaded Documents</h4>
+                  <div className="space-y-3">
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            {doc.type.includes('Image') || doc.type.includes('Photo') || doc.name.match(/\.(jpg|jpeg|png)$/i) ? (
+                              <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-800 truncate leading-tight">{doc.name}</p>
+                                                         <div className="flex items-center space-x-3 text-xs text-slate-500 mt-1">
+                               <span className="font-medium">{doc.type}</span>
+                               <span>{formatDate(doc.uploadedAt)}</span>
+                             </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2 flex-shrink-0">
+                          <button
+                            onClick={() => window.open(doc.url, '_blank')}
+                            className="border-2 border-slate-600 text-slate-600 bg-white hover:bg-slate-50 font-semibold py-1 px-3 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-xs"
+                          >
+                            Preview
+                          </button>
+                          <button
+                            onClick={() => handleRemoveDocument(doc.id)}
+                            className="border-2 border-red-300 text-red-600 bg-white hover:bg-red-50 font-semibold py-1 px-3 rounded-lg transition-all duration-200 ease-in-out hover:shadow-md text-xs"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -589,4 +790,4 @@ The doctor can now track the shipment and will be notified of any delivery issue
   );
 };
 
-export default OrderDetailsView; 
+export default OrderDetailsView;

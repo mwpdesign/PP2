@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import PhoneInput from '../shared/PhoneInput';
+import StateSelect from '../shared/StateSelect';
 
 interface FormData {
   firstName: string;
@@ -97,7 +98,7 @@ const PatientRegistrationForm: React.FC = () => {
           <Typography variant="h5" component="h2" gutterBottom>
             Quick Patient Registration
           </Typography>
-          
+
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {error}
@@ -181,20 +182,17 @@ const PatientRegistrationForm: React.FC = () => {
                 />
               </Grid>
               <Grid item xs={12} sm={3}>
-                <FormControl fullWidth>
-                  <InputLabel>State</InputLabel>
-                  <Select
-                    name="state"
-                    value={formData.state}
-                    onChange={handleSelectChange}
-                    label="State"
-                  >
-                    <MenuItem value="CA">California</MenuItem>
-                    <MenuItem value="NY">New York</MenuItem>
-                    <MenuItem value="TX">Texas</MenuItem>
-                    {/* Add more states as needed */}
-                  </Select>
-                </FormControl>
+                <StateSelect
+                  value={formData.state}
+                  onChange={(value) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      state: value
+                    }));
+                  }}
+                  label="State"
+                  name="state"
+                />
               </Grid>
               <Grid item xs={12} sm={3}>
                 <TextField
@@ -256,4 +254,4 @@ const PatientRegistrationForm: React.FC = () => {
   );
 };
 
-export default PatientRegistrationForm; 
+export default PatientRegistrationForm;

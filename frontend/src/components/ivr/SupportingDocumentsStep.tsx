@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Document } from '../../types/ivr';
 import { DocumentIcon, CheckCircleIcon, XCircleIcon, TrashIcon } from '@heroicons/react/24/outline';
+import UniversalFileUpload from '../shared/UniversalFileUpload';
 
 interface SupportingDocumentsStepProps {
   documents: Document[];
@@ -12,23 +13,44 @@ const SupportingDocumentsStep: React.FC<SupportingDocumentsStepProps> = ({
   onDocumentsChange
 }) => {
   const [customDocumentName, setCustomDocumentName] = useState('');
+  const [uploadingFile, setUploadingFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = async (file: File | null) => {
+    if (!file) {
+      setUploadingFile(null);
+      return;
+    }
 
-    // TODO: Implement actual file upload API call
-    const mockUpload: Document = {
-      id: `DOC-${Math.random().toString(36).substr(2, 9)}`,
-      name: customDocumentName || file.name,
-      type: 'supporting',
-      url: URL.createObjectURL(file),
-      uploadedAt: new Date().toISOString(),
-      status: 'pending'
-    };
+    setUploadingFile(file);
+    setUploadProgress(0);
 
-    onDocumentsChange([...documents, mockUpload]);
-    setCustomDocumentName('');
+    // Simulate upload progress
+    const uploadInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(uploadInterval);
+
+          // Create the document after upload completes
+          const mockUpload: Document = {
+            id: `DOC-${Math.random().toString(36).substr(2, 9)}`,
+            name: customDocumentName || file.name,
+            type: 'supporting',
+            url: URL.createObjectURL(file),
+            uploadedAt: new Date().toISOString(),
+            status: 'pending'
+          };
+
+          onDocumentsChange([...documents, mockUpload]);
+          setCustomDocumentName('');
+          setUploadingFile(null);
+          setUploadProgress(0);
+
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 200);
   };
 
   const handleRemoveDocument = (docId: string) => {
@@ -58,7 +80,7 @@ const SupportingDocumentsStep: React.FC<SupportingDocumentsStepProps> = ({
         <div className="space-y-4">
           <div>
             <label htmlFor="documentName" className="block text-sm font-medium text-gray-700">
-              Document Name
+              Document Name (Optional)
             </label>
             <div className="mt-1">
               <input
@@ -67,29 +89,23 @@ const SupportingDocumentsStep: React.FC<SupportingDocumentsStepProps> = ({
                 value={customDocumentName}
                 onChange={(e) => setCustomDocumentName(e.target.value)}
                 className="block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-[#2C3E50] focus:ring-[#2C3E50] sm:text-sm"
-                placeholder="Enter a name for your document"
+                placeholder="Enter a custom name for your document"
               />
             </div>
           </div>
 
-          <div className="relative border-2 border-dashed rounded-lg p-6 text-center hover:border-[#2C3E50] transition-colors">
-            <input
-              type="file"
-              onChange={handleFileUpload}
-              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-            <div className="space-y-2">
-              <DocumentIcon className="mx-auto h-8 w-8 text-gray-400" />
-              <div className="text-sm text-gray-600">
-                <label htmlFor="file-upload" className="relative cursor-pointer text-[#2C3E50] hover:text-[#375788] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#2C3E50]">
-                  <span>Upload a file</span>
-                </label>
-                <p className="pl-1">or drag and drop</p>
-              </div>
-              <p className="text-xs text-gray-500">PDF, JPG, PNG, DOC up to 10MB</p>
-            </div>
-          </div>
+          <UniversalFileUpload
+            label="Upload Supporting Document"
+            description="Upload medical records, lab results, or other supporting documentation"
+            value={uploadingFile}
+            onChange={handleFileUpload}
+            onUploadProgress={setUploadProgress}
+            status={uploadingFile ? (uploadProgress < 100 ? 'uploading' : 'success') : 'pending'}
+            acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+            maxSizeMB={10}
+            showCamera={true}
+            className="mt-4"
+          />
         </div>
 
         {/* Document List */}
@@ -131,4 +147,4 @@ const SupportingDocumentsStep: React.FC<SupportingDocumentsStepProps> = ({
   );
 };
 
-export default SupportingDocumentsStep; 
+export default SupportingDocumentsStep;

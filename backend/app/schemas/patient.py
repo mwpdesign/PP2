@@ -38,6 +38,7 @@ class Patient(BaseModel):
     updated_at: Optional[datetime] = None
     created_by_id: UUID
     updated_by_id: Optional[UUID] = None
+    documents: Optional[List["PatientDocument"]] = None
 
     class Config:
         from_attributes = True
@@ -68,11 +69,15 @@ class PatientDocument(BaseModel):
     patient_id: UUID
     document_type: str
     file_name: str
+    display_name: Optional[str] = None
     file_path: str
+    s3_key: Optional[str] = None
+    file_size: Optional[int] = None
+    content_type: Optional[str] = None
     document_category: str
     document_metadata: Optional[Dict] = None
-    territory_id: UUID
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

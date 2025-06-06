@@ -67,10 +67,10 @@ const IVRSubmissionPage: React.FC = () => {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // TODO: Replace with actual API call
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         // Mock patient data
         const mockPatient: Patient = {
           id: patientId,
@@ -183,7 +183,7 @@ const IVRSubmissionPage: React.FC = () => {
 
       // Submit IVR using the service
       const submittedIVR = await ivrService.createIVRRequest(updatedFormData);
-      
+
       // Upload any supporting documents
       if (formData.supportingDocuments.length > 0) {
         const uploadPromises = formData.supportingDocuments.map(doc => {
@@ -193,7 +193,7 @@ const IVRSubmissionPage: React.FC = () => {
       }
 
       // Navigate to IVR management page after successful submission
-      navigate('/ivr', { replace: true });
+      navigate('/doctor/ivr', { replace: true });
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('Failed to submit IVR request. Please try again.');
@@ -230,6 +230,8 @@ const IVRSubmissionPage: React.FC = () => {
             onTreatmentInfoChange={(treatmentInfo) =>
               setFormData(prev => prev ? { ...prev, treatmentInfo } : null)
             }
+            documents={formData.supportingDocuments}
+            onDocumentsChange={handleDocumentsChange}
           />
         );
       case 'insurance':
@@ -296,7 +298,7 @@ const IVRSubmissionPage: React.FC = () => {
 
   return (
     <div className="space-y-8 px-8 pt-6">
-      <PageHeader 
+      <PageHeader
         title="Submit Insurance Verification Request"
         subtitle={`Creating IVR for ${patient.firstName} ${patient.lastName}`}
       />
@@ -376,4 +378,4 @@ const IVRSubmissionPage: React.FC = () => {
   );
 };
 
-export default IVRSubmissionPage; 
+export default IVRSubmissionPage;

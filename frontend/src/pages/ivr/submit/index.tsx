@@ -71,13 +71,13 @@ const IVRSubmissionPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       // TODO: Implement API call to submit IVR request
       console.log('Submitting IVR request:', formData);
-      
+
       // Navigate to IVR management page after successful submission
-      navigate('/ivr');
+      navigate('/doctor/ivr');
     } catch (error) {
       console.error('Error submitting IVR request:', error);
     } finally {
@@ -91,7 +91,7 @@ const IVRSubmissionPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <PageHeader 
+      <PageHeader
         title="Submit IVR Request"
         subtitle="Create a new insurance verification request"
       />
@@ -245,4 +245,4 @@ const IVRSubmissionPage: React.FC = () => {
   );
 };
 
-export default IVRSubmissionPage; 
+export default IVRSubmissionPage;

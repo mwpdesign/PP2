@@ -32,7 +32,12 @@ class S3Service:
 
         self.s3_client = boto3.client("s3", **client_config)
         self.bucket = self.settings.aws_s3_bucket
-        self.kms_service = AWSKMSService()
+
+        # Only initialize KMS service for production (not LocalStack)
+        if not (self.settings.aws_endpoint_url and "localhost" in self.settings.aws_endpoint_url):
+            self.kms_service = AWSKMSService()
+        else:
+            self.kms_service = None
 
     async def upload_file(
         self,
@@ -54,15 +59,28 @@ class S3Service:
             }
 
             # Upload to S3 with server-side encryption
-            response = self.s3_client.put_object(
-                Bucket=self.bucket,
-                Key=s3_key,
-                Body=file_content,
-                ContentType=content_type,
-                Metadata=file_metadata,
-                ServerSideEncryption="aws:kms",
-                SSEKMSKeyId=self.settings.aws_kms_key_id,
-            )
+            # For LocalStack, use AES256 encryption instead of KMS
+            if self.settings.aws_endpoint_url and "localhost" in self.settings.aws_endpoint_url:
+                # LocalStack development mode - use AES256 encryption
+                response = self.s3_client.put_object(
+                    Bucket=self.bucket,
+                    Key=s3_key,
+                    Body=file_content,
+                    ContentType=content_type,
+                    Metadata=file_metadata,
+                    ServerSideEncryption="AES256",
+                )
+            else:
+                # Production mode - use KMS encryption
+                response = self.s3_client.put_object(
+                    Bucket=self.bucket,
+                    Key=s3_key,
+                    Body=file_content,
+                    ContentType=content_type,
+                    Metadata=file_metadata,
+                    ServerSideEncryption="aws:kms",
+                    SSEKMSKeyId=self.settings.aws_kms_key_id,
+                )
 
             return {
                 "s3_key": s3_key,

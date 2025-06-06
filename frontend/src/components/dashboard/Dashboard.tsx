@@ -195,7 +195,7 @@ const PatientManagement: React.FC = () => {
   };
 
   const filteredPatients = samplePatients
-    .filter(patient => 
+    .filter(patient =>
       (statusFilter === 'all' || patient.status === statusFilter) &&
       (patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
        patient.insuranceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -230,7 +230,7 @@ const PatientManagement: React.FC = () => {
             </ol>
           </nav>
         </div>
-        <button 
+        <button
           onClick={() => setShowNewPatientForm(true)}
           className="px-4 py-2 bg-[#4A6FA5] text-white rounded-lg flex items-center hover:bg-[#3e5d8c] transition-colors"
         >
@@ -456,9 +456,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
                   <button
                     key={action.name}
                     onClick={() => {
-                      if (action.name === 'New Patient') {
-                        handleNavigation('/patients');
-                        setTimeout(() => setShowNewPatientForm(true), 100);
+                      if (action.name === 'New Patient Intake') {
+                        handleNavigation('/doctor/patients/intake');
+                      } else if (action.name === 'Submit IVR Request') {
+                        handleNavigation('/doctor/patients/select');
+                      } else if (action.name === 'Track Orders') {
+                        handleNavigation('/doctor/orders');
+                      } else if (action.name === 'Review IVR Queue') {
+                        handleNavigation('/doctor/ivr');
                       }
                     }}
                     className="flex flex-col p-4 rounded-lg border-2 border-gray-100 hover:border-[#4A6FA5] hover:bg-gray-50 transition-colors"
@@ -484,11 +489,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={ivrTrendData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="day" 
+                    <XAxis
+                      dataKey="day"
                       label={{ value: 'Days of Week', position: 'insideBottom', offset: -5 }}
                     />
-                    <YAxis 
+                    <YAxis
                       domain={[0, 60]}
                       label={{ value: 'Number of IVRs', angle: -90, position: 'insideLeft' }}
                     />
@@ -740,4 +745,4 @@ export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
       </main>
     </div>
   );
-}; 
+};

@@ -143,6 +143,26 @@ class PatientService {
       throw error;
     }
   }
+
+  async downloadDocument(patientId: string, documentId: string): Promise<void> {
+    try {
+      const response = await api.get(`${PATIENTS_ENDPOINT}/${patientId}/documents/${documentId}/download`);
+      const { download_url, filename } = response.data;
+
+      // Create a temporary link to download the file
+      const link = document.createElement('a');
+      link.href = download_url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        throw new Error(error.response?.data?.detail || 'Failed to download document');
+      }
+      throw error;
+    }
+  }
 }
 
 // Export the singleton instance

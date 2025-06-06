@@ -20,7 +20,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
   const handleSubmitIVR = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/ivr/submit/${patient.id}`);
+    navigate(`/doctor/ivr/submit/${patient.id}`);
   };
 
   const handleSelect = (e: React.MouseEvent) => {
@@ -88,7 +88,7 @@ const PatientCard: React.FC<PatientCardProps> = ({
             <div className="flex items-center space-x-2">
               <ClockIcon className="h-4 w-4 text-gray-400" />
               <p className="text-sm text-gray-900">
-                {patient.lastVisitDate 
+                {patient.lastVisitDate
                   ? format(new Date(patient.lastVisitDate), 'MM/dd/yyyy')
                   : 'No visits recorded'}
               </p>
@@ -141,4 +141,4 @@ const PatientCard: React.FC<PatientCardProps> = ({
   );
 };
 
-export default PatientCard; 
+export default PatientCard;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Button from '../components/ui/Button';
 import { showNotification } from '../components/ui/Notification';
 import ConfirmationDialog from '../components/ui/ConfirmationDialog';
+import PhoneInput from '../components/shared/PhoneInput';
 
 interface Patient {
   id: string;
@@ -23,62 +24,63 @@ const PatientsPage: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   const patients: Patient[] = [
-    { 
-      id: 'P-1234', 
-      name: 'John Smith', 
-      email: 'john@example.com', 
-      phone: '(555) 123-4567', 
-      dateOfBirth: '1980-05-15', 
-      status: 'Active', 
+    {
+      id: 'P-1234',
+      name: 'John Smith',
+      email: 'john@example.com',
+      phone: '(555) 123-4567',
+      dateOfBirth: '1980-05-15',
+      status: 'Active',
       lastVisit: '2024-03-15',
       medicalConditions: ['Hypertension', 'Type 2 Diabetes'],
       upcomingAppointment: '2024-04-01 10:00 AM',
       insuranceProvider: 'Blue Cross'
     },
-    { 
-      id: 'P-1235', 
-      name: 'Sarah Johnson', 
-      email: 'sarah@example.com', 
-      phone: '(555) 234-5678', 
-      dateOfBirth: '1992-08-21', 
-      status: 'Scheduled', 
+    {
+      id: 'P-1235',
+      name: 'Sarah Johnson',
+      email: 'sarah@example.com',
+      phone: '(555) 234-5678',
+      dateOfBirth: '1992-08-21',
+      status: 'Scheduled',
       lastVisit: '2024-03-14',
       medicalConditions: ['Asthma'],
       upcomingAppointment: '2024-03-25 2:30 PM',
       insuranceProvider: 'Aetna'
     },
-    { 
-      id: 'P-1236', 
-      name: 'Michael Brown', 
-      email: 'michael@example.com', 
-      phone: '(555) 345-6789', 
-      dateOfBirth: '1975-12-03', 
-      status: 'Active', 
+    {
+      id: 'P-1236',
+      name: 'Michael Brown',
+      email: 'michael@example.com',
+      phone: '(555) 345-6789',
+      dateOfBirth: '1975-12-03',
+      status: 'Active',
       lastVisit: '2024-03-10',
       medicalConditions: ['Arthritis', 'High Cholesterol'],
       upcomingAppointment: '2024-04-05 11:15 AM',
       insuranceProvider: 'UnitedHealth'
     },
-    { 
-      id: 'P-1237', 
-      name: 'Emily Davis', 
-      email: 'emily@example.com', 
-      phone: '(555) 456-7890', 
-      dateOfBirth: '1988-03-30', 
-      status: 'Inactive', 
+    {
+      id: 'P-1237',
+      name: 'Emily Davis',
+      email: 'emily@example.com',
+      phone: '(555) 456-7890',
+      dateOfBirth: '1988-03-30',
+      status: 'Inactive',
       lastVisit: '2024-02-28',
       medicalConditions: ['Migraine'],
       insuranceProvider: 'Cigna'
     },
-    { 
-      id: 'P-1238', 
-      name: 'David Wilson', 
-      email: 'david@example.com', 
-      phone: '(555) 567-8901', 
-      dateOfBirth: '1965-09-12', 
-      status: 'Active', 
+    {
+      id: 'P-1238',
+      name: 'David Wilson',
+      email: 'david@example.com',
+      phone: '(555) 567-8901',
+      dateOfBirth: '1965-09-12',
+      status: 'Active',
       lastVisit: '2024-03-18',
       medicalConditions: ['COPD', 'Osteoporosis'],
       upcomingAppointment: '2024-03-28 9:00 AM',
@@ -133,7 +135,7 @@ const PatientsPage: React.FC = () => {
     }
   };
 
-  const filteredPatients = patients.filter(patient => 
+  const filteredPatients = patients.filter(patient =>
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -273,7 +275,7 @@ const PatientsPage: React.FC = () => {
                 ✕
               </button>
             </div>
-            
+
             <form onSubmit={handleAddPatient} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -310,13 +312,11 @@ const PatientsPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
+                <PhoneInput
+                  value={phoneNumber}
+                  onChange={setPhoneNumber}
+                  label="Phone Number"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB]"
                 />
               </div>
 
@@ -395,4 +395,4 @@ const PatientsPage: React.FC = () => {
   );
 };
 
-export default PatientsPage; 
+export default PatientsPage;

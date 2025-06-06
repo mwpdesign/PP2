@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 import logging
 import os
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -31,8 +32,6 @@ from app.schemas.patient import (
 from app.schemas.token import TokenData
 from app.services.s3_service import S3Service
 from app.core.config import settings
-from app.models.rbac import Role
-from app.models.organization import Organization
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -52,9 +51,11 @@ async def search_patients(
     try:
         logger.info("Starting patients search query...")
 
-        # Base query - filter by organization
-        query_filter = select(Patient).where(
-            Patient.organization_id == current_user.organization_id
+        # Base query - filter by organization and eagerly load documents
+        query_filter = (
+            select(Patient)
+            .options(selectinload(Patient.documents))
+            .where(Patient.organization_id == current_user.organization_id)
         )
 
         # Apply search filter if query provided
@@ -147,8 +148,16 @@ async def get_patient(
     db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user),
 ) -> Patient:
-    """Get patient by ID"""
-    patient = await db.get(Patient, patient_id)
+    """Get patient by ID with documents"""
+    # Use selectinload to eagerly load documents
+    query = (
+        select(Patient)
+        .options(selectinload(Patient.documents))
+        .where(Patient.id == patient_id)
+    )
+    result = await db.execute(query)
+    patient = result.scalar_one_or_none()
+
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
@@ -302,6 +311,66 @@ async def upload_patient_document(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to upload document: {str(e)}"
+        )
+
+
+@router.get("/{patient_id}/documents/{document_id}/download")
+async def download_patient_document(
+    patient_id: UUID,
+    document_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """Download patient document"""
+    # Verify patient exists and user has access
+    patient = await db.get(Patient, patient_id)
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
+        )
+
+    # Check organization access
+    if patient.organization_id != current_user.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this patient",
+        )
+
+    # Get document
+    document = await db.get(PatientDocument, document_id)
+    if not document or document.patient_id != patient_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Document not found"
+        )
+
+    # Check organization access for document
+    if document.organization_id != current_user.organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this document",
+        )
+
+    try:
+        # Generate presigned URL for download
+        s3_service = S3Service()
+        download_url = await s3_service.generate_presigned_url(
+            s3_key=document.s3_key or document.file_path,
+            expiration=3600,  # 1 hour
+            operation="get_object"
+        )
+
+        return {
+            "download_url": download_url,
+            "filename": document.file_name,
+            "content_type": document.content_type,
+            "size": document.file_size
+        }
+
+    except Exception as e:
+        logger.error(f"Document download failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate download URL: {str(e)}"
         )
 
 

@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { ArrowLeftIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import PageHeader from '../shared/layout/PageHeader';
 import DocumentCard from './DocumentCard';
-import DocumentUpload from './DocumentUpload';
+import UniversalFileUpload from '../shared/UniversalFileUpload';
 import { Patient, Document } from '../../types/ivr';
 import patientService from '../../services/patientService';
 
@@ -49,7 +49,15 @@ const PatientDetail: React.FC = () => {
             groupNumber: response.insurance_group || '',
             status: response.insurance_verified ? 'active' : 'pending'
           },
-          documents: response.documents || []
+          documents: (response.documents || []).map((doc: any) => ({
+            id: doc.id,
+            name: doc.display_name || doc.file_name,
+            type: doc.document_type,
+            url: '', // Will be generated on download
+            uploadedAt: doc.created_at,
+            status: 'verified' as const,
+            size: doc.file_size
+          }))
         };
 
         setPatient(transformedPatient);
@@ -97,22 +105,23 @@ const PatientDetail: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleDocumentUpload = async (files: File[]) => {
-    if (!editedPatient) return;
+  const handleDocumentUpload = async (file: File | null) => {
+    if (!editedPatient || !file) return;
 
     // TODO: Replace with actual API call
-    const newDocuments: Document[] = files.map((file, index) => ({
-      id: `temp-${Date.now()}-${index}`,
+    const newDocument: Document = {
+      id: `temp-${Date.now()}`,
       name: file.name,
       type: file.type.includes('pdf') ? 'medical' : 'other',
-      uploadDate: new Date().toISOString(),
+      uploadedAt: new Date().toISOString(),
       url: URL.createObjectURL(file),
+      status: 'verified' as const,
       size: file.size
-    }));
+    };
 
     setEditedPatient(prev => prev ? {
       ...prev,
-      documents: [...(prev.documents || []), ...newDocuments]
+      documents: [...(prev.documents || []), newDocument]
     } : null);
   };
 
@@ -125,11 +134,15 @@ const PatientDetail: React.FC = () => {
     } : null);
   };
 
-  const handleDocumentDownload = (documentId: string) => {
-    const document = patient?.documents?.find(doc => doc.id === documentId);
-    if (document) {
-      // TODO: Replace with actual download logic
-      window.open(document.url, '_blank');
+  const handleDocumentDownload = async (documentId: string) => {
+    if (!patient?.id) return;
+
+    try {
+      await patientService.downloadDocument(patient.id, documentId);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to download document';
+      setError(errorMessage);
+      console.error('Error downloading document:', error);
     }
   };
 
@@ -146,7 +159,7 @@ const PatientDetail: React.FC = () => {
       <div className="flex flex-col items-center justify-center h-full">
         <div className="text-red-600 mb-4">{error || 'Patient not found'}</div>
         <button
-          onClick={() => navigate('/patients/select')}
+          onClick={() => navigate('/doctor/patients/select')}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#2C3E50] hover:bg-[#375788]"
         >
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
@@ -165,7 +178,7 @@ const PatientDetail: React.FC = () => {
 
       <div className="flex items-center justify-between">
         <button
-          onClick={() => navigate('/patients/select')}
+          onClick={() => navigate('/doctor/patients/select')}
           className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
         >
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
@@ -432,7 +445,7 @@ const PatientDetail: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Last Visit</label>
                 <p className="text-gray-900">
-                  {patient.lastVisit ? format(new Date(patient.lastVisit), 'MM/dd/yyyy') : 'No visits recorded'}
+                  {patient.lastVisitDate ? format(new Date(patient.lastVisitDate), 'MM/dd/yyyy') : 'No visits recorded'}
                 </p>
               </div>
             </div>
@@ -448,7 +461,17 @@ const PatientDetail: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {/* Upload Card (Edit Mode) */}
               {isEditing && (
-                <DocumentUpload onUpload={handleDocumentUpload} />
+                <div className="col-span-full mb-4">
+                  <UniversalFileUpload
+                    label="Upload Document"
+                    description="Upload medical records, insurance cards, or other patient documents"
+                    value={null}
+                    onChange={handleDocumentUpload}
+                    acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.tiff']}
+                    maxSizeMB={25}
+                    showCamera={true}
+                  />
+                </div>
               )}
 
               {/* Document Cards */}
