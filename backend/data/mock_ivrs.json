@@ -1,0 +1,469 @@
+[
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "patient_id": "550e8400-e29b-41d4-a716-446655440001",
+    "submitted_by_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+    "current_reviewer_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+    "status": "in_review",
+    "priority": "HIGH",
+    "submission_type": "initial",
+    "medical_condition": "Diabetic foot ulcer with infection",
+    "treatment_plan": {
+      "primary_diagnosis": "E11.621 - Type 2 diabetes mellitus with foot ulcer",
+      "secondary_diagnoses": ["L97.419 - Non-pressure chronic ulcer of right heel"],
+      "requested_products": [
+        {
+          "product_name": "Collagen Matrix Dressing",
+          "quantity": 10,
+          "frequency": "Change every 3 days",
+          "duration": "4 weeks",
+          "justification": "Advanced wound healing for diabetic ulcer"
+        },
+        {
+          "product_name": "Antimicrobial Silver Dressing",
+          "quantity": 15,
+          "frequency": "Daily",
+          "duration": "2 weeks",
+          "justification": "Infection control"
+        }
+      ],
+      "treatment_goals": "Achieve wound closure within 8 weeks",
+      "expected_outcomes": "Complete epithelialization with no signs of infection"
+    },
+    "insurance_verification": {
+      "primary_insurance": "Blue Cross Blue Shield",
+      "policy_number": "BCBS123456789",
+      "prior_authorization_required": true,
+      "coverage_percentage": 80,
+      "estimated_cost": 1250.00,
+      "patient_responsibility": 250.00
+    },
+    "clinical_documentation": {
+      "wound_assessment": {
+        "size": "3.2cm x 2.8cm x 1.5cm deep",
+        "location": "Right heel",
+        "tissue_type": "50% granulation, 30% slough, 20% necrotic",
+        "exudate": "Moderate purulent",
+        "pain_level": 7,
+        "infection_signs": ["Erythema", "Warmth", "Purulent drainage"]
+      },
+      "patient_history": "68-year-old male with 15-year history of Type 2 diabetes, poor glycemic control",
+      "previous_treatments": ["Standard gauze dressings", "Oral antibiotics"],
+      "treatment_failure_reason": "Inadequate wound healing progression over 6 weeks"
+    },
+    "submission_metadata": {
+      "submitted_at": "2024-06-06T09:30:00Z",
+      "urgency_reason": "Risk of amputation if not treated promptly",
+      "physician_notes": "Patient requires immediate advanced wound care intervention",
+      "supporting_documents": ["wound_photos.jpg", "lab_results.pdf", "previous_treatment_notes.pdf"]
+    },
+    "workflow_history": [
+      {
+        "status": "submitted",
+        "timestamp": "2024-06-06T09:30:00Z",
+        "user_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+        "notes": "Initial submission for diabetic foot ulcer treatment"
+      },
+      {
+        "status": "in_review",
+        "timestamp": "2024-06-06T09:35:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Assigned to IVR specialist for review"
+      }
+    ]
+  },
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440002",
+    "patient_id": "550e8400-e29b-41d4-a716-446655440002",
+    "submitted_by_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+    "current_reviewer_id": null,
+    "status": "approved",
+    "priority": "MEDIUM",
+    "submission_type": "reauthorization",
+    "medical_condition": "Post-surgical wound dehiscence",
+    "treatment_plan": {
+      "primary_diagnosis": "T81.31XA - Disruption of external operation wound, not elsewhere classified",
+      "secondary_diagnoses": ["Z98.890 - Other specified postprocedural states"],
+      "requested_products": [
+        {
+          "product_name": "Negative Pressure Wound Therapy System",
+          "quantity": 1,
+          "frequency": "Continuous",
+          "duration": "3 weeks",
+          "justification": "Promote wound closure and reduce healing time"
+        },
+        {
+          "product_name": "Foam Dressing Kit",
+          "quantity": 6,
+          "frequency": "Change every 3 days",
+          "duration": "3 weeks",
+          "justification": "Compatible with NPWT system"
+        }
+      ],
+      "treatment_goals": "Achieve secondary closure within 3 weeks",
+      "expected_outcomes": "Complete wound closure with minimal scarring"
+    },
+    "insurance_verification": {
+      "primary_insurance": "Aetna",
+      "policy_number": "AET987654321",
+      "prior_authorization_required": true,
+      "coverage_percentage": 90,
+      "estimated_cost": 3500.00,
+      "patient_responsibility": 350.00,
+      "authorization_number": "AUTH2024001"
+    },
+    "clinical_documentation": {
+      "wound_assessment": {
+        "size": "8cm x 4cm x 3cm deep",
+        "location": "Lower abdomen surgical site",
+        "tissue_type": "80% granulation, 20% fibrin",
+        "exudate": "Minimal serous",
+        "pain_level": 4,
+        "infection_signs": []
+      },
+      "patient_history": "62-year-old male, post-operative day 10 from lower extremity bypass surgery",
+      "previous_treatments": ["Primary closure", "Standard wound care"],
+      "treatment_failure_reason": "Wound dehiscence due to patient mobility and poor tissue quality"
+    },
+    "submission_metadata": {
+      "submitted_at": "2024-06-05T14:20:00Z",
+      "urgency_reason": "Prevent further complications and promote healing",
+      "physician_notes": "Patient responding well to NPWT, requesting continuation",
+      "supporting_documents": ["surgical_notes.pdf", "wound_progress_photos.jpg"]
+    },
+    "workflow_history": [
+      {
+        "status": "submitted",
+        "timestamp": "2024-06-05T14:20:00Z",
+        "user_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+        "notes": "Reauthorization request for NPWT continuation"
+      },
+      {
+        "status": "in_review",
+        "timestamp": "2024-06-05T14:25:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Reviewing clinical documentation and previous treatment response"
+      },
+      {
+        "status": "approved",
+        "timestamp": "2024-06-05T16:45:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Approved for 3-week continuation based on positive response"
+      }
+    ]
+  },
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440003",
+    "patient_id": "550e8400-e29b-41d4-a716-446655440003",
+    "submitted_by_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+    "current_reviewer_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+    "status": "pending_approval",
+    "priority": "HIGH",
+    "submission_type": "initial",
+    "medical_condition": "Second-degree burns requiring advanced dressings",
+    "treatment_plan": {
+      "primary_diagnosis": "T23.201A - Burn of second degree of right hand, unspecified site",
+      "secondary_diagnoses": ["F41.9 - Anxiety disorder, unspecified"],
+      "requested_products": [
+        {
+          "product_name": "Silver Hydrogel Dressing",
+          "quantity": 20,
+          "frequency": "Daily",
+          "duration": "4 weeks",
+          "justification": "Antimicrobial protection and moist wound healing"
+        },
+        {
+          "product_name": "Non-adherent Contact Layer",
+          "quantity": 20,
+          "frequency": "Daily",
+          "duration": "4 weeks",
+          "justification": "Prevent trauma during dressing changes"
+        }
+      ],
+      "treatment_goals": "Prevent infection and promote re-epithelialization",
+      "expected_outcomes": "Complete healing within 4-6 weeks without scarring"
+    },
+    "insurance_verification": {
+      "primary_insurance": "UnitedHealthcare",
+      "policy_number": "UHC456789123",
+      "prior_authorization_required": true,
+      "coverage_percentage": 85,
+      "estimated_cost": 800.00,
+      "patient_responsibility": 120.00
+    },
+    "clinical_documentation": {
+      "wound_assessment": {
+        "size": "15% TBSA (Total Body Surface Area)",
+        "location": "Right hand and forearm",
+        "tissue_type": "Partial thickness burns with intact blisters",
+        "exudate": "Minimal serous",
+        "pain_level": 8,
+        "infection_signs": []
+      },
+      "patient_history": "28-year-old female, kitchen accident 3 days ago",
+      "previous_treatments": ["Emergency department care", "Silver sulfadiazine cream"],
+      "treatment_failure_reason": "Patient unable to tolerate silver sulfadiazine due to sensitivity"
+    },
+    "submission_metadata": {
+      "submitted_at": "2024-06-06T11:15:00Z",
+      "urgency_reason": "High risk of infection and scarring without proper treatment",
+      "physician_notes": "Patient has anxiety about dressing changes, needs gentle products",
+      "supporting_documents": ["burn_assessment.pdf", "allergy_documentation.pdf"]
+    },
+    "workflow_history": [
+      {
+        "status": "submitted",
+        "timestamp": "2024-06-06T11:15:00Z",
+        "user_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+        "notes": "Initial submission for burn care products"
+      },
+      {
+        "status": "in_review",
+        "timestamp": "2024-06-06T11:20:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Reviewing burn assessment and product selection"
+      },
+      {
+        "status": "pending_approval",
+        "timestamp": "2024-06-06T13:30:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Need additional documentation of silver sulfadiazine allergy and burn depth assessment"
+      }
+    ],
+    "additional_info_requested": [
+      "Detailed allergy testing results for silver compounds",
+      "Burn depth assessment with photos",
+      "Alternative treatment options considered"
+    ]
+  },
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440004",
+    "patient_id": "550e8400-e29b-41d4-a716-446655440004",
+    "submitted_by_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+    "current_reviewer_id": null,
+    "status": "rejected",
+    "priority": "LOW",
+    "submission_type": "initial",
+    "medical_condition": "Stage 3 pressure ulcer",
+    "treatment_plan": {
+      "primary_diagnosis": "L89.153 - Pressure ulcer of sacral region, stage 3",
+      "secondary_diagnoses": ["F03.90 - Unspecified dementia without behavioral disturbance"],
+      "requested_products": [
+        {
+          "product_name": "Expensive Bioengineered Skin Substitute",
+          "quantity": 5,
+          "frequency": "Weekly application",
+          "duration": "5 weeks",
+          "justification": "Advanced healing for stage 3 pressure ulcer"
+        }
+      ],
+      "treatment_goals": "Achieve wound closure within 5 weeks",
+      "expected_outcomes": "Complete healing with tissue regeneration"
+    },
+    "insurance_verification": {
+      "primary_insurance": "Medicare Part A & B",
+      "policy_number": "1EG4-TE5-MK73",
+      "prior_authorization_required": true,
+      "coverage_percentage": 80,
+      "estimated_cost": 15000.00,
+      "patient_responsibility": 3000.00
+    },
+    "clinical_documentation": {
+      "wound_assessment": {
+        "size": "4cm x 3cm x 2cm deep",
+        "location": "Sacral region",
+        "tissue_type": "60% granulation, 40% slough",
+        "exudate": "Moderate serous",
+        "pain_level": 2,
+        "infection_signs": []
+      },
+      "patient_history": "69-year-old male with dementia, limited mobility",
+      "previous_treatments": ["Standard foam dressings", "Pressure redistribution"],
+      "treatment_failure_reason": "Slow healing progress over 4 weeks"
+    },
+    "submission_metadata": {
+      "submitted_at": "2024-06-04T10:00:00Z",
+      "urgency_reason": "Prevent progression to stage 4",
+      "physician_notes": "Requesting advanced treatment option",
+      "supporting_documents": ["pressure_ulcer_photos.jpg", "mobility_assessment.pdf"]
+    },
+    "workflow_history": [
+      {
+        "status": "submitted",
+        "timestamp": "2024-06-04T10:00:00Z",
+        "user_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+        "notes": "Initial submission for bioengineered skin substitute"
+      },
+      {
+        "status": "in_review",
+        "timestamp": "2024-06-04T10:05:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Reviewing cost-effectiveness and medical necessity"
+      },
+      {
+        "status": "rejected",
+        "timestamp": "2024-06-04T15:30:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Denied - less expensive alternatives not adequately trialed"
+      }
+    ],
+    "denial_reason": "Medical necessity not established. Standard wound care products should be trialed for additional 2-4 weeks before considering advanced biologics. Recommend collagen dressings and negative pressure therapy as step therapy.",
+    "appeal_deadline": "2024-07-04T15:30:00Z"
+  },
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440005",
+    "patient_id": "550e8400-e29b-41d4-a716-446655440005",
+    "submitted_by_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+    "current_reviewer_id": null,
+    "status": "approved",
+    "priority": "HIGH",
+    "submission_type": "urgent",
+    "medical_condition": "C-section wound dehiscence with infection risk",
+    "treatment_plan": {
+      "primary_diagnosis": "O90.0 - Disruption of cesarean delivery wound",
+      "secondary_diagnoses": ["F53.0 - Postpartum depression"],
+      "requested_products": [
+        {
+          "product_name": "Antimicrobial Foam Dressing",
+          "quantity": 14,
+          "frequency": "Every other day",
+          "duration": "4 weeks",
+          "justification": "Infection prevention and absorption of exudate"
+        },
+        {
+          "product_name": "Abdominal Binder",
+          "quantity": 1,
+          "frequency": "Continuous wear",
+          "duration": "6 weeks",
+          "justification": "Support healing and prevent further dehiscence"
+        }
+      ],
+      "treatment_goals": "Achieve secondary healing within 6 weeks",
+      "expected_outcomes": "Complete wound closure without infection"
+    },
+    "insurance_verification": {
+      "primary_insurance": "Cigna",
+      "policy_number": "CIG321549876",
+      "prior_authorization_required": false,
+      "coverage_percentage": 90,
+      "estimated_cost": 450.00,
+      "patient_responsibility": 45.00,
+      "authorization_number": "AUTO-APPROVED"
+    },
+    "clinical_documentation": {
+      "wound_assessment": {
+        "size": "6cm x 2cm x 1cm deep",
+        "location": "Lower abdominal C-section incision",
+        "tissue_type": "70% granulation, 30% fibrin",
+        "exudate": "Moderate serous",
+        "pain_level": 6,
+        "infection_signs": ["Mild erythema"]
+      },
+      "patient_history": "30-year-old female, postpartum day 7, wound dehiscence noted day 5",
+      "previous_treatments": ["Primary closure", "Oral antibiotics"],
+      "treatment_failure_reason": "Wound dehiscence likely due to infection and poor tissue healing"
+    },
+    "submission_metadata": {
+      "submitted_at": "2024-06-06T08:00:00Z",
+      "urgency_reason": "New mother needs rapid healing to care for newborn",
+      "physician_notes": "Patient anxious about wound, needs reassurance and effective treatment",
+      "supporting_documents": ["postpartum_assessment.pdf", "wound_culture_results.pdf"]
+    },
+    "workflow_history": [
+      {
+        "status": "submitted",
+        "timestamp": "2024-06-06T08:00:00Z",
+        "user_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+        "notes": "Urgent submission for postpartum wound dehiscence"
+      },
+      {
+        "status": "approved",
+        "timestamp": "2024-06-06T08:15:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Auto-approved due to urgent postpartum status and clear medical necessity"
+      }
+    ]
+  },
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440006",
+    "patient_id": "550e8400-e29b-41d4-a716-446655440006",
+    "submitted_by_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+    "current_reviewer_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+    "status": "escalated",
+    "priority": "HIGH",
+    "submission_type": "workers_compensation",
+    "medical_condition": "Traumatic laceration with tendon involvement",
+    "treatment_plan": {
+      "primary_diagnosis": "S56.021A - Laceration of flexor muscle, fascia and tendon of right thumb at forearm level",
+      "secondary_diagnoses": ["M54.5 - Low back pain"],
+      "requested_products": [
+        {
+          "product_name": "Advanced Collagen Dressing",
+          "quantity": 12,
+          "frequency": "Every 3 days",
+          "duration": "6 weeks",
+          "justification": "Promote tendon healing and prevent adhesions"
+        },
+        {
+          "product_name": "Compression Therapy System",
+          "quantity": 1,
+          "frequency": "Daily",
+          "duration": "8 weeks",
+          "justification": "Reduce edema and support healing"
+        }
+      ],
+      "treatment_goals": "Restore function and prevent permanent disability",
+      "expected_outcomes": "Return to work within 8-10 weeks with full function"
+    },
+    "insurance_verification": {
+      "primary_insurance": "Workers' Compensation",
+      "policy_number": "WC987654321",
+      "claim_number": "CLM2024001",
+      "prior_authorization_required": true,
+      "coverage_percentage": 100,
+      "estimated_cost": 2200.00,
+      "patient_responsibility": 0.00
+    },
+    "clinical_documentation": {
+      "wound_assessment": {
+        "size": "8cm x 3cm x 2cm deep",
+        "location": "Right forearm, volar aspect",
+        "tissue_type": "Exposed tendon, 40% granulation, 60% fibrin",
+        "exudate": "Minimal serous",
+        "pain_level": 7,
+        "infection_signs": []
+      },
+      "patient_history": "52-year-old male construction worker, injury occurred 5 days ago",
+      "previous_treatments": ["Emergency surgery", "Primary repair", "Standard dressings"],
+      "treatment_failure_reason": "Concern about tendon healing and return to manual labor"
+    },
+    "submission_metadata": {
+      "submitted_at": "2024-06-05T16:30:00Z",
+      "urgency_reason": "Workers' compensation case requiring optimal healing for return to work",
+      "physician_notes": "Patient's livelihood depends on hand function recovery",
+      "supporting_documents": ["surgical_report.pdf", "occupational_therapy_assessment.pdf", "workers_comp_forms.pdf"]
+    },
+    "workflow_history": [
+      {
+        "status": "submitted",
+        "timestamp": "2024-06-05T16:30:00Z",
+        "user_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
+        "notes": "Workers' compensation case for traumatic hand injury"
+      },
+      {
+        "status": "in_review",
+        "timestamp": "2024-06-05T16:35:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Reviewing workers' comp requirements and medical necessity"
+      },
+      {
+        "status": "escalated",
+        "timestamp": "2024-06-06T09:00:00Z",
+        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+        "notes": "Escalated to medical director due to high-cost products and workers' comp complexity"
+      }
+    ],
+    "escalation_reason": "High-cost treatment request for workers' compensation case requires medical director approval. Need to ensure optimal outcome for return-to-work while managing costs.",
+    "escalated_to_id": "21bebfe9-a6a9-4208-a623-87db7ca8d935"
+  }
+]
