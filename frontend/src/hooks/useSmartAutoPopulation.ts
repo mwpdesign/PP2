@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { debounce } from 'lodash';
 import { toast } from 'react-hot-toast';
 import {
@@ -87,19 +87,38 @@ export const useSmartAutoPopulation = (
 
   const [duplicationLoading, setDuplicationLoading] = useState(false);
 
-  // Create auto-population context
+  // Use refs to track if we've already loaded suggestions for this patient
+  const lastPatientIdRef = useRef<string>('');
+  const hasLoadedSuggestionsRef = useRef<boolean>(false);
+
+  // Stabilize currentFieldValues to prevent infinite re-renders
+  const stableFieldValues = useMemo(() => {
+    return {
+      primaryCondition: currentFieldValues?.primaryCondition || '',
+      qCode: currentFieldValues?.qCode || '',
+      frequency: currentFieldValues?.frequency || '',
+      state: currentFieldValues?.state || ''
+    };
+  }, [
+    currentFieldValues?.primaryCondition,
+    currentFieldValues?.qCode,
+    currentFieldValues?.frequency,
+    currentFieldValues?.state
+  ]);
+
+  // Create auto-population context with stable values
   const context: AutoPopulationContext = useMemo(() => ({
     patientId,
     formType,
-    currentFieldValues,
+    currentFieldValues: stableFieldValues,
     userRole,
     facilityId
-  }), [patientId, formType, currentFieldValues, userRole, facilityId]);
+  }), [patientId, formType, stableFieldValues, userRole, facilityId]);
 
   // Debounced function to get auto-population suggestions
   const debouncedGetSuggestions = useMemo(
     () => debounce(async (ctx: AutoPopulationContext) => {
-      if (!enableAutoSuggestions) return;
+      if (!enableAutoSuggestions || !ctx.patientId) return;
 
       try {
         setIsLoading(true);
@@ -109,13 +128,15 @@ export const useSmartAutoPopulation = (
         setPrefilledData(result.prefilledData);
         setConfidence(result.confidence);
 
-        // Show toast for high-confidence suggestions
-        if (result.suggestions.length > 0 && result.confidence > 0.8) {
+        // Show toast for high-confidence suggestions (only once per patient)
+        if (result.suggestions.length > 0 && result.confidence > 0.8 && !hasLoadedSuggestionsRef.current) {
           toast.success(`Found ${result.suggestions.length} smart suggestions for this form`, {
             duration: 3000,
             icon: '💡'
           });
         }
+
+        hasLoadedSuggestionsRef.current = true;
       } catch (error) {
         console.error('Error getting auto-population suggestions:', error);
         toast.error('Failed to load smart suggestions');
@@ -138,7 +159,7 @@ export const useSmartAutoPopulation = (
         setInsuranceLoading(true);
         const params: InsuranceSearchParams = {
           query,
-          patientState: currentFieldValues.state,
+          patientState: stableFieldValues.state,
           limit: 5
         };
 
@@ -151,11 +172,13 @@ export const useSmartAutoPopulation = (
         setInsuranceLoading(false);
       }
     }, debounceMs),
-    [enableInsuranceAutoComplete, currentFieldValues.state, debounceMs]
+    [enableInsuranceAutoComplete, stableFieldValues.state, debounceMs]
   );
 
   // Load patient history
   const loadPatientHistory = useCallback(async () => {
+    if (!patientId) return;
+
     try {
       setHistoryLoading(true);
       const history = await smartAutoPopulationService.getPatientHistory(patientId);
@@ -168,20 +191,24 @@ export const useSmartAutoPopulation = (
     }
   }, [patientId]);
 
-  // Effect to trigger auto-population when context changes
+  // Effect to trigger auto-population when patient changes (not on every field change)
   useEffect(() => {
-    if (patientId && enableAutoSuggestions) {
+    if (patientId && enableAutoSuggestions && patientId !== lastPatientIdRef.current) {
+      // Reset loading state for new patient
+      hasLoadedSuggestionsRef.current = false;
+      lastPatientIdRef.current = patientId;
+
       debouncedGetSuggestions(context);
     }
 
     return () => {
       debouncedGetSuggestions.cancel();
     };
-  }, [context, debouncedGetSuggestions]);
+  }, [patientId, enableAutoSuggestions, debouncedGetSuggestions]); // Removed context dependency
 
-  // Effect to load patient history on mount
+  // Effect to load patient history on mount or patient change
   useEffect(() => {
-    if (patientId) {
+    if (patientId && patientId !== lastPatientIdRef.current) {
       loadPatientHistory();
     }
   }, [patientId, loadPatientHistory]);
@@ -192,8 +219,11 @@ export const useSmartAutoPopulation = (
   }, [debouncedInsuranceSearch]);
 
   const refreshSuggestions = useCallback(() => {
-    debouncedGetSuggestions(context);
-  }, [context, debouncedGetSuggestions]);
+    if (patientId) {
+      hasLoadedSuggestionsRef.current = false; // Allow toast to show again
+      debouncedGetSuggestions(context);
+    }
+  }, [patientId, context, debouncedGetSuggestions]);
 
   const acceptSuggestion = useCallback(async (suggestionId: string, helpful: boolean = true) => {
     try {
