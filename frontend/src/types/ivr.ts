@@ -109,7 +109,18 @@ export interface IVRCommunicationMessage {
   id: string;
   author: User;
   message: string;
+  attachments?: {
+    id: string;
+    name: string;
+    type: string;
+    size: number;
+    url: string;
+    uploadedAt: string;
+  }[];
   createdAt: string;
+  updatedAt?: string;
+  isRead?: boolean;
+  messageType?: 'text' | 'file' | 'system';
 }
 
 export interface IVRReviewNote {

@@ -1,157 +1,152 @@
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import { IVRRequest, IVRQueueParams, IVRStatus, IVRPriority, User } from '../../types/ivr';
-import { mockIVRService } from '../../services/mockIVRService';
-import { useWebSocket, MessageType, ConnectionState } from '../../services/websocket';
-import { useAuth } from '../../contexts/AuthContext';
-import PageHeader from '../../components/shared/layout/PageHeader';
-import { ErrorBoundary } from '../../components/shared/ErrorBoundary';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { mockIVRService } from '../../services/mockIVRService';
+import { IVRRequest, IVRStatus, IVRPriority, User } from '../../types/ivr';
+import { toast } from 'react-hot-toast';
+import UniversalFileUpload from '../../components/shared/UniversalFileUpload';
 
-const IVRQueue: React.FC = () => {
-  const [requests, setRequests] = useState<IVRRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [queueParams, setQueueParams] = useState<IVRQueueParams>({
-    page: 1,
-    size: 20,
-  });
-  const [totalItems, setTotalItems] = useState(0);
-  const { subscribe, connectionState, connect } = useWebSocket();
-  const { isAuthenticated } = useAuth();
+interface IVRStats {
+  totalIVRs: number;
+  pendingReview: number;
+  approved: number;
+  rejected: number;
+}
 
-  // Load queue data
-  const loadQueue = async () => {
-    try {
-      setLoading(true);
-      const response = await mockIVRService.getQueue(queueParams);
-      setRequests(response.items || []);
-      setTotalItems(response.total || 0);
-    } catch (error) {
-      console.error('Failed to load queue:', error);
-      toast.error('Failed to load IVR requests');
-    } finally {
-      setLoading(false);
+// Memoized IVR row component for performance - UPDATED TO MATCH PATIENT STYLING
+const IVRRow = React.memo(({
+  request,
+  index,
+  onRowClick,
+  isIVRSpecialist,
+  onUpdateStatus,
+  newReviewNote,
+  navigate
+}: {
+  request: IVRRequest;
+  index: number;
+  onRowClick: (request: IVRRequest) => void;
+  isIVRSpecialist: boolean;
+  onUpdateStatus: (id: string, status: IVRStatus, note?: string) => void;
+  newReviewNote: string;
+  navigate: (path: string) => void;
+}) => {
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return '1d ago';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.ceil(diffDays / 7)}w ago`;
+    return `${Math.ceil(diffDays / 30)}mo ago`;
+  };
+
+  const getStatusBadgeColor = (status: IVRStatus) => {
+    switch (status) {
+      case IVRStatus.APPROVED:
+        return 'bg-green-100 text-green-800';
+      case IVRStatus.REJECTED:
+        return 'bg-red-100 text-red-800';
+      case IVRStatus.IN_REVIEW:
+        return 'bg-blue-100 text-blue-800';
+      case IVRStatus.SUBMITTED:
+        return 'bg-yellow-100 text-yellow-800';
+      case IVRStatus.DRAFT:
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    loadQueue();
-  }, [queueParams]);
-
-  // Establish WebSocket connection when authenticated
-  useEffect(() => {
-    if (isAuthenticated && connectionState === ConnectionState.DISCONNECTED) {
-      connect();
+  // UPDATED: Match patient page priority dots (w-2 h-2 rounded-full)
+  const getPriorityDotColor = (priority: IVRPriority) => {
+    switch (priority) {
+      case IVRPriority.URGENT:
+        return 'bg-red-500';
+      case IVRPriority.HIGH:
+        return 'bg-orange-500';
+      case IVRPriority.MEDIUM:
+        return 'bg-yellow-500';
+      case IVRPriority.LOW:
+        return 'bg-green-500';
+      default:
+        return 'bg-gray-400';
     }
-  }, [isAuthenticated, connectionState, connect]);
+  };
 
-  // WebSocket subscription for real-time updates
-  useEffect(() => {
-    if (connectionState === ConnectionState.CONNECTED) {
-      const unsubscribe = subscribe(MessageType.IVR_STATUS, (data: IVRRequest) => {
-        setRequests((prev) =>
-          prev.map((request) =>
-            request.id === data.id ? { ...request, ...data } : request
-          )
-        );
-      });
-
-      return () => unsubscribe();
+  const formatStatusText = (status: IVRStatus) => {
+    switch (status) {
+      case IVRStatus.IN_REVIEW:
+        return 'In Review';
+      case IVRStatus.SUBMITTED:
+        return 'Pending Review';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
-  }, [subscribe, connectionState]);
-
-  // Handle WebSocket connection state changes
-  useEffect(() => {
-    if (connectionState === ConnectionState.AUTHENTICATION_FAILED) {
-      toast.error('WebSocket authentication failed. Real-time updates may be unavailable.');
-    }
-  }, [connectionState]);
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Connection status indicator */}
-      {connectionState !== ConnectionState.CONNECTED && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                {connectionState === ConnectionState.CONNECTING ? 'Connecting to real-time updates...' :
-                 connectionState === ConnectionState.RECONNECTING ? 'Reconnecting to real-time updates...' :
-                 connectionState === ConnectionState.AUTHENTICATION_FAILED ? 'Authentication failed. Real-time updates unavailable.' :
-                 'Disconnected from real-time updates.'}
-              </p>
-            </div>
-          </div>
+    <tr
+      className={`group h-12 cursor-pointer transition-colors hover:bg-slate-100 ${
+        index % 2 === 1 ? 'bg-slate-50' : 'bg-white'
+      }`}
+      onClick={() => onRowClick(request)}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') onRowClick(request);
+      }}
+    >
+      <td className="px-4 py-3">
+        <div
+          className={`w-2 h-2 rounded-full ${getPriorityDotColor(request.priority)}`}
+          title={`Priority: ${request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}`}
+        />
+      </td>
+      <td className="px-4 py-3 font-medium text-gray-900 truncate max-w-[200px]">
+        {request.id}
+      </td>
+      <td className="px-4 py-3 text-gray-900 text-sm truncate max-w-[150px]">
+        {request.patient?.firstName} {request.patient?.lastName}
+      </td>
+      <td className="px-4 py-3 text-gray-600 text-sm truncate max-w-[120px]">
+        {request.provider?.name}
+      </td>
+      <td className="px-4 py-3 text-gray-600 text-sm truncate max-w-[140px]">
+        {request.serviceType}
+      </td>
+      <td className="px-4 py-3">
+        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(request.status)}`}>
+          {formatStatusText(request.status)}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-gray-600 text-sm">
+        {formatRelativeTime(request.createdAt)}
+      </td>
+      {/* UPDATED: Replace dropdown menu with simple eye icon */}
+      <td className="px-6 py-2 relative">
+        <div className="flex justify-center">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRowClick(request);
+            }}
+            className="w-8 h-8 rounded hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all"
+            title="View IVR Details"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
         </div>
-      )}
-
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2C3E50]"></div>
-        </div>
-      ) : requests.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500">No IVR requests found</p>
-        </div>
-      ) : (
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul role="list" className="divide-y divide-gray-200">
-            {requests.map((request) => (
-              <li key={request.id}>
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <p className="text-sm font-medium text-[#2C3E50] truncate">
-                        {request.patient?.firstName} {request.patient?.lastName}
-                      </p>
-                      <div className="ml-2 flex-shrink-0">
-                        <span className={`
-                          px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                          ${request.status === IVRStatus.SUBMITTED ? 'bg-yellow-100 text-yellow-800' :
-                            request.status === IVRStatus.APPROVED ? 'bg-green-100 text-green-800' :
-                            request.status === IVRStatus.REJECTED ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'}
-                        `}>
-                          {request.status}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="ml-2 flex-shrink-0 flex">
-                      <p className="text-sm text-gray-500">
-                        Submitted {new Date(request.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-2 sm:flex sm:justify-between">
-                    <div className="sm:flex">
-                      <p className="flex items-center text-sm text-gray-500">
-                        {request.provider?.name}
-                      </p>
-                      <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                        {request.serviceType}
-                      </p>
-                    </div>
-                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                      <p>
-                        Priority: {request.priority}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+      </td>
+    </tr>
   );
-};
+});
 
 const IVRManagementPage: React.FC = () => {
   const { user } = useAuth();
@@ -162,10 +157,45 @@ const IVRManagementPage: React.FC = () => {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [newReviewNote, setNewReviewNote] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<IVRStatus | 'all'>('all');
+  const [priorityFilter, setPriorityFilter] = useState<IVRPriority | 'all'>('all');
+
+  // Enhanced communication state
+  const [attachmentFiles, setAttachmentFiles] = useState<Record<string, File[]>>({});
+  const [uploadingFiles, setUploadingFiles] = useState<Record<string, boolean>>({});
 
   // Role checks
   const isIVRSpecialist = user?.role === 'IVR';
   const isDoctor = user?.role === 'Doctor';
+
+  // Calculate stats from requests
+  const stats: IVRStats = useMemo(() => {
+    return {
+      totalIVRs: requests.length,
+      pendingReview: requests.filter(req => req.status === IVRStatus.SUBMITTED).length,
+      approved: requests.filter(req => req.status === IVRStatus.APPROVED).length,
+      rejected: requests.filter(req => req.status === IVRStatus.REJECTED).length
+    };
+  }, [requests]);
+
+
+
+  // Filtered requests
+  const filteredRequests = useMemo(() => {
+    return requests.filter(req => {
+      const matchesSearch = !searchTerm ||
+        req.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${req.patient?.firstName} ${req.patient?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        req.provider?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        req.serviceType.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = statusFilter === 'all' || req.status === statusFilter;
+      const matchesPriority = priorityFilter === 'all' || req.priority === priorityFilter;
+
+      return matchesSearch && matchesStatus && matchesPriority;
+    });
+  }, [requests, searchTerm, statusFilter, priorityFilter]);
 
   useEffect(() => {
     const loadRequests = async () => {
@@ -241,25 +271,55 @@ const IVRManagementPage: React.FC = () => {
     }
   };
 
+  // Enhanced message handling with file attachments
   const handleAddMessage = async (requestId: string) => {
-    if (!newMessage.trim() || !user) return;
+    if ((!newMessage.trim() && !attachmentFiles[requestId]?.length) || !user) return;
 
     try {
+      setUploadingFiles(prev => ({ ...prev, [requestId]: true }));
+
       const userWithName: User = {
         id: user.email || 'unknown',
         email: user.email,
         role: user.role || 'Doctor',
         name: user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email
       };
-      const updatedRequest = await mockIVRService.addCommunication(requestId, newMessage, userWithName);
+
+      // Simulate file upload and create attachments
+      const attachments = attachmentFiles[requestId]?.map(file => ({
+        id: `att-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        url: URL.createObjectURL(file), // In real app, this would be uploaded to server
+        uploadedAt: new Date().toISOString()
+      })) || [];
+
+      // Create enhanced message with attachments
+      const messageWithAttachments = {
+        message: newMessage.trim() || (attachments.length > 0 ? `Shared ${attachments.length} file(s)` : ''),
+        attachments
+      };
+
+      const updatedRequest = await mockIVRService.addCommunication(
+        requestId,
+        messageWithAttachments.message,
+        userWithName,
+        attachments
+      );
+
       setRequests(prev => prev.map(req =>
         req.id === updatedRequest.id ? updatedRequest : req
       ));
+
       setNewMessage('');
+      setAttachmentFiles(prev => ({ ...prev, [requestId]: [] }));
       toast.success('Message sent successfully');
     } catch (err) {
       console.error('Failed to send message:', err);
       toast.error('Failed to send message');
+    } finally {
+      setUploadingFiles(prev => ({ ...prev, [requestId]: false }));
     }
   };
 
@@ -285,16 +345,53 @@ const IVRManagementPage: React.FC = () => {
     }
   };
 
-  const handleCreateNewRequest = () => {
-    navigate('/patients/select');
+  // File attachment handlers
+  const handleFileUpload = (requestId: string, file: File | null) => {
+    if (file) {
+      setAttachmentFiles(prev => ({
+        ...prev,
+        [requestId]: [...(prev[requestId] || []), file]
+      }));
+    }
   };
+
+  const handleRemoveAttachment = (requestId: string, fileIndex: number) => {
+    setAttachmentFiles(prev => ({
+      ...prev,
+      [requestId]: prev[requestId]?.filter((_, index) => index !== fileIndex) || []
+    }));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handleCreateNewRequest = () => {
+    navigate('/doctor/patients/select');
+  };
+
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
+  const handleRowClick = useCallback((request: IVRRequest) => {
+    setExpandedRow(expandedRow === request.id ? null : request.id);
+  }, [expandedRow]);
 
   if (loading) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6">IVR Management</h1>
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2C3E50]"></div>
+      <div className="min-h-screen bg-slate-100 p-6">
+        <div className="animate-pulse space-y-6">
+          <div className="grid grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg p-6 h-24" />
+            ))}
+          </div>
+          <div className="bg-white rounded-lg p-6 h-96" />
         </div>
       </div>
     );
@@ -302,9 +399,8 @@ const IVRManagementPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6">IVR Management</h1>
-        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+      <div className="min-h-screen bg-slate-100 p-6">
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -327,277 +423,503 @@ const IVRManagementPage: React.FC = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">IVR Management</h1>
-          <p className="text-gray-600 mt-1">
-            {isDoctor ? 'View your submitted IVR requests' : 'Manage insurance verification requests'}
-          </p>
+    <div className="min-h-screen bg-slate-100 p-6">
+      {/* UPDATED: Match patient page stats cards exactly */}
+      <div className="grid grid-cols-4 gap-6 mb-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total IVRs</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.totalIVRs}</p>
+            </div>
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center space-x-4">
-          {isDoctor && (
-            <button
-              onClick={handleCreateNewRequest}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#2C3E50] hover:bg-[#375788]"
-            >
-              Submit New IVR
-            </button>
-          )}
-          <div className="text-sm text-gray-600">
-            {isIVRSpecialist && `${requests.filter(r => r.status === IVRStatus.SUBMITTED).length} pending requests`}
-            {isDoctor && `${requests.length} total requests`}
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Pending Review</p>
+              <p className="text-3xl font-bold text-orange-600">{stats.pendingReview}</p>
+            </div>
+            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Approved</p>
+              <p className="text-3xl font-bold text-green-600">{stats.approved}</p>
+            </div>
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Rejected</p>
+              <p className="text-3xl font-bold text-red-600">{stats.rejected}</p>
+            </div>
+            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Doctor Info Banner */}
       {isDoctor && (
         <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-lg">
-          <p className="text-blue-800 text-sm">
-            <span className="font-bold">Doctor View:</span> You can view the status of your submitted IVR requests here.
-            To submit a new request, click the "Submit New IVR" button or select a patient from the patient list.
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-blue-800 text-sm">
+              <span className="font-bold">Doctor View:</span> You can view the status of your submitted IVR requests here.
+              To submit a new request, click the "Submit New IVR" button or select a patient from the patient list.
+            </p>
+            <button
+              onClick={handleCreateNewRequest}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Submit New IVR
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Patient
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Provider
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Service Type
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Priority
-              </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              {isIVRSpecialist && (
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+      {/* UPDATED: Match patient page table styling exactly */}
+      <div className="bg-white rounded-lg shadow-sm">
+        {/* Search Header - Match patient page exactly */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">IVR Management</h2>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search IVRs..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as IVRStatus | 'all')}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="all">All Status</option>
+                <option value={IVRStatus.SUBMITTED}>Pending Review</option>
+                <option value={IVRStatus.IN_REVIEW}>In Review</option>
+                <option value={IVRStatus.APPROVED}>Approved</option>
+                <option value={IVRStatus.REJECTED}>Rejected</option>
+                <option value={IVRStatus.DRAFT}>Draft</option>
+              </select>
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value as IVRPriority | 'all')}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="all">All Priority</option>
+                <option value={IVRPriority.URGENT}>Urgent</option>
+                <option value={IVRPriority.HIGH}>High</option>
+                <option value={IVRPriority.MEDIUM}>Medium</option>
+                <option value={IVRPriority.LOW}>Low</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* High-Density Table - Match patient page exactly */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                  Priority
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  IVR ID
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Patient
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Provider
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Service Type
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Submitted
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                   Actions
                 </th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {requests.map((request) => (
-              <React.Fragment key={request.id}>
-                <tr
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => setExpandedRow(expandedRow === request.id ? null : request.id)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {request.patient?.firstName} {request.patient?.lastName}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      DOB: {new Date(request.patient?.dateOfBirth || '').toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{request.provider?.name}</div>
-                    <div className="text-sm text-gray-500">{request.provider?.speciality}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {request.serviceType}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                      ${request.priority === IVRPriority.URGENT ? 'bg-red-100 text-red-800' :
-                        request.priority === IVRPriority.HIGH ? 'bg-orange-100 text-orange-800' :
-                        request.priority === IVRPriority.MEDIUM ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'}`}>
-                      {request.priority}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                      ${request.status === IVRStatus.APPROVED ? 'bg-green-100 text-green-800' :
-                        request.status === IVRStatus.REJECTED ? 'bg-red-100 text-red-800' :
-                        request.status === IVRStatus.IN_REVIEW ? 'bg-blue-100 text-blue-800' :
-                        'bg-yellow-100 text-yellow-800'}`}>
-                      {request.status}
-                    </span>
-                  </td>
-                  {isIVRSpecialist && (
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {request.status === IVRStatus.SUBMITTED && (
-                        <div className="space-x-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUpdateStatus(request.id, IVRStatus.APPROVED, newReviewNote);
-                            }}
-                            className="text-green-600 hover:text-green-900"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleUpdateStatus(request.id, IVRStatus.REJECTED, newReviewNote);
-                            }}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                      {request.status === IVRStatus.IN_REVIEW && (
-                        <span className="text-blue-600">Under Review</span>
-                      )}
-                    </td>
-                  )}
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-gray-500">
-                        {expandedRow === request.id ? '▼' : '▶'}
-                      </span>
-                      <span className="text-sm text-gray-900">View Details</span>
-                    </div>
-                  </td>
-                </tr>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRequests.map((request, index) => (
+                <React.Fragment key={request.id}>
+                  <IVRRow
+                    request={request}
+                    index={index}
+                    onRowClick={handleRowClick}
+                    isIVRSpecialist={isIVRSpecialist}
+                    onUpdateStatus={handleUpdateStatus}
+                    newReviewNote={newReviewNote}
+                    navigate={navigate}
+                  />
 
-                {expandedRow === request.id && (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-4 bg-gray-50">
-                      <div className="space-y-6">
-                        {/* Review Notes Section */}
-                        <div className="bg-white p-4 rounded-lg border border-gray-200">
-                          <h4 className="text-lg font-semibold mb-4">Review Notes</h4>
-                          <div className="space-y-4 max-h-60 overflow-y-auto">
-                            {request.reviewNotes.map((note) => (
-                              <div
-                                key={note.id}
-                                className={`p-4 rounded-lg ${note.isInternal ? 'bg-yellow-50' : 'bg-[#2C3E50] bg-opacity-5'}`}
-                              >
-                                <div className="flex justify-between items-start mb-2">
-                                  <span className="font-medium">{note.author.name}</span>
-                                  <span className="text-sm text-gray-500">
-                                    {new Date(note.createdAt).toLocaleString()}
-                                  </span>
-                                </div>
-                                <p className="text-gray-700 whitespace-pre-wrap">{note.note}</p>
-                                {note.status && (
-                                  <div className="mt-2">
-                                    <span className={`
-                                      px-2 py-1 text-xs font-semibold rounded-full
-                                      ${note.status === IVRStatus.APPROVED ? 'bg-green-100 text-green-800' :
-                                        note.status === IVRStatus.REJECTED ? 'bg-red-100 text-red-800' :
-                                        'bg-[#2C3E50] bg-opacity-10 text-[#2C3E50]'}
-                                    `}>
-                                      Status: {note.status}
+                  {/* Expanded Row Details */}
+                  {expandedRow === request.id && (
+                    <tr>
+                      <td colSpan={8} className="px-6 py-4 bg-gray-50">
+                        <div className="space-y-6">
+                          {/* Review Notes Section */}
+                          <div className="bg-white p-4 rounded-lg border border-gray-200">
+                            <h4 className="text-lg font-semibold mb-4">Review Notes</h4>
+                            <div className="space-y-4 max-h-60 overflow-y-auto">
+                              {request.reviewNotes.map((note) => (
+                                <div
+                                  key={note.id}
+                                  className={`p-4 rounded-lg ${note.isInternal ? 'bg-yellow-50' : 'bg-blue-50'}`}
+                                >
+                                  <div className="flex justify-between items-start mb-2">
+                                    <span className="font-medium">{note.author.name}</span>
+                                    <span className="text-sm text-gray-500">
+                                      {new Date(note.createdAt).toLocaleString()}
                                     </span>
                                   </div>
-                                )}
+                                  <p className="text-gray-700 whitespace-pre-wrap">{note.note}</p>
+                                  {note.status && (
+                                    <div className="mt-2">
+                                      <span className={`
+                                        px-2 py-1 text-xs font-semibold rounded-full
+                                        ${note.status === IVRStatus.APPROVED ? 'bg-green-100 text-green-800' :
+                                          note.status === IVRStatus.REJECTED ? 'bg-red-100 text-red-800' :
+                                          'bg-blue-100 text-blue-800'}
+                                      `}>
+                                        Status: {note.status}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Add Review Note (IVR Specialist Only) */}
+                            {isIVRSpecialist && (
+                              <div className="mt-4">
+                                <textarea
+                                  value={newReviewNote}
+                                  onChange={(e) => setNewReviewNote(e.target.value)}
+                                  placeholder="Add a review note..."
+                                  className="w-full p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                  rows={3}
+                                />
+                                <div className="mt-2 flex justify-end space-x-2">
+                                  <button
+                                    onClick={() => handleAddInternalNote(request.id)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                  >
+                                    Add Internal Note
+                                  </button>
+                                  {request.status === IVRStatus.SUBMITTED && (
+                                    <>
+                                      <button
+                                        onClick={() => handleUpdateStatus(request.id, IVRStatus.APPROVED, newReviewNote)}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                      >
+                                        Approve with Note
+                                      </button>
+                                      <button
+                                        onClick={() => handleUpdateStatus(request.id, IVRStatus.REJECTED, newReviewNote)}
+                                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                                      >
+                                        Reject with Note
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
                               </div>
-                            ))}
+                            )}
                           </div>
 
-                          {/* Add Review Note (IVR Specialist Only) */}
-                          {isIVRSpecialist && (
-                            <div className="mt-4">
-                              <textarea
-                                value={newReviewNote}
-                                onChange={(e) => setNewReviewNote(e.target.value)}
-                                placeholder="Add a review note..."
-                                className="w-full p-2 border rounded-lg focus:ring-[#2C3E50] focus:border-[#2C3E50]"
-                                rows={3}
+                          {/* Enhanced Communication Section */}
+                          <div className="bg-white p-4 rounded-lg border border-gray-200">
+                            <h4 className="text-lg font-semibold mb-4 flex items-center">
+                              <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                              Communication Thread
+                            </h4>
+
+                            {/* Message Thread */}
+                            <div className="space-y-4 max-h-80 overflow-y-auto mb-4 bg-gray-50 rounded-lg p-4">
+                              {request.communication.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">
+                                  <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                  </svg>
+                                  <p className="text-sm">No messages yet. Start the conversation!</p>
+                                </div>
+                              ) : (
+                                request.communication.map((msg) => (
+                                  <div
+                                    key={msg.id}
+                                    className={`flex ${msg.author.role === 'IVRCompany' ? 'justify-start' : 'justify-end'}`}
+                                  >
+                                    <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg shadow-sm ${
+                                      msg.author.role === 'IVRCompany'
+                                        ? 'bg-white border border-blue-200'
+                                        : 'bg-blue-600 text-white'
+                                    }`}>
+                                      {/* Message Header */}
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center space-x-2">
+                                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                                            msg.author.role === 'IVRCompany'
+                                              ? 'bg-blue-100 text-blue-600'
+                                              : 'bg-blue-500 text-white'
+                                          }`}>
+                                            {msg.author.name.charAt(0).toUpperCase()}
+                                          </div>
+                                          <span className={`text-xs font-medium ${
+                                            msg.author.role === 'IVRCompany' ? 'text-gray-700' : 'text-blue-100'
+                                          }`}>
+                                            {msg.author.name}
+                                          </span>
+                                        </div>
+                                        <span className={`text-xs ${
+                                          msg.author.role === 'IVRCompany' ? 'text-gray-500' : 'text-blue-200'
+                                        }`}>
+                                          {new Date(msg.createdAt).toLocaleString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                          })}
+                                        </span>
+                                      </div>
+
+                                      {/* Message Content */}
+                                      {msg.message && (
+                                        <p className={`text-sm whitespace-pre-wrap ${
+                                          msg.author.role === 'IVRCompany' ? 'text-gray-800' : 'text-white'
+                                        }`}>
+                                          {msg.message}
+                                        </p>
+                                      )}
+
+                                      {/* File Attachments */}
+                                      {msg.attachments && msg.attachments.length > 0 && (
+                                        <div className="mt-3 space-y-2">
+                                          {msg.attachments.map((attachment) => (
+                                            <div
+                                              key={attachment.id}
+                                              className={`flex items-center space-x-2 p-2 rounded border ${
+                                                msg.author.role === 'IVRCompany'
+                                                  ? 'bg-gray-50 border-gray-200'
+                                                  : 'bg-blue-500 border-blue-400'
+                                              }`}
+                                            >
+                                              <div className={`p-1 rounded ${
+                                                msg.author.role === 'IVRCompany' ? 'bg-gray-200' : 'bg-blue-400'
+                                              }`}>
+                                                {attachment.type.startsWith('image/') ? (
+                                                  <svg className={`w-4 h-4 ${
+                                                    msg.author.role === 'IVRCompany' ? 'text-gray-600' : 'text-white'
+                                                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                  </svg>
+                                                ) : (
+                                                  <svg className={`w-4 h-4 ${
+                                                    msg.author.role === 'IVRCompany' ? 'text-gray-600' : 'text-white'
+                                                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                  </svg>
+                                                )}
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <p className={`text-xs font-medium truncate ${
+                                                  msg.author.role === 'IVRCompany' ? 'text-gray-800' : 'text-white'
+                                                }`}>
+                                                  {attachment.name}
+                                                </p>
+                                                <p className={`text-xs ${
+                                                  msg.author.role === 'IVRCompany' ? 'text-gray-500' : 'text-blue-200'
+                                                }`}>
+                                                  {formatFileSize(attachment.size)}
+                                                </p>
+                                              </div>
+                                              <button
+                                                onClick={() => window.open(attachment.url, '_blank')}
+                                                className={`p-1 rounded hover:bg-opacity-80 ${
+                                                  msg.author.role === 'IVRCompany'
+                                                    ? 'hover:bg-gray-300 text-gray-600'
+                                                    : 'hover:bg-blue-400 text-white'
+                                                }`}
+                                                title="Download file"
+                                              >
+                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                              </button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+
+                            {/* File Upload Section */}
+                            {attachmentFiles[request.id]?.length > 0 && (
+                              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <h5 className="text-sm font-medium text-blue-800 mb-2">Files to send:</h5>
+                                <div className="space-y-2">
+                                  {attachmentFiles[request.id].map((file, index) => (
+                                    <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                                      <div className="flex items-center space-x-2">
+                                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        <span className="text-sm text-gray-700">{file.name}</span>
+                                        <span className="text-xs text-gray-500">({formatFileSize(file.size)})</span>
+                                      </div>
+                                      <button
+                                        onClick={() => handleRemoveAttachment(request.id, index)}
+                                        className="text-red-500 hover:text-red-700"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* File Upload Component */}
+                            <div className="mb-4">
+                              <UniversalFileUpload
+                                label="Attach Files"
+                                description="Upload documents, images, or other files to share"
+                                value={null}
+                                onChange={(file) => handleFileUpload(request.id, file)}
+                                acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.txt']}
+                                maxSizeMB={10}
+                                showCamera={true}
+                                className="border-dashed border-2 border-gray-300"
                               />
-                              <div className="mt-2 flex justify-end space-x-2">
+                            </div>
+
+                            {/* Message Input */}
+                            <div className="flex space-x-2">
+                              <div className="flex-1">
+                                <textarea
+                                  value={newMessage}
+                                  onChange={(e) => setNewMessage(e.target.value)}
+                                  placeholder="Type your message..."
+                                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                  rows={3}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handleAddMessage(request.id);
+                                    }
+                                  }}
+                                />
+                              </div>
+                              <div className="flex flex-col space-y-2">
                                 <button
-                                  onClick={() => handleAddInternalNote(request.id)}
-                                  className="px-4 py-2 bg-[#2C3E50] text-white rounded-lg hover:bg-[#375788]"
+                                  onClick={() => handleAddMessage(request.id)}
+                                  disabled={uploadingFiles[request.id] || (!newMessage.trim() && !attachmentFiles[request.id]?.length)}
+                                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-colors"
                                 >
-                                  Add Internal Note
+                                  {uploadingFiles[request.id] ? (
+                                    <>
+                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                      <span>Sending...</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                      </svg>
+                                      <span>Send</span>
+                                    </>
+                                  )}
                                 </button>
-                                {request.status === IVRStatus.SUBMITTED && (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleUpdateStatus(request.id, IVRStatus.APPROVED, newReviewNote);
-                                      }}
-                                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                                    >
-                                      Approve with Note
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleUpdateStatus(request.id, IVRStatus.REJECTED, newReviewNote);
-                                      }}
-                                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                                    >
-                                      Reject with Note
-                                    </button>
-                                  </>
-                                )}
                               </div>
                             </div>
-                          )}
-                        </div>
-
-                        {/* Communication Section */}
-                        <div className="bg-white p-4 rounded-lg border border-gray-200">
-                          <h4 className="text-lg font-semibold mb-4">Communication</h4>
-                          <div className="space-y-4 max-h-60 overflow-y-auto">
-                            {request.communication.map((msg) => (
-                              <div
-                                key={msg.id}
-                                className={`p-4 rounded-lg ${
-                                  msg.author.role === 'IVRCompany' ? 'bg-[#2C3E50] bg-opacity-5 ml-8' : 'bg-green-50 mr-8'
-                                }`}
-                              >
-                                <div className="flex justify-between items-start mb-2">
-                                  <span className="font-medium">{msg.author.name}</span>
-                                  <span className="text-sm text-gray-500">
-                                    {new Date(msg.createdAt).toLocaleString()}
-                                  </span>
-                                </div>
-                                <p className="text-gray-700 whitespace-pre-wrap">{msg.message}</p>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Add Message (Both Roles) */}
-                          <div className="mt-4 flex space-x-2">
-                            <input
-                              type="text"
-                              value={newMessage}
-                              onChange={(e) => setNewMessage(e.target.value)}
-                              placeholder="Type a message..."
-                              className="flex-1 p-2 border rounded-lg focus:ring-[#2C3E50] focus:border-[#2C3E50]"
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleAddMessage(request.id);
-                                }
-                              }}
-                            />
-                            <button
-                              onClick={() => handleAddMessage(request.id)}
-                              className="px-4 py-2 bg-[#2C3E50] text-white rounded-lg hover:bg-[#375788]"
-                            >
-                              Send
-                            </button>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            ))}
-          </tbody>
-        </table>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* UPDATED: Match patient page empty state exactly */}
+        {filteredRequests.length === 0 && (
+          <div className="text-center py-16">
+            <div className="max-w-md mx-auto">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' ? 'No IVRs found' : 'No IVRs yet'}
+              </h3>
+              <p className="text-gray-500 mb-6">
+                {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all'
+                  ? 'No IVRs match your current filters. Try adjusting your search criteria.'
+                  : 'IVR submissions will appear here once they are created.'
+                }
+              </p>
+              {isDoctor && (
+                <button
+                  onClick={handleCreateNewRequest}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Submit New IVR
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

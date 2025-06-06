@@ -403,7 +403,7 @@ export const mockIVRService = {
     return request;
   },
 
-  addCommunication: async (id: string, message: string, author: User): Promise<IVRRequest> => {
+  addCommunication: async (id: string, message: string, author: User, attachments?: any[]): Promise<IVRRequest> => {
     await new Promise(resolve => setTimeout(resolve, 300));
     const request = mockIVRRequests.find(r => r.id === id);
     if (!request) throw new Error('IVR request not found');
@@ -412,7 +412,9 @@ export const mockIVRService = {
       id: `CM${request.communication.length + 1}`,
       author,
       message,
-      createdAt: new Date().toISOString()
+      attachments: attachments || [],
+      createdAt: new Date().toISOString(),
+      messageType: attachments && attachments.length > 0 ? 'file' : 'text'
     };
 
     request.communication.push(communicationMessage);
