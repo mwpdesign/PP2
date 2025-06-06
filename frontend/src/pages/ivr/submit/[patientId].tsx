@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRightIcon } from '@heroicons/react/24/outline';
+import { ChevronRightIcon, LightBulbIcon, ClockIcon } from '@heroicons/react/24/outline';
 import PageHeader from '../../../components/shared/layout/PageHeader';
 import {
   Patient,
@@ -20,6 +20,8 @@ import { createInitialTracking, updateTrackingTimestamp, updateIVRStatus } from 
 import PatientAndTreatmentStep from '../../../components/ivr/PatientAndTreatmentStep';
 import ivrService from '../../../services/ivrService';
 import { toast } from 'react-hot-toast';
+import { useSmartAutoPopulation } from '../../../hooks/useSmartAutoPopulation';
+import { FieldSuggestion } from '../../../types/autoPopulation';
 
 type FormStep = 'patient-treatment' | 'insurance' | 'documents' | 'review';
 
@@ -55,6 +57,113 @@ const IVRSubmissionPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [formData, setFormData] = useState<IVRFormData | null>(null);
+
+  // Smart Auto-Population Integration
+  const autoPopulation = useSmartAutoPopulation({
+    patientId: patientId || '',
+    formType: 'ivr',
+    currentFieldValues: {
+      primaryCondition: patient?.primaryCondition,
+      qCode: formData?.treatmentInfo?.qCode,
+      frequency: formData?.treatmentInfo?.frequency,
+      state: patient?.state
+    },
+    userRole: 'doctor', // TODO: Get from auth context
+    enableAutoSuggestions: true,
+    enableInsuranceAutoComplete: true,
+    debounceMs: 300
+  });
+
+  // Auto-Population Suggestions Component
+  const AutoPopulationSuggestions: React.FC<{ suggestions: FieldSuggestion[] }> = ({ suggestions }) => {
+    if (suggestions.length === 0) return null;
+
+    return (
+      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center mb-3">
+          <LightBulbIcon className="h-5 w-5 text-blue-600 mr-2" />
+          <h3 className="text-sm font-medium text-blue-900">Smart Suggestions</h3>
+        </div>
+        <div className="space-y-2">
+          {suggestions.map((suggestion, index) => (
+            <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+              <div className="flex-1">
+                <span className="text-sm font-medium text-gray-900">
+                  {suggestion.field}: {suggestion.value}
+                </span>
+                <div className="flex items-center mt-1">
+                  <span className="text-xs text-gray-500 mr-2">
+                    Confidence: {Math.round(suggestion.confidence * 100)}%
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Source: {suggestion.source}
+                  </span>
+                </div>
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => autoPopulation.acceptSuggestion(suggestion.field, true)}
+                  className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                >
+                  Apply
+                </button>
+                <button
+                  onClick={() => autoPopulation.rejectSuggestion(suggestion.field)}
+                  className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Patient History Component
+  const PatientHistoryPanel: React.FC = () => {
+    if (autoPopulation.patientHistory.length === 0) return null;
+
+    return (
+      <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+        <div className="flex items-center mb-3">
+          <ClockIcon className="h-5 w-5 text-gray-600 mr-2" />
+          <h3 className="text-sm font-medium text-gray-900">Previous Forms</h3>
+        </div>
+        <div className="space-y-2">
+          {autoPopulation.patientHistory.slice(0, 3).map((history) => (
+            <div key={history.id} className="flex items-center justify-between p-2 bg-white rounded border">
+              <div className="flex-1">
+                <span className="text-sm text-gray-900">
+                  {history.formType.toUpperCase()} - {new Date(history.createdAt).toLocaleDateString()}
+                </span>
+                <div className="text-xs text-gray-500">
+                  {history.success ? 'Completed' : 'Draft'} • Q-Code: {history.formData.treatmentInfo?.qCode || 'N/A'}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (history.formData.treatmentInfo) {
+                    autoPopulation.duplicateForm({
+                      sourceIVRId: history.id,
+                      targetPatientId: patientId || '',
+                      fieldsToInclude: ['treatmentInfo', 'selectedProducts'],
+                      preserveTimestamps: false
+                    });
+                  }
+                }}
+                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                disabled={autoPopulation.duplicationLoading}
+              >
+                {autoPopulation.duplicationLoading ? 'Copying...' : 'Copy'}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const fetchPatient = async () => {
@@ -192,11 +301,19 @@ const IVRSubmissionPage: React.FC = () => {
         await Promise.all(uploadPromises);
       }
 
+      // Save to auto-population history
+      autoPopulation.saveFormToHistory(updatedFormData, true);
+
       // Navigate to IVR management page after successful submission
       navigate('/doctor/ivr', { replace: true });
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error('Failed to submit IVR request. Please try again.');
+
+      // Save as failed attempt to history
+      if (formData) {
+        autoPopulation.saveFormToHistory(formData, false);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -218,46 +335,78 @@ const IVRSubmissionPage: React.FC = () => {
     }
   };
 
+  // Enhanced form data update with auto-population
+  useEffect(() => {
+    if (autoPopulation.prefilledData && formData) {
+      const updatedFormData = {
+        ...formData,
+        ...autoPopulation.prefilledData,
+        updatedAt: new Date().toISOString()
+      };
+      setFormData(updatedFormData);
+    }
+  }, [autoPopulation.prefilledData]);
+
   const renderStepContent = () => {
     if (!patient || !formData) return null;
 
-    switch (currentStep) {
-      case 'patient-treatment':
-        return (
-          <PatientAndTreatmentStep
-            patient={patient}
-            treatmentInfo={formData.treatmentInfo}
-            onTreatmentInfoChange={(treatmentInfo) =>
-              setFormData(prev => prev ? { ...prev, treatmentInfo } : null)
-            }
-            documents={formData.supportingDocuments}
-            onDocumentsChange={handleDocumentsChange}
-          />
-        );
-      case 'insurance':
-        return (
-          <InsuranceDetailsStep
-            patient={patient}
-            insuranceDetails={formData.insuranceDetails}
-            onInsuranceDetailsChange={(details: InsuranceDetails) =>
-              setFormData(prev => prev ? { ...prev, insuranceDetails: details } : null)
-            }
-            documents={formData.supportingDocuments}
-            onDocumentsChange={handleDocumentsChange}
-          />
-        );
-      case 'documents':
-        return (
-          <SupportingDocumentsStep
-            documents={formData.supportingDocuments}
-            onDocumentsChange={handleDocumentsChange}
-          />
-        );
-      case 'review':
-        return <ReviewStep patient={patient} formData={formData} />;
-      default:
-        return null;
-    }
+    return (
+      <div>
+        {/* Auto-Population Components */}
+        {autoPopulation.isLoading && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+              <span className="text-sm text-blue-700">Loading smart suggestions...</span>
+            </div>
+          </div>
+        )}
+
+        <AutoPopulationSuggestions suggestions={autoPopulation.suggestions} />
+        <PatientHistoryPanel />
+
+        {/* Existing Step Content */}
+        {(() => {
+          switch (currentStep) {
+            case 'patient-treatment':
+              return (
+                <PatientAndTreatmentStep
+                  patient={patient}
+                  treatmentInfo={formData.treatmentInfo}
+                  onTreatmentInfoChange={(treatmentInfo) =>
+                    setFormData(prev => prev ? { ...prev, treatmentInfo } : null)
+                  }
+                  documents={formData.supportingDocuments}
+                  onDocumentsChange={handleDocumentsChange}
+                />
+              );
+            case 'insurance':
+              return (
+                <InsuranceDetailsStep
+                  patient={patient}
+                  insuranceDetails={formData.insuranceDetails}
+                  onInsuranceDetailsChange={(details: InsuranceDetails) =>
+                    setFormData(prev => prev ? { ...prev, insuranceDetails: details } : null)
+                  }
+                  documents={formData.supportingDocuments}
+                  onDocumentsChange={handleDocumentsChange}
+                />
+              );
+            case 'documents':
+              return (
+                <SupportingDocumentsStep
+                  documents={formData.supportingDocuments}
+                  onDocumentsChange={handleDocumentsChange}
+                />
+              );
+            case 'review':
+              return <ReviewStep patient={patient} formData={formData} />;
+            default:
+              return null;
+          }
+        })()}
+      </div>
+    );
   };
 
   if (isLoading) {
