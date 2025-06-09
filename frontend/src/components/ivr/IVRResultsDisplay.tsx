@@ -1,27 +1,31 @@
 import React from 'react';
-import { DocumentTextIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
 
 interface IVRResults {
   caseNumber: string;
   verificationDate: string;
   coverageStatus: "Covered" | "Not Covered" | "Partial";
-  annualDeductible: number;
-  remainingDeductible: number;
-  copay: number;
-  coinsurance: number;
+  coveragePercentage: number;
+  deductibleAmount: number;
+  copayAmount: number;
+  outOfPocketMax: number;
   priorAuthStatus: "Approved" | "Denied" | "Pending";
   coverageDetails: string;
-  notes: string;
+  coverageNotes: string;
 }
 
 interface IVRResultsDisplayProps {
   results: IVRResults;
   className?: string;
+  showOrderButton?: boolean;
+  onOrderClick?: () => void;
 }
 
 const IVRResultsDisplay: React.FC<IVRResultsDisplayProps> = ({
   results,
-  className = ""
+  className = "",
+  showOrderButton = false,
+  onOrderClick
 }) => {
   const getCoverageStatusBadge = (status: string) => {
     const statusConfig = {
@@ -65,9 +69,20 @@ const IVRResultsDisplay: React.FC<IVRResultsDisplayProps> = ({
   return (
     <div className={`bg-emerald-50 border border-emerald-200 rounded-lg p-6 ${className}`}>
       {/* Header */}
-      <div className="flex items-center space-x-2 mb-6">
-        <DocumentTextIcon className="h-6 w-6 text-emerald-600" />
-        <h3 className="text-lg font-semibold text-gray-900">IVR Results</h3>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-2">
+          <DocumentTextIcon className="h-6 w-6 text-emerald-600" />
+          <h3 className="text-lg font-semibold text-gray-900">IVR Results</h3>
+        </div>
+        {showOrderButton && (
+          <button
+            onClick={onOrderClick}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+          >
+            <ShoppingCartIcon className="h-4 w-4 mr-2" />
+            Order Products
+          </button>
+        )}
       </div>
 
       {/* Content Grid */}
@@ -92,51 +107,50 @@ const IVRResultsDisplay: React.FC<IVRResultsDisplayProps> = ({
           </div>
         </div>
 
-        {/* Coverage Status */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Coverage Status
-          </label>
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${coverageStatusBadge.bg} ${coverageStatusBadge.text}`}>
-            {coverageStatusBadge.label}
-          </span>
-        </div>
-
-        {/* Financial Details - Two Column Grid */}
+        {/* Coverage Status and Percentage */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Annual Deductible
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Coverage Status
             </label>
-            <p className="text-gray-900 bg-white px-3 py-2 rounded border font-semibold">
-              {formatCurrency(results.annualDeductible)}
-            </p>
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${coverageStatusBadge.bg} ${coverageStatusBadge.text}`}>
+              {coverageStatusBadge.label}
+            </span>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Remaining Deductible
+              Coverage Percentage
             </label>
-            <p className="text-gray-900 bg-white px-3 py-2 rounded border font-semibold">
-              {formatCurrency(results.remainingDeductible)}
+            <p className="text-gray-900 bg-white px-3 py-2 rounded border font-semibold text-lg">
+              {results.coveragePercentage}%
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Financial Details - Updated to show actual approval data */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Copay
+              Deductible Amount
             </label>
             <p className="text-gray-900 bg-white px-3 py-2 rounded border font-semibold">
-              {formatCurrency(results.copay)}
+              {formatCurrency(results.deductibleAmount)}
             </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Coinsurance
+              Copay Amount
             </label>
             <p className="text-gray-900 bg-white px-3 py-2 rounded border font-semibold">
-              {results.coinsurance}%
+              {formatCurrency(results.copayAmount)}
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Out of Pocket Max
+            </label>
+            <p className="text-gray-900 bg-white px-3 py-2 rounded border font-semibold">
+              {formatCurrency(results.outOfPocketMax)}
             </p>
           </div>
         </div>
@@ -163,14 +177,14 @@ const IVRResultsDisplay: React.FC<IVRResultsDisplayProps> = ({
           </div>
         </div>
 
-        {/* Notes */}
+        {/* Coverage Notes (from approval) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Notes
+            Approval Notes
           </label>
           <div className="bg-white p-4 rounded border">
             <p className="text-gray-900 text-sm leading-relaxed">
-              {results.notes}
+              {results.coverageNotes}
             </p>
           </div>
         </div>

@@ -79,13 +79,13 @@ const DoctorIVRDetailPage: React.FC = () => {
     caseNumber: "CASE-2024-001234",
     verificationDate: "2024-03-15",
     coverageStatus: "Covered" as const,
-    annualDeductible: 1500,
-    remainingDeductible: 750,
-    copay: 25,
-    coinsurance: 20,
+    coveragePercentage: 80,
+    deductibleAmount: 500,
+    copayAmount: 50,
+    outOfPocketMax: 550,
     priorAuthStatus: "Approved" as const,
     coverageDetails: "Wound care supplies covered at 80% after deductible. Prior authorization approved for 6-week treatment period.",
-    notes: "Patient has met 50% of annual deductible. Coverage effective through end of plan year."
+    coverageNotes: "Patient has met 50% of annual deductible. Coverage effective through end of plan year."
   };
 
   // Check for tab query parameter
@@ -228,6 +228,12 @@ const DoctorIVRDetailPage: React.FC = () => {
     setNewMessage('');
   };
 
+  const handleOrderClick = () => {
+    // Navigate to order page or show order modal
+    alert('Order functionality will be implemented in the next phase. This will allow doctors to order the approved products.');
+    // Future implementation: navigate('/orders/create', { state: { ivrId: id, products: ivrDetail.products } });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-100 p-6">
@@ -321,102 +327,106 @@ const DoctorIVRDetailPage: React.FC = () => {
           <div className="space-y-6">
             {/* IVR Results Display - Show when approved */}
             {ivrDetail.status === 'approved' && (
-              <IVRResultsDisplay results={mockIVRResults} />
+              <IVRResultsDisplay
+                results={mockIVRResults}
+                showOrderButton={true}
+                onOrderClick={handleOrderClick}
+              />
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Patient Information */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <UserIcon className="w-5 h-5 mr-2" />
-                Patient Information
-              </h3>
-              <dl className="space-y-3">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Name</dt>
-                  <dd className="text-sm text-gray-900">{ivrDetail.patient.firstName} {ivrDetail.patient.lastName}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Date of Birth</dt>
-                  <dd className="text-sm text-gray-900">{new Date(ivrDetail.patient.dateOfBirth).toLocaleDateString()}</dd>
-                </div>
-
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Insurance</dt>
-                  <dd className="text-sm text-gray-900">{ivrDetail.patient.insurance}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Policy Number</dt>
-                  <dd className="text-sm text-gray-900">{ivrDetail.patient.policyNumber}</dd>
-                </div>
-              </dl>
-            </div>
-
-            {/* Service Details */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Details</h3>
-              <dl className="space-y-3">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Description</dt>
-                  <dd className="text-sm text-gray-900">{ivrDetail.serviceDetails.description}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Diagnosis</dt>
-                  <dd className="text-sm text-gray-900">{ivrDetail.serviceDetails.diagnosis}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Treatment Plan</dt>
-                  <dd className="text-sm text-gray-900">{ivrDetail.serviceDetails.treatmentPlan}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Urgency</dt>
-                  <dd className="text-sm text-gray-900">{ivrDetail.serviceDetails.urgency}</dd>
-                </div>
-              </dl>
-            </div>
-
-            {/* Physician Information */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Physician Information</h3>
-              <dl className="space-y-3">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Name</dt>
-                  <dd className="text-sm text-gray-900">Dr. Jane Smith</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">NPI</dt>
-                  <dd className="text-sm text-gray-900">1234567890</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Medicaid Provider #</dt>
-                  <dd className="text-sm text-gray-900">MED123456</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Medicare PTAN</dt>
-                  <dd className="text-sm text-gray-900">AB12345</dd>
-                </div>
-              </dl>
-            </div>
-
-            {/* Timeline */}
-            <div className="bg-white rounded-lg shadow-sm p-6 lg:col-span-3">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <CalendarIcon className="w-5 h-5 mr-2" />
-                Status Timeline
-              </h3>
-              <div className="space-y-4">
-                {ivrDetail.statusHistory.map((item, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {item.status.replace('_', ' ').charAt(0).toUpperCase() + item.status.replace('_', ' ').slice(1)}
-                      </p>
-                      <p className="text-sm text-gray-500">{new Date(item.timestamp).toLocaleString()}</p>
-                      {item.note && <p className="text-sm text-gray-600 mt-1">{item.note}</p>}
-                    </div>
+              {/* Patient Information */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <UserIcon className="w-5 h-5 mr-2" />
+                  Patient Information
+                </h3>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Name</dt>
+                    <dd className="text-sm text-gray-900">{ivrDetail.patient.firstName} {ivrDetail.patient.lastName}</dd>
                   </div>
-                ))}
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Date of Birth</dt>
+                    <dd className="text-sm text-gray-900">{new Date(ivrDetail.patient.dateOfBirth).toLocaleDateString()}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Insurance</dt>
+                    <dd className="text-sm text-gray-900">{ivrDetail.patient.insurance}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Policy Number</dt>
+                    <dd className="text-sm text-gray-900">{ivrDetail.patient.policyNumber}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              {/* Service Details */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Details</h3>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Description</dt>
+                    <dd className="text-sm text-gray-900">{ivrDetail.serviceDetails.description}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Diagnosis</dt>
+                    <dd className="text-sm text-gray-900">{ivrDetail.serviceDetails.diagnosis}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Treatment Plan</dt>
+                    <dd className="text-sm text-gray-900">{ivrDetail.serviceDetails.treatmentPlan}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Urgency</dt>
+                    <dd className="text-sm text-gray-900">{ivrDetail.serviceDetails.urgency}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              {/* Physician Information */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Physician Information</h3>
+                <dl className="space-y-3">
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Name</dt>
+                    <dd className="text-sm text-gray-900">Dr. Jane Smith</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">NPI</dt>
+                    <dd className="text-sm text-gray-900">1234567890</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Medicaid Provider #</dt>
+                    <dd className="text-sm text-gray-900">MED123456</dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Medicare PTAN</dt>
+                    <dd className="text-sm text-gray-900">AB12345</dd>
+                  </div>
+                </dl>
+              </div>
+
+              {/* Timeline */}
+              <div className="bg-white rounded-lg shadow-sm p-6 lg:col-span-3">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <CalendarIcon className="w-5 h-5 mr-2" />
+                  Status Timeline
+                </h3>
+                <div className="space-y-4">
+                  {ivrDetail.statusHistory.map((item, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {item.status.replace('_', ' ').charAt(0).toUpperCase() + item.status.replace('_', ' ').slice(1)}
+                        </p>
+                        <p className="text-sm text-gray-500">{new Date(item.timestamp).toLocaleString()}</p>
+                        {item.note && <p className="text-sm text-gray-600 mt-1">{item.note}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

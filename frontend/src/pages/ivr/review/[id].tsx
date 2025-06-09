@@ -38,16 +38,14 @@ interface IVRResults {
   caseNumber: string;
   verificationDate: string;
   coverageStatus: 'covered' | 'not_covered' | 'partial';
-  deductible: {
-    annual: number;
-    remaining: number;
-  };
-  copay: number;
-  coinsurance: number;
+  coveragePercentage: number;
+  deductibleAmount: number;
+  copayAmount: number;
+  outOfPocketMax: number;
   priorAuthRequired: boolean;
   priorAuthStatus?: 'approved' | 'pending' | 'denied';
   coverageDetails: string;
-  notes: string;
+  coverageNotes: string;
 }
 
 interface IVRRequest {
@@ -224,16 +222,14 @@ const IVRReviewDetailPage: React.FC = () => {
         caseNumber: 'CASE-2024-001234',
         verificationDate: '2024-03-16',
         coverageStatus: 'covered',
-        deductible: {
-          annual: 1500,
-          remaining: 750
-        },
-        copay: 25,
-        coinsurance: 20,
+        coveragePercentage: 80,
+        deductibleAmount: 500,
+        copayAmount: 50,
+        outOfPocketMax: 550,
         priorAuthRequired: true,
         priorAuthStatus: 'approved',
         coverageDetails: 'Wound care supplies covered at 80% after deductible. Prior authorization approved for 6-week treatment period.',
-        notes: 'Patient has met 50% of annual deductible. Coverage effective through end of plan year.'
+        coverageNotes: 'Patient has met 50% of annual deductible. Coverage effective through end of plan year.'
       },
       documents: [
         {
@@ -344,13 +340,31 @@ const IVRReviewDetailPage: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json();
-        // Update the IVR request status
+        // Update the IVR request status and add approval results
         if (ivrRequest) {
-          setIvrRequest({ ...ivrRequest, status: 'approved' });
+          const updatedRequest = {
+            ...ivrRequest,
+            status: 'approved' as const,
+            ivrResults: {
+              caseNumber: `CASE-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+              verificationDate: new Date().toISOString(),
+              coverageStatus: 'covered' as const,
+              coveragePercentage: approvalData.coveragePercentage,
+              deductibleAmount: approvalData.deductibleAmount,
+              copayAmount: approvalData.copayAmount,
+              outOfPocketMax: approvalData.outOfPocketMax,
+              priorAuthRequired: true,
+              priorAuthStatus: 'approved' as const,
+              coverageDetails: `Coverage approved at ${approvalData.coveragePercentage}% with specified cost-sharing amounts.`,
+              coverageNotes: approvalData.coverageNotes
+            }
+          };
+          setIvrRequest(updatedRequest);
         }
         setIsApprovalModalOpen(false);
-        // Show success notification
-        alert('IVR request approved successfully!');
+        // Show success notification with coverage details
+        const successMessage = `IVR approved with ${approvalData.coveragePercentage}% coverage, $${approvalData.deductibleAmount} deductible, $${approvalData.copayAmount} copay, $${approvalData.outOfPocketMax} OOP max`;
+        alert(successMessage);
       } else {
         throw new Error('Failed to approve request');
       }
@@ -736,24 +750,22 @@ const IVRReviewDetailPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="font-medium text-gray-700">Annual Deductible</label>
-                      <p className="text-gray-900">${ivrRequest.ivrResults.deductible.annual}</p>
-                    </div>
-                    <div>
-                      <label className="font-medium text-gray-700">Remaining Deductible</label>
-                      <p className="text-gray-900">${ivrRequest.ivrResults.deductible.remaining}</p>
-                    </div>
+                  <div>
+                    <label className="font-medium text-gray-700">Coverage Percentage</label>
+                    <p className="text-gray-900 text-lg font-semibold">{ivrRequest.ivrResults.coveragePercentage}%</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="font-medium text-gray-700">Copay</label>
-                      <p className="text-gray-900">${ivrRequest.ivrResults.copay}</p>
+                      <label className="font-medium text-gray-700">Deductible Amount</label>
+                      <p className="text-gray-900">${ivrRequest.ivrResults.deductibleAmount}</p>
                     </div>
                     <div>
-                      <label className="font-medium text-gray-700">Coinsurance</label>
-                      <p className="text-gray-900">{ivrRequest.ivrResults.coinsurance}%</p>
+                      <label className="font-medium text-gray-700">Copay Amount</label>
+                      <p className="text-gray-900">${ivrRequest.ivrResults.copayAmount}</p>
+                    </div>
+                    <div>
+                      <label className="font-medium text-gray-700">Out of Pocket Max</label>
+                      <p className="text-gray-900">${ivrRequest.ivrResults.outOfPocketMax}</p>
                     </div>
                   </div>
                   {ivrRequest.ivrResults.priorAuthRequired && (
@@ -767,8 +779,8 @@ const IVRReviewDetailPage: React.FC = () => {
                     <p className="text-gray-900">{ivrRequest.ivrResults.coverageDetails}</p>
                   </div>
                   <div>
-                    <label className="font-medium text-gray-700">Notes</label>
-                    <p className="text-gray-900">{ivrRequest.ivrResults.notes}</p>
+                    <label className="font-medium text-gray-700">Approval Notes</label>
+                    <p className="text-gray-900">{ivrRequest.ivrResults.coverageNotes}</p>
                   </div>
                 </div>
               </div>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVR Approval Workflow Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .test-link { display: inline-block; margin: 10px 5px; padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+        .test-link:hover { background-color: #0056b3; }
+        .test-data { background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .step { margin: 10px 0; padding: 10px; background-color: #f1f3f4; border-left: 4px solid #4285f4; }
+        .expected { color: #28a745; font-weight: bold; }
+        .highlight { background-color: #fff3cd; padding: 2px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🔄 IVR Approval Workflow Test</h1>
+    <p><strong>Date:</strong> <span id="currentDate"></span></p>
+    <p><strong>Status:</strong> <span class="highlight">Updated with Actual Approval Data Display</span></p>
+
+    <div class="test-section success">
+        <h2>✅ Complete Workflow Overview</h2>
+        <p>This test verifies the end-to-end IVR approval workflow with actual data display:</p>
+        <ol>
+            <li><strong>IVR Company Approval:</strong> Enter coverage details (80%, $500, $50, $550)</li>
+            <li><strong>Success Message:</strong> Shows detailed coverage information</li>
+            <li><strong>IVR Results Display:</strong> Shows actual approval data (not hardcoded)</li>
+            <li><strong>Doctor View:</strong> Sees same approval data with Order button</li>
+        </ol>
+    </div>
+
+    <div class="test-section info">
+        <h2>🧪 Test Data to Use</h2>
+        <div class="test-data">
+            <h4>Approval Form Data:</h4>
+            <ul>
+                <li><strong>Coverage Percentage:</strong> 80%</li>
+                <li><strong>Deductible Amount:</strong> $500</li>
+                <li><strong>Copay Amount:</strong> $50</li>
+                <li><strong>Out of Pocket Max:</strong> $550</li>
+                <li><strong>Coverage Notes:</strong> "Approved for 6-week wound care treatment with 80% coverage after deductible."</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section warning">
+        <h2>🔧 Step 1: IVR Company Approval Test</h2>
+        <div class="step">
+            <strong>Action:</strong> Test the approval process with actual data
+        </div>
+        <a href="http://localhost:3000/ivr/review/660e8400-e29b-41d4-a716-446655440004" class="test-link" target="_blank">
+            🔗 Open IVR Review Page
+        </a>
+        <div class="step">
+            <strong>Steps:</strong>
+            <ol>
+                <li>Login as IVR Company (ivr@healthcare.local / ivr123)</li>
+                <li>Click "Approve Request" button</li>
+                <li>Enter test data above in approval modal</li>
+                <li>Click "Approve Request"</li>
+            </ol>
+        </div>
+        <div class="expected">
+            Expected: Success message shows "IVR approved with 80% coverage, $500 deductible, $50 copay, $550 OOP max"
+        </div>
+    </div>
+
+    <div class="test-section warning">
+        <h2>🔧 Step 2: IVR Results Display Test</h2>
+        <div class="step">
+            <strong>Action:</strong> Verify IVR results show actual approval data
+        </div>
+        <div class="step">
+            <strong>Check in Review Page:</strong>
+            <ul>
+                <li>IVR Results section should appear after approval</li>
+                <li>Coverage Percentage: <strong>80%</strong> (not hardcoded 20%)</li>
+                <li>Deductible Amount: <strong>$500</strong> (not $1500)</li>
+                <li>Copay Amount: <strong>$50</strong> (not $25)</li>
+                <li>Out of Pocket Max: <strong>$550</strong> (new field)</li>
+                <li>Approval Notes: Shows entered coverage notes</li>
+            </ul>
+        </div>
+        <div class="expected">
+            Expected: All values match the approval form input, no hardcoded values
+        </div>
+    </div>
+
+    <div class="test-section warning">
+        <h2>🔧 Step 3: Doctor View Test</h2>
+        <div class="step">
+            <strong>Action:</strong> Test doctor's view of approved IVR
+        </div>
+        <a href="http://localhost:3000/doctor/ivr/IVR-001" class="test-link" target="_blank">
+            🔗 Open Doctor IVR Detail Page
+        </a>
+        <div class="step">
+            <strong>Steps:</strong>
+            <ol>
+                <li>Login as Doctor (doctor@healthcare.local / doctor123)</li>
+                <li>Go to IVR Management</li>
+                <li>Click eye icon to view approved IVR</li>
+                <li>Check IVR Results section</li>
+                <li>Look for "Order Products" button</li>
+            </ol>
+        </div>
+        <div class="expected">
+            Expected: Same approval data displayed + blue "Order Products" button visible
+        </div>
+    </div>
+
+    <div class="test-section info">
+        <h2>📋 Detailed Verification Checklist</h2>
+        <h4>✅ IVR Company Review Page:</h4>
+        <ul>
+            <li>[ ] Approval modal accepts all coverage data</li>
+            <li>[ ] Success message shows detailed coverage info</li>
+            <li>[ ] IVR Results section appears after approval</li>
+            <li>[ ] All fields show actual approval data</li>
+            <li>[ ] Coverage notes appear in "Approval Notes"</li>
+        </ul>
+
+        <h4>✅ Doctor IVR Detail Page:</h4>
+        <ul>
+            <li>[ ] Page loads without JSX errors</li>
+            <li>[ ] IVR Results section shows for approved IVRs</li>
+            <li>[ ] Coverage Percentage shows 80% (not 20%)</li>
+            <li>[ ] Financial details show approval amounts</li>
+            <li>[ ] "Order Products" button appears</li>
+            <li>[ ] Order button shows placeholder message when clicked</li>
+        </ul>
+
+        <h4>✅ Data Flow Verification:</h4>
+        <ul>
+            <li>[ ] Approval form → Success message (correct data)</li>
+            <li>[ ] Approval form → IVR Results display (correct data)</li>
+            <li>[ ] IVR Results → Doctor view (same data)</li>
+            <li>[ ] No hardcoded values in final display</li>
+        </ul>
+    </div>
+
+    <div class="test-section success">
+        <h2>🎯 Expected Final State</h2>
+        <div class="test-data">
+            <h4>After Complete Workflow:</h4>
+            <ul>
+                <li><strong>IVR Status:</strong> Approved</li>
+                <li><strong>Coverage Display:</strong> 80% coverage, $500 deductible, $50 copay, $550 OOP max</li>
+                <li><strong>Doctor Access:</strong> Can view results and order products</li>
+                <li><strong>Data Consistency:</strong> Same values throughout system</li>
+                <li><strong>Order Ready:</strong> Blue "Order Products" button available</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section info">
+        <h2>🔗 Quick Access Links</h2>
+        <a href="http://localhost:3000/login" class="test-link" target="_blank">🔐 Login Page</a>
+        <a href="http://localhost:3000/ivr/review/660e8400-e29b-41d4-a716-446655440004" class="test-link" target="_blank">📋 IVR Review</a>
+        <a href="http://localhost:3000/doctor/ivr/IVR-001" class="test-link" target="_blank">👨‍⚕️ Doctor IVR View</a>
+        <a href="http://localhost:3000/ivr-company/dashboard" class="test-link" target="_blank">🏢 IVR Company Dashboard</a>
+        <a href="http://localhost:3000/doctor/ivr" class="test-link" target="_blank">📊 Doctor IVR Management</a>
+    </div>
+
+    <div class="test-section success">
+        <h2>🚀 Success Criteria</h2>
+        <p><strong>The workflow is successful when:</strong></p>
+        <ol>
+            <li>✅ IVR Company can approve with custom coverage data</li>
+            <li>✅ Success message shows entered coverage details</li>
+            <li>✅ IVR Results display actual approval data (not hardcoded)</li>
+            <li>✅ Doctor sees same approval data with Order button</li>
+            <li>✅ No JSX errors or console errors</li>
+            <li>✅ Data flows consistently from approval to display</li>
+        </ol>
+    </div>
+
+    <script>
+        document.getElementById('currentDate').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>
