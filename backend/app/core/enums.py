@@ -7,6 +7,7 @@ class IVRStatus(str, enum.Enum):
     SUBMITTED = "submitted"
     IN_REVIEW = "in_review"
     PENDING_APPROVAL = "pending_approval"
+    DOCUMENTS_REQUESTED = "documents_requested"
     APPROVED = "approved"
     REJECTED = "rejected"
     ESCALATED = "escalated"

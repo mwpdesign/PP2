@@ -16,7 +16,9 @@ from app.models.rbac import Role  # noqa
 from app.models.provider import Provider, ProviderCredentials  # noqa
 from app.models.patient import Patient, PatientDocument  # noqa
 from app.models.order import Order  # noqa
-from app.models.ivr import IVRRequest, IVRSession  # noqa
+from app.models.ivr import (  # noqa: F401
+    IVRRequest, IVRSession, IVRProduct, IVRProductSize
+)
 from app.models.organization import Organization  # noqa
 
 

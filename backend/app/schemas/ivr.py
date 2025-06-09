@@ -1,9 +1,71 @@
 """IVR schemas for the application."""
 
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from decimal import Decimal
+
+
+class ProductSizeBase(BaseModel):
+    """Base product size schema."""
+
+    size: str = Field(..., description="Size code like '2X2', '2X3', etc.")
+    dimensions: str = Field(..., description="Dimensions like '2x2 cm'")
+    unit_price: Decimal = Field(..., ge=0, description="Unit price")
+    quantity: int = Field(..., ge=1, description="Quantity ordered")
+    total: Decimal = Field(..., ge=0, description="Total cost for this size")
+
+
+class ProductSizeCreate(ProductSizeBase):
+    """Create product size schema."""
+    pass
+
+
+class ProductSizeResponse(ProductSizeBase):
+    """Response product size schema."""
+
+    id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        """Pydantic config."""
+        from_attributes = True
+
+
+class ProductSelectionBase(BaseModel):
+    """Base product selection schema."""
+
+    product_name: str = Field(..., description="Product name")
+    q_code: str = Field(..., description="Q-code for the product")
+    total_quantity: int = Field(
+        ..., ge=0, description="Total quantity across all sizes"
+    )
+    total_cost: Decimal = Field(
+        ..., ge=0, description="Total cost across all sizes"
+    )
+
+
+class ProductSelectionCreate(ProductSelectionBase):
+    """Create product selection schema."""
+
+    sizes: List[ProductSizeCreate] = Field(
+        ..., description="List of size variants"
+    )
+
+
+class ProductSelectionResponse(ProductSelectionBase):
+    """Response product selection schema."""
+
+    id: UUID
+    sizes: List[ProductSizeResponse] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        """Pydantic config."""
+        from_attributes = True
 
 
 class IVRRequestBase(BaseModel):
@@ -21,7 +83,9 @@ class IVRRequestBase(BaseModel):
 class IVRRequestCreate(IVRRequestBase):
     """Create IVR request schema."""
 
-    pass
+    selected_products: Optional[List[ProductSelectionCreate]] = Field(
+        default_factory=list, description="Selected products with sizes"
+    )
 
 
 class IVRRequestResponse(IVRRequestBase):
@@ -29,14 +93,12 @@ class IVRRequestResponse(IVRRequestBase):
 
     id: UUID
     status: str
+    products: List[ProductSelectionResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
-    created_by: UUID
-    updated_by: UUID
 
     class Config:
         """Pydantic config."""
-
         from_attributes = True
 
 

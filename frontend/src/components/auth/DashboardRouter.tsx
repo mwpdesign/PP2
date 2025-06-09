@@ -75,9 +75,9 @@ export const DashboardRouter: React.FC = () => {
       return <Navigate to="/doctor/dashboard" replace />;
 
     case 'IVR':
-      console.log('✅ [DashboardRouter] IVR ROUTE: Redirecting IVR to /ivr/dashboard');
-      console.log('🚀 [DashboardRouter] NAVIGATION: IVR -> /ivr/dashboard');
-      return <Navigate to="/ivr/dashboard" replace />;
+      console.log('✅ [DashboardRouter] IVR ROUTE: Redirecting IVR to /ivr-company/dashboard');
+      console.log('🚀 [DashboardRouter] NAVIGATION: IVR -> /ivr-company/dashboard');
+      return <Navigate to="/ivr-company/dashboard" replace />;
 
     case 'Master Distributor':
       console.log('✅ [DashboardRouter] MASTER DISTRIBUTOR ROUTE: Redirecting Master Distributor to /distributor/dashboard');

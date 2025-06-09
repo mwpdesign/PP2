@@ -71,17 +71,52 @@ const navigationConfig: Record<UserRole, NavigationItem[]> = {
   ],
   'ivr_company': [
     {
+      id: 'dashboard',
+      title: 'Dashboard',
+      path: '/ivr-company/dashboard',
+      icon: 'dashboard',
+      roles: ['ivr_company'],
+    },
+    {
       id: 'review-queue',
       title: 'Review Queue',
-      path: '/review-queue',
+      path: '/ivr-company/queue',
       icon: 'queue',
+      roles: ['ivr_company'],
+    },
+    {
+      id: 'in-progress',
+      title: 'In Progress',
+      path: '/ivr-company/in-progress',
+      icon: 'schedule',
+      roles: ['ivr_company'],
+    },
+    {
+      id: 'completed',
+      title: 'Completed Today',
+      path: '/ivr-company/completed',
+      icon: 'check_circle',
       roles: ['ivr_company'],
     },
     {
       id: 'communications',
       title: 'Communications',
-      path: '/communications',
+      path: '/ivr-company/communications',
       icon: 'message',
+      roles: ['ivr_company'],
+    },
+    {
+      id: 'documents',
+      title: 'Documents',
+      path: '/ivr-company/documents',
+      icon: 'description',
+      roles: ['ivr_company'],
+    },
+    {
+      id: 'reports',
+      title: 'Reports',
+      path: '/ivr-company/reports',
+      icon: 'assessment',
       roles: ['ivr_company'],
     },
   ],
@@ -154,7 +189,7 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({ userRo
             <span className="text-sm font-medium">{item.title}</span>
           </Link>
         )}
-        
+
         {item.children && isOpen && (
           <div className="ml-4">
             {item.children.map(child => renderNavigationItem(child, depth + 1))}
@@ -176,4 +211,4 @@ export const RoleBasedNavigation: React.FC<RoleBasedNavigationProps> = ({ userRo
   );
 };
 
-export default RoleBasedNavigation; 
+export default RoleBasedNavigation;

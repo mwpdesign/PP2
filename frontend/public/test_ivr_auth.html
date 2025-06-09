@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVR Company Authentication & Navigation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .nav-test { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .nav-button { padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .nav-button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Healthcare IVR Platform - IVR Company Test Suite</h1>
+
+    <div class="test-section">
+        <h2>Step 1: Login as IVR Company User</h2>
+        <button onclick="testLogin()">Login as IVR Company User</button>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 2: Test Navigation Routes</h2>
+        <p>Test all IVR Company navigation routes:</p>
+        <div class="nav-test">
+            <button class="nav-button" onclick="testRoute('/ivr-company/dashboard')">Dashboard</button>
+            <button class="nav-button" onclick="testRoute('/ivr-company/queue')">Review Queue</button>
+            <button class="nav-button" onclick="testRoute('/ivr-company/in-progress')">In Progress</button>
+            <button class="nav-button" onclick="testRoute('/ivr-company/completed')">Completed Today</button>
+            <button class="nav-button" onclick="testRoute('/ivr-company/communications')">Communications</button>
+            <button class="nav-button" onclick="testRoute('/ivr-company/documents')">Documents</button>
+            <button class="nav-button" onclick="testRoute('/ivr-company/reports')">Reports</button>
+        </div>
+        <div id="navigationResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 3: Test IVR Approval Workflow</h2>
+        <button onclick="testApproval()">Test IVR Approval</button>
+        <div id="approvalResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 4: Test IVR Rejection</h2>
+        <button onclick="testRejection()">Test IVR Rejection</button>
+        <div id="rejectionResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 5: Test Document Request</h2>
+        <button onclick="testDocumentRequest()">Test Document Request</button>
+        <div id="documentResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Step 6: Test Legacy Route Redirects</h2>
+        <button onclick="testLegacyRoutes()">Test Legacy Redirects</button>
+        <div id="legacyResult"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+        const testUUID = '660e8400-e29b-41d4-a716-446655440001'; // Using an existing UUID
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<p>Testing IVR Company login...</p>';
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'username=ivr@healthcare.local&password=ivr123'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ IVR Company Login Successful!</h3>
+                            <p>Token received and stored in localStorage</p>
+                            <p><strong>Role:</strong> IVR Company</p>
+                            <pre>Token: ${authToken.substring(0, 50)}...</pre>
+                        </div>
+                    `;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Login Failed</h3>
+                            <p>Status: ${response.status}</p>
+                            <pre>${error}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Login Error</h3>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testRoute(route) {
+            const resultDiv = document.getElementById('navigationResult');
+            resultDiv.innerHTML = `<p>Testing route: ${route}</p>`;
+
+            try {
+                const response = await fetch(route);
+                if (response.ok) {
+                    const html = await response.text();
+                    const hasReactApp = html.includes('react') || html.includes('vite');
+
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Route Test: ${route}</h3>
+                            <p>Status: ${response.status} OK</p>
+                            <p>React App Detected: ${hasReactApp ? 'Yes' : 'No'}</p>
+                            <p><a href="${route}" target="_blank">Open in new tab</a></p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Route Failed: ${route}</h3>
+                            <p>Status: ${response.status}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Route Error: ${route}</h3>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testApproval() {
+            const resultDiv = document.getElementById('approvalResult');
+            const token = authToken || localStorage.getItem('authToken');
+
+            if (!token) {
+                resultDiv.innerHTML = '<div class="error">❌ Please login first</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>Testing IVR approval...</p>';
+
+            try {
+                const response = await fetch(`/api/v1/ivr/requests/${testUUID}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        coverage_percentage: 80,
+                        deductible_amount: 500,
+                        copay_amount: 25,
+                        out_of_pocket_max: 2000,
+                        coverage_notes: 'Test approval from IVR Company navigation test'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ IVR Approval Successful!</h3>
+                            <p>Request ID: ${data.ivr_request_id}</p>
+                            <p>New Status: ${data.new_status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Approval Failed</h3>
+                            <p>Status: ${response.status}</p>
+                            <pre>${error}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Approval Error</h3>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testRejection() {
+            const resultDiv = document.getElementById('rejectionResult');
+            const token = authToken || localStorage.getItem('authToken');
+
+            if (!token) {
+                resultDiv.innerHTML = '<div class="error">❌ Please login first</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>Testing IVR rejection...</p>';
+
+            try {
+                const response = await fetch(`/api/v1/ivr/requests/${testUUID}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        reason: 'insufficient_documentation',
+                        explanation: 'Test rejection from IVR Company navigation test - missing required medical records'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ IVR Rejection Successful!</h3>
+                            <p>Request ID: ${data.ivr_request_id}</p>
+                            <p>New Status: ${data.new_status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Rejection Failed</h3>
+                            <p>Status: ${response.status}</p>
+                            <pre>${error}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Rejection Error</h3>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testDocumentRequest() {
+            const resultDiv = document.getElementById('documentResult');
+            const token = authToken || localStorage.getItem('authToken');
+
+            if (!token) {
+                resultDiv.innerHTML = '<div class="error">❌ Please login first</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>Testing document request...</p>';
+
+            try {
+                const response = await fetch(`/api/v1/ivr/requests/${testUUID}/request-documents`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        requested_documents: ['medical_records', 'insurance_card', 'physician_notes'],
+                        other_document: 'Lab results',
+                        additional_instructions: 'Test document request from IVR Company navigation test - please provide all requested documents within 48 hours'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Document Request Successful!</h3>
+                            <p>Request ID: ${data.ivr_request_id}</p>
+                            <p>New Status: ${data.new_status}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    const error = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Document Request Failed</h3>
+                            <p>Status: ${response.status}</p>
+                            <pre>${error}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Document Request Error</h3>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testLegacyRoutes() {
+            const resultDiv = document.getElementById('legacyResult');
+            resultDiv.innerHTML = '<p>Testing legacy route redirects...</p>';
+
+            const legacyRoutes = [
+                '/ivr/dashboard',
+                '/ivr/review/660e8400-e29b-41d4-a716-446655440001'
+            ];
+
+            let results = [];
+
+            for (const route of legacyRoutes) {
+                try {
+                    const response = await fetch(route, { redirect: 'manual' });
+                    if (response.status === 0 || response.status >= 300) {
+                        results.push(`✅ ${route} → Redirected (${response.status})`);
+                    } else {
+                        results.push(`✅ ${route} → Accessible (${response.status})`);
+                    }
+                } catch (error) {
+                    results.push(`❌ ${route} → Error: ${error.message}`);
+                }
+            }
+
+            resultDiv.innerHTML = `
+                <div class="success">
+                    <h3>Legacy Route Test Results:</h3>
+                    <ul>
+                        ${results.map(result => `<li>${result}</li>`).join('')}
+                    </ul>
+                    <p><strong>Note:</strong> Legacy routes should redirect to new IVR Company routes</p>
+                </div>
+            `;
+        }
+
+        // Check if there's already a token in localStorage
+        window.onload = function() {
+            const existingToken = localStorage.getItem('authToken');
+            if (existingToken) {
+                authToken = existingToken;
+                document.getElementById('loginResult').innerHTML = `
+                    <div class="success">
+                        <h3>✅ Existing Token Found</h3>
+                        <p>Token loaded from localStorage</p>
+                        <pre>Token: ${existingToken.substring(0, 50)}...</pre>
+                    </div>
+                `;
+            }
+        };
+    </script>
+</body>
+</html>

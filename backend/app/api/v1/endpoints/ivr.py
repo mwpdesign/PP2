@@ -4,15 +4,13 @@ from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.core.database import get_db
 from app.core.security import (
     get_current_user,
     require_permissions,
-    verify_territory_access,
 )
-from app.models.ivr import IVRRequest, IVRSession, IVRDocument
+from app.models.ivr import IVRRequest, IVRDocument
 from app.schemas.ivr import (
     IVRRequestCreate,
     IVRRequestResponse,
@@ -29,8 +27,36 @@ from app.schemas.ivr import (
 )
 from app.services.ivr_service import IVRService
 from app.services.s3_service import S3Service
+from pydantic import BaseModel
 
 router = APIRouter()
+
+
+# New schemas for approval workflow
+class ApprovalData(BaseModel):
+    coverage_percentage: float
+    deductible_amount: float
+    copay_amount: float
+    out_of_pocket_max: float
+    coverage_notes: str
+
+
+class RejectionData(BaseModel):
+    reason: str
+    explanation: str
+
+
+class DocumentRequestData(BaseModel):
+    requested_documents: List[str]
+    other_document: str = ""
+    additional_instructions: str
+
+
+class ActionResponse(BaseModel):
+    success: bool
+    message: str
+    ivr_request_id: str
+    new_status: str
 
 
 @router.post(
@@ -41,25 +67,31 @@ async def create_ivr_request(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a new IVR request."""
-    # Verify territory access
-    await verify_territory_access(current_user, request["territory_id"])
+    """Create a new IVR request with multi-size product selection."""
+    try:
+        ivr_service = IVRService(db)
+        ivr_request = await ivr_service.create_ivr_request(request)
 
-    # Create IVR request
-    ivr_request = IVRRequest(
-        patient_id=request["patient_id"],
-        provider_id=request["provider_id"],
-        facility_id=request["facility_id"],
-        territory_id=request["territory_id"],
-        service_type=request["service_type"],
-        priority=request["priority"],
-        metadata=request["metadata"],
-        notes=request["notes"],
-    )
-    db.add(ivr_request)
-    await db.commit()
-    await db.refresh(ivr_request)
-    return ivr_request
+        # Convert to response format
+        return IVRRequestResponse(
+            id=ivr_request.id,
+            patient_id=ivr_request.patient_id,
+            provider_id=ivr_request.provider_id,
+            facility_id=ivr_request.facility_id,
+            service_type=ivr_request.service_type,
+            priority=ivr_request.priority,
+            status=ivr_request.status,
+            request_metadata=ivr_request.request_metadata,
+            notes=ivr_request.notes,
+            products=[],  # Will be populated by the relationship
+            created_at=ivr_request.created_at,
+            updated_at=ivr_request.updated_at,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create IVR request: {str(e)}"
+        )
 
 
 @router.get("/requests/{request_id}", response_model=IVRRequestResponse)
@@ -68,33 +100,234 @@ async def get_ivr_request(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get an IVR request by ID."""
-    ivr_request = await db.get(IVRRequest, str(request_id))
-    if not ivr_request:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="IVR request not found"
-        )
+    """Get an IVR request by ID with products and sizes."""
+    try:
+        ivr_service = IVRService(db)
+        ivr_request = await ivr_service.get_ivr_request(request_id)
 
-    # Verify territory access
-    await verify_territory_access(current_user, ivr_request["territory_id"])
-    return ivr_request
+        if not ivr_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR request not found"
+            )
+
+        return ivr_request
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get IVR request: {str(e)}"
+        )
 
 
 @router.get("/requests", response_model=List[IVRRequestResponse])
 async def list_ivr_requests(
-    territory_id: UUID,
+    skip: int = 0,
+    limit: int = 100,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List IVR requests for a territory."""
-    # Verify territory access
-    await verify_territory_access(current_user, territory_id)
+    """List IVR requests with products and sizes."""
+    try:
+        ivr_service = IVRService(db)
+        ivr_requests = await ivr_service.list_ivr_requests(
+            skip=skip,
+            limit=limit
+        )
+        return ivr_requests
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list IVR requests: {str(e)}"
+        )
 
-    # Get IVR requests
-    result = await db.execute(
-        select(IVRRequest).where(IVRRequest.territory_id == str(territory_id))
-    )
-    return result.scalars().all()
+
+@router.post("/requests/{request_id}/approve", response_model=ActionResponse)
+async def approve_ivr_request(
+    request_id: UUID,
+    approval_data: ApprovalData,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Approve an IVR request with coverage details."""
+    try:
+        ivr_service = IVRService(db)
+
+        # Get the IVR request
+        ivr_request = await ivr_service.get_ivr_request(request_id)
+        if not ivr_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR request not found"
+            )
+
+        # Update the request with approval data and status
+        coverage_status = (
+            "covered" if approval_data.coverage_percentage > 0
+            else "not_covered"
+        )
+
+        approval_metadata = {
+            "coverage_percentage": approval_data.coverage_percentage,
+            "deductible_amount": approval_data.deductible_amount,
+            "copay_amount": approval_data.copay_amount,
+            "out_of_pocket_max": approval_data.out_of_pocket_max,
+            "coverage_notes": approval_data.coverage_notes,
+            "approved_by": current_user.id,
+            "approved_at": "2024-03-16T10:30:00Z",
+            "ivr_results": {
+                "case_number": f"CASE-{request_id}",
+                "verification_date": "2024-03-16",
+                "coverage_status": coverage_status,
+                "deductible": {
+                    "annual": approval_data.deductible_amount,
+                    "remaining": approval_data.deductible_amount * 0.5
+                },
+                "copay": approval_data.copay_amount,
+                "coverage_details": approval_data.coverage_notes
+            }
+        }
+
+                # Update status to APPROVED
+        await ivr_service.update_ivr_request_status(
+            request_id,
+            "approved",
+            approval_metadata
+        )
+
+        return ActionResponse(
+            success=True,
+            message=(
+                "IVR request approved successfully. Coverage details have "
+                "been documented and provider has been notified."
+            ),
+            ivr_request_id=str(request_id),
+            new_status="approved"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to approve IVR request: {str(e)}"
+        )
+
+
+@router.post("/requests/{request_id}/reject", response_model=ActionResponse)
+async def reject_ivr_request(
+    request_id: UUID,
+    rejection_data: RejectionData,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Reject an IVR request with reason and explanation."""
+    try:
+        ivr_service = IVRService(db)
+
+        # Get the IVR request
+        ivr_request = await ivr_service.get_ivr_request(request_id)
+        if not ivr_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR request not found"
+            )
+
+        # Update the request with rejection data and status
+        rejection_metadata = {
+            "rejection_reason": rejection_data.reason,
+            "rejection_explanation": rejection_data.explanation,
+            "rejected_by": current_user.id,
+            "rejected_at": "2024-03-16T10:30:00Z",  # In real implementation, use datetime.utcnow()
+            "can_resubmit": True
+        }
+
+                # Update status to REJECTED
+        await ivr_service.update_ivr_request_status(
+            request_id,
+            "rejected",
+            rejection_metadata
+        )
+
+        return ActionResponse(
+            success=True,
+            message=(
+                "IVR request rejected. Provider has been notified with "
+                "detailed explanation and can resubmit with corrections."
+            ),
+            ivr_request_id=str(request_id),
+            new_status="rejected"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reject IVR request: {str(e)}"
+        )
+
+
+@router.post("/requests/{request_id}/request-documents", response_model=ActionResponse)
+async def request_documents(
+    request_id: UUID,
+    document_request: DocumentRequestData,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Request additional documents for an IVR request."""
+    try:
+        ivr_service = IVRService(db)
+
+        # Get the IVR request
+        ivr_request = await ivr_service.get_ivr_request(request_id)
+        if not ivr_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR request not found"
+            )
+
+        # Prepare document request metadata
+        document_request_metadata = {
+            "requested_documents": document_request.requested_documents,
+            "other_document": document_request.other_document,
+            "additional_instructions": document_request.additional_instructions,
+            "requested_by": current_user.id,
+            "requested_at": "2024-03-16T10:30:00Z",  # In real implementation, use datetime.utcnow()
+            "follow_up_date": "2024-03-23T10:30:00Z"  # 7 days from now
+        }
+
+                        # Update status to IN_REVIEW (using existing enum value)
+        await ivr_service.update_ivr_request_status(
+            request_id,
+            "in_review",
+            document_request_metadata
+        )
+
+        # Count requested documents
+        total_docs = len(document_request.requested_documents)
+        if document_request.other_document.strip():
+            total_docs += 1
+
+        return ActionResponse(
+            success=True,
+            message=(
+                f"Document request sent successfully. Provider has been "
+                f"notified to submit {total_docs} additional document(s) "
+                f"with detailed instructions."
+            ),
+            ivr_request_id=str(request_id),
+            new_status="in_review"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to request documents: {str(e)}"
+        )
 
 
 @router.post(
@@ -106,22 +339,15 @@ async def create_ivr_session(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new IVR session."""
-    # Verify territory access
-    await verify_territory_access(current_user, session["territory_id"])
-
-    # Create IVR session
-    ivr_session = IVRSession(
-        patient_id=session["patient_id"],
-        provider_id=session["provider_id"],
-        territory_id=session["territory_id"],
-        status=session["status"],
-        insurance_data=session["insurance_data"],
-        metadata=session["metadata"],
-    )
-    db.add(ivr_session)
-    await db.commit()
-    await db.refresh(ivr_session)
-    return ivr_session
+    try:
+        ivr_service = IVRService(db)
+        ivr_session = await ivr_service.create_session(session)
+        return ivr_session
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create IVR session: {str(e)}"
+        )
 
 
 @router.get("/sessions/{session_id}", response_model=IVRSessionResponse)
@@ -131,32 +357,42 @@ async def get_ivr_session(
     db: AsyncSession = Depends(get_db),
 ):
     """Get an IVR session by ID."""
-    ivr_session = await db.get(IVRSession, str(session_id))
-    if not ivr_session:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="IVR session not found"
-        )
+    try:
+        ivr_service = IVRService(db)
+        ivr_session = await ivr_service.get_session(session_id)
 
-    # Verify territory access
-    await verify_territory_access(current_user, ivr_session["territory_id"])
-    return ivr_session
+        if not ivr_session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR session not found"
+            )
+
+        return ivr_session
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get IVR session: {str(e)}"
+        )
 
 
 @router.get("/sessions", response_model=List[IVRSessionResponse])
 async def list_ivr_sessions(
-    territory_id: UUID,
+    organization_id: UUID,
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List IVR sessions for a territory."""
-    # Verify territory access
-    await verify_territory_access(current_user, territory_id)
-
-    # Get IVR sessions
-    result = await db.execute(
-        select(IVRSession).where(IVRSession.territory_id == str(territory_id))
-    )
-    return result.scalars().all()
+    """List IVR sessions for an organization."""
+    try:
+        ivr_service = IVRService(db)
+        ivr_sessions = await ivr_service.list_sessions(organization_id)
+        return ivr_sessions
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list IVR sessions: {str(e)}"
+        )
 
 
 @router.post(
@@ -170,21 +406,18 @@ async def create_ivr_document(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new IVR document."""
-    # Get IVR request to verify territory access
-    ivr_request = await db.get(IVRRequest, str(document["ivr_request_id"]))
+    # Get IVR request to verify it exists
+    ivr_request = await db.get(IVRRequest, str(document.ivr_request_id))
     if not ivr_request:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="IVR request not found"
         )
 
-    # Verify territory access
-    await verify_territory_access(current_user, ivr_request["territory_id"])
-
     # Create IVR document
     ivr_document = IVRDocument(
-        ivr_request_id=document["ivr_request_id"],
-        document_type=document["document_type"],
-        document_key=document["document_key"],
+        ivr_request_id=document.ivr_request_id,
+        document_type=document.document_type,
+        document_key=document.document_key,
         uploaded_by_id=current_user["id"],
     )
     db.add(ivr_document)

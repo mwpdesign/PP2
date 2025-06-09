@@ -13,6 +13,7 @@ from app.api.v1.endpoints import (
     templates,
     auto_population,
     voice,
+    ivr,
 )
 from app.api.auth.routes import router as auth_router
 
@@ -56,4 +57,9 @@ api_router.include_router(
     voice.router,
     prefix="/voice",
     tags=["voice-transcription"]
+)
+api_router.include_router(
+    ivr.router,
+    prefix="/ivr",
+    tags=["ivr"]
 )

@@ -24,6 +24,8 @@ const PatientSelectionPage = React.lazy(() => import('./pages/patients/select'))
 const PatientDetailPage = React.lazy(() => import('./pages/patients/[id]'));
 const IVRManagementPage = React.lazy(() => import('./pages/ivr'));
 const IVRSubmissionPage = React.lazy(() => import('./pages/ivr/submit/[patientId]'));
+const IVRReviewDetailPage = React.lazy(() => import('./pages/ivr/review/[id]'));
+const DoctorIVRDetailPage = React.lazy(() => import('./pages/doctor/ivr/[id]'));
 const TestIVRPage = React.lazy(() => import('./pages/ivr/submit/TestIVRPage'));
 const OrderManagementPage = React.lazy(() => import('./pages/orders'));
 const ShippingPage = React.lazy(() => import('./pages/shipping'));
@@ -138,6 +140,7 @@ const App = () => {
                     {/* IVR Routes */}
                     <Route path="ivr">
                       <Route index element={<IVRManagementPage />} />
+                      <Route path=":id" element={<DoctorIVRDetailPage />} />
                       <Route path="submit">
                         <Route index element={<Navigate to="/doctor/patients/select" replace />} />
                         <Route path="test/:patientId" element={<TestIVRPage />} />
@@ -178,9 +181,25 @@ const App = () => {
                   </Route>
                 </Route>
 
-                {/* IVR Routes */}
+                {/* IVR Company Routes */}
                 <Route element={<PrivateRoute />}>
-                  <Route path="/ivr/dashboard" element={<SimpleIVRDashboard />} />
+                  <Route path="/ivr-company">
+                    <Route index element={<Navigate to="/ivr-company/dashboard" replace />} />
+                    <Route path="dashboard" element={<SimpleIVRDashboard />} />
+                    <Route path="review/:id" element={<IVRReviewDetailPage />} />
+                    <Route path="queue" element={<SimpleIVRDashboard />} />
+                    <Route path="in-progress" element={<SimpleIVRDashboard />} />
+                    <Route path="completed" element={<SimpleIVRDashboard />} />
+                    <Route path="communications" element={<SimpleIVRDashboard />} />
+                    <Route path="documents" element={<SimpleIVRDashboard />} />
+                    <Route path="reports" element={<SimpleIVRDashboard />} />
+                  </Route>
+                </Route>
+
+                {/* Legacy IVR Routes for backward compatibility */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/ivr/dashboard" element={<Navigate to="/ivr-company/dashboard" replace />} />
+                  <Route path="/ivr/review/:id" element={<Navigate to="/ivr-company/review/:id" replace />} />
                 </Route>
 
                 {/* CHP Admin Routes */}

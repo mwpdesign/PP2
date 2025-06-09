@@ -20,7 +20,7 @@ export default defineConfig({
     strictPort: true,   // Fail if port is in use
     proxy: {
       '/api/v1': {
-        target: 'http://backend:8000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api\/v1/, '/api/v1'),
@@ -34,7 +34,7 @@ export default defineConfig({
         }
       },
       '/ws': {
-        target: 'ws://backend:8000',
+        target: 'ws://localhost:8000',
         ws: true,
         configure: (proxy, _options) => {
           proxy.on('error', (err) => {
@@ -60,4 +60,4 @@ export default defineConfig({
     'process.env': process.env,
     global: 'globalThis',
   },
-}); 
+});

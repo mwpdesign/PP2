@@ -96,6 +96,10 @@ const IVRFormHeader: React.FC<IVRFormHeaderProps> = ({
               <dd className="text-sm text-gray-900">{physician.npi}</dd>
             </div>
             <div>
+              <dt className="text-sm font-medium text-gray-500">Medicaid Provider #</dt>
+              <dd className="text-sm text-gray-900">{physician.medicaidProviderNumber}</dd>
+            </div>
+            <div>
               <dt className="text-sm font-medium text-gray-500">Facility</dt>
               <dd className="text-sm text-gray-900">{physician.facility.name}</dd>
             </div>
@@ -110,4 +114,4 @@ const IVRFormHeader: React.FC<IVRFormHeaderProps> = ({
   );
 };
 
-export default IVRFormHeader; 
+export default IVRFormHeader;

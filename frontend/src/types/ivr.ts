@@ -218,6 +218,7 @@ export interface PhysicianInfo {
   id: string;
   name: string;
   npi: string;
+  medicaidProviderNumber: string;
   medicarePTAN: string;
   taxId: string;
   facility: {
@@ -231,8 +232,20 @@ export interface PhysicianInfo {
 export interface TreatmentInfo {
   skinSubstituteAcknowledged: boolean;
   qCode: string;
-  qCodeProduct: string; // Product type: 'Q4347' or 'Q4250'
-  qCodeSize: string; // Size: '2X2', '2X3', etc.
+  selectedProducts: {
+    productCode: string; // 'Q4347' or 'Q4250'
+    productName: string; // 'RAMPART Wound Care Matrix' or 'AMNIO-AMP Amniotic Membrane'
+    sizes: {
+      size: string; // '2X2', '2X3', etc.
+      dimensions: string; // '2x2 cm', '2x3 cm', etc.
+      surfaceArea: number; // 4, 6, 8, 16, 24, 32
+      quantity: number; // User input quantity
+      unitPrice?: number; // Optional unit price
+    }[];
+  }[];
+  // Legacy fields for backward compatibility - will be removed
+  qCodeProduct: string;
+  qCodeSize: string;
   startDate: string;
   numberOfApplications: number;
   frequency: 'weekly' | 'bi-weekly' | 'monthly' | 'other';
@@ -347,6 +360,36 @@ export const mockProducts: Product[] = [
 export const QCodeProductOptions = [
   { value: 'Q4347', label: 'Q4347 - RAMPART Wound Care Matrix' },
   { value: 'Q4250', label: 'Q4250 - AMNIO-AMP Amniotic Membrane' }
+];
+
+// Comprehensive product data with all sizes
+export const ProductsWithSizes = [
+  {
+    productCode: 'Q4347',
+    productName: 'RAMPART Wound Care Matrix',
+    description: 'Advanced wound care matrix for chronic wounds',
+    sizes: [
+      { size: '2X2', dimensions: '2x2 cm', surfaceArea: 4, unitPrice: 125.00 },
+      { size: '2X3', dimensions: '2x3 cm', surfaceArea: 6, unitPrice: 175.00 },
+      { size: '2X4', dimensions: '2x4 cm', surfaceArea: 8, unitPrice: 225.00 },
+      { size: '4X4', dimensions: '4x4 cm', surfaceArea: 16, unitPrice: 425.00 },
+      { size: '4X6', dimensions: '4x6 cm', surfaceArea: 24, unitPrice: 625.00 },
+      { size: '4X8', dimensions: '4x8 cm', surfaceArea: 32, unitPrice: 825.00 }
+    ]
+  },
+  {
+    productCode: 'Q4250',
+    productName: 'AMNIO-AMP Amniotic Membrane',
+    description: 'Amniotic membrane for advanced wound healing',
+    sizes: [
+      { size: '2X2', dimensions: '2x2 cm', surfaceArea: 4, unitPrice: 150.00 },
+      { size: '2X3', dimensions: '2x3 cm', surfaceArea: 6, unitPrice: 200.00 },
+      { size: '2X4', dimensions: '2x4 cm', surfaceArea: 8, unitPrice: 250.00 },
+      { size: '4X4', dimensions: '4x4 cm', surfaceArea: 16, unitPrice: 450.00 },
+      { size: '4X6', dimensions: '4x6 cm', surfaceArea: 24, unitPrice: 650.00 },
+      { size: '4X8', dimensions: '4x8 cm', surfaceArea: 32, unitPrice: 850.00 }
+    ]
+  }
 ];
 
 // Q Code size options

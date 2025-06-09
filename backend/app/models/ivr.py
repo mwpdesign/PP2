@@ -2,7 +2,9 @@
 
 from datetime import datetime
 from uuid import UUID as PyUUID, uuid4
-from sqlalchemy import String, DateTime, ForeignKey, JSON, Enum, Integer
+from sqlalchemy import (
+    String, DateTime, ForeignKey, JSON, Enum, Integer, Numeric
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -64,6 +66,71 @@ class IVRRequest(Base):
     escalations = relationship("IVREscalation", back_populates="ivr_request")
     reviews = relationship("IVRReview", back_populates="ivr_request")
     documents = relationship("IVRDocument", back_populates="ivr_request")
+    products = relationship(
+        "IVRProduct", back_populates="ivr_request", cascade="all, delete-orphan"
+    )
+
+
+class IVRProduct(Base):
+    """IVR Product model for multi-size product selection."""
+
+    __tablename__ = "ivr_products"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    ivr_request_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ivr_requests.id"), nullable=False
+    )
+    product_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    q_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    total_quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_cost: Mapped[float] = mapped_column(
+        Numeric(10, 2), nullable=False, default=0.00
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    # Relationships
+    ivr_request = relationship("IVRRequest", back_populates="products")
+    sizes = relationship("IVRProductSize", back_populates="ivr_product", cascade="all, delete-orphan")
+
+
+class IVRProductSize(Base):
+    """IVR Product Size model for individual size variants and quantities."""
+
+    __tablename__ = "ivr_product_sizes"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    ivr_product_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ivr_products.id"), nullable=False
+    )
+    size: Mapped[str] = mapped_column(String(10), nullable=False)  # "2X2", "2X3", etc.
+    dimensions: Mapped[str] = mapped_column(String(20), nullable=False)  # "2x2 cm", etc.
+    unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    total: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    # Relationships
+    ivr_product = relationship("IVRProduct", back_populates="sizes")
 
 
 class IVRStatusHistory(Base):

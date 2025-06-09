@@ -37,6 +37,7 @@ const mockPhysician: PhysicianInfo = {
   id: 'PHY123',
   name: 'Dr. Jane Smith',
   npi: '1234567890',
+  medicaidProviderNumber: 'MED123456',
   medicarePTAN: 'AB12345',
   taxId: '12-3456789',
   facility: {
@@ -186,8 +187,8 @@ const IVRSubmissionPage: React.FC = () => {
           firstName: 'John',
           lastName: 'Doe',
           dateOfBirth: '1980-01-15',
-          email: 'john.doe@example.com',
-          phone: '(555) 123-4567',
+          email: '', // Removed per requirements
+          phone: '', // Removed per requirements
           address: '123 Main St',
           city: 'Los Angeles',
           state: 'CA',
@@ -213,6 +214,8 @@ const IVRSubmissionPage: React.FC = () => {
           treatmentInfo: {
             skinSubstituteAcknowledged: false,
             qCode: '',
+            selectedProducts: [],
+            // Legacy fields for backward compatibility
             qCodeProduct: '',
             qCodeSize: '',
             startDate: '',
