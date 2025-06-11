@@ -19,28 +19,53 @@ import { useAuth } from '../../../contexts/AuthContext';
 const Layout: React.FC = () => {
   const { logout, user } = useAuth();
 
-  const navigation = [
+  // Base navigation items
+  const baseNavigation = [
     { name: 'Dashboard', href: '/doctor/dashboard', icon: HomeIcon },
     { name: 'Patient Intake', href: '/doctor/patients', icon: UserPlusIcon },
     { name: 'IVR Management', href: '/doctor/ivr', icon: ClipboardDocumentCheckIcon },
     { name: 'Order Management', href: '/doctor/orders', icon: DocumentTextIcon },
-    { name: 'Shipping & Logistics', href: '/doctor/shipping', icon: TruckIcon },
-    { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
-    { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
-    {
-      name: 'Sign Out',
-      href: '#',
-      icon: ArrowRightOnRectangleIcon,
-      onClick: async () => {
-        try {
-          await logout();
-          window.location.href = '/login';
-        } catch (error) {
-          console.error('Sign out failed:', error);
-        }
-      }
-    }
   ];
+
+  // Add Shipping & Logistics only for non-Doctor roles
+  const navigation = user?.role === 'Doctor'
+    ? [
+        ...baseNavigation,
+        { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
+        { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
+        {
+          name: 'Sign Out',
+          href: '#',
+          icon: ArrowRightOnRectangleIcon,
+          onClick: async () => {
+            try {
+              await logout();
+              window.location.href = '/login';
+            } catch (error) {
+              console.error('Sign out failed:', error);
+            }
+          }
+        }
+      ]
+    : [
+        ...baseNavigation,
+        { name: 'Shipping & Logistics', href: '/doctor/shipping', icon: TruckIcon },
+        { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
+        { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
+        {
+          name: 'Sign Out',
+          href: '#',
+          icon: ArrowRightOnRectangleIcon,
+          onClick: async () => {
+            try {
+              await logout();
+              window.location.href = '/login';
+            } catch (error) {
+              console.error('Sign out failed:', error);
+            }
+          }
+        }
+      ];
 
   const userInfo = {
     name: user?.first_name ? `${user.first_name} ${user.last_name}` : 'Dr. John',

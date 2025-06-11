@@ -29,6 +29,7 @@ const IVRReviewDetailPage = React.lazy(() => import('./pages/ivr/review/[id]'));
 const DoctorIVRDetailPage = React.lazy(() => import('./pages/doctor/ivr/[id]'));
 const TestIVRPage = React.lazy(() => import('./pages/ivr/submit/TestIVRPage'));
 const OrderManagementPage = React.lazy(() => import('./pages/orders'));
+const OrderDetailPage = React.lazy(() => import('./pages/doctor/orders/[id]'));
 const ShippingPage = React.lazy(() => import('./pages/shipping'));
 const AnalyticsPage = React.lazy(() => import('./pages/analytics'));
 const SettingsPage = React.lazy(() => import('./pages/settings'));
@@ -47,6 +48,8 @@ const SimpleCHPAdminDashboard = React.lazy(() => import('./components/chp/Simple
 const SimpleDistributorDashboard = React.lazy(() => import('./components/distributor/SimpleDistributorDashboard'));
 const SimpleSalesDashboard = React.lazy(() => import('./components/sales/SimpleSalesDashboard'));
 const SimpleLogisticsDashboard = React.lazy(() => import('./components/logistics/SimpleLogisticsDashboard'));
+const ShippingQueuePage = React.lazy(() => import('./pages/logistics/shipping-queue'));
+const OrderProcessingPage = React.lazy(() => import('./pages/logistics/orders/[id]/process'));
 
 const App = () => {
   console.log('App component rendering');
@@ -150,9 +153,14 @@ const App = () => {
                       </Route>
                     </Route>
 
+                    {/* Order Routes */}
+                    <Route path="orders">
+                      <Route index element={<OrderManagementPage />} />
+                      <Route path=":id" element={<OrderDetailPage />} />
+                    </Route>
+
                     {/* Other Routes */}
-                    <Route path="orders" element={<OrderManagementPage />} />
-                    <Route path="shipping" element={<ShippingPage />} />
+                    <Route path="shipping" element={<Navigate to="/doctor/orders" replace />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                   </Route>
@@ -222,6 +230,14 @@ const App = () => {
                 {/* Shipping and Logistics Routes */}
                 <Route element={<PrivateRoute />}>
                   <Route path="/logistics/dashboard" element={<SimpleLogisticsDashboard />} />
+                  <Route path="/logistics/shipping-queue" element={<ShippingQueuePage />} />
+                  <Route path="/logistics/orders/:id/process" element={<OrderProcessingPage />} />
+                  <Route path="/logistics/shipments" element={<SimpleLogisticsDashboard />} />
+                  <Route path="/logistics/inventory" element={<SimpleLogisticsDashboard />} />
+                  <Route path="/logistics/tracking" element={<SimpleLogisticsDashboard />} />
+                  <Route path="/logistics/warehouse" element={<SimpleLogisticsDashboard />} />
+                  <Route path="/logistics/reports" element={<SimpleLogisticsDashboard />} />
+                  <Route path="/logistics/settings" element={<SimpleLogisticsDashboard />} />
                 </Route>
 
                 {/* Root Redirect */}

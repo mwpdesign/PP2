@@ -5,7 +5,7 @@ Order model for managing medical supply orders.
 from datetime import datetime
 from uuid import UUID as PyUUID, uuid4
 from sqlalchemy import String, Enum, DateTime, ForeignKey, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.core.database import Base
@@ -39,13 +39,39 @@ class Order(Base, AuditMixin):
     updated_by_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
-    ivr_session_id: Mapped[str] = mapped_column(String(100))
+
+    # IVR Integration Fields (NEW)
+    ivr_request_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ivr_requests.id"),
+        nullable=True,
+        unique=True
+    )
+    shipping_address: Mapped[dict] = mapped_column(JSONB, nullable=True)
+    products: Mapped[dict] = mapped_column(JSONB, nullable=True)
+    processed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    shipped_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    received_by: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+
+    # Legacy fields
+    ivr_session_id: Mapped[str] = mapped_column(String(100), nullable=True)
     status: Mapped[str] = mapped_column(
         Enum(
             "pending",
             "verified",
             "approved",
             "processing",
+            "shipped",
+            "received",
             "completed",
             "cancelled",
             name="order_status_enum",
@@ -57,23 +83,35 @@ class Order(Base, AuditMixin):
         Enum(
             "prescription",
             "medical_equipment",
+            "medical_supplies",
             "lab_test",
             "referral",
             name="order_type_enum",
         ),
         nullable=False,
+        default="medical_supplies",
     )
     priority: Mapped[str] = mapped_column(
         Enum("routine", "urgent", "emergency", name="order_priority_enum"),
         nullable=False,
         default="routine",
     )
-    _total_amount: Mapped[str] = mapped_column(String(500))  # Encrypted
-    _notes: Mapped[str] = mapped_column(Text)  # Encrypted
-    _insurance_data: Mapped[str] = mapped_column(String(2000))  # Encrypted JSON
-    _payment_info: Mapped[str] = mapped_column(String(2000))  # Encrypted JSON
-    _delivery_info: Mapped[str] = mapped_column(String(2000))  # Encrypted JSON
-    completion_date: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    _total_amount: Mapped[str] = mapped_column(
+        String(500), nullable=True
+    )  # Encrypted
+    _notes: Mapped[str] = mapped_column(Text, nullable=True)  # Encrypted
+    _insurance_data: Mapped[str] = mapped_column(
+        String(2000), nullable=True
+    )  # Encrypted JSON
+    _payment_info: Mapped[str] = mapped_column(
+        String(2000), nullable=True
+    )  # Encrypted JSON
+    _delivery_info: Mapped[str] = mapped_column(
+        String(2000), nullable=True
+    )  # Encrypted JSON
+    completion_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow
     )
@@ -95,6 +133,12 @@ class Order(Base, AuditMixin):
     updated_by = relationship(
         "User", foreign_keys=[updated_by_id], back_populates="updated_orders"
     )
+    received_by_user = relationship(
+        "User", foreign_keys=[received_by], back_populates="received_orders"
+    )
+    ivr_request = relationship(
+        "IVRRequest", foreign_keys=[ivr_request_id], back_populates="order"
+    )
     shipping_addresses = relationship(
         "ShippingAddress", back_populates="order", cascade="all, delete-orphan"
     )
@@ -105,7 +149,10 @@ class Order(Base, AuditMixin):
         "FulfillmentOrder", back_populates="order", cascade="all, delete-orphan"
     )
     status_history = relationship(
-        "OrderStatusHistory", back_populates="order", cascade="all, " "delete-orphan"
+        "OrderStatusHistory", back_populates="order", cascade="all, delete-orphan"
+    )
+    documents = relationship(
+        "OrderDocument", back_populates="order", cascade="all, delete-orphan"
     )
 
     @property
@@ -201,6 +248,8 @@ class OrderStatusHistory(Base):
             "verified",
             "approved",
             "processing",
+            "shipped",
+            "received",
             "completed",
             "cancelled",
             name="order_status_enum",
@@ -213,6 +262,8 @@ class OrderStatusHistory(Base):
             "verified",
             "approved",
             "processing",
+            "shipped",
+            "received",
             "completed",
             "cancelled",
             name="order_status_enum",
@@ -231,4 +282,54 @@ class OrderStatusHistory(Base):
     order = relationship("Order", back_populates="status_history")
     changed_by = relationship(
         "User", foreign_keys=[changed_by_id], back_populates="order_status_changes"
+    )
+
+
+class OrderDocument(Base):
+    """Order document model for shipping documents, tracking, POD, etc."""
+
+    __tablename__ = "order_documents"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    order_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False
+    )
+    document_type: Mapped[str] = mapped_column(
+        Enum(
+            "shipping_label",
+            "tracking_info",
+            "proof_of_delivery",
+            "invoice",
+            "packing_slip",
+            "insurance_form",
+            "other",
+            name="order_document_type_enum",
+        ),
+        nullable=False,
+    )
+    document_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    original_filename: Mapped[str] = mapped_column(String(255), nullable=True)
+    uploaded_by_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), default="pending", nullable=False
+    )
+    verification_notes: Mapped[str] = mapped_column(String(500), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    # Relationships
+    order = relationship("Order", back_populates="documents")
+    uploaded_by = relationship(
+        "User", back_populates="uploaded_order_documents"
     )

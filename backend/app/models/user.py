@@ -206,6 +206,14 @@ class User(Base):
         foreign_keys="OrderStatusHistory.changed_by_id",
         back_populates="changed_by",
     )
+    received_orders = relationship(
+        "Order", foreign_keys="Order.received_by", back_populates="received_by_user"
+    )
+    uploaded_order_documents = relationship(
+        "OrderDocument",
+        foreign_keys="OrderDocument.uploaded_by_id",
+        back_populates="uploaded_by",
+    )
     secondary_insurance = relationship(
         "SecondaryInsurance",
         foreign_keys="SecondaryInsurance.created_by_id",

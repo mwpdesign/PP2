@@ -473,9 +473,13 @@ const DoctorIVRDetailPage: React.FC = () => {
   };
 
   const handleOrderClick = () => {
-    // Navigate to order page or show order modal
-    alert('Order functionality will be implemented in the next phase. This will allow doctors to order the approved products.');
-    // Future implementation: navigate('/orders/create', { state: { ivrId: id, products: ivrDetail.products } });
+    // This will be handled by the IVRResultsDisplay component
+    console.log('Order button clicked - handled by IVRResultsDisplay');
+  };
+
+  const handleNavigateToOrder = (orderId: string) => {
+    // Navigate to order detail page
+    navigate(`/doctor/orders?orderId=${orderId}`);
   };
 
   if (loading) {
@@ -590,6 +594,8 @@ const DoctorIVRDetailPage: React.FC = () => {
                 results={mockIVRResults}
                 showOrderButton={true}
                 onOrderClick={handleOrderClick}
+                ivrId={id}
+                onNavigateToOrder={handleNavigateToOrder}
               />
             )}
 

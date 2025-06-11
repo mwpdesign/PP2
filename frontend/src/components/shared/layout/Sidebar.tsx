@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   HomeIcon,
@@ -14,7 +15,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 interface NavigationItem {
   name: string;
   href: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   onClick?: () => void;
 }
 
@@ -31,17 +32,29 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInfo: customUserInfo }) => {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
-  const defaultNavigation = [
+  // Base navigation items
+  const baseNavigation = [
     { name: 'Dashboard', href: '/doctor/dashboard', icon: HomeIcon },
     { name: 'Patient Intake', href: '/doctor/patients', icon: UserPlusIcon },
     { name: 'IVR Management', href: '/doctor/ivr', icon: ClipboardDocumentCheckIcon },
     { name: 'Order Management', href: '/doctor/orders', icon: DocumentTextIcon },
-    { name: 'Shipping & Logistics', href: '/doctor/shipping', icon: TruckIcon },
-    { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
-    { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
   ];
+
+  // Add Shipping & Logistics only for non-Doctor roles
+  const defaultNavigation = user?.role === 'Doctor'
+    ? [
+        ...baseNavigation,
+        { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
+        { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
+      ]
+    : [
+        ...baseNavigation,
+        { name: 'Shipping & Logistics', href: '/doctor/shipping', icon: TruckIcon },
+        { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
+        { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
+      ];
 
   const defaultUserInfo = {
     name: 'Dr. John',
@@ -49,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInf
     avatar: 'Dr'
   };
 
-  const navigation = customNavigation || defaultNavigation;
+    const navigation = customNavigation || defaultNavigation;
   const userInfo = customUserInfo || defaultUserInfo;
 
   const handleSignOut = async () => {

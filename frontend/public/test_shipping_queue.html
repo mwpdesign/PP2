@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping Queue Page Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .success { border-left: 4px solid #28a745; }
+        .info { border-left: 4px solid #17a2b8; }
+        .warning { border-left: 4px solid #ffc107; }
+        .test-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .test-link:hover {
+            background: #0056b3;
+        }
+        .checklist {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚚 Shipping Queue Page Test</h1>
+
+    <div class="test-section info">
+        <h2>📋 Test Overview</h2>
+        <p>This test verifies the basic Shipping Queue page implementation for the logistics team.</p>
+        <p><strong>Requirements:</strong></p>
+        <ul>
+            <li>Basic page layout with header "Shipping Queue"</li>
+            <li>Subtitle: "Process and manage orders ready for shipment"</li>
+            <li>Placeholder content: "Shipping queue table will go here"</li>
+            <li>Standard authenticated layout</li>
+            <li>Navigation menu item under "Shipping & Logistics"</li>
+            <li>Role protection for Logistics Admin and Logistics Staff only</li>
+        </ul>
+    </div>
+
+    <div class="test-section warning">
+        <h2>🔐 Authentication Required</h2>
+        <p>To test the Shipping Queue page, you need to:</p>
+        <ol>
+            <li>Login with a Logistics Admin or Logistics Staff account</li>
+            <li>Navigate to the Shipping Queue from the sidebar menu</li>
+            <li>Verify the page loads correctly with proper role protection</li>
+        </ol>
+        <a href="http://localhost:3000/login" class="test-link">Go to Login Page</a>
+    </div>
+
+    <div class="test-section info">
+        <h2>🧪 Test Scenarios</h2>
+
+        <h3>Scenario 1: Direct URL Access</h3>
+        <p>Test accessing the shipping queue page directly:</p>
+        <a href="http://localhost:3000/logistics/shipping-queue" class="test-link">Test Direct Access</a>
+        <p><em>Expected: Should redirect to login if not authenticated, or to dashboard if wrong role</em></p>
+
+        <h3>Scenario 2: Navigation Menu</h3>
+        <p>After logging in as logistics user:</p>
+        <ol>
+            <li>Check that "Shipping Queue" appears in the sidebar navigation</li>
+            <li>Verify it has a Package icon</li>
+            <li>Click the menu item to navigate to the page</li>
+        </ol>
+
+        <h3>Scenario 3: Page Content</h3>
+        <p>Verify the page displays:</p>
+        <ul class="checklist">
+            <li>Header with "Shipping Queue" title</li>
+            <li>Subtitle: "Process and manage orders ready for shipment"</li>
+            <li>QueueList icon in the header</li>
+            <li><strong>NEW:</strong> Professional shipping queue table</li>
+            <li><strong>NEW:</strong> 5 sample orders with different statuses</li>
+            <li><strong>NEW:</strong> Status badges (Created/Processing/Shipped)</li>
+            <li><strong>NEW:</strong> Priority badges (Urgent/Routine)</li>
+            <li><strong>NEW:</strong> 7 table columns (Order#, Doctor, Ship To, Products, Priority, Status, Date)</li>
+            <li>Professional slate color scheme</li>
+            <li>Responsive padding and layout</li>
+        </ul>
+    </div>
+
+    <div class="test-section success">
+        <h2>✅ Implementation Status</h2>
+        <p><strong>Completed:</strong></p>
+        <ul>
+            <li>✅ Created shipping queue page component</li>
+            <li>✅ Added role protection (Logistics Admin & Staff only)</li>
+            <li>✅ Updated logistics dashboard navigation</li>
+            <li>✅ Added route to App.tsx</li>
+            <li>✅ Used UnifiedDashboardLayout for consistency</li>
+            <li>✅ Professional slate color scheme</li>
+            <li>✅ QueueList icon from Heroicons</li>
+            <li>✅ Responsive design</li>
+            <li>✅ <strong>NEW:</strong> ShippingQueueTable component with mock data</li>
+            <li>✅ <strong>NEW:</strong> Professional table with 7 columns</li>
+            <li>✅ <strong>NEW:</strong> Status and priority badges</li>
+            <li>✅ <strong>NEW:</strong> 5 sample orders with variety</li>
+            <li>✅ <strong>NEW:</strong> Responsive table design</li>
+        </ul>
+    </div>
+
+    <div class="test-section info">
+        <h2>🔧 Technical Details</h2>
+        <p><strong>Files Created/Modified:</strong></p>
+        <ul>
+            <li><code>frontend/src/pages/logistics/shipping-queue.tsx</code> - Shipping queue page with table</li>
+            <li><code>frontend/src/components/logistics/ShippingQueueTable.tsx</code> - <strong>NEW:</strong> Table component</li>
+            <li><code>frontend/src/components/logistics/SimpleLogisticsDashboard.tsx</code> - Updated navigation</li>
+            <li><code>frontend/src/App.tsx</code> - Added route</li>
+        </ul>
+
+        <p><strong>Role Protection:</strong></p>
+        <ul>
+            <li>Only "Logistics Admin" and "Logistics Staff" roles can access</li>
+            <li>Other roles are redirected to /dashboard</li>
+        </ul>
+
+        <p><strong>Navigation:</strong></p>
+        <ul>
+            <li>Added "Shipping Queue" menu item with PackageIcon</li>
+            <li>Route: /logistics/shipping-queue</li>
+            <li>Positioned second in logistics navigation menu</li>
+        </ul>
+    </div>
+
+    <div class="test-section warning">
+        <h2>⚠️ Next Steps</h2>
+        <p>This is just the basic page structure. Future tasks will add:</p>
+        <ul>
+            <li>Shipping queue data table</li>
+            <li>Order processing functionality</li>
+            <li>Shipment management features</li>
+            <li>Status updates and tracking</li>
+            <li>Bulk operations</li>
+        </ul>
+    </div>
+
+    <script>
+        // Simple test to check if frontend is running
+        fetch('http://localhost:3000')
+            .then(() => {
+                console.log('✅ Frontend server is running');
+            })
+            .catch(() => {
+                console.log('❌ Frontend server not responding');
+                document.body.insertAdjacentHTML('afterbegin',
+                    '<div style="background: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 20px; border-radius: 5px;">' +
+                    '⚠️ Frontend server not running. Please start with: cd frontend && npm run dev' +
+                    '</div>'
+                );
+            });
+    </script>
+</body>
+</html>

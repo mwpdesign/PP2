@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Test Order - Healthcare IVR Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        h2 {
+            color: #334155;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        h3 {
+            color: #475569;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .test-section {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .auth-section {
+            background: #fef3c7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #f59e0b;
+        }
+        .success-section {
+            background: #dcfce7;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #10b981;
+        }
+        .auth-section input {
+            margin: 5px 10px 5px 0;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .auth-section button, .action-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            font-weight: 500;
+        }
+        .auth-section button:hover, .action-button:hover {
+            background: #2563eb;
+        }
+        .action-button.success {
+            background: #10b981;
+        }
+        .action-button.success:hover {
+            background: #059669;
+        }
+        .action-button.warning {
+            background: #f59e0b;
+        }
+        .action-button.warning:hover {
+            background: #d97706;
+        }
+        .action-button.danger {
+            background: #ef4444;
+        }
+        .action-button.danger:hover {
+            background: #dc2626;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .test-result {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        .test-result.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .test-result.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .test-result.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fed7aa;
+        }
+        .ivr-item, .order-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .ivr-item h4, .order-item h4 {
+            margin: 0 0 10px 0;
+            color: #1e293b;
+        }
+        .ivr-item .status, .order-item .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .ivr-item .status.approved, .order-item .status.approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .ivr-item .status.in_review, .order-item .status.in_review {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .ivr-item .status.submitted, .order-item .status.submitted {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .order-link {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        .order-link:hover {
+            background: #2563eb;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .step-number {
+            background: #3b82f6;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .step-number.completed {
+            background: #10b981;
+        }
+        .step-number.current {
+            background: #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Create Test Order</h1>
+        <p>This page helps create test orders to verify the Order Detail page functionality.</p>
+
+        <div class="auth-section">
+            <h3>🔐 Authentication</h3>
+            <input type="email" id="email" placeholder="Email" value="doctor@healthcare.local">
+            <input type="password" id="password" placeholder="Password" value="doctor123">
+            <button onclick="authenticate()">Login</button>
+            <span id="auth-status" class="status-badge status-warning">Not Authenticated</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>📋 Order Creation Process</h3>
+            <div class="step-indicator">
+                <div class="step-number" id="step1">1</div>
+                <span>Find or Create Approved IVR</span>
+            </div>
+            <div class="step-indicator">
+                <div class="step-number" id="step2">2</div>
+                <span>Create Order from Approved IVR</span>
+            </div>
+            <div class="step-indicator">
+                <div class="step-number" id="step3">3</div>
+                <span>Verify Order Creation</span>
+            </div>
+            <div class="step-indicator">
+                <div class="step-number" id="step4">4</div>
+                <span>Test Order Detail Page</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>🔍 Step 1: Check Existing IVRs</h3>
+            <button class="action-button" onclick="loadIVRs()">Load IVRs</button>
+            <button class="action-button warning" onclick="createApprovedIVR()">Create Approved IVR</button>
+            <div id="ivr-results"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>🛒 Step 2: Create Order from IVR</h3>
+            <p>Select an approved IVR to create an order:</p>
+            <div id="approved-ivrs"></div>
+            <div id="order-creation-results"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>📦 Step 3: Verify Created Orders</h3>
+            <button class="action-button" onclick="loadOrders()">Load Orders</button>
+            <div id="order-results"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>🔗 Step 4: Test Order Detail Page</h3>
+            <p>Click on any order below to test the Order Detail page:</p>
+            <div id="order-links"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="success-section">
+            <h3>✅ Quick Test Links</h3>
+            <p>Direct links to test the Order Detail functionality:</p>
+            <a href="/doctor/orders" target="_blank" class="order-link">📊 Order Management Page</a>
+            <a href="/doctor/ivr" target="_blank" class="order-link">📋 IVR Management Page</a>
+            <a href="/test_order_detail_page.html" target="_blank" class="order-link">🧪 Order Detail Test Page</a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let authToken = localStorage.getItem('authToken');
+        let currentStep = 1;
+
+        // Update auth status on page load
+        updateAuthStatus();
+
+        function updateAuthStatus() {
+            const statusElement = document.getElementById('auth-status');
+            if (authToken) {
+                statusElement.textContent = 'Authenticated';
+                statusElement.className = 'status-badge status-success';
+            } else {
+                statusElement.textContent = 'Not Authenticated';
+                statusElement.className = 'status-badge status-warning';
+            }
+        }
+
+        function updateStepIndicator(step) {
+            // Reset all steps
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                stepEl.className = 'step-number';
+                if (i < step) {
+                    stepEl.className = 'step-number completed';
+                } else if (i === step) {
+                    stepEl.className = 'step-number current';
+                }
+            }
+            currentStep = step;
+        }
+
+        async function authenticate() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    updateAuthStatus();
+                    console.log('✅ Authentication successful');
+                } else {
+                    console.error('❌ Authentication failed:', response.status);
+                    alert('Authentication failed. Please check credentials.');
+                }
+            } catch (error) {
+                console.error('❌ Authentication error:', error);
+                alert('Authentication error. Please check if backend is running.');
+            }
+        }
+
+        async function loadIVRs() {
+            const resultsDiv = document.getElementById('ivr-results');
+            resultsDiv.innerHTML = '<p>🔄 Loading IVRs...</p>';
+
+            if (!authToken) {
+                resultsDiv.innerHTML = '<div class="test-result error">❌ Please authenticate first</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const ivrs = data.items || [];
+
+                    let html = `<h4>📋 Found ${ivrs.length} IVRs:</h4>`;
+
+                    if (ivrs.length === 0) {
+                        html += '<div class="test-result warning">⚠️ No IVRs found. Create one first.</div>';
+                    } else {
+                        const approvedIVRs = ivrs.filter(ivr => ivr.status === 'approved');
+                        html += `<div class="test-result success">✅ Found ${approvedIVRs.length} approved IVRs</div>`;
+
+                        ivrs.forEach(ivr => {
+                            html += `
+                                <div class="ivr-item">
+                                    <h4>IVR ${ivr.id}</h4>
+                                    <p><strong>Patient:</strong> ${ivr.patient_name || 'Unknown'}</p>
+                                    <p><strong>Status:</strong> <span class="status ${ivr.status}">${ivr.status}</span></p>
+                                    <p><strong>Created:</strong> ${new Date(ivr.created_at).toLocaleDateString()}</p>
+                                    ${ivr.status === 'approved' ?
+                                        `<button class="action-button success" onclick="createOrderFromIVR('${ivr.id}')">Create Order</button>` :
+                                        `<button class="action-button warning" onclick="approveIVR('${ivr.id}')">Approve IVR</button>`
+                                    }
+                                </div>
+                            `;
+                        });
+
+                        if (approvedIVRs.length > 0) {
+                            updateStepIndicator(2);
+                        }
+                    }
+
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="test-result error">❌ Failed to load IVRs: ${response.status}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="test-result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function createApprovedIVR() {
+            const resultsDiv = document.getElementById('ivr-results');
+            resultsDiv.innerHTML = '<p>🔄 Creating approved IVR...</p>';
+
+            if (!authToken) {
+                resultsDiv.innerHTML = '<div class="test-result error">❌ Please authenticate first</div>';
+                return;
+            }
+
+            try {
+                // Create a test IVR with approved status
+                const ivrData = {
+                    patient_id: "test-patient-123",
+                    patient_name: "Test Patient",
+                    provider_id: "test-provider-123",
+                    provider_name: "Dr. Test Provider",
+                    status: "approved",
+                    priority: "routine",
+                    service_type: "wound_care",
+                    diagnosis_code: "L89.90",
+                    treatment_plan: "Skin graft application for chronic wound",
+                    insurance_carrier: "Blue Cross Blue Shield",
+                    policy_number: "TEST123456",
+                    group_number: "GRP789",
+                    selected_products: [
+                        {
+                            product_name: "Skin Graft - Type A",
+                            q_code: "Q4100",
+                            total_quantity: 2,
+                            total_cost: 1500.00,
+                            sizes: [
+                                {
+                                    size: "2x2 cm",
+                                    dimensions: "2x2",
+                                    unit_price: 750.00,
+                                    quantity: 2,
+                                    total: 1500.00
+                                }
+                            ]
+                        }
+                    ]
+                };
+
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(ivrData)
+                });
+
+                if (response.ok) {
+                    const createdIVR = await response.json();
+                    resultsDiv.innerHTML = `
+                        <div class="test-result success">
+                            ✅ Created approved IVR: ${createdIVR.id}
+                            <button class="action-button success" onclick="createOrderFromIVR('${createdIVR.id}')">Create Order</button>
+                        </div>
+                    `;
+                    updateStepIndicator(2);
+                } else {
+                    resultsDiv.innerHTML = `<div class="test-result error">❌ Failed to create IVR: ${response.status}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="test-result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function approveIVR(ivrId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/${ivrId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        decision: "approved",
+                        notes: "Test approval for order creation"
+                    })
+                });
+
+                if (response.ok) {
+                    alert('✅ IVR approved successfully!');
+                    loadIVRs(); // Refresh the list
+                } else {
+                    alert(`❌ Failed to approve IVR: ${response.status}`);
+                }
+            } catch (error) {
+                alert(`❌ Error: ${error.message}`);
+            }
+        }
+
+        async function createOrderFromIVR(ivrId) {
+            const resultsDiv = document.getElementById('order-creation-results');
+            resultsDiv.innerHTML = '<p>🔄 Creating order from IVR...</p>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/orders/create-from-ivr/${ivrId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const orderData = await response.json();
+                    resultsDiv.innerHTML = `
+                        <div class="test-result success">
+                            ✅ Order created successfully!
+                            <br><strong>Order Number:</strong> ${orderData.order_number}
+                            <br><strong>Order ID:</strong> ${orderData.id}
+                            <br><a href="/doctor/orders/${orderData.id}" target="_blank" class="order-link">View Order Detail</a>
+                        </div>
+                    `;
+                    updateStepIndicator(3);
+                    loadOrders(); // Refresh orders list
+                } else {
+                    const errorData = await response.json();
+                    resultsDiv.innerHTML = `<div class="test-result error">❌ Failed to create order: ${errorData.detail || response.status}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="test-result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadOrders() {
+            const resultsDiv = document.getElementById('order-results');
+            const linksDiv = document.getElementById('order-links');
+            resultsDiv.innerHTML = '<p>🔄 Loading orders...</p>';
+
+            if (!authToken) {
+                resultsDiv.innerHTML = '<div class="test-result error">❌ Please authenticate first</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/orders/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const orders = data.items || [];
+
+                    let html = `<h4>📦 Found ${orders.length} Orders:</h4>`;
+                    let linksHtml = '';
+
+                    if (orders.length === 0) {
+                        html += '<div class="test-result warning">⚠️ No orders found. Create one from an approved IVR.</div>';
+                    } else {
+                        html += `<div class="test-result success">✅ Found ${orders.length} orders</div>`;
+
+                        orders.forEach(order => {
+                            html += `
+                                <div class="order-item">
+                                    <h4>Order ${order.order_number}</h4>
+                                    <p><strong>Patient:</strong> ${order.patient_name || 'Unknown'}</p>
+                                    <p><strong>Status:</strong> <span class="status ${order.status}">${order.status}</span></p>
+                                    <p><strong>Total:</strong> $${order.total_amount || '0.00'}</p>
+                                    <p><strong>Created:</strong> ${new Date(order.created_at).toLocaleDateString()}</p>
+                                    <a href="/doctor/orders/${order.id}" target="_blank" class="order-link">View Order Detail</a>
+                                </div>
+                            `;
+
+                            linksHtml += `
+                                <a href="/doctor/orders/${order.id}" target="_blank" class="order-link">
+                                    📋 ${order.order_number} - ${order.patient_name}
+                                </a>
+                            `;
+                        });
+
+                        updateStepIndicator(4);
+                    }
+
+                    resultsDiv.innerHTML = html;
+                    linksDiv.innerHTML = linksHtml;
+                } else {
+                    resultsDiv.innerHTML = `<div class="test-result error">❌ Failed to load orders: ${response.status}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="test-result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-load data if authenticated
+        setTimeout(() => {
+            if (authToken) {
+                console.log('🔄 Auto-loading IVRs and orders...');
+                loadIVRs();
+                loadOrders();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

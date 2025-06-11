@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistics Navigation Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .success { border-left: 4px solid #28a745; }
+        .info { border-left: 4px solid #17a2b8; }
+        .warning { border-left: 4px solid #ffc107; }
+        .test-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .test-link:hover {
+            background: #0056b3;
+        }
+        .checklist {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            margin-right: 8px;
+        }
+        .route-test {
+            background: #e9ecef;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧭 Logistics Navigation Test</h1>
+
+    <div class="test-section info">
+        <h2>📋 Navigation Test Overview</h2>
+        <p>This test verifies that the logistics dashboard navigation is working correctly.</p>
+        <p><strong>Issue:</strong> Clicking sidebar menu items wasn't navigating to the correct pages.</p>
+        <p><strong>Fix Applied:</strong> Added missing routes and verified navigation pattern.</p>
+    </div>
+
+    <div class="test-section warning">
+        <h2>🔐 Prerequisites</h2>
+        <p>To test logistics navigation, you need to:</p>
+        <ol>
+            <li>Login with a "Shipping and Logistics" role account</li>
+            <li>Navigate to the logistics dashboard</li>
+            <li>Test each sidebar navigation item</li>
+        </ol>
+        <a href="http://localhost:3000/login" class="test-link">Go to Login Page</a>
+        <a href="http://localhost:3000/logistics/dashboard" class="test-link">Go to Logistics Dashboard</a>
+    </div>
+
+    <div class="test-section info">
+        <h2>🧪 Navigation Routes Test</h2>
+
+        <h3>Primary Routes (Should Work):</h3>
+        <div class="route-test">✅ /logistics/dashboard → Logistics Dashboard</div>
+        <div class="route-test">✅ /logistics/shipping-queue → Shipping Queue Table</div>
+
+        <h3>Secondary Routes (Placeholder - Go to Dashboard):</h3>
+        <div class="route-test">📋 /logistics/shipments → Logistics Dashboard (placeholder)</div>
+        <div class="route-test">📋 /logistics/inventory → Logistics Dashboard (placeholder)</div>
+        <div class="route-test">📋 /logistics/tracking → Logistics Dashboard (placeholder)</div>
+        <div class="route-test">📋 /logistics/warehouse → Logistics Dashboard (placeholder)</div>
+        <div class="route-test">📋 /logistics/reports → Logistics Dashboard (placeholder)</div>
+        <div class="route-test">📋 /logistics/settings → Logistics Dashboard (placeholder)</div>
+
+        <h3>Direct Route Tests:</h3>
+        <a href="http://localhost:3000/logistics/dashboard" class="test-link">Dashboard</a>
+        <a href="http://localhost:3000/logistics/shipping-queue" class="test-link">Shipping Queue</a>
+        <a href="http://localhost:3000/logistics/shipments" class="test-link">Shipments</a>
+        <a href="http://localhost:3000/logistics/inventory" class="test-link">Inventory</a>
+        <a href="http://localhost:3000/logistics/tracking" class="test-link">Tracking</a>
+        <a href="http://localhost:3000/logistics/warehouse" class="test-link">Warehouse</a>
+        <a href="http://localhost:3000/logistics/reports" class="test-link">Reports</a>
+        <a href="http://localhost:3000/logistics/settings" class="test-link">Settings</a>
+    </div>
+
+    <div class="test-section success">
+        <h2>✅ Manual Navigation Test</h2>
+        <p><strong>Step-by-Step Test Procedure:</strong></p>
+        <ol class="checklist">
+            <li>Login as logistics user</li>
+            <li>Navigate to /logistics/dashboard</li>
+            <li>Verify sidebar shows all 8 menu items</li>
+            <li>Click "Shipping Queue" in sidebar</li>
+            <li>Verify URL changes to /logistics/shipping-queue</li>
+            <li>Verify shipping queue table displays</li>
+            <li>Verify "Shipping Queue" is highlighted in sidebar</li>
+            <li>Click "Dashboard" in sidebar</li>
+            <li>Verify URL changes to /logistics/dashboard</li>
+            <li>Verify "Dashboard" is highlighted in sidebar</li>
+            <li>Test other menu items (should navigate to dashboard as placeholder)</li>
+        </ol>
+    </div>
+
+    <div class="test-section info">
+        <h2>🔧 Technical Implementation</h2>
+
+        <h3>Navigation Pattern Used:</h3>
+        <ul>
+            <li><strong>Sidebar Component:</strong> Uses React Router's <code>Link</code> components</li>
+            <li><strong>Active State:</strong> Uses <code>useLocation()</code> to highlight current page</li>
+            <li><strong>Route Matching:</strong> Uses <code>location.pathname.startsWith(item.href)</code></li>
+        </ul>
+
+        <h3>Routes Added to App.tsx:</h3>
+        <ul>
+            <li>✅ /logistics/dashboard (existing)</li>
+            <li>✅ /logistics/shipping-queue (existing)</li>
+            <li>🆕 /logistics/shipments (new placeholder)</li>
+            <li>🆕 /logistics/inventory (new placeholder)</li>
+            <li>🆕 /logistics/tracking (new placeholder)</li>
+            <li>🆕 /logistics/warehouse (new placeholder)</li>
+            <li>🆕 /logistics/reports (new placeholder)</li>
+            <li>🆕 /logistics/settings (new placeholder)</li>
+        </ul>
+
+        <h3>Navigation Items in Sidebar:</h3>
+        <ul>
+            <li>Dashboard (🏠 HomeIcon)</li>
+            <li>Shipping Queue (📋 QueueListIcon)</li>
+            <li>Shipment Processing (🚛 TruckIcon)</li>
+            <li>Inventory Management (📦 ArchiveBoxIcon)</li>
+            <li>Delivery Tracking (🗺️ MapIcon)</li>
+            <li>Warehouse Operations (🏪 BuildingStorefrontIcon)</li>
+            <li>Reports (📊 ClipboardDocumentListIcon)</li>
+            <li>Settings (⚙️ Cog6ToothIcon)</li>
+            <li>Sign Out (🚪 ArrowRightOnRectangleIcon)</li>
+        </ul>
+    </div>
+
+    <div class="test-section warning">
+        <h2>⚠️ Expected Behavior</h2>
+        <ul>
+            <li><strong>Dashboard:</strong> Shows logistics dashboard with stats and quick actions</li>
+            <li><strong>Shipping Queue:</strong> Shows the shipping queue table with 5 sample orders</li>
+            <li><strong>Other Items:</strong> Navigate to dashboard (placeholder until implemented)</li>
+            <li><strong>Active Highlighting:</strong> Current page should be highlighted in sidebar</li>
+            <li><strong>URL Changes:</strong> Browser URL should update when navigating</li>
+            <li><strong>Back/Forward:</strong> Browser back/forward buttons should work</li>
+        </ul>
+    </div>
+
+    <div class="test-section success">
+        <h2>🎯 Success Criteria</h2>
+        <p>Navigation is working correctly if:</p>
+        <ul>
+            <li>✅ Clicking "Shipping Queue" shows the table</li>
+            <li>✅ Clicking "Dashboard" shows the dashboard</li>
+            <li>✅ URL changes reflect the navigation</li>
+            <li>✅ Active menu item is highlighted</li>
+            <li>✅ No console errors during navigation</li>
+            <li>✅ Browser back/forward buttons work</li>
+        </ul>
+    </div>
+
+    <script>
+        // Test if frontend is running
+        fetch('http://localhost:3000')
+            .then(() => {
+                console.log('✅ Frontend server is running');
+                document.body.insertAdjacentHTML('afterbegin',
+                    '<div style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border-radius: 5px;">' +
+                    '✅ Frontend server is running - Navigation tests ready' +
+                    '</div>'
+                );
+            })
+            .catch(() => {
+                console.log('❌ Frontend server not responding');
+                document.body.insertAdjacentHTML('afterbegin',
+                    '<div style="background: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 20px; border-radius: 5px;">' +
+                    '⚠️ Frontend server not running. Please start with: cd frontend && npm run dev' +
+                    '</div>'
+                );
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management Consolidation Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+        .test-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status.pending { background: #fef3c7; color: #92400e; }
+        .status.pass { background: #d1fae5; color: #065f46; }
+        .status.fail { background: #fee2e2; color: #991b1b; }
+        .test-link {
+            display: inline-block;
+            margin: 5px 10px 5px 0;
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .test-link:hover {
+            background: #2563eb;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .feature-list li:before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Order Management Consolidation Test</h1>
+            <p>Comprehensive testing for the consolidated order and shipping functionality</p>
+            <div class="status pending">Testing in Progress</div>
+        </div>
+
+        <!-- Navigation Changes -->
+        <div class="test-section">
+            <h2>🧭 Navigation Changes</h2>
+            <p>Verify that "Shipping & Logistics" has been removed from Doctor navigation only</p>
+
+            <div class="test-item">
+                <h3>Doctor Navigation Test</h3>
+                <p><strong>Expected:</strong> No "Shipping & Logistics" menu item for Doctor role</p>
+                <p><strong>Test Steps:</strong></p>
+                <ol>
+                    <li>Login as doctor@healthcare.local / doctor123</li>
+                    <li>Check sidebar navigation menu</li>
+                    <li>Verify "Shipping & Logistics" is NOT present</li>
+                    <li>Verify "Order Management" is present</li>
+                </ol>
+                <a href="http://localhost:3000/login" class="test-link" target="_blank">Test Doctor Login</a>
+            </div>
+
+            <div class="test-item">
+                <h3>Logistics Role Navigation Test</h3>
+                <p><strong>Expected:</strong> "Shipping & Logistics" still present for logistics roles</p>
+                <p><strong>Test Steps:</strong></p>
+                <ol>
+                    <li>Login as logistics user (if available)</li>
+                    <li>Check sidebar navigation menu</li>
+                    <li>Verify "Shipping & Logistics" IS present</li>
+                </ol>
+                <div class="warning">
+                    <strong>Note:</strong> This test requires a logistics user account to be available
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Order Management -->
+        <div class="test-section">
+            <h2>📋 Enhanced Order Management Page</h2>
+            <p>Test the consolidated order management with shipping functionality</p>
+
+            <div class="test-item">
+                <h3>Order List with Shipping Information</h3>
+                <p><strong>Expected Features:</strong></p>
+                <ul class="feature-list">
+                    <li>Display ALL orders regardless of status</li>
+                    <li>Show tracking numbers for shipped orders</li>
+                    <li>Show estimated delivery dates</li>
+                    <li>Show carrier names</li>
+                    <li>"Track Shipment" links that open carrier websites</li>
+                    <li>"Mark as Received" buttons for delivered orders</li>
+                    <li>Enhanced status badges with descriptive labels</li>
+                    <li>Search by tracking number</li>
+                </ul>
+                <a href="http://localhost:3000/doctor/orders" class="test-link" target="_blank">Test Order Management</a>
+            </div>
+
+            <div class="test-item">
+                <h3>Enhanced Status Badges</h3>
+                <p><strong>Expected Status Labels:</strong></p>
+                <div class="code-block">
+"Pending" → "Pending Approval"
+"Processing" → "Preparing Shipment"
+"Shipped" → "Shipped - In Transit"
+"Delivered" → "Delivered - Awaiting Confirmation"
+"Received" → "Received - Complete"
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>Tracking Functionality</h3>
+                <p><strong>Test Steps:</strong></p>
+                <ol>
+                    <li>Find a shipped order with tracking number</li>
+                    <li>Click "Track Shipment" button</li>
+                    <li>Verify it opens the correct carrier website</li>
+                    <li>Test copy tracking number functionality</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Enhanced Order Detail Page -->
+        <div class="test-section">
+            <h2>📄 Enhanced Order Detail Page</h2>
+            <p>Test the comprehensive shipping information integration</p>
+
+            <div class="test-item">
+                <h3>Shipping & Tracking Information Card</h3>
+                <p><strong>Expected Features:</strong></p>
+                <ul class="feature-list">
+                    <li>Comprehensive tracking information section</li>
+                    <li>Tracking number with copy button</li>
+                    <li>Carrier name and tracking link</li>
+                    <li>Estimated delivery date</li>
+                    <li>Actual delivery date (if delivered)</li>
+                    <li>Delivery confirmation/signature info</li>
+                    <li>"Mark as Received" button for delivered orders</li>
+                    <li>Direct links to carrier tracking websites</li>
+                </ul>
+                <a href="http://localhost:3000/doctor/orders/ORD-2024-003" class="test-link" target="_blank">Test Shipped Order Detail</a>
+                <a href="http://localhost:3000/doctor/orders/ORD-2024-004" class="test-link" target="_blank">Test Delivered Order Detail</a>
+            </div>
+
+            <div class="test-item">
+                <h3>Enhanced Status Display</h3>
+                <p><strong>Test Steps:</strong></p>
+                <ol>
+                    <li>Open various order detail pages</li>
+                    <li>Verify status badges use descriptive labels</li>
+                    <li>Check that shipping information adapts to order status</li>
+                    <li>Verify tracking section only shows for shipped/delivered orders</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Route Redirects -->
+        <div class="test-section">
+            <h2>🔄 Route Redirects</h2>
+            <p>Test that shipping routes redirect to order management</p>
+
+            <div class="test-item">
+                <h3>Shipping Route Redirect</h3>
+                <p><strong>Expected:</strong> /doctor/shipping redirects to /doctor/orders</p>
+                <a href="http://localhost:3000/doctor/shipping" class="test-link" target="_blank">Test Shipping Redirect</a>
+            </div>
+
+            <div class="test-item">
+                <h3>Legacy Route Redirect</h3>
+                <p><strong>Expected:</strong> /shipping redirects to /doctor/orders</p>
+                <a href="http://localhost:3000/shipping" class="test-link" target="_blank">Test Legacy Redirect</a>
+            </div>
+        </div>
+
+        <!-- Functionality Tests -->
+        <div class="test-section">
+            <h2>⚡ Functionality Tests</h2>
+            <p>Test core shipping and order management functionality</p>
+
+            <div class="test-item">
+                <h3>Mark as Received Functionality</h3>
+                <p><strong>Test Steps:</strong></p>
+                <ol>
+                    <li>Find a delivered order</li>
+                    <li>Click "Mark as Received" button</li>
+                    <li>Verify status updates to "Received"</li>
+                    <li>Check that button disappears after marking</li>
+                </ol>
+            </div>
+
+            <div class="test-item">
+                <h3>Tracking Links</h3>
+                <p><strong>Test Carriers:</strong></p>
+                <ul>
+                    <li>UPS: Should open ups.com tracking</li>
+                    <li>FedEx: Should open fedex.com tracking</li>
+                    <li>USPS: Should open usps.com tracking</li>
+                </ul>
+            </div>
+
+            <div class="test-item">
+                <h3>Search and Filter</h3>
+                <p><strong>Test Steps:</strong></p>
+                <ol>
+                    <li>Search by tracking number</li>
+                    <li>Filter by different statuses</li>
+                    <li>Verify results update correctly</li>
+                    <li>Test date range filters</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Mock Data Verification -->
+        <div class="test-section">
+            <h2>📊 Mock Data Verification</h2>
+            <p>Verify that mock data includes comprehensive shipping information</p>
+
+            <div class="test-item">
+                <h3>Expected Test Orders</h3>
+                <div class="code-block">
+ORD-2024-001: Pending Approval (no tracking)
+ORD-2024-002: Preparing Shipment (no tracking)
+ORD-2024-003: Shipped - In Transit (UPS789456123, UPS)
+ORD-2024-004: Delivered (FEDEX456789123, FedEx, with signature)
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>Shipping Data Fields</h3>
+                <p><strong>Each order should include:</strong></p>
+                <ul class="feature-list">
+                    <li>tracking_number (for shipped/delivered)</li>
+                    <li>carrier (UPS, FedEx, etc.)</li>
+                    <li>estimated_delivery</li>
+                    <li>actual_delivery (for delivered)</li>
+                    <li>delivery_confirmation (signature info)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Success Criteria -->
+        <div class="test-section">
+            <h2>✅ Success Criteria</h2>
+            <p>All tests must pass for successful consolidation</p>
+
+            <div class="success">
+                <h3>Consolidation Complete When:</h3>
+                <ul class="feature-list">
+                    <li>Doctors no longer see "Shipping & Logistics" in navigation</li>
+                    <li>Order Management shows ALL orders with shipping info</li>
+                    <li>Tracking numbers are clickable and open carrier sites</li>
+                    <li>Status badges use descriptive labels</li>
+                    <li>"Mark as Received" works for delivered orders</li>
+                    <li>Order detail pages show comprehensive shipping info</li>
+                    <li>Shipping routes redirect to Order Management</li>
+                    <li>No broken navigation links remain</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Testing Checklist -->
+        <div class="test-section">
+            <h2>📝 Testing Checklist</h2>
+            <p>Complete verification checklist</p>
+
+            <div class="test-item">
+                <h3>Navigation Tests</h3>
+                <ul>
+                    <li>☐ Doctor navigation excludes "Shipping & Logistics"</li>
+                    <li>☐ Logistics navigation includes "Shipping & Logistics"</li>
+                    <li>☐ Order Management is prominently displayed</li>
+                </ul>
+            </div>
+
+            <div class="test-item">
+                <h3>Order Management Tests</h3>
+                <ul>
+                    <li>☐ All orders display regardless of status</li>
+                    <li>☐ Tracking information shows in order rows</li>
+                    <li>☐ Status badges use descriptive labels</li>
+                    <li>☐ Track Shipment links work correctly</li>
+                    <li>☐ Mark as Received functionality works</li>
+                    <li>☐ Search includes tracking numbers</li>
+                </ul>
+            </div>
+
+            <div class="test-item">
+                <h3>Order Detail Tests</h3>
+                <ul>
+                    <li>☐ Comprehensive shipping information card</li>
+                    <li>☐ Tracking number copy functionality</li>
+                    <li>☐ Carrier tracking links work</li>
+                    <li>☐ Delivery confirmation displays</li>
+                    <li>☐ Status-appropriate information shows</li>
+                </ul>
+            </div>
+
+            <div class="test-item">
+                <h3>Redirect Tests</h3>
+                <ul>
+                    <li>☐ /doctor/shipping → /doctor/orders</li>
+                    <li>☐ /shipping → /doctor/orders</li>
+                    <li>☐ No broken links in navigation</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="warning">
+            <strong>Important:</strong> Test with both backend running (localhost:8000) and frontend (localhost:3000) for full functionality.
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh status every 30 seconds
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+
+        // Add click handlers for test links
+        document.querySelectorAll('.test-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                console.log('Testing:', this.href);
+            });
+        });
+    </script>
+</body>
+</html>

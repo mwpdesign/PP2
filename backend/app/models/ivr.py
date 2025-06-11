@@ -85,6 +85,10 @@ class IVRRequest(Base):
         cascade="all, delete-orphan",
         order_by="IVRCommunicationMessage.created_at"
     )
+    order = relationship(
+        "Order", foreign_keys="Order.ivr_request_id", back_populates="ivr_request",
+        uselist=False
+    )
 
 
 class IVRProduct(Base):

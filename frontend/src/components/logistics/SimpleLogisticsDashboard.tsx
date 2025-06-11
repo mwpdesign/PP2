@@ -7,13 +7,14 @@ import {
   ClipboardDocumentListIcon,
   BuildingStorefrontIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  QueueListIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import UnifiedDashboardLayout from '../shared/layout/UnifiedDashboardLayout';
 
 const SimpleLogisticsDashboard: React.FC = () => {
-  const { logout, user } = useAuth();
+    const { logout, user } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -26,6 +27,7 @@ const SimpleLogisticsDashboard: React.FC = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/logistics/dashboard', icon: HomeIcon },
+    { name: 'Shipping Queue', href: '/logistics/shipping-queue', icon: QueueListIcon },
     { name: 'Shipment Processing', href: '/logistics/shipments', icon: TruckIcon },
     { name: 'Inventory Management', href: '/logistics/inventory', icon: ArchiveBoxIcon },
     { name: 'Delivery Tracking', href: '/logistics/tracking', icon: MapIcon },

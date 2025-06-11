@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Products Button - Test Verification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin: 5px;
+        }
+        .status.success { background: #dcfce7; color: #166534; }
+        .status.warning { background: #fef3c7; color: #92400e; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.info { background: #dbeafe; color: #1e40af; }
+        .test-section {
+            margin: 30px 0;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: background 0.2s;
+        }
+        .button:hover { background: #2563eb; }
+        .button.success { background: #10b981; }
+        .button.success:hover { background: #059669; }
+        .button.danger { background: #ef4444; }
+        .button.danger:hover { background: #dc2626; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #f59e0b;
+            margin: 15px 0;
+        }
+        .step {
+            counter-increment: step-counter;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            position: relative;
+        }
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -15px;
+            top: 20px;
+            background: #10b981;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .steps-container {
+            counter-reset: step-counter;
+        }
+        .api-test {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .result.success { background: #dcfce7; color: #166534; }
+        .result.error { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 Order Products Button - Implementation Test</h1>
+            <p>Comprehensive verification of the Order Products button functionality in IVR Detail pages</p>
+            <div class="status info">Task 3: Add Order Products Button to IVR Detail</div>
+        </div>
+
+        <!-- Implementation Summary -->
+        <div class="test-section">
+            <h2>📋 Implementation Summary</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>✅ Backend API Fixed</h3>
+                    <ul>
+                        <li>Fixed import error in orders.py</li>
+                        <li>Updated permission decorators</li>
+                        <li>Order creation endpoint working</li>
+                        <li>Order checking endpoint working</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>✅ Frontend Services Created</h3>
+                    <ul>
+                        <li>usePermissions hook</li>
+                        <li>orderApiService</li>
+                        <li>Enhanced IVRResultsDisplay</li>
+                        <li>Toast notifications</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>✅ UI/UX Features</h3>
+                    <ul>
+                        <li>Permission-based visibility</li>
+                        <li>Order existence checking</li>
+                        <li>Loading states</li>
+                        <li>Success/error handling</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>✅ Integration Complete</h3>
+                    <ul>
+                        <li>Doctor IVR Detail page updated</li>
+                        <li>Navigation to orders page</li>
+                        <li>Professional design system</li>
+                        <li>Error boundaries</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Testing -->
+        <div class="test-section">
+            <h2>🔧 API Endpoint Testing</h2>
+            <div class="api-test">
+                <h3>Backend Order API Endpoints</h3>
+                <button class="button" onclick="testOrderAPI()">Test Order API</button>
+                <button class="button success" onclick="testPermissionsAPI()">Test Permissions API</button>
+                <div id="api-results"></div>
+            </div>
+        </div>
+
+        <!-- Manual Testing Steps -->
+        <div class="test-section">
+            <h2>🧪 Manual Testing Procedure</h2>
+            <div class="steps-container">
+                <div class="step">
+                    <h3>Login as Doctor</h3>
+                    <p>Navigate to <a href="http://localhost:3000/login" target="_blank">http://localhost:3000/login</a></p>
+                    <div class="code-block">
+Email: doctor@healthcare.local
+Password: doctor123</div>
+                </div>
+
+                <div class="step">
+                    <h3>Navigate to IVR Management</h3>
+                    <p>Go to <a href="http://localhost:3000/doctor/ivr" target="_blank">Doctor IVR Management</a></p>
+                    <p>Look for approved IVR requests (green "Approved" badge)</p>
+                </div>
+
+                <div class="step">
+                    <h3>Open Approved IVR Detail</h3>
+                    <p>Click on an approved IVR to view details</p>
+                    <p>Should see IVR Results section with green background</p>
+                </div>
+
+                <div class="step">
+                    <h3>Verify Order Products Button</h3>
+                    <p>Check for "Order Medical Products" button in IVR Results header</p>
+                    <ul>
+                        <li>✅ Button should be emerald-600 color</li>
+                        <li>✅ Should have ClipboardDocumentListIcon</li>
+                        <li>✅ Only visible for approved IVRs</li>
+                        <li>✅ Only visible with create_orders permission</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h3>Test Order Creation</h3>
+                    <p>Click "Order Medical Products" button</p>
+                    <ul>
+                        <li>✅ Should show loading state</li>
+                        <li>✅ Should create order via API</li>
+                        <li>✅ Should show success toast</li>
+                        <li>✅ Button should change to "View Order"</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <h3>Test Order Navigation</h3>
+                    <p>Click "View Order" button (after order creation)</p>
+                    <ul>
+                        <li>✅ Should navigate to /doctor/orders</li>
+                        <li>✅ Should include orderId parameter</li>
+                        <li>✅ Should maintain order context</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Verification -->
+        <div class="test-section">
+            <h2>✅ Feature Verification Checklist</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>🔐 Permission Checks</h3>
+                    <div class="test-item">
+                        <input type="checkbox" id="perm1"> Button only shows with create_orders permission
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="perm2"> Hidden for users without order permissions
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="perm3"> Graceful fallback for permission API failures
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📋 Order Logic</h3>
+                    <div class="test-item">
+                        <input type="checkbox" id="order1"> Only shows for approved IVRs
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="order2"> Checks for existing orders
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="order3"> Shows "View Order" if order exists
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="order4"> Creates order from IVR data
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🎨 UI/UX Design</h3>
+                    <div class="test-item">
+                        <input type="checkbox" id="ui1"> Emerald-600 success color
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="ui2"> Professional loading states
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="ui3"> Toast notifications
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="ui4"> Proper hover effects
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🔄 Error Handling</h3>
+                    <div class="test-item">
+                        <input type="checkbox" id="error1"> API error handling
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="error2"> Network failure handling
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="error3"> Permission denied handling
+                    </div>
+                    <div class="test-item">
+                        <input type="checkbox" id="error4"> Invalid IVR ID handling
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Details -->
+        <div class="test-section">
+            <h2>⚙️ Technical Implementation Details</h2>
+            <div class="highlight">
+                <h3>🔧 Backend Changes</h3>
+                <ul>
+                    <li><strong>Fixed Import Error:</strong> Changed from app.core.permissions to app.core.security</li>
+                    <li><strong>Updated Decorators:</strong> @requires_permission → @require_permissions with list format</li>
+                    <li><strong>Order API:</strong> POST /api/v1/orders/create-from-ivr/{ivr_id}</li>
+                    <li><strong>Order Check:</strong> GET /api/v1/orders/?ivr_request_id={ivr_id}</li>
+                </ul>
+            </div>
+
+            <div class="highlight">
+                <h3>⚛️ Frontend Changes</h3>
+                <ul>
+                    <li><strong>Permissions Hook:</strong> usePermissions() for checking create_orders</li>
+                    <li><strong>Order Service:</strong> orderApiService for API integration</li>
+                    <li><strong>Enhanced Component:</strong> IVRResultsDisplay with order functionality</li>
+                    <li><strong>Toast Integration:</strong> react-hot-toast for user feedback</li>
+                </ul>
+            </div>
+
+            <div class="highlight">
+                <h3>🎯 Key Features</h3>
+                <ul>
+                    <li><strong>Smart Button Logic:</strong> Shows "Order" or "View Order" based on state</li>
+                    <li><strong>Permission-Based:</strong> Only visible to users with order permissions</li>
+                    <li><strong>Status-Aware:</strong> Only appears for approved IVRs</li>
+                    <li><strong>Professional Design:</strong> Emerald colors, loading states, icons</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="test-section">
+            <h2>🔗 Quick Test Links</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Frontend Pages</h3>
+                    <a href="http://localhost:3000/login" target="_blank" class="button">Login Page</a>
+                    <a href="http://localhost:3000/doctor/ivr" target="_blank" class="button">IVR Management</a>
+                    <a href="http://localhost:3000/doctor/orders" target="_blank" class="button">Order Management</a>
+                </div>
+                <div class="card">
+                    <h3>Backend APIs</h3>
+                    <a href="http://localhost:8000/docs" target="_blank" class="button">API Documentation</a>
+                    <a href="http://localhost:8000/api/v1/orders/" target="_blank" class="button">Orders API</a>
+                    <a href="http://localhost:8000/api/v1/permissions/my-permissions" target="_blank" class="button">Permissions API</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Summary -->
+        <div class="test-section">
+            <h2>📊 Implementation Status</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="status success">✅ COMPLETED</div>
+                    <h3>Backend Order API</h3>
+                    <p>Fixed import errors, updated decorators, order creation and checking endpoints working</p>
+                </div>
+                <div class="card">
+                    <div class="status success">✅ COMPLETED</div>
+                    <h3>Frontend Integration</h3>
+                    <p>Permissions hook, order service, enhanced IVRResultsDisplay component</p>
+                </div>
+                <div class="card">
+                    <div class="status success">✅ COMPLETED</div>
+                    <h3>UI/UX Features</h3>
+                    <p>Professional design, loading states, toast notifications, error handling</p>
+                </div>
+                <div class="card">
+                    <div class="status success">✅ READY FOR TESTING</div>
+                    <h3>Order Products Button</h3>
+                    <p>Fully functional order creation from approved IVRs with navigation</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testOrderAPI() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<div class="result">Testing Order API endpoints...</div>';
+
+            try {
+                // Test orders list endpoint
+                const response = await fetch('/api/v1/orders/', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken') || 'test-token'}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.status === 401) {
+                    resultsDiv.innerHTML += '<div class="result success">✅ Orders API: Authentication required (expected)</div>';
+                } else if (response.ok) {
+                    resultsDiv.innerHTML += '<div class="result success">✅ Orders API: Endpoint accessible</div>';
+                } else {
+                    resultsDiv.innerHTML += '<div class="result error">❌ Orders API: Unexpected response</div>';
+                }
+
+                // Test OpenAPI docs
+                const docsResponse = await fetch('/api/v1/orders/create-from-ivr/test-id', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer test-token`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (docsResponse.status === 401 || docsResponse.status === 422) {
+                    resultsDiv.innerHTML += '<div class="result success">✅ Order Creation API: Endpoint exists (auth/validation required)</div>';
+                } else {
+                    resultsDiv.innerHTML += '<div class="result error">❌ Order Creation API: Unexpected response</div>';
+                }
+
+            } catch (error) {
+                resultsDiv.innerHTML += '<div class="result error">❌ API Test Failed: ' + error.message + '</div>';
+            }
+        }
+
+        async function testPermissionsAPI() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML += '<div class="result">Testing Permissions API...</div>';
+
+            try {
+                const response = await fetch('/api/v1/permissions/my-permissions', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken') || 'test-token'}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.status === 401) {
+                    resultsDiv.innerHTML += '<div class="result success">✅ Permissions API: Authentication required (expected)</div>';
+                } else if (response.ok) {
+                    const data = await response.json();
+                    resultsDiv.innerHTML += '<div class="result success">✅ Permissions API: Working, found ' + (data.permissions?.length || 0) + ' permissions</div>';
+                } else {
+                    resultsDiv.innerHTML += '<div class="result error">❌ Permissions API: Unexpected response</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML += '<div class="result error">❌ Permissions Test Failed: ' + error.message + '</div>';
+            }
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testOrderAPI();
+                setTimeout(testPermissionsAPI, 1000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
