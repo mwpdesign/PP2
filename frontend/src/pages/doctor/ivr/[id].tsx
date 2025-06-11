@@ -12,7 +12,8 @@ import {
   ExclamationTriangleIcon,
   PaperClipIcon,
   PlusIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  IdentificationIcon
 } from '@heroicons/react/24/outline';
 import IVRResultsDisplay from '../../../components/ivr/IVRResultsDisplay';
 import { formatMessageTimestamp, formatDateOnly } from '../../../utils/formatters';
@@ -642,27 +643,30 @@ const DoctorIVRDetailPage: React.FC = () => {
                 </dl>
               </div>
 
-              {/* Physician Information */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Physician Information</h3>
-                <dl className="space-y-3">
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Name</dt>
-                    <dd className="text-sm text-gray-900">Dr. John Smith</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">NPI</dt>
-                    <dd className="text-sm text-gray-900">1234567890</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Medicaid Provider #</dt>
-                    <dd className="text-sm text-gray-900">MED123456</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Medicare PTAN</dt>
-                    <dd className="text-sm text-gray-900">AB12345</dd>
-                  </div>
-                </dl>
+              {/* Treating Physician */}
+              <div className="bg-slate-50 rounded-lg p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <IdentificationIcon className="h-5 w-5 text-slate-600" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Treating Physician</h3>
+                </div>
+                                  <dl className="space-y-3">
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Name</dt>
+                      <dd className="text-sm text-gray-900">Dr. John Smith</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">NPI</dt>
+                      <dd className="text-sm text-gray-900">1234567890</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Medicaid Provider #</dt>
+                      <dd className="text-sm text-gray-900">MED123456</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Medicare PTAN</dt>
+                      <dd className="text-sm text-gray-900">AB12345</dd>
+                    </div>
+                  </dl>
               </div>
 
               {/* Timeline */}

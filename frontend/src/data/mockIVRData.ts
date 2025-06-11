@@ -25,6 +25,22 @@ export interface DashboardStats {
   pendingApproval: number;
 }
 
+// Helper function to calculate actual days pending from submitted date
+const calculateDaysPending = (submittedDate: string): number => {
+  const submitted = new Date(submittedDate);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - submitted.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+};
+
+// Helper function to create recent dates for realistic testing
+const getRecentDate = (daysAgo: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+};
+
 // Shared mock data - single source of truth for all IVR data
 export const mockIVRRequests: SharedIVRRequest[] = [
   {
@@ -36,14 +52,14 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     insurance: 'Blue Cross Blue Shield',
     status: 'approved',
     priority: 'high',
-    submittedDate: '2024-03-15',
-    lastUpdated: '2024-03-18',
+    submittedDate: getRecentDate(3), // 3 days ago
+    lastUpdated: getRecentDate(1), // 1 day ago
     daysSinceSubmission: 3,
     daysPending: 3,
     hasUnreadMessages: false,
     patientId: 'P-1234',
     doctorId: 'D-001',
-    estimatedCompletion: '2024-03-20'
+    estimatedCompletion: getRecentDate(-2) // 2 days from now
   },
   {
     id: '660e8400-e29b-41d4-a716-446655440002',
@@ -54,14 +70,14 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     insurance: 'UnitedHealthcare',
     status: 'in_review',
     priority: 'medium',
-    submittedDate: '2024-03-16',
-    lastUpdated: '2024-03-17',
+    submittedDate: getRecentDate(2), // 2 days ago
+    lastUpdated: getRecentDate(1), // 1 day ago
     daysSinceSubmission: 2,
     daysPending: 2,
     hasUnreadMessages: true,
     patientId: 'P-1235',
     doctorId: 'D-002',
-    estimatedCompletion: '2024-03-22'
+    estimatedCompletion: getRecentDate(-3) // 3 days from now
   },
   {
     id: '660e8400-e29b-41d4-a716-446655440003',
@@ -72,8 +88,8 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     insurance: 'Aetna',
     status: 'documents_requested',
     priority: 'high',
-    submittedDate: '2024-03-14',
-    lastUpdated: '2024-03-17',
+    submittedDate: getRecentDate(4), // 4 days ago
+    lastUpdated: getRecentDate(1), // 1 day ago
     daysSinceSubmission: 4,
     daysPending: 4,
     hasUnreadMessages: true,
@@ -89,8 +105,8 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     insurance: 'Cigna',
     status: 'submitted',
     priority: 'low',
-    submittedDate: '2024-03-18',
-    lastUpdated: '2024-03-18',
+    submittedDate: getRecentDate(1), // 1 day ago
+    lastUpdated: getRecentDate(1), // 1 day ago
     daysSinceSubmission: 1,
     daysPending: 1,
     hasUnreadMessages: false,
@@ -106,15 +122,20 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     insurance: 'Medicare',
     status: 'rejected',
     priority: 'medium',
-    submittedDate: '2024-03-12',
-    lastUpdated: '2024-03-16',
+    submittedDate: getRecentDate(6), // 6 days ago
+    lastUpdated: getRecentDate(2), // 2 days ago
     daysSinceSubmission: 6,
     daysPending: 6,
     hasUnreadMessages: true,
     patientId: 'P-1238',
     doctorId: 'D-005'
   }
-];
+].map(request => ({
+  ...request,
+  // Recalculate days pending based on actual submitted date
+  daysPending: calculateDaysPending(request.submittedDate),
+  daysSinceSubmission: calculateDaysPending(request.submittedDate)
+}));
 
 // Shared dashboard stats
 export const mockDashboardStats: DashboardStats = {
@@ -135,3 +156,6 @@ export const calculateStatsFromData = (requests: SharedIVRRequest[]): DashboardS
     pendingApproval: requests.filter(r => r.status === 'pending_approval').length
   };
 };
+
+// Export the calculation function for use in components
+export { calculateDaysPending };

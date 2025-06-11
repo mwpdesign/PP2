@@ -1,6 +1,7 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { IVRTracking, Patient, PhysicianInfo } from '../../types/ivr';
+import { IdentificationIcon } from '@heroicons/react/24/outline';
 
 interface IVRFormHeaderProps {
   tracking: IVRTracking;
@@ -89,9 +90,12 @@ const IVRFormHeader: React.FC<IVRFormHeaderProps> = ({
           </dl>
         </div>
 
-        {/* Physician Information */}
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Physician Information</h3>
+        {/* Treating Physician */}
+        <div className="bg-slate-50 rounded-lg p-4">
+          <div className="flex items-center space-x-2 mb-4">
+            <IdentificationIcon className="h-5 w-5 text-slate-600" />
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Treating Physician</h3>
+          </div>
           <dl className="space-y-2">
             <div>
               <dt className="text-sm font-medium text-gray-500">Name</dt>

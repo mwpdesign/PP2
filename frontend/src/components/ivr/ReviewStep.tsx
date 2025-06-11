@@ -151,8 +151,8 @@ const ReviewStep: React.FC<ReviewStepProps> = ({ patient, formData }) => {
         </div>
       ))}
 
-      {/* Physician Information */}
-      {renderSection('Physician Information', (
+      {/* Treating Physician */}
+      {renderSection('Treating Physician', (
         <div className="grid grid-cols-2 gap-4">
           {renderField('Name', formData.physician.name)}
           {renderField('NPI', formData.physician.npi)}

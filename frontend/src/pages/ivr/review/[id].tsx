@@ -1232,17 +1232,17 @@ const IVRReviewDetailPage: React.FC = () => {
                   <span className="text-gray-900">{ivrRequest.daysPending} days</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Doctor:</span>
+                  <span className="text-gray-600">Requesting Provider:</span>
                   <span className="text-gray-900">{ivrRequest.doctorName}</span>
                 </div>
               </div>
             </div>
 
-            {/* Physician Information */}
+            {/* Treating Physician */}
             <div className="bg-slate-50 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-3">
                 <IdentificationIcon className="h-4 w-4 text-slate-600" />
-                <h4 className="text-sm font-semibold text-gray-900">Physician Information</h4>
+                <h4 className="text-sm font-semibold text-gray-900">Treating Physician</h4>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
