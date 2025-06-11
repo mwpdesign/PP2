@@ -497,7 +497,7 @@ const DoctorIVRDetailPage: React.FC = () => {
           <p className="text-gray-600 mt-2">The requested IVR could not be found.</p>
           <button
             onClick={() => navigate('/doctor/ivr')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="mt-4 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700"
           >
             Back to IVR Management
           </button>
@@ -568,7 +568,7 @@ const DoctorIVRDetailPage: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-slate-500 text-slate-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -678,7 +678,7 @@ const DoctorIVRDetailPage: React.FC = () => {
                 <div className="space-y-4">
                   {ivrDetail.statusHistory.map((item, index) => (
                     <div key={index} className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2" />
+                      <div className="flex-shrink-0 w-2 h-2 bg-slate-500 rounded-full mt-2" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">
                           {item.status.replace('_', ' ').charAt(0).toUpperCase() + item.status.replace('_', ' ').slice(1)}
@@ -785,7 +785,7 @@ const DoctorIVRDetailPage: React.FC = () => {
                     <button
                       onClick={handleSubmitComment}
                       disabled={!doctorComment.trim() || isSubmittingComment}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmittingComment ? 'Submitting...' : (ivrDetail.doctor_comment ? 'Update Comment' : 'Submit Comment')}
                     </button>
@@ -800,7 +800,7 @@ const DoctorIVRDetailPage: React.FC = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
-              <button className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                              <button className="inline-flex items-center px-3 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 text-sm">
                 <PlusIcon className="w-4 h-4 mr-2" />
                 Upload Document
               </button>
@@ -817,7 +817,7 @@ const DoctorIVRDetailPage: React.FC = () => {
                       </p>
                     </div>
                   </div>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  <button className="text-slate-600 hover:text-slate-700 text-sm font-medium">
                     Download
                   </button>
                 </div>

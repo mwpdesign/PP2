@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Management + Permissions UI Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-step {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { border-left: 4px solid #28a745; }
+        .warning { border-left: 4px solid #ffc107; }
+        .info { border-left: 4px solid #17a2b8; }
+        .error { border-left: 4px solid #dc3545; }
+        .code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status.working { background: #d4edda; color: #155724; }
+        .status.pending { background: #fff3cd; color: #856404; }
+        .status.error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🏥 Staff Management + Permissions UI Test Suite</h1>
+    <p><strong>Phase 3.2C:</strong> Combined Team Management + Role-Based Permissions</p>
+
+    <div class="test-section info">
+        <h2>📋 Test Overview</h2>
+        <p>This test verifies that the updated Settings → Permissions tab includes BOTH the Team Management functionality AND the original Role/Permissions display.</p>
+
+        <h3>🎯 Test Objectives:</h3>
+        <ul>
+            <li>✅ <strong>Team Management Section:</strong> Staff list, statistics, add/deactivate functionality</li>
+            <li>✅ <strong>Role & Permissions Section:</strong> Role selection and permission toggles</li>
+            <li>✅ <strong>API Integration:</strong> Practice API endpoints working</li>
+            <li>✅ <strong>Combined UI:</strong> Both sections visible on same page</li>
+            <li>✅ <strong>Proper Separation:</strong> Clear visual separation between sections</li>
+        </ul>
+    </div>
+
+    <div class="test-section warning">
+        <h2>⚠️ Prerequisites</h2>
+        <div class="test-step">
+            <h3>1. Backend Server Status</h3>
+            <p>Backend must be running on <code>localhost:8000</code></p>
+            <button class="button" onclick="checkBackend()">Check Backend</button>
+            <div id="backend-status"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>2. Frontend Server Status</h3>
+            <p>Frontend must be running on <code>localhost:3000</code></p>
+            <button class="button" onclick="checkFrontend()">Check Frontend</button>
+            <div id="frontend-status"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>3. Authentication</h3>
+            <p>Must be logged in as a doctor user</p>
+            <button class="button" onclick="checkAuth()">Check Authentication</button>
+            <div id="auth-status"></div>
+        </div>
+    </div>
+
+    <div class="test-section success">
+        <h2>🧪 Manual Testing Steps</h2>
+
+        <div class="test-step">
+            <h3>Step 1: Navigate to Settings → Permissions</h3>
+            <ol>
+                <li>Open <a href="http://localhost:3000" target="_blank" class="button">Healthcare IVR Platform</a></li>
+                <li>Login with doctor credentials: <code>doctor@healthcare.local</code> / <code>doctor123</code></li>
+                <li>Navigate to <strong>Settings</strong> in the sidebar</li>
+                <li>Click on the <strong>Permissions</strong> tab</li>
+            </ol>
+            <p><strong>Expected:</strong> Should see TWO main sections on the page</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 2: Verify Team Management Section (Top)</h3>
+            <p>The first section should show:</p>
+            <ul>
+                <li><strong>Header:</strong> "Team Management" with blue "Add Staff Member" button</li>
+                <li><strong>Statistics Cards:</strong> 4 cards showing Total Staff, Active Staff, Office Admins, Pending Invitations</li>
+                <li><strong>Staff Table:</strong> "Current Staff Members" with columns for Name, Email, Role, Status, Action</li>
+                <li><strong>Empty State:</strong> If no staff: "No staff members added yet. Click 'Add Staff Member' to invite your team."</li>
+            </ul>
+            <p><strong>Expected:</strong> Team Management section loads with Practice API data</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 3: Test Add Staff Member Functionality</h3>
+            <ol>
+                <li>Click the <strong>"Add Staff Member"</strong> button in Team Management section</li>
+                <li>Fill out the modal form:
+                    <ul>
+                        <li><strong>First Name:</strong> Test</li>
+                        <li><strong>Last Name:</strong> Staff</li>
+                        <li><strong>Email:</strong> test-staff@example.com</li>
+                        <li><strong>Role:</strong> Office Administrator</li>
+                    </ul>
+                </li>
+                <li>Click <strong>"Send Invitation"</strong></li>
+            </ol>
+            <p><strong>Expected:</strong> Success message and staff table updates with new pending invitation</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 4: Verify Roles & Permissions Section (Bottom)</h3>
+            <p>The second section should show:</p>
+            <ul>
+                <li><strong>Header:</strong> "Roles & Permissions" with "Edit Permissions" button</li>
+                <li><strong>Role Selection:</strong> 3 role cards (Healthcare Provider, Office Administrator, Medical Staff)</li>
+                <li><strong>Permissions List:</strong> Shows permissions for selected role with checkboxes</li>
+                <li><strong>Warning Message:</strong> Yellow warning about permission changes affecting all users</li>
+            </ul>
+            <p><strong>Expected:</strong> Role/Permissions section displays with role selection and permission toggles</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 5: Test Permission Editing</h3>
+            <ol>
+                <li>Click <strong>"Edit Permissions"</strong> button in Roles & Permissions section</li>
+                <li>Click on different role cards to select them</li>
+                <li>Try toggling permission checkboxes (if permissions are loaded)</li>
+                <li>Click <strong>"Save"</strong> or <strong>"Cancel"</strong></li>
+            </ol>
+            <p><strong>Expected:</strong> Permission editing mode works with role selection and checkbox toggles</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 6: Verify Visual Separation</h3>
+            <p>Check that:</p>
+            <ul>
+                <li>Both sections are clearly separated with adequate spacing</li>
+                <li>Each section has its own distinct header and functionality</li>
+                <li>Team Management is at the top, Roles & Permissions at the bottom</li>
+                <li>No visual conflicts or overlapping elements</li>
+            </ul>
+            <p><strong>Expected:</strong> Clean, professional layout with clear section separation</p>
+        </div>
+    </div>
+
+    <div class="test-section info">
+        <h2>🔧 API Testing</h2>
+
+        <div class="test-step">
+            <h3>Test Practice API Endpoints</h3>
+            <button class="button" onclick="testPracticeAPI()">Test Practice APIs</button>
+            <div id="api-test-results"></div>
+        </div>
+
+        <div class="test-step">
+            <h3>Test Permissions API Endpoints</h3>
+            <button class="button" onclick="testPermissionsAPI()">Test Permissions APIs</button>
+            <div id="permissions-test-results"></div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="test-results">
+            <p>Run the tests above to see results here.</p>
+        </div>
+    </div>
+
+    <script>
+        async function checkBackend() {
+            const statusDiv = document.getElementById('backend-status');
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.innerHTML = `<span class="status working">✅ Backend Running</span> - ${data.service}`;
+                } else {
+                    statusDiv.innerHTML = `<span class="status error">❌ Backend Error</span> - Status: ${response.status}`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="status error">❌ Backend Offline</span> - Cannot connect to localhost:8000`;
+            }
+        }
+
+        async function checkFrontend() {
+            const statusDiv = document.getElementById('frontend-status');
+            try {
+                const response = await fetch('http://localhost:3000');
+                if (response.ok) {
+                    statusDiv.innerHTML = `<span class="status working">✅ Frontend Running</span> - React app accessible`;
+                } else {
+                    statusDiv.innerHTML = `<span class="status error">❌ Frontend Error</span> - Status: ${response.status}`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="status error">❌ Frontend Offline</span> - Cannot connect to localhost:3000`;
+            }
+        }
+
+        async function checkAuth() {
+            const statusDiv = document.getElementById('auth-status');
+            const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                statusDiv.innerHTML = `<span class="status error">❌ Not Authenticated</span> - No auth token found`;
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/practice/statistics', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    statusDiv.innerHTML = `<span class="status working">✅ Authenticated</span> - Doctor access confirmed`;
+                } else if (response.status === 401) {
+                    statusDiv.innerHTML = `<span class="status error">❌ Invalid Token</span> - Please login again`;
+                } else if (response.status === 403) {
+                    statusDiv.innerHTML = `<span class="status error">❌ Not a Doctor</span> - User role insufficient`;
+                } else {
+                    statusDiv.innerHTML = `<span class="status error">❌ Auth Error</span> - Status: ${response.status}`;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="status error">❌ Auth Check Failed</span> - ${error.message}`;
+            }
+        }
+
+        async function testPracticeAPI() {
+            const resultsDiv = document.getElementById('api-test-results');
+            const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                resultsDiv.innerHTML = `<span class="status error">❌ No auth token</span> - Please login first`;
+                return;
+            }
+
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+
+            let results = '<h4>Practice API Test Results:</h4>';
+
+            // Test 1: Get Practice Statistics
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/practice/statistics', { headers });
+                if (response.ok) {
+                    const data = await response.json();
+                    results += `<p><span class="status working">✅ Statistics</span> - Total: ${data.total_staff}, Active: ${data.active_staff}</p>`;
+                } else {
+                    results += `<p><span class="status error">❌ Statistics</span> - Status: ${response.status}</p>`;
+                }
+            } catch (error) {
+                results += `<p><span class="status error">❌ Statistics</span> - Error: ${error.message}</p>`;
+            }
+
+            // Test 2: Get Staff List
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/practice/staff', { headers });
+                if (response.ok) {
+                    const data = await response.json();
+                    results += `<p><span class="status working">✅ Staff List</span> - Found ${data.staff_members.length} staff members</p>`;
+                } else {
+                    results += `<p><span class="status error">❌ Staff List</span> - Status: ${response.status}</p>`;
+                }
+            } catch (error) {
+                results += `<p><span class="status error">❌ Staff List</span> - Error: ${error.message}</p>`;
+            }
+
+            // Test 3: Test Staff Invitation (with unique email)
+            try {
+                const timestamp = Date.now();
+                const response = await fetch('http://localhost:8000/api/v1/practice/staff/invite', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        email: `test-${timestamp}@example.com`,
+                        first_name: 'Test',
+                        last_name: 'User',
+                        practice_role: 'office_admin'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    results += `<p><span class="status working">✅ Staff Invitation</span> - Invitation sent successfully</p>`;
+                } else {
+                    const errorData = await response.json();
+                    results += `<p><span class="status error">❌ Staff Invitation</span> - ${errorData.detail}</p>`;
+                }
+            } catch (error) {
+                results += `<p><span class="status error">❌ Staff Invitation</span> - Error: ${error.message}</p>`;
+            }
+
+            resultsDiv.innerHTML = results;
+        }
+
+        async function testPermissionsAPI() {
+            const resultsDiv = document.getElementById('permissions-test-results');
+            const token = localStorage.getItem('authToken');
+
+            if (!token) {
+                resultsDiv.innerHTML = `<span class="status error">❌ No auth token</span> - Please login first`;
+                return;
+            }
+
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+
+            let results = '<h4>Permissions API Test Results:</h4>';
+
+            // Test 1: Get Roles
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/permissions/roles', { headers });
+                if (response.ok) {
+                    const data = await response.json();
+                    results += `<p><span class="status working">✅ Roles</span> - Found ${data.roles ? data.roles.length : 0} roles</p>`;
+                } else {
+                    results += `<p><span class="status pending">⚠️ Roles</span> - Status: ${response.status} (Using fallback roles)</p>`;
+                }
+            } catch (error) {
+                results += `<p><span class="status pending">⚠️ Roles</span> - Error: ${error.message} (Using fallback roles)</p>`;
+            }
+
+            // Test 2: Get Permissions
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/permissions/permissions', { headers });
+                if (response.ok) {
+                    const data = await response.json();
+                    results += `<p><span class="status working">✅ Permissions</span> - Found ${data.permissions ? data.permissions.length : 0} permissions</p>`;
+                } else {
+                    results += `<p><span class="status pending">⚠️ Permissions</span> - Status: ${response.status} (Basic functionality available)</p>`;
+                }
+            } catch (error) {
+                results += `<p><span class="status pending">⚠️ Permissions</span> - Error: ${error.message} (Basic functionality available)</p>`;
+            }
+
+            resultsDiv.innerHTML = results;
+        }
+
+        // Auto-run basic checks on page load
+        window.onload = function() {
+            checkBackend();
+            checkFrontend();
+            checkAuth();
+        };
+    </script>
+</body>
+</html>

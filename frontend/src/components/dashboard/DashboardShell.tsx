@@ -12,7 +12,7 @@ import {
 import {
   Person as PersonIcon,
   Phone as PhoneIcon,
-  ShoppingCart as CartIcon,
+  Assignment as MedicalOrderIcon,
   LocalShipping as ShippingIcon,
   Assessment as AnalyticsIcon,
   Settings as SettingsIcon,
@@ -103,7 +103,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   const menuItems = [
     { text: 'Patient Intake', icon: <PersonIcon />, path: '/patients' },
     { text: 'IVR Management', icon: <PhoneIcon />, path: '/ivr' },
-    { text: 'Order Management', icon: <CartIcon />, path: '/orders' },
+    { text: 'Medical Orders', icon: <MedicalOrderIcon />, path: '/orders' },
     { text: 'Shipping & Logistics', icon: <ShippingIcon />, path: '/shipping' },
     { text: 'Analytics & Reports', icon: <AnalyticsIcon />, path: '/analytics' },
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
@@ -115,7 +115,7 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
         <LogoContainer>
           <img src="/logo2.png" alt="Healthcare IVR" />
         </LogoContainer>
-        
+
         <Box sx={{ mt: 4, px: 5 }}>
           {menuItems.map((item) => (
             <StyledListItemButton
@@ -130,13 +130,13 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
             </StyledListItemButton>
           ))}
         </Box>
-        
+
         <Box sx={{ flexGrow: 1 }} />
-        
+
         <Box sx={{ px: 5, pb: 4 }}>
-          <Divider sx={{ 
+          <Divider sx={{
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            my: 2 
+            my: 2
           }} />
           <StyledListItemButton>
             <ListItemIcon>
@@ -156,4 +156,4 @@ const DashboardShell: React.FC<DashboardShellProps> = ({ children }) => {
   );
 };
 
-export default DashboardShell; 
+export default DashboardShell;

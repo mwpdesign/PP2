@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, Shield, FileText, Settings } from 'lucide-react';
 import ProfileSection from '../../components/settings/ProfileSection';
-import PermissionsSection from '../../components/settings/PermissionsSection';
+import PermissionsTab from '../../components/settings/PermissionsTab';
 import AuditSection from '../../components/settings/AuditSection';
 import PreferencesSection from '../../components/settings/PreferencesSection';
 
@@ -22,7 +22,7 @@ const SettingsPage: React.FC = () => {
       case 'profile':
         return <ProfileSection />;
       case 'permissions':
-        return <PermissionsSection />;
+        return <PermissionsTab />;
       case 'audit':
         return <AuditSection />;
       case 'preferences':
@@ -86,4 +86,4 @@ const SettingsPage: React.FC = () => {
   );
 };
 
-export default SettingsPage; 
+export default SettingsPage;

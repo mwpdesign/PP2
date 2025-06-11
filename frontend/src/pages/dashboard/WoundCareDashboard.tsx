@@ -3,7 +3,6 @@ import { ChartCard } from '../../components/shared/DashboardWidgets/ChartCard';
 import {
   UserPlusIcon,
   ClipboardDocumentListIcon,
-  ShoppingCartIcon,
   ClockIcon,
   DocumentTextIcon,
   ClipboardDocumentCheckIcon,
@@ -115,7 +114,7 @@ const quickActions = [
     name: 'Track Orders',
     description: 'View and manage patient orders',
     href: '/doctor/orders',
-    icon: ShoppingCartIcon,
+          icon: ClipboardDocumentListIcon,
   },
   {
     name: 'Review IVR Queue',
@@ -216,7 +215,7 @@ const WoundCareDashboard: React.FC = () => {
                   <p className="text-xs text-gray-400 mt-1">in progress</p>
                 </div>
                 <div className="p-3 bg-purple-50 rounded-full">
-                  <ShoppingCartIcon className="h-6 w-6 text-purple-500" />
+                  <ClipboardDocumentListIcon className="h-6 w-6 text-purple-500" />
                 </div>
               </div>
             </div>

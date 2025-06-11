@@ -1,5 +1,5 @@
 import React from 'react';
-import { DocumentTextIcon, ShoppingCartIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 interface IVRResults {
   caseNumber: string;
@@ -77,10 +77,10 @@ const IVRResultsDisplay: React.FC<IVRResultsDisplayProps> = ({
         {showOrderButton && (
           <button
             onClick={onOrderClick}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-slate-600 text-white text-sm font-medium rounded-lg hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-colors"
           >
-            <ShoppingCartIcon className="h-4 w-4 mr-2" />
-            Order Products
+                          <ClipboardDocumentListIcon className="h-4 w-4 mr-2" />
+              Order Medical Products
           </button>
         )}
       </div>

@@ -696,7 +696,7 @@ const IVRReviewDetailPage: React.FC = () => {
           <p className="text-gray-600 mb-4">The requested IVR could not be found.</p>
           <button
             onClick={() => navigate('/ivr/dashboard')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700"
           >
             Back to Dashboard
           </button>
@@ -770,7 +770,7 @@ const IVRReviewDetailPage: React.FC = () => {
             {/* Insurance Details */}
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="flex items-center space-x-2 mb-4">
-                <ShieldCheckIcon className="h-5 w-5 text-blue-600" />
+                <ShieldCheckIcon className="h-5 w-5 text-slate-600" />
                 <h3 className="text-lg font-semibold text-gray-900">Insurance Details</h3>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -1075,7 +1075,7 @@ const IVRReviewDetailPage: React.FC = () => {
                       type="checkbox"
                       checked={item.completed}
                       onChange={() => handleChecklistToggle(item.id)}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-slate-600 focus:ring-slate-500 border-gray-300 rounded"
                     />
                     <span className={`text-sm ${item.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                       {item.label}
@@ -1104,7 +1104,7 @@ const IVRReviewDetailPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleRequestDocs}
-                  className="w-full flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="w-full flex items-center justify-center px-4 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
                 >
                   <DocumentTextIcon className="h-5 w-5 mr-2" />
                   Request Documents
@@ -1209,7 +1209,7 @@ const IVRReviewDetailPage: React.FC = () => {
                       <button
                         onClick={handleSubmitResponse}
                         disabled={!ivrResponse.trim() || isSubmittingResponse}
-                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSubmittingResponse ? 'Submitting...' : (ivrRequest.ivr_response ? 'Update Response' : 'Submit Response')}
                       </button>

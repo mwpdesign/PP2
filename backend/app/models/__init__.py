@@ -7,6 +7,7 @@ from .user import User
 from .organization import Organization
 from .rbac import Role, Permission, RolePermission
 from .sensitive_data import SensitiveData
+from .doctor_profile import DoctorProfile
 
 # Import other models that exist
 try:
@@ -131,6 +132,7 @@ __all__ = [
     "Permission",
     "RolePermission",
     "SensitiveData",
+    "DoctorProfile",
     "Patient",
     "PatientDocument",
     "Provider",

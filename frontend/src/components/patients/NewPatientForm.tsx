@@ -822,7 +822,7 @@ export const NewPatientForm: React.FC<NewPatientFormProps> = ({ onClose, onSave,
                             <button
                               type="button"
                               onClick={() => setShowTemplates(true)}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                              className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors flex items-center space-x-2"
                             >
                               <Zap className="w-4 h-4" />
                               <span>Quick Templates</span>

@@ -351,7 +351,7 @@ const IVRSubmissionPage: React.FC = () => {
         {autoPopulation.isLoading && patient && formData && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-600 mr-2"></div>
               <span className="text-sm text-blue-700">Loading smart suggestions...</span>
             </div>
           </div>
@@ -407,7 +407,7 @@ const IVRSubmissionPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2C3E50]"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
       </div>
     );
   }

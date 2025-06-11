@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVR Communication Permissions Verification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 5px;
+        }
+        .status.success { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.warning { background: #fef3c7; color: #92400e; }
+        .status.info { background: #dbeafe; color: #1e40af; }
+        .test-step {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+            font-weight: 600;
+        }
+        .button:hover { background: #2563eb; }
+        .button.success { background: #10b981; }
+        .button.success:hover { background: #059669; }
+        .checklist {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .checklist-item.complete {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        .permission-matrix {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 1px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .matrix-header {
+            background: #1e293b;
+            color: white;
+            padding: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .matrix-cell {
+            background: white;
+            padding: 12px;
+            text-align: center;
+        }
+        .matrix-permission {
+            background: #f8fafc;
+            padding: 12px;
+            text-align: left;
+            font-weight: 500;
+        }
+        .check-yes { color: #10b981; font-weight: bold; }
+        .check-no { color: #ef4444; font-weight: bold; }
+        .permission-group {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .permission-group h4 {
+            margin: 0 0 10px 0;
+            color: #1e293b;
+        }
+        .permission-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .permission-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .permission-list li:last-child {
+            border-bottom: none;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .business-logic {
+            background: #ecfdf5;
+            border: 2px solid #10b981;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔐 IVR Communication Permissions Implementation</h1>
+        <p>Complete permission set including IVR administrative tasks for office staff</p>
+        <div class="status success">11 Comprehensive Permissions Implemented</div>
+    </div>
+
+    <div class="section">
+        <h2>🎯 Business Requirements Implemented</h2>
+        <div class="business-logic">
+            <h3>Key Business Logic:</h3>
+            <ul>
+                <li><strong>Office Administrators:</strong> Trusted staff who handle ALL administrative tasks (full permissions)</li>
+                <li><strong>Medical Staff:</strong> Can handle patient care and IVR communications but not financial decisions</li>
+                <li><strong>IVR Delegation:</strong> Both roles can communicate with IVR companies to expedite approvals</li>
+                <li><strong>Workflow Efficiency:</strong> Reduces doctor workload by delegating administrative IVR tasks</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📋 Complete Permission Set (11 Permissions)</h2>
+
+        <div class="permission-group">
+            <h4>🏥 IVR Permissions (4 permissions)</h4>
+            <ul class="permission-list">
+                <li><strong>Submit IVR Requests:</strong> Create new insurance verification requests</li>
+                <li><strong>View IVR Details:</strong> Access full IVR information and history</li>
+                <li><strong>Respond to IVR Messages:</strong> Communicate with IVR company on behalf of doctor</li>
+                <li><strong>Upload IVR Documents:</strong> Provide additional documentation for insurance verification</li>
+            </ul>
+        </div>
+
+        <div class="permission-group">
+            <h4>👥 Patient Permissions (2 permissions)</h4>
+            <ul class="permission-list">
+                <li><strong>Add Patients:</strong> Register new patients in the system</li>
+                <li><strong>View Patients:</strong> Access patient records and information</li>
+            </ul>
+        </div>
+
+        <div class="permission-group">
+            <h4>📦 Order Permissions (3 permissions)</h4>
+            <ul class="permission-list">
+                <li><strong>Create Orders:</strong> Place orders for wound care products after IVR approval</li>
+                <li><strong>View Orders:</strong> Track order status and shipments</li>
+                <li><strong>Mark Orders Received:</strong> Confirm delivery of wound care products</li>
+            </ul>
+        </div>
+
+        <div class="permission-group">
+            <h4>⚙️ Other Permissions (2 permissions)</h4>
+            <ul class="permission-list">
+                <li><strong>View Analytics:</strong> Access practice metrics and reports</li>
+                <li><strong>Manage Settings:</strong> Modify practice settings and preferences</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔐 Role-Based Permission Matrix</h2>
+        <div class="permission-matrix">
+            <div class="matrix-header">Permission</div>
+            <div class="matrix-header">Healthcare Provider</div>
+            <div class="matrix-header">Office Administrator</div>
+            <div class="matrix-header">Medical Staff</div>
+
+            <!-- IVR Permissions -->
+            <div class="matrix-permission">Submit IVR Requests</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+
+            <div class="matrix-permission">View IVR Details</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+
+            <div class="matrix-permission">Respond to IVR Messages</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+
+            <div class="matrix-permission">Upload IVR Documents</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+
+            <!-- Patient Permissions -->
+            <div class="matrix-permission">Add Patients</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+
+            <div class="matrix-permission">View Patients</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+
+            <!-- Order Permissions -->
+            <div class="matrix-permission">Create Orders</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-no">❌ NO</div>
+
+            <div class="matrix-permission">View Orders</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+
+            <div class="matrix-permission">Mark Orders Received</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+
+            <!-- Other Permissions -->
+            <div class="matrix-permission">View Analytics</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-no">❌ NO</div>
+
+            <div class="matrix-permission">Manage Settings</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-yes">✅ YES</div>
+            <div class="matrix-cell check-no">❌ NO</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>✅ Verification Checklist</h2>
+        <div class="checklist">
+            <div class="checklist-item">
+                <input type="checkbox" id="check1">
+                <label for="check1">Frontend server is running (npm run dev)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check2">
+                <label for="check2">Navigate to Settings → Permissions successfully</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check3">
+                <label for="check3"><strong>TEAM MANAGEMENT:</strong> "Add Staff Member" button visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check4">
+                <label for="check4"><strong>PERMISSIONS:</strong> 11 permission items visible (not 6)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check5">
+                <label for="check5"><strong>IVR PERMISSIONS:</strong> Submit IVR Requests visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check6">
+                <label for="check6"><strong>IVR PERMISSIONS:</strong> View IVR Details visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check7">
+                <label for="check7"><strong>IVR PERMISSIONS:</strong> Respond to IVR Messages visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check8">
+                <label for="check8"><strong>IVR PERMISSIONS:</strong> Upload IVR Documents visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check9">
+                <label for="check9"><strong>HEALTHCARE PROVIDER:</strong> All 11 permissions checked</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check10">
+                <label for="check10"><strong>OFFICE ADMINISTRATOR:</strong> All 11 permissions checked</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check11">
+                <label for="check11"><strong>MEDICAL STAFF:</strong> Only 8 permissions checked (no Create Orders, View Analytics, Manage Settings)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check12">
+                <label for="check12">Role descriptions updated to mention IVR communications</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🧪 Manual Testing Steps</h2>
+
+        <div class="test-step">
+            <h3>Step 1: Navigate to Settings</h3>
+            <p>1. Open browser to <a href="http://localhost:5173" target="_blank" class="button">http://localhost:5173</a></p>
+            <p>2. Login as doctor: <span class="highlight">doctor@healthcare.local</span> / <span class="highlight">doctor123</span></p>
+            <p>3. Navigate to Settings → Permissions tab</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 2: Verify Complete Permission Set</h3>
+            <p><strong>CRITICAL:</strong> You should now see <span class="highlight">11 permissions</span> instead of 6:</p>
+            <ol>
+                <li>Submit IVR Requests</li>
+                <li>View IVR Details</li>
+                <li>Respond to IVR Messages</li>
+                <li>Upload IVR Documents</li>
+                <li>Add Patients</li>
+                <li>View Patients</li>
+                <li>Create Orders</li>
+                <li>View Orders</li>
+                <li>Mark Orders Received</li>
+                <li>View Analytics</li>
+                <li>Manage Settings</li>
+            </ol>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 3: Test Healthcare Provider Role</h3>
+            <p>1. Click on "Healthcare Provider" role card</p>
+            <p>2. <strong>VERIFY:</strong> All 11 permissions should be checked ✅</p>
+            <p>3. <strong>VERIFY:</strong> Description mentions "Full access to all medical and administrative functions"</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 4: Test Office Administrator Role</h3>
+            <p>1. Click on "Office Administrator" role card</p>
+            <p>2. <strong>VERIFY:</strong> All 11 permissions should be checked ✅</p>
+            <p>3. <strong>VERIFY:</strong> Description mentions "Trusted staff who handle all administrative tasks including IVR communications"</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 5: Test Medical Staff Role</h3>
+            <p>1. Click on "Medical Staff" role card</p>
+            <p>2. <strong>VERIFY:</strong> Only 8 permissions should be checked:</p>
+            <ul>
+                <li>✅ Submit IVR Requests</li>
+                <li>✅ View IVR Details</li>
+                <li>✅ Respond to IVR Messages</li>
+                <li>✅ Upload IVR Documents</li>
+                <li>✅ Add Patients</li>
+                <li>✅ View Patients</li>
+                <li>❌ Create Orders</li>
+                <li>✅ View Orders</li>
+                <li>✅ Mark Orders Received</li>
+                <li>❌ View Analytics</li>
+                <li>❌ Manage Settings</li>
+            </ul>
+            <p>3. <strong>VERIFY:</strong> Description mentions "Clinical support staff who can handle patient care and IVR communications"</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 6: Verify IVR Communication Focus</h3>
+            <p>1. <strong>VERIFY:</strong> All 4 IVR permissions are visible and properly described</p>
+            <p>2. <strong>VERIFY:</strong> Both Office Administrator and Medical Staff can handle IVR communications</p>
+            <p>3. <strong>VERIFY:</strong> Medical Staff cannot create orders (financial restriction)</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🚨 Critical Success Criteria</h2>
+        <div class="status success">MUST SEE: 11 permissions total (not 6)</div>
+        <div class="status success">MUST SEE: 4 IVR-specific permissions</div>
+        <div class="status success">MUST SEE: Office Administrator has ALL permissions</div>
+        <div class="status error">MUST SEE: Medical Staff missing Create Orders, View Analytics, Manage Settings</div>
+        <div class="status success">MUST SEE: Updated role descriptions mentioning IVR communications</div>
+
+        <p><strong>If you only see 6 permissions, the IVR communication permissions were not implemented correctly!</strong></p>
+    </div>
+
+    <div class="section">
+        <h2>💼 Business Impact</h2>
+        <ul>
+            <li><strong>Workflow Efficiency:</strong> Office staff can handle IVR communications without doctor involvement</li>
+            <li><strong>Faster Approvals:</strong> Staff can respond to IVR company requests immediately</li>
+            <li><strong>Document Management:</strong> Staff can upload required documents for insurance verification</li>
+            <li><strong>Role Clarity:</strong> Clear distinction between administrative and financial permissions</li>
+            <li><strong>Doctor Time Savings:</strong> Doctors focus on clinical decisions while staff handle admin tasks</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🔗 Quick Links</h2>
+        <a href="http://localhost:5173" target="_blank" class="button">Frontend (Vite Dev Server)</a>
+        <a href="http://localhost:5173/settings" target="_blank" class="button success">Settings Page (Direct Link)</a>
+        <a href="http://localhost:8001/docs" target="_blank" class="button">Backend API Docs</a>
+    </div>
+
+    <script>
+        // Auto-check items as they're completed
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const item = this.closest('.checklist-item');
+                if (this.checked) {
+                    item.classList.add('complete');
+                } else {
+                    item.classList.remove('complete');
+                }
+            });
+        });
+
+        // Show completion status
+        function updateStatus() {
+            const total = document.querySelectorAll('input[type="checkbox"]').length;
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+
+            if (checked === total) {
+                document.querySelector('.header').innerHTML +=
+                    '<div class="status success" style="margin-top: 15px;">🎉 IVR Communication Permissions Verified!</div>';
+            }
+        }
+
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateStatus);
+        });
+    </script>
+</body>
+</html>

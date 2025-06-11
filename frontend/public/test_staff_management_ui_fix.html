@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Management UI Fix Verification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 5px;
+        }
+        .status.success { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.warning { background: #fef3c7; color: #92400e; }
+        .status.info { background: #dbeafe; color: #1e40af; }
+        .test-step {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+            font-weight: 600;
+        }
+        .button:hover { background: #2563eb; }
+        .button.success { background: #10b981; }
+        .button.success:hover { background: #059669; }
+        .checklist {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .checklist-item.complete {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        .code {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛠️ Staff Management UI Fix Verification</h1>
+        <p>Verifying that the Team Management section is now visible in Settings → Permissions</p>
+        <div class="status info">Fix Applied: Settings page now uses PermissionsTab instead of PermissionsSection</div>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Fix Summary</h2>
+        <p><strong>Problem:</strong> Settings → Permissions page only showed role definitions and permission checkboxes, missing the Team Management section.</p>
+        <p><strong>Root Cause:</strong> Settings page was importing <code>PermissionsSection</code> (incomplete) instead of <code>PermissionsTab</code> (complete with Team Management).</p>
+        <p><strong>Solution:</strong> Updated Settings page imports and component usage to use the complete <code>PermissionsTab</code> component.</p>
+
+        <div class="code">
+// BEFORE (Incomplete)
+import PermissionsSection from '../../components/settings/PermissionsSection';
+return &lt;PermissionsSection /&gt;;
+
+// AFTER (Complete with Team Management)
+import PermissionsTab from '../../components/settings/PermissionsTab';
+return &lt;PermissionsTab /&gt;;
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>✅ Verification Checklist</h2>
+        <div class="checklist">
+            <div class="checklist-item">
+                <input type="checkbox" id="check1">
+                <label for="check1">Frontend server is running on localhost:3000</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check2">
+                <label for="check2">Backend server is running on localhost:8000</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check3">
+                <label for="check3">Can navigate to Settings page</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check4">
+                <label for="check4">Can click on "Permissions" tab</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check5">
+                <label for="check5"><strong>CRITICAL:</strong> "Team Management" section is visible at the top</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check6">
+                <label for="check6"><strong>CRITICAL:</strong> "Add Staff Member" button is visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check7">
+                <label for="check7">Statistics cards show staff counts</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check8">
+                <label for="check8">Staff table or empty state is visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check9">
+                <label for="check9">"Roles & Permissions" section is visible below Team Management</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check10">
+                <label for="check10">Clicking "Add Staff Member" opens the modal</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🧪 Manual Testing Steps</h2>
+
+        <div class="test-step">
+            <h3>Step 1: Navigate to Settings</h3>
+            <p>1. Open browser to <a href="http://localhost:3000" target="_blank" class="button">http://localhost:3000</a></p>
+            <p>2. Login as doctor: <span class="highlight">doctor@healthcare.local</span> / <span class="highlight">doctor123</span></p>
+            <p>3. Navigate to Settings page</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 2: Verify Permissions Tab</h3>
+            <p>1. Click on the "Permissions" tab</p>
+            <p>2. <strong>VERIFY:</strong> You should see TWO main sections:</p>
+            <ul>
+                <li><strong>Team Management</strong> (at the top)</li>
+                <li><strong>Roles & Permissions</strong> (below)</li>
+            </ul>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 3: Verify Team Management Section</h3>
+            <p>1. <strong>VERIFY:</strong> "Team Management" header is visible</p>
+            <p>2. <strong>VERIFY:</strong> Blue "Add Staff Member" button is visible in top-right</p>
+            <p>3. <strong>VERIFY:</strong> Four statistics cards are visible (Total Staff, Active Staff, Office Admins, Pending Invitations)</p>
+            <p>4. <strong>VERIFY:</strong> Staff table or empty state message is visible</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 4: Test Add Staff Modal</h3>
+            <p>1. Click the "Add Staff Member" button</p>
+            <p>2. <strong>VERIFY:</strong> Modal opens with form fields:</p>
+            <ul>
+                <li>First Name (required)</li>
+                <li>Last Name (required)</li>
+                <li>Email (required)</li>
+                <li>Role dropdown (Office Administrator / Medical Staff)</li>
+            </ul>
+            <p>3. <strong>VERIFY:</strong> "Send Invitation" and "Cancel" buttons are present</p>
+        </div>
+
+        <div class="test-step">
+            <h3>Step 5: Verify API Integration</h3>
+            <p>1. Open browser developer tools (F12)</p>
+            <p>2. Go to Network tab</p>
+            <p>3. Refresh the Permissions page</p>
+            <p>4. <strong>VERIFY:</strong> API calls are made to:</p>
+            <ul>
+                <li><code>/api/v1/practice/staff</code> (to load staff data)</li>
+                <li><code>/api/v1/permissions/roles</code> (to load roles)</li>
+                <li><code>/api/v1/permissions/permissions</code> (to load permissions)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🎯 Expected UI Layout</h2>
+        <p>After the fix, the Permissions tab should show this structure:</p>
+        <div class="code">
+Settings → Permissions Tab:
+
+┌─ Team Management ─────────────────────────────────┐
+│  📊 Statistics Cards (4 cards in a row)          │
+│  👥 Current Staff Members (table or empty state) │
+│  [Add Staff Member] button (top-right)           │
+└───────────────────────────────────────────────────┘
+
+┌─ Roles & Permissions ─────────────────────────────┐
+│  🛡️ Role Selection (3 role cards)                │
+│  ✅ Permission Checkboxes                         │
+│  [Edit Permissions] / [Save] [Cancel] buttons    │
+└───────────────────────────────────────────────────┘
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🚨 Critical Success Criteria</h2>
+        <div class="status error">MUST SEE: "Add Staff Member" button visible on the page</div>
+        <div class="status error">MUST SEE: "Team Management" section header</div>
+        <div class="status error">MUST SEE: Staff statistics cards</div>
+        <div class="status success">SHOULD SEE: Modal opens when clicking "Add Staff Member"</div>
+        <div class="status success">SHOULD SEE: API calls in Network tab</div>
+
+        <p><strong>If you don't see the "Add Staff Member" button, the fix has not been applied correctly!</strong></p>
+    </div>
+
+    <div class="section">
+        <h2>🔗 Quick Links</h2>
+        <a href="http://localhost:3000" target="_blank" class="button">Frontend (localhost:3000)</a>
+        <a href="http://localhost:8000/docs" target="_blank" class="button">Backend API Docs (localhost:8000)</a>
+        <a href="http://localhost:3000/settings" target="_blank" class="button success">Settings Page (Direct Link)</a>
+    </div>
+
+    <script>
+        // Auto-check items as they're completed
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const item = this.closest('.checklist-item');
+                if (this.checked) {
+                    item.classList.add('complete');
+                } else {
+                    item.classList.remove('complete');
+                }
+            });
+        });
+
+        // Show completion status
+        function updateStatus() {
+            const total = document.querySelectorAll('input[type="checkbox"]').length;
+            const checked = document.querySelectorAll('input[type="checkbox"]:checked').length;
+
+            if (checked === total) {
+                document.querySelector('.header').innerHTML +=
+                    '<div class="status success" style="margin-top: 15px;">🎉 All verification steps completed!</div>';
+            }
+        }
+
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', updateStatus);
+        });
+    </script>
+</body>
+</html>

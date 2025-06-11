@@ -40,7 +40,16 @@ class User(Base):
         ForeignKey("roles.id"),
         nullable=False
     )
-    role = relationship("Role", back_populates="users")
+    role = relationship("Role", foreign_keys=[role_id], back_populates="users")
+
+    # Many-to-many relationship with roles through user_roles table
+    roles = relationship(
+        "Role",
+        secondary="user_roles",
+        primaryjoin="User.id == user_roles.c.user_id",
+        secondaryjoin="Role.id == user_roles.c.role_id",
+        back_populates="users"
+    )
 
     # Audit fields
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -63,9 +72,67 @@ class User(Base):
     )
     organization = relationship("Organization", back_populates="users")
 
+    # User Hierarchy Fields (Phase 3.1)
+    parent_sales_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    parent_distributor_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    parent_master_distributor_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    added_by_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    added_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Practice delegation fields
+    parent_doctor_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    practice_role = Column(String(50), nullable=True)
+    invitation_token = Column(String(255), nullable=True)
+    invited_at = Column(DateTime(timezone=True), nullable=True)
+
+    # User Hierarchy Relationships (Phase 3.1)
+    parent_sales = relationship(
+        "User", remote_side=[id], foreign_keys=[parent_sales_id]
+    )
+    parent_distributor = relationship(
+        "User", remote_side=[id], foreign_keys=[parent_distributor_id]
+    )
+    parent_master_distributor = relationship(
+        "User", remote_side=[id], foreign_keys=[parent_master_distributor_id]
+    )
+    added_by = relationship(
+        "User", remote_side=[id], foreign_keys=[added_by_id]
+    )
+
+    # Practice delegation relationships
+    parent_doctor = relationship(
+        "User",
+        remote_side=[id],
+        foreign_keys=[parent_doctor_id],
+        back_populates="staff_members"
+    )
+    staff_members = relationship(
+        "User",
+        foreign_keys="User.parent_doctor_id",
+        back_populates="parent_doctor"
+    )
+
     # Sensitive data relationship
     sensitive_data = relationship(
         "SensitiveData",
+        back_populates="user",
+        uselist=False
+    )
+
+    # Doctor profile relationship (Phase 3.1)
+    doctor_profile = relationship(
+        "DoctorProfile",
+        foreign_keys="DoctorProfile.user_id",
         back_populates="user",
         uselist=False
     )

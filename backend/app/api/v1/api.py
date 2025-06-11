@@ -15,6 +15,9 @@ from app.api.v1.endpoints import (
     voice,
     ivr,
     products,
+    permissions,
+    team,
+    practice,
 )
 from app.api.auth.routes import router as auth_router
 
@@ -68,4 +71,19 @@ api_router.include_router(
     products.router,
     prefix="/products",
     tags=["products"]
+)
+api_router.include_router(
+    permissions.router,
+    prefix="/permissions",
+    tags=["permissions"]
+)
+api_router.include_router(
+    team.router,
+    prefix="/team",
+    tags=["team"]
+)
+api_router.include_router(
+    practice.router,
+    prefix="/practice",
+    tags=["practice"]
 )

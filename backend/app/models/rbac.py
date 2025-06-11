@@ -10,6 +10,32 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.core.database import Base
 
 
+class UserRole(Base):
+    """Association model for user-role relationship."""
+
+    __tablename__ = "user_roles"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    user_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    role_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False
+    )
+    assigned_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=datetime.utcnow
+    )
+    assigned_by: Mapped[Optional[PyUUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+
 class RolePermission(Base):
     """Association model for role-permission relationship."""
 
@@ -37,16 +63,16 @@ class Role(Base):
     id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid4
     )
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
-    description: Mapped[str] = mapped_column(String(255))
-    organization_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False
+    name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
+    display_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_system_role: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    organization_id: Mapped[Optional[PyUUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=True
     )
-    parent_role_id: Mapped[Optional[PyUUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("roles.id"), nullable=True
-    )
-    permissions: Mapped[dict] = mapped_column(
-        JSON, nullable=False, server_default="{}")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
     )
@@ -56,12 +82,23 @@ class Role(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
     )
+    created_by: Mapped[Optional[PyUUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    updated_by: Mapped[Optional[PyUUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
 
     # Relationships
     organization = relationship("Organization", back_populates="roles")
-    parent_role = relationship("Role", remote_side=[id])
-    users = relationship("User", back_populates="role")
-    assigned_permissions = relationship(
+    users = relationship(
+        "User",
+        secondary="user_roles",
+        primaryjoin="Role.id == user_roles.c.role_id",
+        secondaryjoin="User.id == user_roles.c.user_id",
+        back_populates="roles"
+    )
+    permissions = relationship(
         "Permission", secondary="role_permissions", back_populates="roles"
     )
 
@@ -94,7 +131,7 @@ class Permission(Base):
     # Relationships
     roles = relationship(
         "Role", secondary="role_permissions",
-        back_populates="assigned_permissions"
+        back_populates="permissions"
     )
 
     def __repr__(self):

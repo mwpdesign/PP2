@@ -5,7 +5,7 @@ import {
   BellIcon,
   UserPlusIcon,
   ClipboardDocumentCheckIcon,
-  ShoppingCartIcon,
+  ClipboardDocumentListIcon,
   ChartBarIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
@@ -152,7 +152,7 @@ const TestDashboard: React.FC = () => {
                   <p className="text-xs text-gray-400 mt-1">in progress</p>
                 </div>
                 <div className="p-3 bg-purple-50 rounded-full">
-                  <ShoppingCartIcon className="h-6 w-6 text-purple-500" />
+                  <ClipboardDocumentListIcon className="h-6 w-6 text-purple-500" />
                 </div>
               </div>
             </div>
@@ -227,8 +227,8 @@ const TestDashboard: React.FC = () => {
                 <div key={item.id} className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <div className={`h-2 w-2 rounded-full mr-3 ${
-                      item.priorityColor === 'red' 
-                        ? 'bg-red-500' 
+                      item.priorityColor === 'red'
+                        ? 'bg-red-500'
                         : item.priorityColor === 'orange'
                         ? 'bg-orange-500'
                         : 'bg-yellow-500'
@@ -284,4 +284,4 @@ const TestDashboard: React.FC = () => {
   );
 };
 
-export default TestDashboard; 
+export default TestDashboard;

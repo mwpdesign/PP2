@@ -127,8 +127,8 @@ const IVRRequestRow = React.memo(({
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center space-x-2">
-          <ShieldCheckIcon className="w-4 h-4 text-blue-500" />
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          <ShieldCheckIcon className="w-4 h-4 text-slate-500" />
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
             {getInsuranceAbbreviation(request.insurance)}
           </span>
         </div>

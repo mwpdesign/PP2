@@ -24,11 +24,11 @@ const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
-  
+
   const variants = {
-    primary: 'bg-[#2E86AB] text-white hover:bg-[#247297] focus:ring-[#2E86AB]',
+    primary: 'bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-500',
     secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500',
-    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-[#2E86AB]',
+    outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-slate-500',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'
   };
 
@@ -66,4 +66,4 @@ const Button: React.FC<ButtonProps> = ({
   );
 };
 
-export default Button; 
+export default Button;

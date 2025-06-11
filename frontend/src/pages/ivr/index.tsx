@@ -109,7 +109,7 @@ const DoctorIVRRequestRow = React.memo(({
       <td className="px-4 py-3 font-medium text-gray-900">
         <div className="flex items-center space-x-2">
           {request.hasUnreadMessages && (
-            <span className="w-2 h-2 bg-blue-500 rounded-full" aria-label="Unread messages"></span>
+            <span className="w-2 h-2 bg-slate-500 rounded-full" aria-label="Unread messages"></span>
           )}
           <span>{request.ivrNumber}</span>
         </div>
@@ -128,8 +128,8 @@ const DoctorIVRRequestRow = React.memo(({
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center space-x-2">
-          <ShieldCheckIcon className="w-4 h-4 text-blue-500" />
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          <ShieldCheckIcon className="w-4 h-4 text-slate-500" />
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
             {getInsuranceAbbreviation(request.insurance)}
           </span>
         </div>
@@ -188,7 +188,7 @@ const DoctorIVRRequestRow = React.memo(({
                   navigate(`/doctor/ivr/${request.id}?tab=communication`);
                   setOpenMenuId(null);
                 }}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-blue-600 flex items-center space-x-2"
+                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-600 flex items-center space-x-2"
               >
                 <ChatBubbleLeftRightIcon className="w-4 h-4" />
                 <span>Open Communication</span>
@@ -283,7 +283,7 @@ const DoctorIVRManagement: React.FC = () => {
         </div>
         <button
           onClick={handleNewIVR}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
         >
           <PlusIcon className="w-5 h-5 mr-2" />
           New IVR Request
@@ -296,7 +296,7 @@ const DoctorIVRManagement: React.FC = () => {
           title="Submitted"
           value={dashboardStats.submitted}
           className="border-l-4 border-blue-500"
-          icon={<DocumentTextIcon className="w-6 h-6 text-blue-500" />}
+          icon={<DocumentTextIcon className="w-6 h-6 text-slate-500" />}
         />
         <MetricCard
           title="In Review"
@@ -421,7 +421,7 @@ const DoctorIVRManagement: React.FC = () => {
               {!searchTerm && statusFilter === 'all' && (
                 <button
                   onClick={handleNewIVR}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
                 >
                   <PlusIcon className="w-5 h-5 mr-2" />
                   Submit Your First IVR
