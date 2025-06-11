@@ -76,8 +76,8 @@
     "id": "660e8400-e29b-41d4-a716-446655440002",
     "patient_id": "550e8400-e29b-41d4-a716-446655440002",
     "submitted_by_id": "43d8ebd3-efe8-4aee-98b5-0a77ba7003e8",
-    "current_reviewer_id": null,
-    "status": "approved",
+    "current_reviewer_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
+    "status": "in_review",
     "priority": "MEDIUM",
     "submission_type": "reauthorization",
     "medical_condition": "Post-surgical wound dehiscence",
@@ -109,8 +109,7 @@
       "prior_authorization_required": true,
       "coverage_percentage": 90,
       "estimated_cost": 3500.00,
-      "patient_responsibility": 350.00,
-      "authorization_number": "AUTH2024001"
+      "patient_responsibility": 350.00
     },
     "clinical_documentation": {
       "wound_assessment": {
@@ -143,12 +142,6 @@
         "timestamp": "2024-06-05T14:25:00Z",
         "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
         "notes": "Reviewing clinical documentation and previous treatment response"
-      },
-      {
-        "status": "approved",
-        "timestamp": "2024-06-05T16:45:00Z",
-        "user_id": "311e87c4-812e-4f8c-b842-62f4d5cdffbe",
-        "notes": "Approved for 3-week continuation based on positive response"
       }
     ]
   },

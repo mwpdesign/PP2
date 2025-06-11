@@ -115,20 +115,22 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    // Set up WebSocket connection for real-time updates
-    const ws = new WebSocket('ws://localhost:8000/ws/dashboard');
-    
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      // Update relevant metrics based on real-time data
-      if (data.type === 'metrics_update') {
-        setMetrics((prev) => ({ ...prev, ...data.metrics }));
-      }
-    };
 
-    return () => {
-      ws.close();
-    };
+    // TEMPORARILY DISABLED WebSocket to prevent connection errors
+    // TODO: Re-enable when WebSocket server endpoints are properly configured
+    // const ws = new WebSocket('ws://localhost:8000/ws/dashboard');
+    //
+    // ws.onmessage = (event) => {
+    //   const data = JSON.parse(event.data);
+    //   // Update relevant metrics based on real-time data
+    //   if (data.type === 'metrics_update') {
+    //     setMetrics((prev) => ({ ...prev, ...data.metrics }));
+    //   }
+    // };
+    //
+    // return () => {
+    //   ws.close();
+    // };
   }, []);
 
   if (loading) {
@@ -350,4 +352,4 @@ export const AdminDashboard: React.FC = () => {
       </div>
     </div>
   );
-}; 
+};

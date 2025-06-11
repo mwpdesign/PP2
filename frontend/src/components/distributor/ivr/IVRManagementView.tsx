@@ -303,7 +303,9 @@ const IVRRow = React.memo(({
             </svg>
           </button>
           {openMenuId === ivr.id && (
-            <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10 min-w-[140px]">
+            <div className={`absolute right-0 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10 min-w-[140px] ${
+              index >= 3 ? 'bottom-8' : 'top-8'
+            }`}>
               <button
                 onClick={(e) => {
                   e.stopPropagation();

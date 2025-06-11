@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 CRITICAL FIX VERIFICATION - Task mbs1cg61kpezv94uxl</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fef2f2;
+        }
+        .critical-header {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
+        }
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 5px solid #dc2626;
+        }
+        .success {
+            border-left-color: #16a34a;
+            background: #f0fdf4;
+        }
+        .warning {
+            border-left-color: #eab308;
+            background: #fffbeb;
+        }
+        .error {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .test-item.pass {
+            background: #f0fdf4;
+            border-color: #16a34a;
+        }
+        .test-item.fail {
+            background: #fef2f2;
+            border-color: #dc2626;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-approved {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status-in-review {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 8px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #15803d;
+        }
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .highlight {
+            background: #fbbf24;
+            color: #92400e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .checklist li:before {
+            content: "❌";
+            margin-right: 10px;
+        }
+        .checklist li.complete:before {
+            content: "✅";
+        }
+    </style>
+</head>
+<body>
+    <div class="critical-header">
+        <h1>🚨 CRITICAL BUG FIX VERIFICATION</h1>
+        <h2>Task ID: mbs1cg61kpezv94uxl - Status/Priority Data Inconsistency</h2>
+        <p><strong>EMERGENCY FIXES APPLIED - VERIFICATION REQUIRED</strong></p>
+    </div>
+
+    <div class="test-section error">
+        <h2>🎯 CRITICAL ISSUE SUMMARY</h2>
+        <p><strong>Problem:</strong> IVR-2024-002 (Emily Davis) was showing conflicting status between table and detail views:</p>
+        <ul>
+            <li><strong>Table View:</strong> "In Review" status (correct)</li>
+            <li><strong>Detail View:</strong> "Approved" status (WRONG) + IVR Results + Order Button</li>
+        </ul>
+        <p><strong>Business Impact:</strong> Doctors could order products before approval - critical workflow violation!</p>
+    </div>
+
+    <div class="test-section warning">
+        <h2>⚡ EMERGENCY FIXES APPLIED</h2>
+        <ul class="checklist">
+            <li class="complete">Disabled API override that was changing status from shared mock data</li>
+            <li class="complete">Disabled WebSocket to stop console error spam</li>
+            <li class="complete">Forced use of shared mock data status ('in_review')</li>
+            <li class="complete">Verified conditional logic: IVR Results only show when status === 'approved'</li>
+            <li class="complete">Updated backend mock data to match frontend</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 VERIFICATION TESTS</h2>
+
+        <h3>1. Data Consistency Check</h3>
+        <div class="code-block">
+Frontend Shared Data: IVR-2024-002 status = 'in_review'
+Backend Mock Data: IVR-2024-002 status = "in_review"
+Detail View Logic: mockDetail.status = selectedData.status (forced)
+        </div>
+
+        <h3>2. Business Logic Verification</h3>
+        <div class="code-block">
+Conditional Logic: {ivrDetail.status === 'approved' && (
+  &lt;IVRResultsDisplay showOrderButton={true} /&gt;
+)}
+
+Expected Result for IVR-2024-002:
+- Status: 'in_review' !== 'approved'
+- IVR Results: HIDDEN ✅
+- Order Button: HIDDEN ✅
+        </div>
+
+        <h3>3. WebSocket Error Fix</h3>
+        <div class="code-block">
+// TEMPORARILY DISABLED WebSocket to stop console errors
+// const { connectionState, subscribeToIVR, isSubscribed } = useIVRWebSocket({...});
+
+// Mock WebSocket state for UI
+const connectionState = 'disconnected';
+const isSubscribed = () => false;
+        </div>
+    </div>
+
+    <div class="test-section success">
+        <h2>✅ MANUAL VERIFICATION STEPS</h2>
+        <p><strong>Follow these exact steps to verify the fix:</strong></p>
+
+        <ol>
+            <li><strong>Clear Browser Cache:</strong> Ctrl+Shift+Delete (Chrome) or Cmd+Shift+Delete (Safari)</li>
+            <li><strong>Hard Refresh:</strong> Ctrl+Shift+R (Chrome) or Cmd+Shift+R (Safari)</li>
+            <li><strong>Navigate to Table View:</strong>
+                <a href="http://localhost:3000/doctor/ivr" class="btn btn-primary" target="_blank">
+                    Doctor IVR Management
+                </a>
+            </li>
+            <li><strong>Verify Table Status:</strong> IVR-2024-002 should show <span class="status-badge status-in-review">In Review</span></li>
+            <li><strong>Navigate to Detail View:</strong>
+                <a href="http://localhost:3000/doctor/ivr/660e8400-e29b-41d4-a716-446655440002" class="btn btn-danger" target="_blank">
+                    IVR-2024-002 Detail View
+                </a>
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 EXPECTED RESULTS</h2>
+
+        <div class="test-item pass">
+            <span class="emoji">✅</span>
+            <strong>Status Badge:</strong> Should show <span class="highlight">"In Review"</span> (yellow badge)
+        </div>
+
+        <div class="test-item pass">
+            <span class="emoji">✅</span>
+            <strong>IVR Results Section:</strong> Should be <span class="highlight">COMPLETELY HIDDEN</span>
+        </div>
+
+        <div class="test-item pass">
+            <span class="emoji">✅</span>
+            <strong>Order Products Button:</strong> Should be <span class="highlight">COMPLETELY HIDDEN</span>
+        </div>
+
+        <div class="test-item pass">
+            <span class="emoji">✅</span>
+            <strong>Console Errors:</strong> Should be <span class="highlight">CLEAN</span> (no WebSocket spam)
+        </div>
+
+        <div class="test-item pass">
+            <span class="emoji">✅</span>
+            <strong>WebSocket Status:</strong> Should show <span class="highlight">"Offline"</span> (red dot)
+        </div>
+    </div>
+
+    <div class="test-section error">
+        <h2>🚨 FAILURE INDICATORS</h2>
+        <p><strong>If you see ANY of these, the fix has FAILED:</strong></p>
+
+        <div class="test-item fail">
+            <span class="emoji">❌</span>
+            <strong>Status shows "Approved"</strong> instead of "In Review"
+        </div>
+
+        <div class="test-item fail">
+            <span class="emoji">❌</span>
+            <strong>Green IVR Results box is visible</strong> with coverage details
+        </div>
+
+        <div class="test-item fail">
+            <span class="emoji">❌</span>
+            <strong>Order Products button is visible</strong> and clickable
+        </div>
+
+        <div class="test-item fail">
+            <span class="emoji">❌</span>
+            <strong>Console flooded with WebSocket errors</strong> (ws://localhost:8080)
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 ALL IVR STATUS VERIFICATION</h2>
+        <p><strong>Test all 5 IVRs for consistency:</strong></p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <a href="http://localhost:3000/doctor/ivr/660e8400-e29b-41d4-a716-446655440001" class="btn btn-success" target="_blank">
+                IVR-2024-001<br><small>Should show: Approved + Results</small>
+            </a>
+            <a href="http://localhost:3000/doctor/ivr/660e8400-e29b-41d4-a716-446655440002" class="btn btn-danger" target="_blank">
+                IVR-2024-002<br><small>Should show: In Review (NO Results)</small>
+            </a>
+            <a href="http://localhost:3000/doctor/ivr/660e8400-e29b-41d4-a716-446655440003" class="btn btn-primary" target="_blank">
+                IVR-2024-003<br><small>Should show: Documents Requested</small>
+            </a>
+            <a href="http://localhost:3000/doctor/ivr/660e8400-e29b-41d4-a716-446655440004" class="btn btn-primary" target="_blank">
+                IVR-2024-004<br><small>Should show: Submitted</small>
+            </a>
+            <a href="http://localhost:3000/doctor/ivr/660e8400-e29b-41d4-a716-446655440005" class="btn btn-primary" target="_blank">
+                IVR-2024-005<br><small>Should show: Rejected</small>
+            </a>
+        </div>
+    </div>
+
+    <div class="test-section success">
+        <h2>📸 SCREENSHOT EVIDENCE REQUIRED</h2>
+        <p><strong>Take screenshots showing:</strong></p>
+        <ol>
+            <li>IVR-2024-002 detail page with "In Review" status</li>
+            <li>NO green IVR Results section visible</li>
+            <li>NO Order Products button visible</li>
+            <li>Clean browser console (F12) with no WebSocket errors</li>
+        </ol>
+        <p><strong>Only mark this task complete when screenshots prove the fix works!</strong></p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 NEXT STEPS</h2>
+        <p>After verifying this fix works:</p>
+        <ol>
+            <li><strong>Task #2:</strong> Fix WebSocket Connection Errors (Task ID: mbs43yjpkwjfl6o86lb)</li>
+            <li><strong>Task #3:</strong> Fix Actions Dropdown Cut Off (Task ID: mbs4osmyk9jqkjmjimj)</li>
+            <li><strong>Task #4:</strong> Audit All Dashboard Pages (Task ID: mbs2h9y8uy6j3hhze0m)</li>
+        </ol>
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds to check for updates
+        setTimeout(() => {
+            window.location.reload();
+        }, 30000);
+
+        // Log test page load
+        console.log('🧪 CRITICAL FIX VERIFICATION PAGE LOADED');
+        console.log('📋 Testing Task ID: mbs1cg61kpezv94uxl');
+        console.log('🎯 Expected: IVR-2024-002 shows "In Review" with NO IVR Results');
+    </script>
+</body>
+</html>

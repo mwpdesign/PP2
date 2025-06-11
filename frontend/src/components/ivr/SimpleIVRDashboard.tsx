@@ -11,7 +11,13 @@ import {
   CheckCircleIcon,
   ChatBubbleLeftRightIcon,
   DocumentTextIcon,
-  DocumentChartBarIcon
+  DocumentChartBarIcon,
+  EllipsisVerticalIcon,
+  EyeIcon,
+  CalendarDaysIcon,
+  UserIcon,
+  BuildingOfficeIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIVR } from '../../contexts/IVRContext';
@@ -55,9 +61,9 @@ const IVRRequestRow = React.memo(({
 
   const getPriorityBadge = (priority: string) => {
     const priorityConfig = {
-      high: { bg: 'bg-red-100', text: 'text-red-800', label: 'High' },
-      medium: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Medium' },
-      low: { bg: 'bg-green-100', text: 'text-green-800', label: 'Low' }
+      high: { bg: 'bg-red-100', text: 'text-red-800', label: 'High Priority' },
+      medium: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Medium Priority' },
+      low: { bg: 'bg-green-100', text: 'text-green-800', label: 'Low Priority' }
     };
     return priorityConfig[priority as keyof typeof priorityConfig] || priorityConfig.medium;
   };
@@ -77,6 +83,20 @@ const IVRRequestRow = React.memo(({
   const statusBadge = getStatusBadge(request.status);
   const priorityBadge = getPriorityBadge(request.priority);
 
+  const getFormattedDaysAgo = (submittedDate: string) => {
+    const submitted = new Date(submittedDate);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - submitted.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 14) return '1 week ago';
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  };
+
   return (
     <tr
       className={`group h-12 cursor-pointer transition-colors hover:bg-slate-100 ${
@@ -87,20 +107,31 @@ const IVRRequestRow = React.memo(({
       onKeyDown={(e) => {
         if (e.key === 'Enter') onRowClick(request);
       }}
+      role="button"
+      aria-label={`Review IVR request ${request.ivrNumber} for ${request.patientName}`}
     >
       <td className="px-4 py-3 font-medium text-gray-900">
         {request.ivrNumber}
       </td>
       <td className="px-4 py-3 text-gray-900 truncate max-w-[150px]">
-        {request.patientName}
+        <div className="flex items-center space-x-2">
+          <UserIcon className="w-4 h-4 text-gray-400" />
+          <span>{request.patientName}</span>
+        </div>
       </td>
       <td className="px-4 py-3 text-gray-600 truncate max-w-[150px]">
-        {request.doctorName}
+        <div className="flex items-center space-x-2">
+          <BuildingOfficeIcon className="w-4 h-4 text-gray-400" />
+          <span>{request.doctorName}</span>
+        </div>
       </td>
       <td className="px-4 py-3">
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          {getInsuranceAbbreviation(request.insurance)}
-        </span>
+        <div className="flex items-center space-x-2">
+          <ShieldCheckIcon className="w-4 h-4 text-blue-500" />
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            {getInsuranceAbbreviation(request.insurance)}
+          </span>
+        </div>
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center space-x-2">
@@ -116,7 +147,10 @@ const IVRRequestRow = React.memo(({
         </span>
       </td>
       <td className="px-4 py-3 text-gray-600 text-sm">
-        {request.daysSinceSubmission}d
+        <div className="flex items-center space-x-1">
+          <CalendarDaysIcon className="w-4 h-4 text-gray-400" />
+          <span>{getFormattedDaysAgo(request.submittedDate)}</span>
+        </div>
       </td>
       <td className="px-6 py-2 relative">
         <div className="flex justify-end">
@@ -126,20 +160,26 @@ const IVRRequestRow = React.memo(({
               setOpenMenuId(openMenuId === request.id ? null : request.id);
             }}
             className="w-8 h-8 rounded hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all"
+            aria-label={`More actions for IVR ${request.ivrNumber}`}
           >
-            •••
+            <EllipsisVerticalIcon className="w-5 h-5" />
           </button>
           {openMenuId === request.id && (
-            <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10 min-w-[140px]">
+            <div
+              className={`absolute right-0 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10 min-w-[160px] ${
+                index >= 3 ? 'bottom-8' : 'top-8'
+              }`}
+            >
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/ivr-company/review/${request.id}`);
                   setOpenMenuId(null);
                 }}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
+                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700 flex items-center space-x-2"
               >
-                Review Details
+                <EyeIcon className="w-4 h-4" />
+                <span>Review Details</span>
               </button>
             </div>
           )}
@@ -281,12 +321,13 @@ const SimpleIVRDashboard: React.FC = () => {
           {/* Search and Filter Header */}
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Review Queue</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Insurance Verification Review Queue</h2>
               <div className="flex items-center space-x-4">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  aria-label="Filter by status"
                 >
                   <option value="all">All Status</option>
                   <option value="submitted">Submitted</option>
@@ -305,6 +346,7 @@ const SimpleIVRDashboard: React.FC = () => {
                     value={searchTerm}
                     onChange={handleSearch}
                     className="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    aria-label="Search IVR requests"
                   />
                   <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -316,29 +358,29 @@ const SimpleIVRDashboard: React.FC = () => {
 
           {/* High-Density Table */}
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" role="table" aria-label="IVR review queue table">
               <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    IVR#
+                    Request ID
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Patient
+                    Patient Name
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Doctor
+                    Requesting Doctor
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Insurance
+                    Insurance Provider
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
+                    Current Status
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Priority
+                    Priority Level
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Days Pending
+                    Submitted
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                     Actions

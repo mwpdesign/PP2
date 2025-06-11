@@ -22,6 +22,7 @@ import {
 import UniversalFileUpload from '../../../components/shared/UniversalFileUpload';
 import { ApprovalModal, RejectionModal, DocumentRequestModal } from '../../../components/ivr/modals';
 import { formatMessageTimestamp, formatDateOnly } from '../../../utils/formatters';
+import { mockIVRRequests } from '../../../data/mockIVRData';
 
 interface Product {
   id: string;
@@ -249,21 +250,24 @@ const IVRReviewDetailPage: React.FC = () => {
   // Mock data - replace with actual API call
   useEffect(() => {
     const fetchData = async () => {
+      // Get the correct mock data from the single source of truth
+      const selectedData = mockIVRRequests.find(request => request.id === id) || mockIVRRequests[0];
+
     const mockData: IVRRequest = {
-      id: id || '660e8400-e29b-41d4-a716-446655440004',
-      ivrNumber: 'IVR-2024-001',
-      patientName: 'John Smith',
-      doctorName: 'Dr. John Smith',
-      insurance: 'Blue Cross Blue Shield',
-      status: 'approved',
-      priority: 'high',
-      daysPending: 3,
-      submittedDate: '2024-03-15',
-      patientId: 'P-1234',
-      doctorId: 'D-001',
+      id: selectedData.id,
+      ivrNumber: selectedData.ivrNumber,
+      patientName: selectedData.patientName,
+      doctorName: selectedData.doctorName,
+      insurance: selectedData.insurance,
+      status: selectedData.status,
+      priority: selectedData.priority,
+      daysPending: selectedData.daysPending,
+      submittedDate: selectedData.submittedDate,
+      patientId: selectedData.patientId,
+      doctorId: selectedData.doctorId,
       patient: {
-        firstName: 'John',
-        lastName: 'Smith',
+        firstName: selectedData.patientName.split(' ')[0],
+        lastName: selectedData.patientName.split(' ')[1] || '',
         dateOfBirth: '1980-05-15',
         address: '123 Main Street',
         city: 'Boston',
@@ -271,7 +275,7 @@ const IVRReviewDetailPage: React.FC = () => {
         zipCode: '02101'
       },
       insuranceDetails: {
-        provider: 'Blue Cross Blue Shield',
+        provider: selectedData.insurance,
         policyNumber: 'BCBS123456789',
         groupNumber: 'GRP001',
         memberID: 'MEM123456',
