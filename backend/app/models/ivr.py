@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID as PyUUID, uuid4
 from sqlalchemy import (
-    String, DateTime, ForeignKey, JSON, Enum, Integer, Numeric
+    String, Text, DateTime, ForeignKey, JSON, Enum, Integer, Numeric
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -43,6 +43,14 @@ class IVRRequest(Base):
     # Metadata
     request_metadata: Mapped[dict] = mapped_column(JSON, default={})
     notes: Mapped[str] = mapped_column(String(1000), nullable=True)
+
+    # Simplified Communication Fields
+    doctor_comment: Mapped[str] = mapped_column(Text, nullable=True)
+    ivr_response: Mapped[str] = mapped_column(Text, nullable=True)
+    comment_updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, nullable=False
     )
@@ -58,16 +66,24 @@ class IVRRequest(Base):
     provider = relationship("Provider", back_populates="ivr_requests")
     facility = relationship("Facility", back_populates="ivr_requests")
     current_reviewer = relationship(
-        "User", foreign_keys=[current_reviewer_id], back_populates="current_ivr_reviews"
+        "User", foreign_keys=[current_reviewer_id],
+        back_populates="current_ivr_reviews"
     )
     status_history = relationship(
-        "IVRStatusHistory", back_populates="ivr_request")
+        "IVRStatusHistory", back_populates="ivr_request"
+    )
     approvals = relationship("IVRApproval", back_populates="ivr_request")
     escalations = relationship("IVREscalation", back_populates="ivr_request")
     reviews = relationship("IVRReview", back_populates="ivr_request")
     documents = relationship("IVRDocument", back_populates="ivr_request")
     products = relationship(
-        "IVRProduct", back_populates="ivr_request", cascade="all, delete-orphan"
+        "IVRProduct", back_populates="ivr_request",
+        cascade="all, delete-orphan"
+    )
+    communication_messages = relationship(
+        "IVRCommunicationMessage", back_populates="ivr_request",
+        cascade="all, delete-orphan",
+        order_by="IVRCommunicationMessage.created_at"
     )
 
 
@@ -100,7 +116,10 @@ class IVRProduct(Base):
 
     # Relationships
     ivr_request = relationship("IVRRequest", back_populates="products")
-    sizes = relationship("IVRProductSize", back_populates="ivr_product", cascade="all, delete-orphan")
+    sizes = relationship(
+        "IVRProductSize", back_populates="ivr_product",
+        cascade="all, delete-orphan"
+    )
 
 
 class IVRProductSize(Base):
@@ -347,22 +366,55 @@ class IVRSessionItem(Base):
     session_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("ivr_sessions.id"), nullable=False
     )
-    product_id: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("products.id"), nullable=False
-    )
-    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    notes: Mapped[str] = mapped_column(String(1000), nullable=True)
-    insurance_coverage: Mapped[dict] = mapped_column(JSON, nullable=True)
+    item_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    item_data: Mapped[dict] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=datetime.utcnow
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
     )
 
     # Relationships
     session = relationship("IVRSession", back_populates="items")
-    product = relationship("Product")
+
+
+class IVRCommunicationMessage(Base):
+    """IVR communication message model for doctor-IVR specialist communication."""
+
+    __tablename__ = "ivr_communication_messages"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid4
+    )
+    ivr_request_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ivr_requests.id"), nullable=False
+    )
+    author_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+
+    # Message content
+    message: Mapped[str] = mapped_column(String(2000), nullable=False)
+    message_type: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="text"
+    )  # text, file, system
+    author_type: Mapped[str] = mapped_column(
+        String(20), nullable=False
+    )  # doctor, ivr_specialist, system
+    author_name: Mapped[str] = mapped_column(String(200), nullable=False)
+
+    # Attachments (stored as JSON array)
+    attachments: Mapped[dict] = mapped_column(JSON, default=[])
+
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    # Relationships
+    ivr_request = relationship("IVRRequest", back_populates="communication_messages")
+    author = relationship("User")

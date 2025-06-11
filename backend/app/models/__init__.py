@@ -25,7 +25,13 @@ except ImportError:
     pass
 
 try:
-    from .product import Product
+    from .products import (
+        ProductCategory,
+        Product,
+        ProductSize,
+        Inventory,
+        ProductPricing,
+    )
 except ImportError:
     pass
 
@@ -59,6 +65,7 @@ try:
         IVRDocument,
         IVRSession,
         IVRSessionItem,
+        IVRCommunicationMessage,
     )
 except ImportError:
     pass
@@ -128,7 +135,11 @@ __all__ = [
     "PatientDocument",
     "Provider",
     "Facility",
+    "ProductCategory",
     "Product",
+    "ProductSize",
+    "Inventory",
+    "ProductPricing",
     "Order",
     "OrderStatusHistory",
     "Notification",
@@ -144,6 +155,7 @@ __all__ = [
     "IVRDocument",
     "IVRSession",
     "IVRSessionItem",
+    "IVRCommunicationMessage",
     "AuditLog",
     "ComplianceReport",
     "SecondaryInsurance",

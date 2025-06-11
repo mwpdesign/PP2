@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useIVR } from '../../contexts/IVRContext';
 import { MetricCard } from '../../components/shared/DashboardWidgets/MetricCard';
+import { SharedIVRRequest, DashboardStats } from '../../data/mockIVRData';
 import {
   PlusIcon,
-  EyeIcon,
-  ChatBubbleLeftRightIcon,
   DocumentTextIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -13,53 +13,37 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
-interface DoctorIVRRequest {
-  id: string;
-  ivrNumber: string;
-  patientName: string;
-  serviceType: string;
-  status: 'submitted' | 'in_review' | 'approved' | 'rejected' | 'awaiting_docs';
-  priority: 'high' | 'medium' | 'low';
-  submittedDate: string;
-  lastUpdated: string;
-  daysSinceSubmission: number;
-  hasUnreadMessages: boolean;
-  patientId: string;
-  insurance: string;
-  estimatedCompletion?: string;
-}
-
-interface DoctorDashboardStats {
-  submitted: number;
-  inReview: number;
-  approved: number;
-  awaitingDocs: number;
-}
+// Type alias for Doctor view - uses shared interface
+type DoctorIVRRequest = SharedIVRRequest;
+type DoctorDashboardStats = DashboardStats;
 
 // Memoized IVR request row component for performance
 const DoctorIVRRequestRow = React.memo(({
   request,
   index,
   onRowClick,
-  onViewDetails,
-  onCommunicate,
+  openMenuId,
+  setOpenMenuId,
   navigate
 }: {
   request: DoctorIVRRequest;
   index: number;
   onRowClick: (request: DoctorIVRRequest) => void;
-  onViewDetails: (request: DoctorIVRRequest) => void;
-  onCommunicate: (request: DoctorIVRRequest) => void;
+  openMenuId: string | null;
+  setOpenMenuId: (id: string | null) => void;
   navigate: (path: string) => void;
 }) => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       submitted: { color: 'blue', dot: 'bg-blue-500', bg: 'bg-blue-100', text: 'text-blue-800', label: 'Submitted' },
-      in_review: { color: 'yellow', dot: 'bg-yellow-500', bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'In Review' },
-      approved: { color: 'emerald', dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Approved' },
+      in_review: { color: 'amber', dot: 'bg-amber-500', bg: 'bg-amber-100', text: 'text-amber-800', label: 'In Review' },
+      pending_approval: { color: 'emerald', dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Pending Approval' },
+      documents_requested: { color: 'purple', dot: 'bg-purple-500', bg: 'bg-purple-100', text: 'text-purple-800', label: 'Documents Requested' },
+      approved: { color: 'green', dot: 'bg-green-500', bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
       rejected: { color: 'red', dot: 'bg-red-500', bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
-      awaiting_docs: { color: 'amber', dot: 'bg-amber-500', bg: 'bg-amber-100', text: 'text-amber-800', label: 'Awaiting Docs' }
+      escalated: { color: 'orange', dot: 'bg-orange-500', bg: 'bg-orange-100', text: 'text-orange-800', label: 'Escalated' },
+      cancelled: { color: 'slate', dot: 'bg-slate-500', bg: 'bg-slate-100', text: 'text-slate-800', label: 'Cancelled' }
     };
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.submitted;
   };
@@ -100,12 +84,10 @@ const DoctorIVRRequestRow = React.memo(({
       }}
     >
       <td className="px-4 py-3 font-medium text-gray-900">
-        <div className="flex items-center space-x-2">
-          {request.hasUnreadMessages && (
-            <div className="w-2 h-2 bg-blue-500 rounded-full" />
-          )}
-          <span>{request.ivrNumber}</span>
-        </div>
+        {request.hasUnreadMessages && (
+          <span className="w-2 h-2 bg-blue-500 rounded-full inline-block mr-2"></span>
+        )}
+        {request.ivrNumber}
       </td>
       <td className="px-4 py-3 text-gray-900 truncate max-w-[150px]">
         {request.patientName}
@@ -134,28 +116,41 @@ const DoctorIVRRequestRow = React.memo(({
       <td className="px-4 py-3 text-gray-600 text-sm">
         {request.daysSinceSubmission}d
       </td>
-      <td className="px-6 py-2">
-        <div className="flex items-center space-x-2">
+      <td className="px-6 py-2 relative">
+        <div className="flex justify-end">
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onViewDetails(request);
+              setOpenMenuId(openMenuId === request.id ? null : request.id);
             }}
-            className="p-2 rounded-lg hover:bg-blue-100 text-blue-600 hover:text-blue-700 transition-colors"
-            title="View Details"
+            className="w-8 h-8 rounded hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all"
           >
-            <EyeIcon className="w-4 h-4" />
+            •••
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onCommunicate(request);
-            }}
-            className="p-2 rounded-lg hover:bg-green-100 text-green-600 hover:text-green-700 transition-colors"
-            title="Communication"
-          >
-            <ChatBubbleLeftRightIcon className="w-4 h-4" />
-          </button>
+          {openMenuId === request.id && (
+            <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-10 min-w-[140px]">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/doctor/ivr/${request.id}`);
+                  setOpenMenuId(null);
+                }}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700"
+              >
+                View Details
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/doctor/ivr/${request.id}?tab=communication`);
+                  setOpenMenuId(null);
+                }}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-blue-600"
+              >
+                Start Chat
+              </button>
+            </div>
+          )}
         </div>
       </td>
     </tr>
@@ -165,97 +160,28 @@ const DoctorIVRRequestRow = React.memo(({
 const DoctorIVRManagement: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { ivrRequests, dashboardStats } = useIVR();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-
-  // Mock data for doctor's IVR submissions - replace with actual API calls
-  const [ivrRequests] = useState<DoctorIVRRequest[]>([
-    {
-      id: 'IVR-001',
-      ivrNumber: 'IVR-2024-001',
-      patientName: 'John Smith',
-      serviceType: 'Wound Care Authorization',
-      status: 'approved',
-      priority: 'high',
-      submittedDate: '2024-03-15',
-      lastUpdated: '2024-03-18',
-      daysSinceSubmission: 3,
-      hasUnreadMessages: false,
-      patientId: 'P-1234',
-      insurance: 'Blue Cross Blue Shield',
-      estimatedCompletion: '2024-03-20'
-    },
-    {
-      id: 'IVR-002',
-      ivrNumber: 'IVR-2024-002',
-      patientName: 'Emily Davis',
-      serviceType: 'Skin Graft Authorization',
-      status: 'in_review',
-      priority: 'medium',
-      submittedDate: '2024-03-16',
-      lastUpdated: '2024-03-17',
-      daysSinceSubmission: 2,
-      hasUnreadMessages: true,
-      patientId: 'P-1235',
-      insurance: 'UnitedHealthcare',
-      estimatedCompletion: '2024-03-22'
-    },
-    {
-      id: 'IVR-003',
-      ivrNumber: 'IVR-2024-003',
-      patientName: 'David Wilson',
-      serviceType: 'Negative Pressure Therapy',
-      status: 'awaiting_docs',
-      priority: 'high',
-      submittedDate: '2024-03-14',
-      lastUpdated: '2024-03-17',
-      daysSinceSubmission: 4,
-      hasUnreadMessages: true,
-      patientId: 'P-1236',
-      insurance: 'Aetna'
-    },
-    {
-      id: 'IVR-004',
-      ivrNumber: 'IVR-2024-004',
-      patientName: 'Sarah Johnson',
-      serviceType: 'Advanced Wound Care',
-      status: 'submitted',
-      priority: 'low',
-      submittedDate: '2024-03-18',
-      lastUpdated: '2024-03-18',
-      daysSinceSubmission: 1,
-      hasUnreadMessages: false,
-      patientId: 'P-1237',
-      insurance: 'Cigna'
-    },
-    {
-      id: 'IVR-005',
-      ivrNumber: 'IVR-2024-005',
-      patientName: 'Michael Brown',
-      serviceType: 'Collagen Dressing Auth',
-      status: 'rejected',
-      priority: 'medium',
-      submittedDate: '2024-03-12',
-      lastUpdated: '2024-03-16',
-      daysSinceSubmission: 6,
-      hasUnreadMessages: true,
-      patientId: 'P-1238',
-      insurance: 'Medicare'
-    }
-  ]);
-
-  const [dashboardStats] = useState<DoctorDashboardStats>({
-    submitted: 8,
-    inReview: 5,
-    approved: 12,
-    awaitingDocs: 3
-  });
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Load data
   useEffect(() => {
     setLoading(false);
   }, []);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (openMenuId) {
+        setOpenMenuId(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
 
   // Filtered requests
   const filteredRequests = useMemo(() => {
@@ -286,54 +212,42 @@ const DoctorIVRManagement: React.FC = () => {
     navigate(`/doctor/ivr/${request.id}`);
   }, [navigate]);
 
-  const handleViewDetails = useCallback((request: DoctorIVRRequest) => {
-    navigate(`/doctor/ivr/${request.id}`);
-  }, [navigate]);
-
-  const handleCommunicate = useCallback((request: DoctorIVRRequest) => {
-    navigate(`/doctor/ivr/${request.id}?tab=communication`);
-  }, [navigate]);
-
   const handleNewIVR = useCallback(() => {
     navigate('/doctor/patients/select');
   }, [navigate]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-100 p-6">
-        <div className="animate-pulse space-y-6">
-          <div className="grid grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg p-6 h-24" />
-            ))}
-          </div>
-          <div className="bg-white rounded-lg p-6 h-96" />
+      <div className="animate-pulse space-y-6">
+        <div className="grid grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-lg p-6 h-24" />
+          ))}
         </div>
+        <div className="bg-white rounded-lg p-6 h-96" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">IVR Management</h1>
-            <p className="text-gray-600">Track your insurance verification requests</p>
-          </div>
-          <button
-            onClick={handleNewIVR}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            New IVR Request
-          </button>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">IVR Management</h1>
+          <p className="text-gray-600">Track your insurance verification requests</p>
         </div>
+        <button
+          onClick={handleNewIVR}
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <PlusIcon className="w-5 h-5 mr-2" />
+          New IVR Request
+        </button>
       </div>
 
       {/* Stats Cards Header */}
-      <div className="grid grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-4 gap-6">
         <MetricCard
           title="Submitted"
           value={dashboardStats.submitted}
@@ -353,10 +267,10 @@ const DoctorIVRManagement: React.FC = () => {
           icon={<CheckCircleIcon className="w-6 h-6 text-emerald-500" />}
         />
         <MetricCard
-          title="Awaiting Docs"
-          value={dashboardStats.awaitingDocs}
-          className="border-l-4 border-amber-500"
-          icon={<ExclamationTriangleIcon className="w-6 h-6 text-amber-500" />}
+          title="Documents Requested"
+          value={dashboardStats.documentsRequested}
+          className="border-l-4 border-purple-500"
+          icon={<ExclamationTriangleIcon className="w-6 h-6 text-purple-500" />}
         />
       </div>
 
@@ -375,9 +289,12 @@ const DoctorIVRManagement: React.FC = () => {
                 <option value="all">All Status</option>
                 <option value="submitted">Submitted</option>
                 <option value="in_review">In Review</option>
+                <option value="pending_approval">Pending Approval</option>
+                <option value="documents_requested">Documents Requested</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
-                <option value="awaiting_docs">Awaiting Docs</option>
+                <option value="escalated">Escalated</option>
+                <option value="cancelled">Cancelled</option>
               </select>
               <div className="relative">
                 <input
@@ -433,8 +350,8 @@ const DoctorIVRManagement: React.FC = () => {
                   request={request}
                   index={index}
                   onRowClick={handleRowClick}
-                  onViewDetails={handleViewDetails}
-                  onCommunicate={handleCommunicate}
+                  openMenuId={openMenuId}
+                  setOpenMenuId={setOpenMenuId}
                   navigate={navigate}
                 />
               ))}

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVR Status Consistency Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 5px;
+        }
+        .test-link:hover {
+            background: #2563eb;
+        }
+        .success {
+            color: #059669;
+            font-weight: bold;
+        }
+        .issue {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .status-approved {
+            background: #dcfce7;
+            color: #166534;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .comparison-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .fixed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 IVR Status Consistency Test</h1>
+
+    <div class="info">
+        <h3>✅ Issue Fixed: Status Consistency Across All Views</h3>
+        <p><strong>Problem:</strong> IVR-2024-001 was showing different statuses across views:</p>
+        <ul>
+            <li>Doctor Dashboard: <span class="status-approved">Approved</span> (green)</li>
+            <li>Doctor IVR Detail: <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px;">In Review</span> (yellow)</li>
+            <li>IVR Company Review: <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px;">In Review</span> (amber)</li>
+        </ul>
+        <p><strong>Solution:</strong> Updated all views to consistently show <span class="status-approved">Approved</span> status.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Test Status Consistency</h2>
+        <p>Click the links below to verify that all views show <strong class="status-approved">APPROVED</strong> status for IVR-2024-001:</p>
+
+        <h3>Doctor's Views:</h3>
+        <a href="http://localhost:3000/doctor/ivr" class="test-link" target="_blank">
+            Doctor IVR Dashboard
+        </a>
+        <a href="http://localhost:3000/doctor/ivr/660e8400-e29b-41d4-a716-446655440001" class="test-link" target="_blank">
+            Doctor IVR Detail Page
+        </a>
+
+        <h3>IVR Company View:</h3>
+        <a href="http://localhost:3000/ivr-company/review/660e8400-e29b-41d4-a716-446655440001" class="test-link" target="_blank">
+            IVR Company Review Page
+        </a>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Status Verification Checklist</h2>
+        <p>Verify the following locations show <strong class="status-approved">APPROVED</strong> status:</p>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>View</th>
+                    <th>Location</th>
+                    <th>Expected Status</th>
+                    <th>Expected Color</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="fixed">
+                    <td><strong>Doctor Dashboard</strong></td>
+                    <td>IVR-2024-001 row → Status column</td>
+                    <td>Approved</td>
+                    <td>Green badge</td>
+                </tr>
+                <tr class="fixed">
+                    <td><strong>Doctor IVR Detail</strong></td>
+                    <td>Header → Status badge</td>
+                    <td>Approved</td>
+                    <td>Green badge with checkmark icon</td>
+                </tr>
+                <tr class="fixed">
+                    <td><strong>Doctor IVR Detail</strong></td>
+                    <td>Status Timeline → Latest entry</td>
+                    <td>Approved</td>
+                    <td>"IVR approved with coverage details"</td>
+                </tr>
+                <tr class="fixed">
+                    <td><strong>IVR Company Review</strong></td>
+                    <td>Header → Status badge</td>
+                    <td>Approved</td>
+                    <td>Green badge</td>
+                </tr>
+                <tr class="fixed">
+                    <td><strong>IVR Company Review</strong></td>
+                    <td>IVR Results section</td>
+                    <td>Visible</td>
+                    <td>Green coverage details box should be displayed</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Technical Changes Made</h2>
+        <h3>Files Modified:</h3>
+        <ul>
+            <li><strong>frontend/src/data/mockIVRData.ts</strong>
+                <ul>
+                    <li>Line 31: IVR-2024-001 status remains 'approved' (source of truth)</li>
+                    <li>Line 29: Changed doctorName from 'Dr. Sarah Wilson' to 'Dr. John Smith'</li>
+                </ul>
+            </li>
+            <li><strong>frontend/src/pages/doctor/ivr/[id].tsx</strong>
+                <ul>
+                    <li>Line 285: Changed status from 'in_review' to 'approved'</li>
+                    <li>Line 276: Fixed ivrNumber to 'IVR-2024-001'</li>
+                    <li>Added approved status to statusHistory with timestamp</li>
+                </ul>
+            </li>
+            <li><strong>frontend/src/pages/ivr/review/[id].tsx</strong>
+                <ul>
+                    <li>Line 191: Changed status from 'in_review' to 'approved'</li>
+                    <li>Line 189: Changed doctorName from 'Dr. Sarah Wilson' to 'Dr. John Smith'</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>Result:</h3>
+        <p class="success">✅ All views now consistently show "Approved" status for IVR-2024-001</p>
+        <p class="success">✅ All views now consistently show "Dr. John Smith" as the physician</p>
+        <p class="success">✅ IVR Results section will display on approved requests</p>
+        <p class="success">✅ Status timeline shows complete approval workflow</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Expected Behavior</h2>
+        <p>For IVR-2024-001, all views should now show:</p>
+        <ul>
+            <li><strong>Status:</strong> <span class="status-approved">Approved</span> (green badge with checkmark)</li>
+            <li><strong>Doctor:</strong> Dr. John Smith (consistent across all views)</li>
+            <li><strong>Patient:</strong> John Smith</li>
+            <li><strong>Service:</strong> Wound Care Authorization</li>
+            <li><strong>Insurance:</strong> Blue Cross Blue Shield</li>
+            <li><strong>Priority:</strong> High</li>
+        </ul>
+
+        <h3>Additional Features for Approved Status:</h3>
+        <ul>
+            <li>✅ IVR Results section visible in both Doctor and IVR Company views</li>
+            <li>✅ Coverage details, deductible, copay information displayed</li>
+            <li>✅ Order button available for doctors (future functionality)</li>
+            <li>✅ Complete status timeline showing approval workflow</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🚀 Next Steps</h2>
+        <p>With status consistency resolved, the system now provides:</p>
+        <ul>
+            <li>✅ Unified user experience across all views</li>
+            <li>✅ Accurate status reporting for decision making</li>
+            <li>✅ Proper workflow progression visibility</li>
+            <li>✅ Consistent doctor identity throughout the system</li>
+        </ul>
+        <p class="success">The Healthcare IVR Platform now maintains data integrity and provides a seamless user experience! 🎉</p>
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds to check for updates
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+
+        console.log('📊 IVR Status Consistency Test Page Loaded');
+        console.log('✅ All views should now show "Approved" status consistently');
+        console.log('✅ All views should now show "Dr. John Smith" consistently');
+    </script>
+</body>
+</html>

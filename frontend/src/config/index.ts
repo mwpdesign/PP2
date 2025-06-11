@@ -58,7 +58,7 @@ const config = {
   WS_MAX_RECONNECT_ATTEMPTS: env.VITE_WS_MAX_RECONNECT_ATTEMPTS,
   WS_PING_INTERVAL: env.VITE_WS_PING_INTERVAL,
   ENDPOINTS: API_ENDPOINTS,
-  getWSEndpoint: (path: string = '/ws') => `${env.VITE_WS_URL}${path}`,
+  getWSEndpoint: (path: string = '/api/v1/realtime/ws') => `${env.VITE_WS_URL}${path}`,
   getAPIEndpoint: (path: string) => `${env.VITE_API_URL}${path}`,
   isDevelopment: () => env.VITE_ENV === 'development',
   isProduction: () => env.VITE_ENV === 'production',
@@ -66,4 +66,4 @@ const config = {
 } as const;
 
 export type Config = typeof config;
-export default config; 
+export default config;

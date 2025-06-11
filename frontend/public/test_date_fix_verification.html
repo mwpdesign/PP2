@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Fix Verification - IVR Communication</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-result {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid;
+        }
+        .success {
+            background: #d1fae5;
+            border-color: #10b981;
+            color: #065f46;
+        }
+        .error {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+        .warning {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .auth-section {
+            background: #f3f4f6;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .auth-section input {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            margin: 0 8px;
+            width: 200px;
+        }
+        pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Date Fix Verification</h1>
+        <p>This page verifies that the "Invalid Date" issue has been resolved in the IVR communication system.</p>
+
+        <div class="auth-section">
+            <h3>Authentication</h3>
+            <input type="email" id="email" placeholder="Email" value="ivr@healthcare.local">
+            <input type="password" id="password" placeholder="Password" value="ivr123">
+            <button onclick="authenticate()">Login</button>
+            <span id="auth-status">Not Authenticated</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3>🧪 Quick Date Formatting Test</h3>
+        <button onclick="testDateFormatting()">Test Date Formatting</button>
+        <div id="date-test-results"></div>
+    </div>
+
+    <div class="container">
+        <h3>💬 Live Communication Messages Test</h3>
+        <button onclick="testCommunicationMessages()">Load & Test Messages</button>
+        <div id="communication-test-results"></div>
+    </div>
+
+    <div class="container">
+        <h3>🔗 Direct Component Links</h3>
+        <p>Test the actual components to see if dates are displaying correctly:</p>
+        <div style="margin: 16px 0;">
+            <a href="/doctor/ivr/660e8400-e29b-41d4-a716-446655440001?tab=communication" target="_blank">
+                <button>🩺 Doctor View - Communication Tab</button>
+            </a>
+            <a href="/ivr-company/review/660e8400-e29b-41d4-a716-446655440001" target="_blank">
+                <button>🏢 IVR Company View</button>
+            </a>
+        </div>
+        <div class="test-result warning">
+            <strong>Expected Result:</strong> All dates should display as "Mar 15, 2024 10:30 AM" format instead of "Invalid Date"
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const TEST_IVR_ID = '660e8400-e29b-41d4-a716-446655440001';
+        let authToken = localStorage.getItem('authToken');
+
+        // Update auth status on page load
+        updateAuthStatus();
+
+        function updateAuthStatus() {
+            const statusElement = document.getElementById('auth-status');
+            if (authToken) {
+                statusElement.textContent = '✅ Authenticated';
+                statusElement.style.color = '#059669';
+            } else {
+                statusElement.textContent = '❌ Not Authenticated';
+                statusElement.style.color = '#dc2626';
+            }
+        }
+
+        async function authenticate() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    updateAuthStatus();
+                    console.log('✅ Authentication successful');
+                } else {
+                    console.error('❌ Authentication failed:', response.status);
+                    alert('Authentication failed');
+                }
+            } catch (error) {
+                console.error('❌ Authentication error:', error);
+                alert('Authentication error');
+            }
+        }
+
+        function testDateFormatting() {
+            const resultsDiv = document.getElementById('date-test-results');
+
+            // Test various date scenarios
+            const testCases = [
+                { input: '2024-03-15T10:30:00Z', label: 'Valid ISO Date' },
+                { input: null, label: 'Null Date' },
+                { input: undefined, label: 'Undefined Date' },
+                { input: '', label: 'Empty String' },
+                { input: 'invalid-date', label: 'Invalid Date String' },
+                { input: new Date().toISOString(), label: 'Current Date' }
+            ];
+
+            let html = '<h4>Date Formatting Test Results:</h4>';
+
+            testCases.forEach(testCase => {
+                let result;
+                let resultClass;
+
+                try {
+                    // Test the old way (should show Invalid Date for some)
+                    const oldWay = testCase.input ? new Date(testCase.input).toLocaleString() : 'N/A';
+
+                    // Test the new way (should handle all cases gracefully)
+                    const newWay = formatDateSafely(testCase.input);
+
+                    if (oldWay === 'Invalid Date' && newWay !== 'Invalid Date') {
+                        result = `✅ FIXED: Old="${oldWay}" → New="${newWay}"`;
+                        resultClass = 'success';
+                    } else if (oldWay === newWay && newWay !== 'Invalid Date') {
+                        result = `✅ GOOD: "${newWay}"`;
+                        resultClass = 'success';
+                    } else {
+                        result = `⚠️ CHECK: Old="${oldWay}" → New="${newWay}"`;
+                        resultClass = 'warning';
+                    }
+                } catch (error) {
+                    result = `❌ ERROR: ${error.message}`;
+                    resultClass = 'error';
+                }
+
+                html += `<div class="test-result ${resultClass}">
+                    <strong>${testCase.label}:</strong> ${result}
+                </div>`;
+            });
+
+            resultsDiv.innerHTML = html;
+        }
+
+        function formatDateSafely(dateInput) {
+            // Replicate the formatting logic from the frontend
+            if (!dateInput) {
+                return 'Not available';
+            }
+
+            try {
+                const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+
+                if (isNaN(date.getTime())) {
+                    return 'Invalid date';
+                }
+
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            } catch (error) {
+                return 'Invalid date';
+            }
+        }
+
+        async function testCommunicationMessages() {
+            const resultsDiv = document.getElementById('communication-test-results');
+            resultsDiv.innerHTML = '<p>Loading communication messages...</p>';
+
+            if (!authToken) {
+                resultsDiv.innerHTML = '<div class="test-result error">❌ Please authenticate first</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/${TEST_IVR_ID}/messages`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    let html = `<h4>Communication Messages Test (${messages.length} messages):</h4>`;
+
+                    if (messages.length === 0) {
+                        html += '<div class="test-result warning">⚠️ No messages found to test</div>';
+                    } else {
+                        let hasInvalidDates = false;
+
+                        messages.forEach((msg, index) => {
+                            const oldFormat = new Date(msg.timestamp).toLocaleString();
+                            const newFormat = formatDateSafely(msg.timestamp);
+
+                            let resultClass = 'success';
+                            let status = '✅ GOOD';
+
+                            if (oldFormat === 'Invalid Date') {
+                                hasInvalidDates = true;
+                                if (newFormat !== 'Invalid Date') {
+                                    status = '✅ FIXED';
+                                    resultClass = 'success';
+                                } else {
+                                    status = '❌ STILL BROKEN';
+                                    resultClass = 'error';
+                                }
+                            }
+
+                            html += `<div class="test-result ${resultClass}">
+                                <strong>Message ${index + 1} (${msg.author}):</strong> ${status}<br>
+                                <small>Timestamp: ${msg.timestamp} → "${newFormat}"</small>
+                            </div>`;
+                        });
+
+                        if (!hasInvalidDates) {
+                            html += '<div class="test-result success">✅ All message timestamps are valid!</div>';
+                        }
+                    }
+
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="test-result error">❌ Failed to load messages: ${response.status}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="test-result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Run initial test on page load
+        window.addEventListener('load', () => {
+            testDateFormatting();
+        });
+    </script>
+</body>
+</html>

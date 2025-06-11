@@ -14,6 +14,7 @@ from app.api.v1.endpoints import (
     auto_population,
     voice,
     ivr,
+    products,
 )
 from app.api.auth.routes import router as auth_router
 
@@ -62,4 +63,9 @@ api_router.include_router(
     ivr.router,
     prefix="/ivr",
     tags=["ivr"]
+)
+api_router.include_router(
+    products.router,
+    prefix="/products",
+    tags=["products"]
 )

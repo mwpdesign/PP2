@@ -23,10 +23,10 @@ export const createInitialTracking = (userId: string): IVRTracking => {
     createdAt: now,
     lastUpdatedAt: now,
     lastUpdatedBy: userId,
-    status: IVRStatus.DRAFT,
+    status: IVRStatus.SUBMITTED,
     statusHistory: [
       {
-        status: IVRStatus.DRAFT,
+        status: IVRStatus.SUBMITTED,
         timestamp: now,
         updatedBy: userId,
         notes: 'IVR request created'
@@ -71,4 +71,4 @@ export const updateIVRStatus = (
       }
     ]
   };
-}; 
+};

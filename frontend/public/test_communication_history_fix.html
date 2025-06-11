@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Communication History Fix</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .auth-section {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .auth-section input {
+            margin: 5px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .message-display {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            min-height: 100px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .message.system {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+        .message.doctor {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+        }
+        .message.ivr {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+        .code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Test: Communication History "Unknown User • Invalid Date" Fix</h1>
+
+    <div class="test-section">
+        <h2>📋 Task Completed</h2>
+        <p><strong>Task ID:</strong> mbrf8d843zpsb2fmbgp</p>
+        <p><strong>Issue:</strong> Communication history showing "Unknown User • Invalid Date" for all messages</p>
+
+        <h3>✅ Fixes Applied:</h3>
+        <ul>
+            <li><strong>Frontend:</strong> Proper author name handling with fallbacks</li>
+            <li><strong>Frontend:</strong> Using formatMessageTimestamp utility function</li>
+            <li><strong>Backend:</strong> Improved author name construction from user data</li>
+            <li><strong>Backend:</strong> Better fallbacks for missing user information</li>
+        </ul>
+    </div>
+
+    <div class="auth-section">
+        <h3>🔐 Authentication</h3>
+        <input type="email" id="email" placeholder="Email" value="ivr@healthcare.local">
+        <input type="password" id="password" placeholder="Password" value="ivr123">
+        <button class="test-button" onclick="authenticate()">Login</button>
+        <span id="auth-status" class="status-indicator status-warning">Not Authenticated</span>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Communication History Tests</h2>
+
+        <h3>Test 1: Load Communication Messages</h3>
+        <button class="test-button" onclick="testCommunicationMessages()">Load Messages</button>
+        <div id="communication-results" class="message-display">
+            Click "Load Messages" to test the communication history display.
+        </div>
+
+        <h3>Test 2: Check Frontend Components</h3>
+        <p>Test the actual frontend components to verify the fixes:</p>
+        <button class="test-button" onclick="openDoctorView()">🩺 Doctor View</button>
+        <button class="test-button" onclick="openIVRView()">🏢 IVR Company View</button>
+
+        <h3>Test 3: Expected vs Actual Results</h3>
+        <div class="test-section warning">
+            <h4>❌ Before Fix:</h4>
+            <ul>
+                <li>Author: "Unknown User"</li>
+                <li>Timestamp: "Invalid Date"</li>
+            </ul>
+        </div>
+
+        <div class="test-section success">
+            <h4>✅ After Fix:</h4>
+            <ul>
+                <li>Author: "Dr. [Name]", "IVR Specialist", or actual user name</li>
+                <li>Timestamp: "Jun 10, 2025 3:45 PM" format</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Technical Details</h2>
+
+        <h3>Frontend Changes:</h3>
+        <ul>
+            <li><code class="code">frontend/src/pages/doctor/ivr/[id].tsx</code> - Fixed author name and timestamp formatting</li>
+            <li><code class="code">frontend/src/pages/ivr/review/[id].tsx</code> - Fixed author name and timestamp formatting</li>
+        </ul>
+
+        <h3>Backend Changes:</h3>
+        <ul>
+            <li><code class="code">backend/app/api/v1/endpoints/ivr.py</code> - Improved author name construction</li>
+        </ul>
+
+        <h3>Key Improvements:</h3>
+        <ul>
+            <li><strong>Author Name Logic:</strong> Proper fallbacks based on user type</li>
+            <li><strong>Date Formatting:</strong> Using formatMessageTimestamp utility</li>
+            <li><strong>Error Handling:</strong> Graceful degradation for missing data</li>
+            <li><strong>User Experience:</strong> Meaningful names instead of "Unknown User"</li>
+        </ul>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const TEST_IVR_ID = '660e8400-e29b-41d4-a716-446655440004';
+        let authToken = localStorage.getItem('authToken');
+
+        // Update auth status on page load
+        updateAuthStatus();
+
+        function updateAuthStatus() {
+            const statusElement = document.getElementById('auth-status');
+            if (authToken) {
+                statusElement.textContent = '✅ Authenticated';
+                statusElement.className = 'status-indicator status-success';
+            } else {
+                statusElement.textContent = '❌ Not Authenticated';
+                statusElement.className = 'status-indicator status-error';
+            }
+        }
+
+        async function authenticate() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    updateAuthStatus();
+                    console.log('✅ Authentication successful');
+                } else {
+                    console.error('❌ Authentication failed:', response.status);
+                    alert('Authentication failed. Please check credentials.');
+                }
+            } catch (error) {
+                console.error('❌ Authentication error:', error);
+                alert('Authentication error. Please try again.');
+            }
+        }
+
+        async function testCommunicationMessages() {
+            const resultsDiv = document.getElementById('communication-results');
+            resultsDiv.innerHTML = '<p>Loading communication messages...</p>';
+
+            if (!authToken) {
+                resultsDiv.innerHTML = '<div class="test-section error">❌ Please authenticate first</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/${TEST_IVR_ID}/messages`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    let html = `<h4>✅ Messages loaded successfully (${messages.length} total):</h4>`;
+
+                    if (messages.length === 0) {
+                        html += '<div class="test-section warning">⚠️ No messages found to test</div>';
+                    } else {
+                        let hasIssues = false;
+
+                        messages.forEach((msg, index) => {
+                            const messageClass = msg.message_type === 'system' ? 'system' :
+                                               msg.author_type === 'doctor' ? 'doctor' : 'ivr';
+
+                            // Check for issues
+                            const hasUnknownUser = !msg.author || msg.author.trim() === '' || msg.author === 'Unknown User';
+                            const hasInvalidDate = !msg.timestamp || msg.timestamp === 'Invalid Date';
+
+                            if (hasUnknownUser || hasInvalidDate) {
+                                hasIssues = true;
+                            }
+
+                            // Format timestamp for display
+                            let displayTimestamp = 'Invalid Date';
+                            try {
+                                if (msg.timestamp) {
+                                    displayTimestamp = new Date(msg.timestamp).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                        hour12: true
+                                    });
+                                }
+                            } catch (error) {
+                                displayTimestamp = 'Invalid Date';
+                            }
+
+                            const statusIcon = (hasUnknownUser || hasInvalidDate) ? '❌' : '✅';
+                            const authorDisplay = msg.author || 'Unknown User';
+
+                            html += `
+                                <div class="message ${messageClass}">
+                                    <strong>${statusIcon} Message ${index + 1}:</strong><br>
+                                    <strong>Author:</strong> ${authorDisplay} (${msg.author_type})<br>
+                                    <strong>Timestamp:</strong> ${displayTimestamp}<br>
+                                    <strong>Raw Data:</strong> author="${msg.author}", timestamp="${msg.timestamp}"<br>
+                                    <em>${msg.message}</em>
+                                </div>
+                            `;
+                        });
+
+                        if (!hasIssues) {
+                            html += '<div class="test-section success">🎉 All messages display correctly! No "Unknown User" or "Invalid Date" issues found.</div>';
+                        } else {
+                            html += '<div class="test-section error">⚠️ Some messages still have display issues. Check the backend user data.</div>';
+                        }
+                    }
+
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="test-section error">❌ Failed to load messages: ${response.status}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="test-section error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function openDoctorView() {
+            const url = `/doctor/ivr/${TEST_IVR_ID}?tab=communication`;
+            window.open(url, '_blank');
+        }
+
+        function openIVRView() {
+            const url = `/ivr-company/review/${TEST_IVR_ID}`;
+            window.open(url, '_blank');
+        }
+
+        // Auto-run authentication check on page load
+        console.log('🧪 Communication History Fix Test Page Loaded');
+        console.log('📍 Task ID: mbrf8d843zpsb2fmbgp');
+        console.log('🔗 Test the fixes by loading messages and checking frontend components');
+    </script>
+</body>
+</html>

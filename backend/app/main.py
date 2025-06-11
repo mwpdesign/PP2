@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from app.api.v1.api import api_router
+from app.api.realtime.routes import router as realtime_router
 from app.core.database import init_db
 from app.core.config import get_settings
 from app.core.middleware import add_security_middleware
@@ -163,6 +164,7 @@ async def startup_event():
     # Include API routes
     try:
         app.include_router(api_router, prefix="/api/v1")
+        app.include_router(realtime_router, prefix="/api/v1/realtime")
         logger.info("API v1 routers loaded successfully")
     except Exception as e:
         logger.error(f"Failed to load API v1 routers: {str(e)}")

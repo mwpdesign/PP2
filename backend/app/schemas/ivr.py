@@ -94,6 +94,12 @@ class IVRRequestResponse(IVRRequestBase):
     id: UUID
     status: str
     products: List[ProductSelectionResponse] = Field(default_factory=list)
+
+    # Simplified Communication Fields
+    doctor_comment: Optional[str] = None
+    ivr_response: Optional[str] = None
+    comment_updated_at: Optional[datetime] = None
+
     created_at: datetime
     updated_at: datetime
 
@@ -251,3 +257,16 @@ class IVRCallResponse(IVRCallBase):
         """Pydantic config."""
 
         from_attributes = True
+
+
+# Simplified Communication Schemas
+class DoctorCommentUpdate(BaseModel):
+    """Schema for updating doctor comment."""
+
+    comment: str = Field(..., description="Doctor's comment or question")
+
+
+class IVRResponseUpdate(BaseModel):
+    """Schema for updating IVR specialist response."""
+
+    response: str = Field(..., description="IVR specialist's response")

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Timestamps - IVR Communication</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .timestamp-test {
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .error {
+            color: #dc2626;
+        }
+        .success {
+            color: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐛 Debug Timestamps</h1>
+        <p>This page helps debug the timestamp formatting issues in the IVR communication system.</p>
+
+        <button onclick="authenticate()">Login</button>
+        <button onclick="debugTimestamps()">Debug Timestamps</button>
+        <button onclick="testDateFormatting()">Test Date Formatting</button>
+
+        <div id="auth-status"></div>
+    </div>
+
+    <div class="container">
+        <h3>Raw API Response</h3>
+        <pre id="raw-response">Click "Debug Timestamps" to see raw API data</pre>
+    </div>
+
+    <div class="container">
+        <h3>Timestamp Analysis</h3>
+        <div id="timestamp-analysis"></div>
+    </div>
+
+    <div class="container">
+        <h3>Date Formatting Tests</h3>
+        <div id="formatting-tests"></div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const TEST_IVR_ID = '660e8400-e29b-41d4-a716-446655440001';
+        let authToken = localStorage.getItem('authToken');
+
+        async function authenticate() {
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'ivr@healthcare.local',
+                        password: 'ivr123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    document.getElementById('auth-status').innerHTML = '<p class="success">✅ Authenticated</p>';
+                } else {
+                    document.getElementById('auth-status').innerHTML = '<p class="error">❌ Authentication failed</p>';
+                }
+            } catch (error) {
+                document.getElementById('auth-status').innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function debugTimestamps() {
+            if (!authToken) {
+                alert('Please authenticate first');
+                return;
+            }
+
+            try {
+                // Get messages
+                const messagesResponse = await fetch(`${API_BASE}/api/v1/ivr/requests/${TEST_IVR_ID}/messages`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (messagesResponse.ok) {
+                    const messages = await messagesResponse.json();
+
+                    // Show raw response
+                    document.getElementById('raw-response').textContent = JSON.stringify(messages, null, 2);
+
+                    // Analyze timestamps
+                    let analysisHtml = '<h4>Timestamp Analysis:</h4>';
+
+                    if (messages.length === 0) {
+                        analysisHtml += '<p>No messages found</p>';
+                    } else {
+                        messages.forEach((msg, index) => {
+                            analysisHtml += `
+                                <div class="timestamp-test">
+                                    <strong>Message ${index + 1}:</strong><br>
+                                    <strong>Author:</strong> ${msg.author}<br>
+                                    <strong>Raw Timestamp:</strong> <code>${msg.timestamp}</code><br>
+                                    <strong>Type:</strong> ${typeof msg.timestamp}<br>
+                                    <strong>Is Valid:</strong> ${msg.timestamp ? 'Has value' : 'Empty/null'}<br>
+                                    <strong>new Date() result:</strong> ${msg.timestamp ? new Date(msg.timestamp).toString() : 'N/A'}<br>
+                                    <strong>toLocaleString() result:</strong> ${msg.timestamp ? new Date(msg.timestamp).toLocaleString() : 'N/A'}
+                                </div>
+                            `;
+                        });
+                    }
+
+                    document.getElementById('timestamp-analysis').innerHTML = analysisHtml;
+                } else {
+                    document.getElementById('raw-response').textContent = `Error: ${messagesResponse.status} ${messagesResponse.statusText}`;
+                }
+            } catch (error) {
+                document.getElementById('raw-response').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function testDateFormatting() {
+            const testCases = [
+                '2024-03-15T10:30:00Z',
+                '2024-03-15T10:30:00.000Z',
+                '2024-03-15 10:30:00',
+                null,
+                undefined,
+                '',
+                'invalid-date',
+                new Date().toISOString()
+            ];
+
+            let html = '<h4>Date Formatting Test Results:</h4>';
+
+            testCases.forEach((testCase, index) => {
+                let result;
+                let error = null;
+
+                try {
+                    if (testCase) {
+                        const date = new Date(testCase);
+                        if (!isNaN(date.getTime())) {
+                            result = date.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            });
+                        } else {
+                            result = 'Invalid date';
+                        }
+                    } else {
+                        result = 'Not available';
+                    }
+                } catch (e) {
+                    result = 'Error';
+                    error = e.message;
+                }
+
+                html += `
+                    <div class="timestamp-test">
+                        <strong>Test ${index + 1}:</strong><br>
+                        <strong>Input:</strong> <code>${JSON.stringify(testCase)}</code><br>
+                        <strong>Result:</strong> ${result}<br>
+                        ${error ? `<strong>Error:</strong> ${error}<br>` : ''}
+                    </div>
+                `;
+            });
+
+            document.getElementById('formatting-tests').innerHTML = html;
+        }
+
+        // Auto-authenticate if token exists
+        if (authToken) {
+            document.getElementById('auth-status').innerHTML = '<p class="success">✅ Already authenticated</p>';
+        }
+    </script>
+</body>
+</html>

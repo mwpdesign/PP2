@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Name Consistency Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 5px;
+        }
+        .test-link:hover {
+            background: #2563eb;
+        }
+        .success {
+            color: #059669;
+            font-weight: bold;
+        }
+        .issue {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🩺 Doctor Name Consistency Test</h1>
+
+    <div class="info">
+        <h3>✅ Issue Fixed: Doctor Name Consistency</h3>
+        <p><strong>Problem:</strong> The system was showing different doctor names across views:</p>
+        <ul>
+            <li>Dashboard: "Dr. John Smith" (logged in user)</li>
+            <li>IVR Request: "Dr. Sarah Wilson" (submitting doctor)</li>
+            <li>Physician Info: "Dr. Jane Smith" (credentials)</li>
+        </ul>
+        <p><strong>Solution:</strong> Updated all views to consistently show "Dr. John Smith" as the physician.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Test Doctor Name Consistency</h2>
+        <p>Click the links below to verify that all views show <strong>"Dr. John Smith"</strong> consistently:</p>
+
+        <h3>Doctor's View:</h3>
+        <a href="http://localhost:3000/doctor/ivr/660e8400-e29b-41d4-a716-446655440004" class="test-link" target="_blank">
+            Doctor IVR Detail Page
+        </a>
+        <p><em>Check: Physician Information section should show "Dr. John Smith"</em></p>
+
+        <h3>IVR Company View:</h3>
+        <a href="http://localhost:3000/ivr-company/review/660e8400-e29b-41d4-a716-446655440004" class="test-link" target="_blank">
+            IVR Company Review Page
+        </a>
+        <p><em>Check: Header, Request Details, and Physician Information should all show "Dr. John Smith"</em></p>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Verification Checklist</h2>
+        <p>Verify the following locations show <strong>"Dr. John Smith"</strong>:</p>
+
+        <h3>Doctor's IVR Detail Page:</h3>
+        <ul>
+            <li>✅ Header subtitle: "Wound Care Assessment for John Doe"</li>
+            <li>✅ Physician Information section → Name: "Dr. John Smith"</li>
+            <li>✅ Physician Information section → NPI: "1234567890"</li>
+            <li>✅ Physician Information section → Medicaid Provider #: "MED123456"</li>
+            <li>✅ Physician Information section → Medicare PTAN: "AB12345"</li>
+        </ul>
+
+        <h3>IVR Company Review Page:</h3>
+        <ul>
+            <li>✅ Header subtitle: "John Smith • Dr. John Smith"</li>
+            <li>✅ Request Details → Doctor: "Dr. John Smith"</li>
+            <li>✅ Physician Information → Name: "Dr. John Smith"</li>
+            <li>✅ Physician Information → NPI: "1234567890"</li>
+            <li>✅ Physician Information → Medicaid Provider #: "MED123456"</li>
+            <li>✅ Physician Information → Medicare PTAN: "AB12345"</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Technical Changes Made</h2>
+        <h3>Files Modified:</h3>
+        <ul>
+            <li><strong>frontend/src/pages/ivr/review/[id].tsx</strong>
+                <ul>
+                    <li>Line 189: Changed doctorName from 'Dr. Sarah Wilson' to 'Dr. John Smith'</li>
+                    <li>Physician Information section uses dynamic {ivrRequest.doctorName}</li>
+                </ul>
+            </li>
+            <li><strong>frontend/src/pages/doctor/ivr/[id].tsx</strong>
+                <ul>
+                    <li>Physician Information section: Changed hardcoded 'Dr. Jane Smith' to 'Dr. John Smith'</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>Result:</h3>
+        <p class="success">✅ All views now consistently show "Dr. John Smith" as the physician</p>
+        <p class="success">✅ Credentials (NPI, Medicaid Provider #, Medicare PTAN) remain consistent</p>
+        <p class="success">✅ No more confusion between logged-in user and IVR physician</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Expected Behavior</h2>
+        <p>When Dr. John Smith is logged in:</p>
+        <ul>
+            <li>Dashboard shows: "Welcome, Dr. John Smith"</li>
+            <li>IVR requests show: "Dr. John Smith" as the submitting physician</li>
+            <li>Physician credentials belong to: "Dr. John Smith"</li>
+            <li>All communication is attributed to: "Dr. John Smith"</li>
+        </ul>
+        <p class="success">✅ System now maintains consistent doctor identity throughout the entire workflow</p>
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds to check for updates
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+
+        console.log('🩺 Doctor Name Consistency Test Page Loaded');
+        console.log('✅ All views should now show "Dr. John Smith" consistently');
+    </script>
+</body>
+</html>

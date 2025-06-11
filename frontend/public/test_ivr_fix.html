@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVR Fix Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-link {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #2C3E50;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background-color: #375788;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .fixes {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 IVR Submission Fix Verification</h1>
+
+        <div class="fixes">
+            <h3>✅ Fixes Applied:</h3>
+            <ul>
+                <li><strong>Fixed IVRStatus.DRAFT:</strong> Changed to IVRStatus.SUBMITTED in both IVR submission page and ivrUtils.ts</li>
+                <li><strong>Fixed IVRFormHeader:</strong> Added null check for tracking.status to prevent .replace() error</li>
+                <li><strong>Fixed Toast Import:</strong> Changed from react-toastify to react-hot-toast in PatientAndTreatmentStep</li>
+                <li><strong>Updated Status Colors:</strong> Added all valid IVR status values to getStatusColor function</li>
+            </ul>
+        </div>
+
+        <div class="status info">
+            <strong>🎯 Test the Fixed Route:</strong><br>
+            Click the link below to test the IVR submission page that was previously showing "Something went wrong"
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="http://localhost:3000/doctor/ivr/submit/P-1234" class="test-link" target="_blank">
+                🚀 Test IVR Submission for P-1234
+            </a>
+        </div>
+
+        <div class="status success">
+            <strong>Expected Result:</strong><br>
+            • Should load the IVR submission form without errors<br>
+            • Should show patient information for "John Doe"<br>
+            • Should display the 4-step form process<br>
+            • Should show smart auto-population features<br>
+            • No more "Something went wrong" error page
+        </div>
+
+        <h3>🔍 If Still Having Issues:</h3>
+        <ol>
+            <li>Open browser DevTools (F12)</li>
+            <li>Check Console tab for any remaining JavaScript errors</li>
+            <li>Ensure you're logged in as a doctor (doctor@healthcare.local / doctor123)</li>
+            <li>Try refreshing the page</li>
+            <li>Check that both frontend (localhost:3000) and backend (localhost:8000) are running</li>
+        </ol>
+
+        <div style="margin-top: 30px; padding: 15px; background-color: #f8f9fa; border-radius: 6px;">
+            <strong>🔗 Additional Test Links:</strong><br>
+            <a href="http://localhost:3000/login" target="_blank">Login Page</a> |
+            <a href="http://localhost:3000/doctor/patients/select" target="_blank">Patient Selection</a> |
+            <a href="http://localhost:3000/doctor/ivr" target="_blank">IVR Management</a>
+        </div>
+    </div>
+
+    <script>
+        // Simple status check
+        console.log('IVR Fix Verification Page Loaded');
+        console.log('Timestamp:', new Date().toISOString());
+
+        // Check if we can reach the frontend
+        fetch('http://localhost:3000')
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ Frontend server is running');
+                } else {
+                    console.log('❌ Frontend server error');
+                }
+            })
+            .catch(error => {
+                console.log('❌ Frontend server not reachable:', error);
+            });
+    </script>
+</body>
+</html>

@@ -197,7 +197,8 @@ def add_security_middleware(app):
     """Add all security middleware to the FastAPI app."""
     # Add middleware in reverse order (last added = first executed)
     app.add_middleware(PHIProtectionMiddleware)
-    app.add_middleware(RateLimitingMiddleware, calls_per_minute=100)
+    # Increased to 500 for development to prevent polling issues
+    app.add_middleware(RateLimitingMiddleware, calls_per_minute=500)
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
 

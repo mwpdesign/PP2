@@ -1,9 +1,12 @@
 export enum IVRStatus {
-  DRAFT = 'draft',
   SUBMITTED = 'submitted',
   IN_REVIEW = 'in_review',
+  PENDING_APPROVAL = 'pending_approval',
+  DOCUMENTS_REQUESTED = 'documents_requested',
   APPROVED = 'approved',
-  REJECTED = 'rejected'
+  REJECTED = 'rejected',
+  ESCALATED = 'escalated',
+  CANCELLED = 'cancelled'
 }
 
 export enum IVRPriority {

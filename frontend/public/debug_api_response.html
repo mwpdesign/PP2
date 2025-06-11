@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Response Debug</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+        .container { background: white; padding: 20px; border-radius: 8px; margin: 10px 0; }
+        .json { background: #f8f8f8; padding: 15px; border-radius: 4px; white-space: pre-wrap; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>🔍 API Response Structure Debug</h1>
+
+    <div class="container">
+        <h2>Authentication</h2>
+        <button onclick="authAsDoctor()">Auth as Doctor</button>
+        <button onclick="authAsIVR()">Auth as IVR Specialist</button>
+        <div id="auth-status">Not authenticated</div>
+    </div>
+
+    <div class="container">
+        <h2>API Response Analysis</h2>
+        <button onclick="checkAPIResponse()">Check GET /api/v1/ivr/requests/{id}</button>
+        <div id="api-analysis"></div>
+    </div>
+
+    <div class="container">
+        <h2>Field Mapping Check</h2>
+        <button onclick="testFieldMapping()">Test Field Mapping</button>
+        <div id="field-mapping"></div>
+    </div>
+
+    <script>
+        const IVR_ID = '660e8400-e29b-41d4-a716-446655440004';
+        let authToken = null;
+
+        async function authAsDoctor() {
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'doctor@healthcare.local',
+                        password: 'doctor123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    document.getElementById('auth-status').innerHTML = '<span class="success">✅ Authenticated as Doctor</span>';
+                } else {
+                    document.getElementById('auth-status').innerHTML = '<span class="error">❌ Doctor auth failed</span>';
+                }
+            } catch (error) {
+                document.getElementById('auth-status').innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function authAsIVR() {
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'ivr@healthcare.local',
+                        password: 'ivr123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    document.getElementById('auth-status').innerHTML = '<span class="success">✅ Authenticated as IVR Specialist</span>';
+                } else {
+                    document.getElementById('auth-status').innerHTML = '<span class="error">❌ IVR auth failed</span>';
+                }
+            } catch (error) {
+                document.getElementById('auth-status').innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function checkAPIResponse() {
+            if (!authToken) {
+                document.getElementById('api-analysis').innerHTML = '<span class="error">❌ Please authenticate first</span>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/ivr/requests/${IVR_ID}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    document.getElementById('api-analysis').innerHTML = `
+                        <h3>✅ API Response Received</h3>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Response Size:</strong> ${JSON.stringify(data).length} characters</p>
+
+                        <h4>🔍 Communication Fields Analysis:</h4>
+                        <ul>
+                            <li><strong>doctor_comment:</strong> ${data.doctor_comment !== undefined ? '✅ EXISTS' : '❌ MISSING'} - Value: "${data.doctor_comment || 'null/empty'}"</li>
+                            <li><strong>ivr_response:</strong> ${data.ivr_response !== undefined ? '✅ EXISTS' : '❌ MISSING'} - Value: "${data.ivr_response || 'null/empty'}"</li>
+                            <li><strong>comment_updated_at:</strong> ${data.comment_updated_at !== undefined ? '✅ EXISTS' : '❌ MISSING'} - Value: "${data.comment_updated_at || 'null/empty'}"</li>
+                        </ul>
+
+                        <h4>📋 Full Response Structure:</h4>
+                        <div class="json">${JSON.stringify(data, null, 2)}</div>
+                    `;
+                } else {
+                    document.getElementById('api-analysis').innerHTML = `<span class="error">❌ API Error: ${response.status}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('api-analysis').innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function testFieldMapping() {
+            if (!authToken) {
+                document.getElementById('field-mapping').innerHTML = '<span class="error">❌ Please authenticate first</span>';
+                return;
+            }
+
+            try {
+                // Test comment submission
+                const commentResponse = await fetch(`/api/v1/ivr/requests/${IVR_ID}/doctor-comment`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ comment: `Debug test comment - ${new Date().toISOString()}` })
+                });
+
+                let commentResult = '';
+                if (commentResponse.ok) {
+                    const commentData = await commentResponse.json();
+                    commentResult = `✅ Comment submission successful. Response fields: ${Object.keys(commentData).join(', ')}`;
+                } else {
+                    commentResult = `❌ Comment submission failed: ${commentResponse.status}`;
+                }
+
+                // Test response submission
+                const responseResponse = await fetch(`/api/v1/ivr/requests/${IVR_ID}/ivr-response`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ response: `Debug test response - ${new Date().toISOString()}` })
+                });
+
+                let responseResult = '';
+                if (responseResponse.ok) {
+                    const responseData = await responseResponse.json();
+                    responseResult = `✅ Response submission successful. Response fields: ${Object.keys(responseData).join(', ')}`;
+                } else {
+                    responseResult = `❌ Response submission failed: ${responseResponse.status}`;
+                }
+
+                // Get fresh data
+                const getResponse = await fetch(`/api/v1/ivr/requests/${IVR_ID}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                let getResult = '';
+                if (getResponse.ok) {
+                    const getData = await getResponse.json();
+                    getResult = `
+                        <h4>📊 Fresh Data Check:</h4>
+                        <ul>
+                            <li><strong>doctor_comment:</strong> "${getData.doctor_comment || 'empty'}"</li>
+                            <li><strong>ivr_response:</strong> "${getData.ivr_response || 'empty'}"</li>
+                            <li><strong>comment_updated_at:</strong> "${getData.comment_updated_at || 'empty'}"</li>
+                        </ul>
+                    `;
+                } else {
+                    getResult = `❌ Fresh data fetch failed: ${getResponse.status}`;
+                }
+
+                document.getElementById('field-mapping').innerHTML = `
+                    <h3>🧪 Field Mapping Test Results</h3>
+                    <p>${commentResult}</p>
+                    <p>${responseResult}</p>
+                    ${getResult}
+                `;
+
+            } catch (error) {
+                document.getElementById('field-mapping').innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -2,49 +2,45 @@
 """Check IVR data in the database."""
 
 import asyncio
-import os
-import sys
-
-# Add the backend directory to the Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-# Import after path modification
-from app.core.database import get_db  # noqa: E402
-from app.models.ivr import IVRRequest  # noqa: E402
+from app.core.database import engine
+from sqlalchemy import text
 
 
 async def check_ivr_data():
     """Check IVR data in the database."""
-    try:
-        async for db in get_db():
-            # Query all IVR requests
-            from sqlalchemy import select
+    async with engine.begin() as conn:
+        # Check IVR requests with more details
+        result = await conn.execute(text(
+            "SELECT id, status, service_type, doctor_comment, ivr_response, created_at "
+            "FROM ivr_requests ORDER BY created_at DESC LIMIT 5;"
+        ))
+        requests = result.fetchall()
+        print("=== IVR REQUESTS DETAILS ===")
+        for req in requests:
+            print(f"ID: {req[0]}")
+            print(f"  Status: {req[1]}")
+            print(f"  Service: {req[2]}")
+            print(f"  Doctor Comment: {req[3] or 'None'}")
+            print(f"  IVR Response: {req[4] or 'None'}")
+            print(f"  Created: {req[5]}")
+            print()
 
-            result = await db.execute(select(IVRRequest))
-            ivr_requests = result.scalars().all()
+        # Check communication messages
+        result = await conn.execute(text("SELECT COUNT(*) FROM ivr_communication_messages;"))
+        count = result.scalar()
+        print("=== COMMUNICATION MESSAGES ===")
+        print(f"Total messages: {count}")
 
-            print(f"Total IVR requests in database: {len(ivr_requests)}")
-            print("-" * 50)
-
-            for ivr in ivr_requests:
-                print(f"ID: {ivr.id}")
-                print(f"Status: {ivr.status}")
-                print(f"Patient ID: {ivr.patient_id}")
-                print(f"Provider ID: {ivr.provider_id}")
-                print(f"Facility ID: {ivr.facility_id}")
-                print(f"Service Type: {ivr.service_type}")
-                print(f"Priority: {ivr.priority}")
-                print(f"Current Reviewer: {ivr.current_reviewer_id}")
-                print(f"Created: {ivr.created_at}")
-                print(f"Updated: {ivr.updated_at}")
-                print("-" * 30)
-
-            break  # Only need one session
-
-    except Exception as e:
-        print(f"Error checking IVR data: {e}")
-        import traceback
-        traceback.print_exc()
+        if count > 0:
+            result = await conn.execute(text(
+                "SELECT ivr_request_id, author_name, message, created_at "
+                "FROM ivr_communication_messages ORDER BY created_at DESC LIMIT 3;"
+            ))
+            messages = result.fetchall()
+            print("Sample messages:")
+            for msg in messages:
+                message_preview = msg[2][:50] + "..." if len(msg[2]) > 50 else msg[2]
+                print(f"  IVR: {msg[0]}, Author: {msg[1]}, Message: {message_preview}, Created: {msg[3]}")
 
 
 if __name__ == "__main__":

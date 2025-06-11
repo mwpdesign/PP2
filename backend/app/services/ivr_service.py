@@ -11,12 +11,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.models.ivr import IVRSession, IVRRequest, IVRProduct, IVRProductSize
+from app.models.ivr import (
+    IVRSession, IVRRequest, IVRProduct, IVRProductSize, IVRCommunicationMessage
+)
 from app.schemas.ivr import (
     IVRSessionCreate, IVRSessionUpdate, IVRRequestCreate,
     ProductSelectionCreate
 )
 from app.core.exceptions import ValidationError
+from app.services.websocket_service import websocket_manager
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +73,9 @@ class IVRService:
             if not ivr_session:
                 return None
 
-            for field, value in session_data.model_dump(exclude_unset=True).items():
+            for field, value in session_data.model_dump(
+                exclude_unset=True
+            ).items():
                 setattr(ivr_session, field, value)
             ivr_session.updated_at = datetime.utcnow()
 
@@ -106,10 +111,20 @@ class IVRService:
             # Create products and their sizes
             if request_data.selected_products:
                 for product_data in request_data.selected_products:
-                    await self._create_ivr_product(ivr_request.id, product_data)
+                    await self._create_ivr_product(
+                        ivr_request.id, product_data
+                    )
 
             await self.db.commit()
             await self.db.refresh(ivr_request)
+
+            # Broadcast IVR creation via WebSocket
+            await self._broadcast_ivr_update(
+                ivr_request,
+                "created",
+                {"message": "New IVR request created"}
+            )
+
             return ivr_request
         except Exception as e:
             logger.error("Failed to create IVR request: %s", str(e))
@@ -157,7 +172,9 @@ class IVRService:
             result = await self.db.execute(
                 select(IVRRequest)
                 .options(
-                    selectinload(IVRRequest.products).selectinload(IVRProduct.sizes)
+                    selectinload(IVRRequest.products).selectinload(
+                        IVRProduct.sizes
+                    )
                 )
                 .where(IVRRequest.id == request_id)
             )
@@ -177,7 +194,9 @@ class IVRService:
             query = (
                 select(IVRRequest)
                 .options(
-                    selectinload(IVRRequest.products).selectinload(IVRProduct.sizes)
+                    selectinload(IVRRequest.products).selectinload(
+                        IVRProduct.sizes
+                    )
                 )
                 .offset(skip)
                 .limit(limit)
@@ -186,7 +205,9 @@ class IVRService:
             if filters:
                 for field, value in filters.items():
                     if hasattr(IVRRequest, field):
-                        query = query.where(getattr(IVRRequest, field) == value)
+                        query = query.where(
+                            getattr(IVRRequest, field) == value
+                        )
 
             result = await self.db.execute(query)
             return result.scalars().all()
@@ -198,13 +219,17 @@ class IVRService:
         self,
         request_id: UUID,
         new_status: str,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
+        user_id: Optional[UUID] = None
     ) -> Optional[IVRRequest]:
-        """Update IVR request status and metadata."""
+        """Update IVR request status and metadata with WebSocket broadcast."""
         try:
             ivr_request = await self.get_ivr_request(request_id)
             if not ivr_request:
                 return None
+
+            # Store previous status for comparison
+            previous_status = ivr_request.status
 
             # Update status
             ivr_request.status = new_status
@@ -219,11 +244,72 @@ class IVRService:
 
             await self.db.commit()
             await self.db.refresh(ivr_request)
+
+            # Broadcast status change via WebSocket
+            await self._broadcast_ivr_update(
+                ivr_request,
+                "status_changed",
+                {
+                    "previous_status": previous_status,
+                    "new_status": new_status,
+                    "changed_by": str(user_id) if user_id else None,
+                    "metadata": metadata
+                }
+            )
+
             return ivr_request
         except Exception as e:
             logger.error("Failed to update IVR request status: %s", str(e))
             await self.db.rollback()
             raise
+
+    async def _broadcast_ivr_update(
+        self,
+        ivr_request: IVRRequest,
+        update_type: str,
+        additional_data: Optional[Dict] = None
+    ) -> None:
+        """Broadcast IVR update via WebSocket."""
+        try:
+            # Get organization ID from the request
+            # For now, we'll use a default organization ID
+            # In a real implementation, this would come from the user/request
+            organization_id = UUID("00000000-0000-0000-0000-000000000001")
+
+            # Prepare metadata
+            broadcast_metadata = {
+                "update_type": update_type,
+                "ivr_id": str(ivr_request.id),
+                "patient_id": str(ivr_request.patient_id),
+                "provider_id": str(ivr_request.provider_id),
+                "service_type": ivr_request.service_type,
+                "priority": ivr_request.priority,
+                "notes": ivr_request.notes,
+                **(additional_data or {})
+            }
+
+            # Broadcast the update
+            await websocket_manager.broadcast_ivr_status_update(
+                ivr_id=str(ivr_request.id),
+                status=ivr_request.status,
+                organization_id=organization_id,
+                metadata=broadcast_metadata
+            )
+
+            logger.info(
+                "Broadcasted IVR update: id=%s, type=%s, status=%s",
+                ivr_request.id,
+                update_type,
+                ivr_request.status
+            )
+
+        except Exception as e:
+            logger.error(
+                "Failed to broadcast IVR update: %s",
+                str(e),
+                exc_info=True
+            )
+            # Don't raise the exception as this is a non-critical operation
 
     async def _validate_status_transition(
         self, session: IVRSession, new_status: str
@@ -239,7 +325,8 @@ class IVRService:
 
         if new_status not in valid_transitions.get(session.status, []):
             raise ValidationError(
-                f"Invalid status transition from {session.status} to {new_status}"
+                f"Invalid status transition from {session.status} "
+                f"to {new_status}"
             )
 
     async def delete_session(self, session_id: UUID) -> bool:
@@ -277,4 +364,129 @@ class IVRService:
             return result.scalars().all()
         except Exception as e:
             logger.error("Failed to list IVR sessions: %s", str(e))
+            raise
+
+    async def add_communication_message(
+        self,
+        ivr_request_id: UUID,
+        author_id: UUID,
+        message: str,
+        author_type: str,
+        author_name: str,
+        message_type: str = "text",
+        attachments: Optional[List[Dict]] = None
+    ) -> IVRCommunicationMessage:
+        """Add a communication message to an IVR request."""
+        try:
+            communication_message = IVRCommunicationMessage(
+                ivr_request_id=ivr_request_id,
+                author_id=author_id,
+                message=message,
+                message_type=message_type,
+                author_type=author_type,
+                author_name=author_name,
+                attachments=attachments or [],
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+            self.db.add(communication_message)
+            await self.db.commit()
+            await self.db.refresh(communication_message)
+
+            # Broadcast new communication message
+            await self._broadcast_ivr_update(
+                await self.get_ivr_request(ivr_request_id),
+                "communication_added",
+                {
+                    "message_id": str(communication_message.id),
+                    "author_type": author_type,
+                    "author_name": author_name,
+                    "message_type": message_type
+                }
+            )
+
+            return communication_message
+        except Exception as e:
+            logger.error("Failed to add communication message: %s", str(e))
+            await self.db.rollback()
+            raise
+
+    async def get_communication_messages(
+        self,
+        ivr_request_id: UUID
+    ) -> List[IVRCommunicationMessage]:
+        """Get all communication messages for an IVR request."""
+        try:
+            result = await self.db.execute(
+                select(IVRCommunicationMessage)
+                .where(
+                    IVRCommunicationMessage.ivr_request_id == ivr_request_id
+                )
+                .order_by(IVRCommunicationMessage.created_at)
+            )
+            return result.scalars().all()
+        except Exception as e:
+            logger.error("Failed to get communication messages: %s", str(e))
+            raise
+
+    async def update_doctor_comment(
+        self,
+        request_id: UUID,
+        comment: str
+    ) -> Optional[IVRRequest]:
+        """Update doctor comment for an IVR request."""
+        try:
+            ivr_request = await self.get_ivr_request(request_id)
+            if not ivr_request:
+                return None
+
+            ivr_request.doctor_comment = comment
+            ivr_request.comment_updated_at = datetime.utcnow()
+            ivr_request.updated_at = datetime.utcnow()
+
+            await self.db.commit()
+            await self.db.refresh(ivr_request)
+
+            # Broadcast comment update
+            await self._broadcast_ivr_update(
+                ivr_request,
+                "doctor_comment_updated",
+                {"comment_length": len(comment)}
+            )
+
+            return ivr_request
+        except Exception as e:
+            logger.error("Failed to update doctor comment: %s", str(e))
+            await self.db.rollback()
+            raise
+
+    async def update_ivr_response(
+        self,
+        request_id: UUID,
+        response: str
+    ) -> Optional[IVRRequest]:
+        """Update IVR specialist response for an IVR request."""
+        try:
+            ivr_request = await self.get_ivr_request(request_id)
+            if not ivr_request:
+                return None
+
+            ivr_request.ivr_response = response
+            ivr_request.comment_updated_at = datetime.utcnow()
+            ivr_request.updated_at = datetime.utcnow()
+
+            await self.db.commit()
+            await self.db.refresh(ivr_request)
+
+            # Broadcast response update
+            await self._broadcast_ivr_update(
+                ivr_request,
+                "ivr_response_updated",
+                {"response_length": len(response)}
+            )
+
+            return ivr_request
+        except Exception as e:
+            logger.error("Failed to update IVR response: %s", str(e))
+            await self.db.rollback()
             raise

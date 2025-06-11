@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Communication Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #007bff; }
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            overflow-x: auto;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+        }
+        .log {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #fff;
+            border-radius: 4px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-pending { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Backend Communication Debug Test</h1>
+        <p>This page tests the IVR communication endpoints to debug the 500 errors.</p>
+
+        <div class="test-section">
+            <h2>1. Authentication Test</h2>
+            <button onclick="testAuth()">🔐 Test Login</button>
+            <div id="auth-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. IVR Request Test</h2>
+            <button onclick="testGetIVRRequest()">📋 Get IVR Request</button>
+            <div id="ivr-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Communication Messages Test</h2>
+            <button onclick="testGetMessages()">📥 Get Messages</button>
+            <button onclick="testSendMessage()">📤 Send Message</button>
+            <div id="messages-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Debug Log</h2>
+            <button onclick="clearLog()">🗑️ Clear Log</button>
+            <div id="debug-log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/v1';
+        let authToken = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('debug-log').innerHTML = '';
+        }
+
+        function setStatus(elementId, status, message) {
+            const element = document.getElementById(elementId);
+            const statusClass = status === 'success' ? 'status-success' :
+                               status === 'error' ? 'status-error' : 'status-pending';
+            element.innerHTML = `<span class="status-indicator ${statusClass}"></span>${message}`;
+        }
+
+        async function testAuth() {
+            log('🔐 Testing authentication...', 'info');
+            setStatus('auth-result', 'pending', 'Testing authentication...');
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'username=ivr@healthcare.local&password=ivr123'
+                });
+
+                log(`Auth response status: ${response.status}`, 'info');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    log('✅ Authentication successful!', 'success');
+                    setStatus('auth-result', 'success',
+                        `✅ Logged in successfully<br><small>Token: ${authToken.substring(0, 50)}...</small>`);
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ Auth failed: ${response.status} - ${errorText}`, 'error');
+                    setStatus('auth-result', 'error', `❌ Login failed: ${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ Auth error: ${error.message}`, 'error');
+                setStatus('auth-result', 'error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function testGetIVRRequest() {
+            if (!authToken) {
+                log('❌ No auth token. Please login first.', 'error');
+                setStatus('ivr-result', 'error', '❌ Please login first');
+                return;
+            }
+
+            log('📋 Testing IVR request retrieval...', 'info');
+            setStatus('ivr-result', 'pending', 'Getting IVR request...');
+
+            const ivrId = '660e8400-e29b-41d4-a716-446655440005'; // Real IVR ID from database
+
+            try {
+                const response = await fetch(`${API_BASE}/ivr/requests/${ivrId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                log(`IVR request response status: ${response.status}`, 'info');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ IVR request retrieved successfully!', 'success');
+                    setStatus('ivr-result', 'success',
+                        `✅ IVR Request found<br><pre>${JSON.stringify(data, null, 2)}</pre>`);
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ IVR request failed: ${response.status} - ${errorText}`, 'error');
+                    setStatus('ivr-result', 'error',
+                        `❌ Failed: ${response.status}<br><pre>${errorText}</pre>`);
+                }
+            } catch (error) {
+                log(`❌ IVR request error: ${error.message}`, 'error');
+                setStatus('ivr-result', 'error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function testGetMessages() {
+            if (!authToken) {
+                log('❌ No auth token. Please login first.', 'error');
+                setStatus('messages-result', 'error', '❌ Please login first');
+                return;
+            }
+
+            log('📥 Testing get communication messages...', 'info');
+            setStatus('messages-result', 'pending', 'Getting messages...');
+
+            const ivrId = '660e8400-e29b-41d4-a716-446655440005'; // Real IVR ID from database
+
+            try {
+                const response = await fetch(`${API_BASE}/ivr/requests/${ivrId}/messages`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                log(`Get messages response status: ${response.status}`, 'info');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ Messages retrieved successfully!', 'success');
+                    setStatus('messages-result', 'success',
+                        `✅ Messages retrieved (${data.length} messages)<br><pre>${JSON.stringify(data, null, 2)}</pre>`);
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ Get messages failed: ${response.status} - ${errorText}`, 'error');
+                    setStatus('messages-result', 'error',
+                        `❌ Failed: ${response.status}<br><pre>${errorText}</pre>`);
+                }
+            } catch (error) {
+                log(`❌ Get messages error: ${error.message}`, 'error');
+                setStatus('messages-result', 'error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        async function testSendMessage() {
+            if (!authToken) {
+                log('❌ No auth token. Please login first.', 'error');
+                setStatus('messages-result', 'error', '❌ Please login first');
+                return;
+            }
+
+            log('📤 Testing send communication message...', 'info');
+            setStatus('messages-result', 'pending', 'Sending message...');
+
+            const ivrId = '660e8400-e29b-41d4-a716-446655440005'; // Real IVR ID from database
+
+            const messageData = {
+                message: `Test message from debug tool at ${new Date().toLocaleTimeString()}`,
+                message_type: "text",
+                attachments: []
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/ivr/requests/${ivrId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(messageData)
+                });
+
+                log(`Send message response status: ${response.status}`, 'info');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ Message sent successfully!', 'success');
+                    setStatus('messages-result', 'success',
+                        `✅ Message sent successfully<br><pre>${JSON.stringify(data, null, 2)}</pre>`);
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ Send message failed: ${response.status} - ${errorText}`, 'error');
+                    setStatus('messages-result', 'error',
+                        `❌ Failed: ${response.status}<br><pre>${errorText}</pre>`);
+                }
+            } catch (error) {
+                log(`❌ Send message error: ${error.message}`, 'error');
+                setStatus('messages-result', 'error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        // Auto-load token if available
+        window.onload = function() {
+            const savedToken = localStorage.getItem('authToken');
+            if (savedToken) {
+                authToken = savedToken;
+                log('✅ Found saved auth token', 'success');
+                setStatus('auth-result', 'success',
+                    `✅ Using saved token: ${savedToken.substring(0, 50)}...`);
+            }
+            log('🚀 Debug page loaded. Ready to test!', 'info');
+        };
+    </script>
+</body>
+</html>

@@ -10,7 +10,7 @@ from app.core.security import (
     get_current_user,
     require_permissions,
 )
-from app.models.ivr import IVRRequest, IVRDocument
+# Models imported for type checking only
 from app.schemas.ivr import (
     IVRRequestCreate,
     IVRRequestResponse,
@@ -24,7 +24,10 @@ from app.schemas.ivr import (
     IVRCallCreate,
     IVRCallUpdate,
     IVRCallResponse,
+    DoctorCommentUpdate,
+    IVRResponseUpdate,
 )
+from app.schemas.token import TokenData
 from app.services.ivr_service import IVRService
 from app.services.s3_service import S3Service
 from pydantic import BaseModel
@@ -52,6 +55,23 @@ class DocumentRequestData(BaseModel):
     additional_instructions: str
 
 
+# Communication schemas
+class CommunicationMessageCreate(BaseModel):
+    message: str
+    message_type: str = "text"  # text, file, system
+    attachments: List[dict] = []
+
+
+class CommunicationMessageResponse(BaseModel):
+    id: str
+    message: str
+    author: str
+    author_type: str  # doctor, ivr_specialist, system
+    timestamp: str
+    message_type: str
+    attachments: List[dict] = []
+
+
 class ActionResponse(BaseModel):
     success: bool
     message: str
@@ -60,7 +80,9 @@ class ActionResponse(BaseModel):
 
 
 @router.post(
-    "/requests", response_model=IVRRequestResponse, status_code=status.HTTP_201_CREATED
+    "/requests",
+    response_model=IVRRequestResponse,
+    status_code=status.HTTP_201_CREATED
 )
 async def create_ivr_request(
     request: IVRRequestCreate,
@@ -143,6 +165,75 @@ async def list_ivr_requests(
         )
 
 
+# Simplified Communication Endpoints
+@router.put("/requests/{request_id}/doctor-comment")
+async def update_doctor_comment(
+    request_id: UUID,
+    comment_data: DoctorCommentUpdate,
+    current_user: TokenData = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update doctor comment for an IVR request."""
+    try:
+        ivr_service = IVRService(db)
+
+        # Verify the IVR request exists
+        ivr_request = await ivr_service.get_ivr_request(request_id)
+        if not ivr_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR request not found"
+            )
+
+        # Update the doctor comment
+        updated_request = await ivr_service.update_doctor_comment(
+            request_id, comment_data.comment
+        )
+
+        return updated_request
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update doctor comment: {str(e)}"
+        )
+
+
+@router.put("/requests/{request_id}/ivr-response")
+async def update_ivr_response(
+    request_id: UUID,
+    response_data: IVRResponseUpdate,
+    current_user: TokenData = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update IVR specialist response for an IVR request."""
+    try:
+        ivr_service = IVRService(db)
+
+        # Verify the IVR request exists
+        ivr_request = await ivr_service.get_ivr_request(request_id)
+        if not ivr_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR request not found"
+            )
+
+        # Update the IVR response
+        updated_request = await ivr_service.update_ivr_response(
+            request_id, response_data.response
+        )
+
+        return updated_request
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update IVR response: {str(e)}"
+        )
+
+
 @router.post("/requests/{request_id}/approve", response_model=ActionResponse)
 async def approve_ivr_request(
     request_id: UUID,
@@ -174,7 +265,7 @@ async def approve_ivr_request(
             "copay_amount": approval_data.copay_amount,
             "out_of_pocket_max": approval_data.out_of_pocket_max,
             "coverage_notes": approval_data.coverage_notes,
-            "approved_by": current_user.id,
+            "approved_by": str(current_user.id),
             "approved_at": "2024-03-16T10:30:00Z",
             "ivr_results": {
                 "case_number": f"CASE-{request_id}",
@@ -189,11 +280,12 @@ async def approve_ivr_request(
             }
         }
 
-                # Update status to APPROVED
+        # Update status to APPROVED
         await ivr_service.update_ivr_request_status(
             request_id,
             "approved",
-            approval_metadata
+            approval_metadata,
+            user_id=current_user.id
         )
 
         return ActionResponse(
@@ -238,16 +330,17 @@ async def reject_ivr_request(
         rejection_metadata = {
             "rejection_reason": rejection_data.reason,
             "rejection_explanation": rejection_data.explanation,
-            "rejected_by": current_user.id,
-            "rejected_at": "2024-03-16T10:30:00Z",  # In real implementation, use datetime.utcnow()
+            "rejected_by": str(current_user.id),
+            "rejected_at": "2024-03-16T10:30:00Z",
             "can_resubmit": True
         }
 
-                # Update status to REJECTED
+        # Update status to REJECTED
         await ivr_service.update_ivr_request_status(
             request_id,
             "rejected",
-            rejection_metadata
+            rejection_metadata,
+            user_id=current_user.id
         )
 
         return ActionResponse(
@@ -269,7 +362,10 @@ async def reject_ivr_request(
         )
 
 
-@router.post("/requests/{request_id}/request-documents", response_model=ActionResponse)
+@router.post(
+    "/requests/{request_id}/request-documents",
+    response_model=ActionResponse
+)
 async def request_documents(
     request_id: UUID,
     document_request: DocumentRequestData,
@@ -292,23 +388,60 @@ async def request_documents(
         document_request_metadata = {
             "requested_documents": document_request.requested_documents,
             "other_document": document_request.other_document,
-            "additional_instructions": document_request.additional_instructions,
-            "requested_by": current_user.id,
-            "requested_at": "2024-03-16T10:30:00Z",  # In real implementation, use datetime.utcnow()
-            "follow_up_date": "2024-03-23T10:30:00Z"  # 7 days from now
+            "additional_instructions": (
+                document_request.additional_instructions
+            ),
+            "requested_by": str(current_user.id),
+            "requested_at": "2024-03-16T10:30:00Z",
+            "follow_up_date": "2024-03-23T10:30:00Z"
         }
 
-                        # Update status to IN_REVIEW (using existing enum value)
+        # Update status to IN_REVIEW (using existing enum value)
         await ivr_service.update_ivr_request_status(
             request_id,
             "in_review",
-            document_request_metadata
+            document_request_metadata,
+            user_id=current_user.id
         )
 
         # Count requested documents
         total_docs = len(document_request.requested_documents)
         if document_request.other_document.strip():
             total_docs += 1
+
+        # Create a system message for the document request
+        doc_list = document_request.requested_documents.copy()
+        if document_request.other_document.strip():
+            doc_list.append(document_request.other_document)
+
+        doc_request_message = (
+            "📋 DOCUMENT REQUEST\n\n"
+            "The following documents are needed:\n"
+        )
+        for i, doc in enumerate(doc_list, 1):
+            doc_request_message += f"{i}. {doc}\n"
+
+        if document_request.additional_instructions.strip():
+            doc_request_message += (
+                f"\nAdditional Instructions:\n"
+                f"{document_request.additional_instructions}"
+            )
+
+        doc_request_message += (
+            "\n\nPlease upload the requested documents to continue "
+            "processing your IVR request."
+        )
+
+        # Add the document request as a system communication message
+        await ivr_service.add_communication_message(
+            ivr_request_id=request_id,
+            author_id=current_user.id,
+            message=doc_request_message,
+            author_type="system",
+            author_name="IVR System",
+            message_type="system",
+            attachments=[]
+        )
 
         return ActionResponse(
             success=True,
@@ -331,7 +464,136 @@ async def request_documents(
 
 
 @router.post(
-    "/sessions", response_model=IVRSessionResponse, status_code=status.HTTP_201_CREATED
+    "/requests/{request_id}/messages",
+    response_model=CommunicationMessageResponse
+)
+async def add_communication_message(
+    request_id: UUID,
+    message_data: CommunicationMessageCreate,
+    current_user: TokenData = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Add a communication message to an IVR request."""
+    try:
+        ivr_service = IVRService(db)
+
+        # Get the IVR request to verify it exists
+        ivr_request = await ivr_service.get_ivr_request(request_id)
+        if not ivr_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR request not found"
+            )
+
+        # Determine author type and name based on user role
+        author_type = ("doctor" if current_user.role == "Doctor"
+                       else "ivr_specialist")
+
+        # Construct author name from user data
+        if (hasattr(current_user, 'first_name') and
+                hasattr(current_user, 'last_name')):
+            if current_user.first_name and current_user.last_name:
+                author_name = (f"{current_user.first_name} "
+                               f"{current_user.last_name}")
+                if author_type == "doctor":
+                    author_name = f"Dr. {author_name}"
+            elif current_user.first_name:
+                author_name = current_user.first_name
+                if author_type == "doctor":
+                    author_name = f"Dr. {author_name}"
+            else:
+                author_name = ("Dr. [Name]" if author_type == "doctor"
+                               else "IVR Specialist")
+        else:
+            # Fallback for different user object structures
+            fallback_name = ("Dr. [Name]" if author_type == "doctor"
+                             else "IVR Specialist")
+            author_name = getattr(current_user, "name", fallback_name)
+
+        # Save message to database
+        communication_message = await ivr_service.add_communication_message(
+            ivr_request_id=request_id,
+            author_id=current_user.id,
+            message=message_data.message,
+            author_type=author_type,
+            author_name=author_name,
+            message_type=message_data.message_type,
+            attachments=message_data.attachments
+        )
+
+        # Return message response
+        return CommunicationMessageResponse(
+            id=str(communication_message.id),
+            message=communication_message.message,
+            author=communication_message.author_name,
+            author_type=communication_message.author_type,
+            timestamp=communication_message.created_at.isoformat() + "Z",
+            message_type=communication_message.message_type,
+            attachments=communication_message.attachments
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add communication message: {str(e)}"
+        )
+
+
+@router.get(
+    "/requests/{request_id}/messages",
+    response_model=List[CommunicationMessageResponse]
+)
+async def get_communication_messages(
+    request_id: UUID,
+    current_user: TokenData = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get all communication messages for an IVR request."""
+    try:
+        ivr_service = IVRService(db)
+
+        # Get the IVR request to verify it exists
+        ivr_request = await ivr_service.get_ivr_request(request_id)
+        if not ivr_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR request not found"
+            )
+
+        # Get messages from database
+        communication_messages = await ivr_service.get_communication_messages(
+            request_id
+        )
+
+        # Convert to response format
+        messages = []
+        for msg in communication_messages:
+            messages.append(CommunicationMessageResponse(
+                id=str(msg.id),
+                message=msg.message,
+                author=msg.author_name,
+                author_type=msg.author_type,
+                timestamp=msg.created_at.isoformat() + "Z",
+                message_type=msg.message_type,
+                attachments=msg.attachments
+            ))
+
+        return messages
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get communication messages: {str(e)}"
+        )
+
+
+@router.post(
+    "/sessions", response_model=IVRSessionResponse,
+    status_code=status.HTTP_201_CREATED
 )
 async def create_ivr_session(
     session: IVRSessionCreate,
@@ -406,24 +668,15 @@ async def create_ivr_document(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new IVR document."""
-    # Get IVR request to verify it exists
-    ivr_request = await db.get(IVRRequest, str(document.ivr_request_id))
-    if not ivr_request:
+    try:
+        ivr_service = IVRService(db)
+        ivr_document = await ivr_service.create_document(document)
+        return ivr_document
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="IVR request not found"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create IVR document: {str(e)}"
         )
-
-    # Create IVR document
-    ivr_document = IVRDocument(
-        ivr_request_id=document.ivr_request_id,
-        document_type=document.document_type,
-        document_key=document.document_key,
-        uploaded_by_id=current_user["id"],
-    )
-    db.add(ivr_document)
-    await db.commit()
-    await db.refresh(ivr_document)
-    return ivr_document
 
 
 @router.post("/scripts", response_model=IVRScriptResponse)
@@ -435,12 +688,15 @@ async def create_ivr_script(
     current_user: dict = Depends(get_current_user),
 ) -> IVRScriptResponse:
     """Create a new IVR script."""
-    ivr_service = IVRService(db)
-
-    script = await ivr_service.create_script(
-        script_in, created_by_id=current_user["id"]
-    )
-    return script
+    try:
+        ivr_service = IVRService(db)
+        script = await ivr_service.create_script(script_in)
+        return script
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create IVR script: {str(e)}"
+        )
 
 
 @router.get("/scripts", response_model=List[IVRScriptResponse])
@@ -453,12 +709,17 @@ async def get_ivr_scripts(
     limit: int = 100,
 ) -> List[IVRScriptResponse]:
     """Get IVR scripts."""
-    ivr_service = IVRService(db)
-
-    scripts = await ivr_service.get_scripts(
-        organization_id=current_user["organization_id"], skip=skip, limit=limit
-    )
-    return scripts
+    try:
+        ivr_service = IVRService(db)
+        scripts = await ivr_service.get_scripts(
+            skip=skip, limit=limit
+        )
+        return scripts
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get IVR scripts: {str(e)}"
+        )
 
 
 @router.get("/scripts/{script_id}", response_model=IVRScriptResponse)
@@ -470,21 +731,24 @@ async def get_ivr_script(
     current_user: dict = Depends(get_current_user),
 ) -> IVRScriptResponse:
     """Get an IVR script by ID."""
-    ivr_service = IVRService(db)
+    try:
+        ivr_service = IVRService(db)
+        script = await ivr_service.get_script(script_id)
 
-    script = await ivr_service.get_script(script_id)
-    if not script:
+        if not script:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR script not found"
+            )
+
+        return script
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="IVR script not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get IVR script: {str(e)}"
         )
-
-    # Check organization access
-    if script["organization_id"] != current_user["organization_id"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
-    return script
 
 
 @router.put("/scripts/{script_id}", response_model=IVRScriptResponse)
@@ -497,25 +761,24 @@ async def update_ivr_script(
     current_user: dict = Depends(get_current_user),
 ) -> IVRScriptResponse:
     """Update an IVR script."""
-    ivr_service = IVRService(db)
+    try:
+        ivr_service = IVRService(db)
+        script = await ivr_service.update_script(script_id, script_in)
 
-    # Get existing script
-    script = await ivr_service.get_script(script_id)
-    if not script:
+        if not script:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR script not found"
+            )
+
+        return script
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="IVR script not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update IVR script: {str(e)}"
         )
-
-    # Check organization access
-    if script["organization_id"] != current_user["organization_id"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
-    script = await ivr_service.update_script(
-        script_id, script_in, updated_by_id=current_user["id"]
-    )
-    return script
 
 
 @router.delete("/scripts/{script_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -527,22 +790,24 @@ async def delete_ivr_script(
     current_user: dict = Depends(get_current_user),
 ):
     """Delete an IVR script."""
-    ivr_service = IVRService(db)
+    try:
+        ivr_service = IVRService(db)
+        success = await ivr_service.delete_script(script_id)
 
-    # Get existing script
-    script = await ivr_service.get_script(script_id)
-    if not script:
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR script not found"
+            )
+
+        return None
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="IVR script not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete IVR script: {str(e)}"
         )
-
-    # Check organization access
-    if script["organization_id"] != current_user["organization_id"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
-    await ivr_service.delete_script(script_id)
 
 
 @router.post("/scripts/{script_id}/audio", response_model=IVRScriptResponse)
@@ -556,33 +821,32 @@ async def upload_script_audio(
     s3_service: S3Service = Depends(),
 ) -> IVRScriptResponse:
     """Upload audio file for an IVR script."""
-    ivr_service = IVRService(db)
-
-    # Get existing script
-    script = await ivr_service.get_script(script_id)
-    if not script:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="IVR script not found"
+    try:
+        # Upload file to S3
+        file_key = f"ivr-scripts/{script_id}/audio.wav"
+        audio_url = await s3_service.upload_file(
+            audio_file.file, file_key, audio_file.content_type
         )
 
-    # Check organization access
-    if script["organization_id"] != current_user["organization_id"]:
+        # Update script with audio URL
+        ivr_service = IVRService(db)
+        script_update = IVRScriptUpdate(audio_url=audio_url)
+        script = await ivr_service.update_script(script_id, script_update)
+
+        if not script:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR script not found"
+            )
+
+        return script
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to upload script audio: {str(e)}"
         )
-
-    # Upload audio file
-    audio_url = await s3_service.upload_file(
-        file=audio_file, folder="ivr-audio", uploaded_by_id=current_user["id"]
-    )
-
-    # Update script with audio URL
-    script = await ivr_service.update_script(
-        script_id,
-        IVRScriptUpdate(audio_url=audio_url),
-        updated_by_id=current_user["id"],
-    )
-    return script
 
 
 @router.post("/calls", response_model=IVRCallResponse)
@@ -594,13 +858,15 @@ async def create_ivr_call(
     current_user: dict = Depends(get_current_user),
 ) -> IVRCallResponse:
     """Create a new IVR call."""
-    ivr_service = IVRService(db)
-
-    call = await ivr_service.create_call(
-        call_in,
-        created_by_id=current_user["id"]
-    )
-    return call
+    try:
+        ivr_service = IVRService(db)
+        call = await ivr_service.create_call(call_in)
+        return call
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create IVR call: {str(e)}"
+        )
 
 
 @router.get("/calls", response_model=List[IVRCallResponse])
@@ -613,12 +879,15 @@ async def get_ivr_calls(
     limit: int = 100,
 ) -> List[IVRCallResponse]:
     """Get IVR calls."""
-    ivr_service = IVRService(db)
-
-    calls = await ivr_service.get_calls(
-        organization_id=current_user["organization_id"], skip=skip, limit=limit
-    )
-    return calls
+    try:
+        ivr_service = IVRService(db)
+        calls = await ivr_service.get_calls(skip=skip, limit=limit)
+        return calls
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get IVR calls: {str(e)}"
+        )
 
 
 @router.get("/calls/{call_id}", response_model=IVRCallResponse)
@@ -630,21 +899,24 @@ async def get_ivr_call(
     current_user: dict = Depends(get_current_user),
 ) -> IVRCallResponse:
     """Get an IVR call by ID."""
-    ivr_service = IVRService(db)
+    try:
+        ivr_service = IVRService(db)
+        call = await ivr_service.get_call(call_id)
 
-    call = await ivr_service.get_call(call_id)
-    if not call:
+        if not call:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR call not found"
+            )
+
+        return call
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="IVR call not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get IVR call: {str(e)}"
         )
-
-    # Check organization access
-    if call["organization_id"] != current_user["organization_id"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
-    return call
 
 
 @router.put("/calls/{call_id}", response_model=IVRCallResponse)
@@ -657,22 +929,21 @@ async def update_ivr_call(
     current_user: dict = Depends(get_current_user),
 ) -> IVRCallResponse:
     """Update an IVR call."""
-    ivr_service = IVRService(db)
+    try:
+        ivr_service = IVRService(db)
+        call = await ivr_service.update_call(call_id, call_in)
 
-    # Get existing call
-    call = await ivr_service.get_call(call_id)
-    if not call:
+        if not call:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="IVR call not found"
+            )
+
+        return call
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="IVR call not found"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update IVR call: {str(e)}"
         )
-
-    # Check organization access
-    if call["organization_id"] != current_user["organization_id"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
-    call = await ivr_service.update_call(
-        call_id, call_in, updated_by_id=current_user["id"]
-    )
-    return call

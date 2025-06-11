@@ -28,7 +28,12 @@ export enum MessageType {
   CONNECTED = 'connected',
   DISCONNECTED = 'disconnected',
   IVR_STATUS = 'ivr_status',
-  AUTH_ERROR = 'auth_error'
+  IVR_STATUS_UPDATE = 'ivr_status_update',
+  AUTH_ERROR = 'auth_error',
+  SUBSCRIBE_IVR = 'subscribe_ivr',
+  UNSUBSCRIBE_IVR = 'unsubscribe_ivr',
+  IVR_SUBSCRIBED = 'ivr_subscribed',
+  IVR_UNSUBSCRIBED = 'ivr_unsubscribed'
 }
 
 export interface WebSocketMessage {
@@ -97,7 +102,7 @@ export class WebSocketService {
 
   connect(getToken: () => string | null) {
     // Skip if already connected or connecting
-    if (this.socket?.readyState === WebSocket.OPEN || 
+    if (this.socket?.readyState === WebSocket.OPEN ||
         this.socket?.readyState === WebSocket.CONNECTING) {
       return;
     }
@@ -111,13 +116,13 @@ export class WebSocketService {
 
     try {
       this.setConnectionState(ConnectionState.CONNECTING);
-      
+
       // Use the configured WebSocket URL
       const wsUrl = new URL(this.config.baseUrl || defaultConfig.baseUrl);
       wsUrl.searchParams.append('token', token);
-      
+
       this.socket = new WebSocket(wsUrl.toString());
-      
+
       this.socket.onopen = () => {
         console.log('WebSocket connected');
         this.reconnectAttempts = 0;
@@ -130,11 +135,11 @@ export class WebSocketService {
       this.socket.onclose = (event) => {
         console.log('WebSocket disconnected', event.code, event.reason);
         this.clearPingInterval();
-        
+
         // Check if closure was due to authentication failure
         if (event.code === 1008 || event.code === 4001) {
           this.setConnectionState(ConnectionState.AUTHENTICATION_FAILED);
-          this.notifySubscribers({ 
+          this.notifySubscribers({
             type: MessageType.AUTH_ERROR,
             data: { message: 'Authentication failed' }
           });
@@ -148,7 +153,7 @@ export class WebSocketService {
 
       this.socket.onerror = (error) => {
         console.error('WebSocket error:', error);
-        this.notifySubscribers({ 
+        this.notifySubscribers({
           type: MessageType.ERROR,
           data: { message: 'Connection error occurred' }
         });
@@ -157,18 +162,18 @@ export class WebSocketService {
       this.socket.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
-          
+
           // Handle authentication errors from server
           if (message.type === MessageType.AUTH_ERROR) {
             this.setConnectionState(ConnectionState.AUTHENTICATION_FAILED);
             return;
           }
-          
+
           // Handle pong messages for connection health check
           if (message.type === MessageType.PONG) {
             return;
           }
-          
+
           this.notifySubscribers(message);
         } catch (error) {
           console.error('Failed to parse WebSocket message:', error);
@@ -191,9 +196,9 @@ export class WebSocketService {
       this.reconnectAttempts++;
       this.reconnectDelay *= 2; // Exponential backoff
       this.setConnectionState(ConnectionState.RECONNECTING);
-      
+
       console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-      
+
       setTimeout(() => {
         this.connect(getToken);
       }, this.reconnectDelay);
@@ -261,6 +266,20 @@ export class WebSocketService {
       console.error('Failed to send message:', error);
       return false;
     }
+  }
+
+  subscribeToIVR(ivrId: string): boolean {
+    return this.send({
+      type: MessageType.SUBSCRIBE_IVR,
+      data: { ivr_id: ivrId }
+    });
+  }
+
+  unsubscribeFromIVR(ivrId: string): boolean {
+    return this.send({
+      type: MessageType.UNSUBSCRIBE_IVR,
+      data: { ivr_id: ivrId }
+    });
   }
 
   getConnectionState(): ConnectionState {
@@ -333,4 +352,4 @@ export const useWebSocket = (config: WebSocketConfig = defaultConfig): WebSocket
   };
 };
 
-export default useWebSocket; 
+export default useWebSocket;

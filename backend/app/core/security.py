@@ -295,6 +295,76 @@ async def _authenticate_database_user(
     return token_data
 
 
+async def verify_websocket_token(
+    token: str, db: AsyncSession
+) -> Optional[Dict[str, Any]]:
+    """Verify JWT token for WebSocket connections.
+
+    Args:
+        token: JWT token to verify
+        db: Database session
+
+    Returns:
+        Optional[Dict[str, Any]]: User data if token is valid, None otherwise
+    """
+    try:
+        logger.info("Verifying WebSocket token")
+
+        # Decode JWT token
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+
+        email: str = payload.get("sub")
+        if not email:
+            logger.error("No email found in WebSocket token")
+            return None
+
+        # Check if we're in local development mode with mock auth
+        is_local_mode = settings.AUTH_MODE == "local"
+        is_dev_mode = mock_auth_service.is_development_mode()
+
+        if is_local_mode and is_dev_mode:
+            logger.info("Using mock user authentication for WebSocket")
+            mock_user = mock_auth_service.get_mock_user(email)
+
+            if mock_user:
+                return {
+                    "id": mock_user["id"],
+                    "email": mock_user["email"],
+                    "organization_id": mock_user["organization_id"],
+                    "role": mock_user["role_id"]
+                }
+            else:
+                logger.error(
+                    f"Mock user not found for WebSocket: {email}"
+                )
+                return None
+
+        # Database authentication for real users
+        query = select(User).where(User.email == email)
+        result = await db.execute(query)
+        user = result.scalar_one_or_none()
+
+        if not user or not user.is_active:
+            logger.error(f"WebSocket auth failed for user: {email}")
+            return None
+
+        return {
+            "id": str(user.id),
+            "email": user.email,
+            "organization_id": str(user.organization_id),
+            "role": user.role.name if user.role else "Unknown"
+        }
+
+    except JWTError as e:
+        logger.error(f"WebSocket token verification failed: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error in WebSocket auth: {str(e)}")
+        return None
+
+
 def encrypt_phi(value: str) -> str:
     """Encrypt PHI data."""
     if not value:

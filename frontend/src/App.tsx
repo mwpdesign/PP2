@@ -7,6 +7,7 @@ import { AdminRoute } from './components/auth/AdminRoute';
 import { DashboardRouter } from './components/auth/DashboardRouter';
 import { TestLogin } from './components/auth/TestLogin';
 import { ConfigProvider } from './contexts/ConfigContext';
+import { IVRProvider } from './contexts/IVRContext';
 
 
 // Import components
@@ -52,8 +53,9 @@ const App = () => {
 
   return (
     <ConfigProvider>
-      <ErrorBoundary>
-        <div className="min-h-screen bg-gray-50">
+      <IVRProvider>
+        <ErrorBoundary>
+          <div className="min-h-screen bg-gray-50">
             <Toaster
               position="top-right"
               toastOptions={{
@@ -231,6 +233,7 @@ const App = () => {
             </Suspense>
           </div>
         </ErrorBoundary>
+      </IVRProvider>
     </ConfigProvider>
   );
 };

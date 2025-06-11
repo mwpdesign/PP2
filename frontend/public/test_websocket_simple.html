@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple WebSocket Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .connecting { background-color: #fff3cd; color: #856404; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #log { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Simple WebSocket Test</h1>
+
+    <div id="status" class="status disconnected">Disconnected</div>
+
+    <div>
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+        <button onclick="testAuth()">Test Auth</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div>
+        <input type="text" id="tokenInput" placeholder="Enter auth token" style="width: 300px;">
+        <button onclick="setToken()">Set Token</button>
+    </div>
+
+    <h3>Log:</h3>
+    <div id="log"></div>
+
+    <script>
+        let ws = null;
+        let authToken = null;
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(status, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = status;
+            statusDiv.className = `status ${className}`;
+        }
+
+        function setToken() {
+            authToken = document.getElementById('tokenInput').value;
+            log(`Token set: ${authToken ? 'Yes' : 'No'}`);
+        }
+
+        async function testAuth() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'username=ivr@healthcare.local&password=ivr123'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    document.getElementById('tokenInput').value = authToken;
+                    log('✅ Authentication successful');
+                    log(`Token: ${authToken.substring(0, 20)}...`);
+                } else {
+                    log('❌ Authentication failed');
+                }
+            } catch (error) {
+                log(`❌ Auth error: ${error.message}`);
+            }
+        }
+
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                log('Already connected');
+                return;
+            }
+
+            if (!authToken) {
+                log('❌ No auth token. Please authenticate first.');
+                return;
+            }
+
+            updateStatus('Connecting...', 'connecting');
+            log('🔄 Connecting to WebSocket...');
+
+            const wsUrl = `ws://localhost:8000/api/v1/realtime/ws?token=${authToken}`;
+            log(`URL: ${wsUrl.substring(0, 50)}...`);
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function(event) {
+                updateStatus('Connected', 'connected');
+                log('✅ WebSocket connected');
+            };
+
+            ws.onmessage = function(event) {
+                log(`📨 Message: ${event.data}`);
+            };
+
+            ws.onclose = function(event) {
+                updateStatus('Disconnected', 'disconnected');
+                log(`❌ WebSocket closed: ${event.code} - ${event.reason}`);
+            };
+
+            ws.onerror = function(error) {
+                log(`❌ WebSocket error: ${error}`);
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                updateStatus('Disconnected', 'disconnected');
+                log('🔌 Disconnected');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // Auto-test auth on page load
+        window.onload = function() {
+            log('🚀 Page loaded. Click "Test Auth" to get a token, then "Connect"');
+        };
+    </script>
+</body>
+</html>

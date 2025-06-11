@@ -14,29 +14,13 @@ import {
   DocumentChartBarIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
+import { useIVR } from '../../contexts/IVRContext';
 import UnifiedDashboardLayout from '../shared/layout/UnifiedDashboardLayout';
 import { MetricCard } from '../shared/DashboardWidgets/MetricCard';
+import { SharedIVRRequest, DashboardStats } from '../../data/mockIVRData';
 
-interface IVRRequest {
-  id: string;
-  ivrNumber: string;
-  patientName: string;
-  doctorName: string;
-  insurance: string;
-  status: 'pending_review' | 'awaiting_docs' | 'ready' | 'completed';
-  priority: 'high' | 'medium' | 'low';
-  daysPending: number;
-  submittedDate: string;
-  patientId: string;
-  doctorId: string;
-}
-
-interface DashboardStats {
-  pendingReview: number;
-  awaitingDocs: number;
-  ready: number;
-  completed: number;
-}
+// Type alias for IVR Company view - uses shared interface
+type IVRRequest = SharedIVRRequest;
 
 // Memoized IVR request row component for performance
 const IVRRequestRow = React.memo(({
@@ -57,12 +41,16 @@ const IVRRequestRow = React.memo(({
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending_review: { color: 'amber', dot: 'bg-amber-500', bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending Review' },
-      awaiting_docs: { color: 'blue', dot: 'bg-blue-500', bg: 'bg-blue-100', text: 'text-blue-800', label: 'Awaiting Docs' },
-      ready: { color: 'emerald', dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Ready' },
-      completed: { color: 'slate', dot: 'bg-slate-500', bg: 'bg-slate-100', text: 'text-slate-800', label: 'Completed' }
+      submitted: { color: 'blue', dot: 'bg-blue-500', bg: 'bg-blue-100', text: 'text-blue-800', label: 'Submitted' },
+      in_review: { color: 'amber', dot: 'bg-amber-500', bg: 'bg-amber-100', text: 'text-amber-800', label: 'In Review' },
+      pending_approval: { color: 'emerald', dot: 'bg-emerald-500', bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Pending Approval' },
+      documents_requested: { color: 'purple', dot: 'bg-purple-500', bg: 'bg-purple-100', text: 'text-purple-800', label: 'Documents Requested' },
+      approved: { color: 'green', dot: 'bg-green-500', bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
+      rejected: { color: 'red', dot: 'bg-red-500', bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
+      escalated: { color: 'orange', dot: 'bg-orange-500', bg: 'bg-orange-100', text: 'text-orange-800', label: 'Escalated' },
+      cancelled: { color: 'slate', dot: 'bg-slate-500', bg: 'bg-slate-100', text: 'text-slate-800', label: 'Cancelled' }
     };
-    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending_review;
+    return statusConfig[status as keyof typeof statusConfig] || statusConfig.in_review;
   };
 
   const getPriorityBadge = (priority: string) => {
@@ -128,7 +116,7 @@ const IVRRequestRow = React.memo(({
         </span>
       </td>
       <td className="px-4 py-3 text-gray-600 text-sm">
-        {request.daysPending}d
+        {request.daysSinceSubmission}d
       </td>
       <td className="px-6 py-2 relative">
         <div className="flex justify-end">
@@ -153,26 +141,6 @@ const IVRRequestRow = React.memo(({
               >
                 Review Details
               </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle approve action
-                  setOpenMenuId(null);
-                }}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-emerald-600"
-              >
-                Quick Approve
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle request docs action
-                  setOpenMenuId(null);
-                }}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-blue-600"
-              >
-                Request Docs
-              </button>
             </div>
           )}
         </div>
@@ -183,6 +151,7 @@ const IVRRequestRow = React.memo(({
 
 const SimpleIVRDashboard: React.FC = () => {
   const { logout, user } = useAuth();
+  const { ivrRequests, dashboardStats } = useIVR();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -219,82 +188,6 @@ const SimpleIVRDashboard: React.FC = () => {
     role: 'Insurance Verification Specialist',
     avatar: user?.first_name?.charAt(0) || 'I'
   };
-
-  // Mock data - replace with actual API calls
-  const [ivrRequests] = useState<IVRRequest[]>([
-    {
-      id: '660e8400-e29b-41d4-a716-446655440001',
-      ivrNumber: 'IVR-2024-001',
-      patientName: 'John Smith',
-      doctorName: 'Dr. Sarah Wilson',
-      insurance: 'Blue Cross Blue Shield',
-      status: 'pending_review',
-      priority: 'high',
-      daysPending: 3,
-      submittedDate: '2024-03-15',
-      patientId: 'P-1234',
-      doctorId: 'D-001'
-    },
-    {
-      id: '660e8400-e29b-41d4-a716-446655440002',
-      ivrNumber: 'IVR-2024-002',
-      patientName: 'Emily Davis',
-      doctorName: 'Dr. Michael Brown',
-      insurance: 'UnitedHealthcare',
-      status: 'awaiting_docs',
-      priority: 'medium',
-      daysPending: 7,
-      submittedDate: '2024-03-10',
-      patientId: 'P-1235',
-      doctorId: 'D-002'
-    },
-    {
-      id: '660e8400-e29b-41d4-a716-446655440003',
-      ivrNumber: 'IVR-2024-003',
-      patientName: 'David Wilson',
-      doctorName: 'Dr. Jennifer Lee',
-      insurance: 'Aetna',
-      status: 'ready',
-      priority: 'low',
-      daysPending: 1,
-      submittedDate: '2024-03-18',
-      patientId: 'P-1236',
-      doctorId: 'D-003'
-    },
-    {
-      id: '660e8400-e29b-41d4-a716-446655440004',
-      ivrNumber: 'IVR-2024-004',
-      patientName: 'Sarah Johnson',
-      doctorName: 'Dr. Robert Chen',
-      insurance: 'Cigna',
-      status: 'completed',
-      priority: 'medium',
-      daysPending: 0,
-      submittedDate: '2024-03-12',
-      patientId: 'P-1237',
-      doctorId: 'D-004'
-    },
-    {
-      id: '660e8400-e29b-41d4-a716-446655440005',
-      ivrNumber: 'IVR-2024-005',
-      patientName: 'Michael Brown',
-      doctorName: 'Dr. Lisa Anderson',
-      insurance: 'Medicare',
-      status: 'pending_review',
-      priority: 'high',
-      daysPending: 2,
-      submittedDate: '2024-03-16',
-      patientId: 'P-1238',
-      doctorId: 'D-005'
-    }
-  ]);
-
-  const [dashboardStats] = useState<DashboardStats>({
-    pendingReview: 15,
-    awaitingDocs: 8,
-    ready: 12,
-    completed: 142
-  });
 
   // Load data
   useEffect(() => {
@@ -362,24 +255,24 @@ const SimpleIVRDashboard: React.FC = () => {
         {/* Stats Cards Header */}
         <div className="grid grid-cols-4 gap-6">
           <MetricCard
-            title="Pending Review"
-            value={dashboardStats.pendingReview}
+            title="In Review"
+            value={dashboardStats.inReview}
             className="border-l-4 border-amber-500"
           />
           <MetricCard
-            title="Awaiting Docs"
-            value={dashboardStats.awaitingDocs}
-            className="border-l-4 border-blue-500"
+            title="Documents Requested"
+            value={dashboardStats.documentsRequested}
+            className="border-l-4 border-purple-500"
           />
           <MetricCard
-            title="Ready to Approve"
-            value={dashboardStats.ready}
+            title="Pending Approval"
+            value={dashboardStats.pendingApproval}
             className="border-l-4 border-emerald-500"
           />
           <MetricCard
-            title="Completed Today"
-            value={dashboardStats.completed}
-            className="border-l-4 border-slate-600"
+            title="Approved Today"
+            value={dashboardStats.approved}
+            className="border-l-4 border-green-600"
           />
         </div>
 
@@ -396,10 +289,14 @@ const SimpleIVRDashboard: React.FC = () => {
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Status</option>
-                  <option value="pending_review">Pending Review</option>
-                  <option value="awaiting_docs">Awaiting Docs</option>
-                  <option value="ready">Ready to Approve</option>
-                  <option value="completed">Completed</option>
+                  <option value="submitted">Submitted</option>
+                  <option value="in_review">In Review</option>
+                  <option value="pending_approval">Pending Approval</option>
+                  <option value="documents_requested">Documents Requested</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="escalated">Escalated</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
                 <div className="relative">
                   <input

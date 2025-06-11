@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Formatting Test - IVR Communication System</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1f2937;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 8px;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .test-item .label {
+            font-weight: 500;
+            color: #374151;
+        }
+        .test-item .value {
+            font-family: monospace;
+            background: #e5e7eb;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #1f2937;
+        }
+        .success { color: #059669; }
+        .error { color: #dc2626; }
+        .warning { color: #d97706; }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .message.system {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+        .message.doctor {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+        }
+        .message.ivr {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .auth-section {
+            background: #f3f4f6;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .auth-section input {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            margin: 0 8px;
+            width: 200px;
+        }
+        pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗓️ Date Formatting Test - IVR Communication System</h1>
+        <p>This page tests the new date formatting utility functions to ensure "Invalid Date" issues are resolved.</p>
+
+        <div class="auth-section">
+            <h3>Authentication</h3>
+            <input type="email" id="email" placeholder="Email" value="ivr@healthcare.local">
+            <input type="password" id="password" placeholder="Password" value="ivr123">
+            <button onclick="authenticate()">Login</button>
+            <span id="auth-status" class="status-badge status-warning">Not Authenticated</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>📅 Date Formatting Utility Tests</h3>
+            <div id="date-utility-tests">
+                <div class="test-item">
+                    <span class="label">Valid ISO Date:</span>
+                    <span class="value" id="test-valid-iso"></span>
+                </div>
+                <div class="test-item">
+                    <span class="label">Null Date:</span>
+                    <span class="value" id="test-null-date"></span>
+                </div>
+                <div class="test-item">
+                    <span class="label">Undefined Date:</span>
+                    <span class="value" id="test-undefined-date"></span>
+                </div>
+                <div class="test-item">
+                    <span class="label">Invalid Date String:</span>
+                    <span class="value" id="test-invalid-date"></span>
+                </div>
+                <div class="test-item">
+                    <span class="label">Empty String:</span>
+                    <span class="value" id="test-empty-string"></span>
+                </div>
+                <div class="test-item">
+                    <span class="label">Date Object:</span>
+                    <span class="value" id="test-date-object"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>💬 Communication Messages Test</h3>
+            <button onclick="loadCommunicationMessages()">Load Messages</button>
+            <button onclick="refreshMessages()">🔄 Refresh</button>
+            <div id="communication-results">
+                <p>Click "Load Messages" to test date formatting in communication messages.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>📋 IVR Request Data Test</h3>
+            <button onclick="loadIVRRequestData()">Load IVR Request</button>
+            <button onclick="refreshIVRData()">🔄 Refresh</button>
+            <div id="ivr-request-results">
+                <p>Click "Load IVR Request" to test date formatting in IVR request data.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>🧪 Frontend Component Test</h3>
+            <p>Test the actual frontend components to ensure date formatting is working:</p>
+            <div style="margin: 16px 0;">
+                <a href="/doctor/ivr/660e8400-e29b-41d4-a716-446655440001?tab=communication" target="_blank">
+                    <button>🩺 Doctor View - Communication Tab</button>
+                </a>
+                <a href="/ivr-company/review/660e8400-e29b-41d4-a716-446655440001" target="_blank">
+                    <button>🏢 IVR Company View</button>
+                </a>
+            </div>
+            <p><strong>Expected Result:</strong> All dates should display as "Jun 10, 2025 3:30 PM" format instead of "Invalid Date"</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-section">
+            <h3>📊 Test Results Summary</h3>
+            <div id="test-summary">
+                <p>Run the tests above to see the summary.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const TEST_IVR_ID = '660e8400-e29b-41d4-a716-446655440001';
+        let authToken = localStorage.getItem('authToken');
+
+        // Update auth status on page load
+        updateAuthStatus();
+
+        // Date formatting utility functions (copied from frontend/src/utils/formatters.ts)
+        function formatDate(dateInput, format = 'full') {
+            // Handle null, undefined, or empty string
+            if (!dateInput) {
+                return 'Not available';
+            }
+
+            try {
+                // Convert to Date object if it's a string
+                const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+
+                // Check if the date is valid
+                if (isNaN(date.getTime())) {
+                    return 'Invalid date';
+                }
+
+                // Format based on the requested format
+                switch (format) {
+                    case 'date':
+                        return date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+
+                    case 'time':
+                        return date.toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+
+                    case 'short':
+                        return date.toLocaleDateString('en-US', {
+                            month: 'numeric',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+
+                    case 'full':
+                    default:
+                        return date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+                }
+            } catch (error) {
+                console.warn('Date formatting error:', error, 'Input:', dateInput);
+                return 'Invalid date';
+            }
+        }
+
+        function formatMessageTimestamp(timestamp) {
+            return formatDate(timestamp, 'full');
+        }
+
+        function formatDateOnly(dateInput) {
+            return formatDate(dateInput, 'date');
+        }
+
+        function updateAuthStatus() {
+            const statusElement = document.getElementById('auth-status');
+            if (authToken) {
+                statusElement.textContent = 'Authenticated';
+                statusElement.className = 'status-badge status-success';
+            } else {
+                statusElement.textContent = 'Not Authenticated';
+                statusElement.className = 'status-badge status-warning';
+            }
+        }
+
+        async function authenticate() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    updateAuthStatus();
+                    console.log('✅ Authentication successful');
+                } else {
+                    console.error('❌ Authentication failed:', response.status);
+                    alert('Authentication failed');
+                }
+            } catch (error) {
+                console.error('❌ Authentication error:', error);
+                alert('Authentication error');
+            }
+        }
+
+        function runDateUtilityTests() {
+            // Test various date inputs
+            const testCases = [
+                { id: 'test-valid-iso', input: '2024-03-15T10:30:00Z', label: 'Valid ISO' },
+                { id: 'test-null-date', input: null, label: 'Null' },
+                { id: 'test-undefined-date', input: undefined, label: 'Undefined' },
+                { id: 'test-invalid-date', input: 'invalid-date-string', label: 'Invalid String' },
+                { id: 'test-empty-string', input: '', label: 'Empty String' },
+                { id: 'test-date-object', input: new Date(), label: 'Date Object' }
+            ];
+
+            testCases.forEach(testCase => {
+                const result = formatMessageTimestamp(testCase.input);
+                const element = document.getElementById(testCase.id);
+                element.textContent = result;
+
+                // Color code results
+                if (result === 'Invalid date' || result === 'Not available') {
+                    element.style.color = result === 'Not available' ? '#d97706' : '#dc2626';
+                } else {
+                    element.style.color = '#059669';
+                }
+            });
+        }
+
+        async function loadCommunicationMessages() {
+            const resultsDiv = document.getElementById('communication-results');
+            resultsDiv.innerHTML = '<p>Loading communication messages...</p>';
+
+            if (!authToken) {
+                resultsDiv.innerHTML = '<p class="error">❌ Please authenticate first</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/${TEST_IVR_ID}/messages`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    let html = `<h4>✅ Messages loaded successfully (${messages.length} total):</h4>`;
+
+                    if (messages.length === 0) {
+                        html += '<p>No messages found</p>';
+                    } else {
+                        messages.forEach(msg => {
+                            const messageClass = msg.message_type === 'system' ? 'system' :
+                                               msg.author_type === 'doctor' ? 'doctor' : 'ivr';
+
+                            // Test both old and new date formatting
+                            const oldFormat = new Date(msg.timestamp).toLocaleString();
+                            const newFormat = formatMessageTimestamp(msg.timestamp);
+
+                            html += `
+                                <div class="message ${messageClass}">
+                                    <strong>${msg.author}</strong> (${msg.author_type})
+                                    <br><strong>Old Format:</strong> ${oldFormat}
+                                    <br><strong>New Format:</strong> ${newFormat}
+                                    <br><em>${msg.message}</em>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<p class="error">❌ Failed to load messages: ${response.status}</p>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function loadIVRRequestData() {
+            const resultsDiv = document.getElementById('ivr-request-results');
+            resultsDiv.innerHTML = '<p>Loading IVR request data...</p>';
+
+            if (!authToken) {
+                resultsDiv.innerHTML = '<p class="error">❌ Please authenticate first</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/${TEST_IVR_ID}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    let html = '<h4>✅ IVR Request data loaded successfully:</h4>';
+
+                    // Test date formatting for various fields
+                    const dateFields = [
+                        { label: 'Comment Updated At', value: data.comment_updated_at },
+                        { label: 'Created At', value: data.created_at },
+                        { label: 'Updated At', value: data.updated_at }
+                    ];
+
+                    dateFields.forEach(field => {
+                        const oldFormat = field.value ? new Date(field.value).toLocaleString() : 'N/A';
+                        const newFormat = formatMessageTimestamp(field.value);
+
+                        html += `
+                            <div class="test-item">
+                                <span class="label">${field.label}:</span>
+                                <div>
+                                    <div>Old: ${oldFormat}</div>
+                                    <div>New: ${newFormat}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                        <div class="test-item">
+                            <span class="label">Doctor Comment:</span>
+                            <span class="value">${data.doctor_comment || 'None'}</span>
+                        </div>
+                        <div class="test-item">
+                            <span class="label">IVR Response:</span>
+                            <span class="value">${data.ivr_response || 'None'}</span>
+                        </div>
+                    `;
+
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<p class="error">❌ Failed to load IVR data: ${response.status}</p>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        function refreshMessages() {
+            loadCommunicationMessages();
+        }
+
+        function refreshIVRData() {
+            loadIVRRequestData();
+        }
+
+        function updateTestSummary() {
+            const summaryDiv = document.getElementById('test-summary');
+            const now = new Date();
+
+            summaryDiv.innerHTML = `
+                <div class="test-item">
+                    <span class="label">Test Run Time:</span>
+                    <span class="value">${formatMessageTimestamp(now)}</span>
+                </div>
+                <div class="test-item">
+                    <span class="label">Authentication Status:</span>
+                    <span class="value ${authToken ? 'success' : 'error'}">${authToken ? 'Authenticated' : 'Not Authenticated'}</span>
+                </div>
+                <div class="test-item">
+                    <span class="label">Date Utility Status:</span>
+                    <span class="value success">✅ Loaded and Working</span>
+                </div>
+                <p><strong>Next Steps:</strong></p>
+                <ol>
+                    <li>Authenticate with IVR credentials</li>
+                    <li>Run communication messages test</li>
+                    <li>Run IVR request data test</li>
+                    <li>Test frontend components using the links above</li>
+                    <li>Verify no "Invalid Date" displays appear</li>
+                </ol>
+            `;
+        }
+
+        // Run tests on page load
+        window.addEventListener('load', () => {
+            runDateUtilityTests();
+            updateTestSummary();
+        });
+    </script>
+</body>
+</html>

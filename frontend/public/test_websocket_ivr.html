@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket IVR Real-Time Updates Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.connected { background-color: #d4edda; color: #155724; }
+        .status.connecting { background-color: #fff3cd; color: #856404; }
+        .status.disconnected { background-color: #f8d7da; color: #721c24; }
+        .button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover { background-color: #0056b3; }
+        .button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <h1>🔌 WebSocket IVR Real-Time Updates Test</h1>
+
+    <div class="container">
+        <h2>📊 Connection Status</h2>
+        <div id="connectionStatus" class="status disconnected">Disconnected</div>
+        <div>
+            <button id="connectBtn" class="button">Connect WebSocket</button>
+            <button id="disconnectBtn" class="button" disabled>Disconnect</button>
+            <button id="clearLogBtn" class="button">Clear Log</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔐 Authentication</h2>
+        <div>
+            <input type="email" id="emailInput" placeholder="Email" value="doctor@healthcare.local">
+            <input type="password" id="passwordInput" placeholder="Password" value="doctor123">
+            <button id="loginBtn" class="button">Login & Get Token</button>
+        </div>
+        <div id="authStatus"></div>
+    </div>
+
+    <div class="container">
+        <h2>📋 IVR Subscription Management</h2>
+        <div>
+            <input type="text" id="ivrIdInput" placeholder="IVR ID" value="550e8400-e29b-41d4-a716-446655440000">
+            <button id="subscribeBtn" class="button" disabled>Subscribe to IVR</button>
+            <button id="unsubscribeBtn" class="button" disabled>Unsubscribe from IVR</button>
+        </div>
+        <div id="subscriptionStatus"></div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Test IVR Status Updates</h2>
+        <div class="test-section">
+            <h3>Simulate Status Changes</h3>
+            <select id="statusSelect">
+                <option value="submitted">Submitted</option>
+                <option value="in_review">In Review</option>
+                <option value="pending_approval">Pending Approval</option>
+                <option value="documents_requested">Documents Requested</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+            </select>
+            <button id="updateStatusBtn" class="button" disabled>Update IVR Status</button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test Communication Updates</h3>
+            <textarea id="messageInput" placeholder="Test message" rows="3" style="width: 100%; margin-bottom: 10px;">Test communication message from WebSocket</textarea>
+            <button id="sendMessageBtn" class="button" disabled>Send Test Message</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📝 Real-Time Event Log</h2>
+        <div id="eventLog" class="log"></div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 WebSocket Message Inspector</h2>
+        <div id="messageInspector" class="log"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let authToken = null;
+        let subscribedIVRs = new Set();
+
+        // DOM elements
+        const connectionStatus = document.getElementById('connectionStatus');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const authStatus = document.getElementById('authStatus');
+        const ivrIdInput = document.getElementById('ivrIdInput');
+        const subscribeBtn = document.getElementById('subscribeBtn');
+        const unsubscribeBtn = document.getElementById('unsubscribeBtn');
+        const subscriptionStatus = document.getElementById('subscriptionStatus');
+        const statusSelect = document.getElementById('statusSelect');
+        const updateStatusBtn = document.getElementById('updateStatusBtn');
+        const messageInput = document.getElementById('messageInput');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const eventLog = document.getElementById('eventLog');
+        const messageInspector = document.getElementById('messageInspector');
+
+        // Logging functions
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            eventLog.appendChild(logEntry);
+            eventLog.scrollTop = eventLog.scrollHeight;
+        }
+
+        function inspectMessage(direction, message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const messageEntry = document.createElement('div');
+            messageEntry.innerHTML = `
+                <strong>[${timestamp}] ${direction}:</strong><br>
+                <pre>${JSON.stringify(message, null, 2)}</pre>
+                <hr>
+            `;
+            messageInspector.appendChild(messageEntry);
+            messageInspector.scrollTop = messageInspector.scrollHeight;
+        }
+
+        // Authentication
+        async function login() {
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        username: emailInput.value,
+                        password: passwordInput.value
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    authStatus.innerHTML = '<span class="success">✅ Authentication successful</span>';
+                    log('Authentication successful', 'success');
+                    updateButtonStates();
+                } else {
+                    authStatus.innerHTML = '<span class="error">❌ Authentication failed</span>';
+                    log('Authentication failed', 'error');
+                }
+            } catch (error) {
+                authStatus.innerHTML = '<span class="error">❌ Authentication error</span>';
+                log(`Authentication error: ${error.message}`, 'error');
+            }
+        }
+
+        // WebSocket connection
+        function connectWebSocket() {
+            if (!authToken) {
+                log('Please login first to get authentication token', 'warning');
+                return;
+            }
+
+            const wsUrl = `ws://localhost:8000/realtime/ws?token=${authToken}`;
+            log(`Connecting to WebSocket: ${wsUrl}`, 'info');
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function(event) {
+                log('WebSocket connected successfully', 'success');
+                connectionStatus.textContent = 'Connected';
+                connectionStatus.className = 'status connected';
+                updateButtonStates();
+            };
+
+            ws.onmessage = function(event) {
+                try {
+                    const message = JSON.parse(event.data);
+                    inspectMessage('RECEIVED', message);
+
+                    switch(message.type) {
+                        case 'ivr_status_update':
+                            log(`📢 IVR Status Update: ${message.data.ivr_id} → ${message.data.status}`, 'success');
+                            if (message.data.metadata) {
+                                log(`   Metadata: ${JSON.stringify(message.data.metadata)}`, 'info');
+                            }
+                            break;
+                        case 'ivr_subscribed':
+                            log(`✅ Successfully subscribed to IVR: ${message.ivr_id}`, 'success');
+                            subscribedIVRs.add(message.ivr_id);
+                            updateSubscriptionStatus();
+                            break;
+                        case 'ivr_unsubscribed':
+                            log(`❌ Successfully unsubscribed from IVR: ${message.ivr_id}`, 'info');
+                            subscribedIVRs.delete(message.ivr_id);
+                            updateSubscriptionStatus();
+                            break;
+                        case 'pong':
+                            log('🏓 Pong received', 'info');
+                            break;
+                        case 'error':
+                            log(`❌ WebSocket error: ${message.message}`, 'error');
+                            break;
+                        default:
+                            log(`📨 Received message type: ${message.type}`, 'info');
+                    }
+                } catch (error) {
+                    log(`Error parsing WebSocket message: ${error.message}`, 'error');
+                }
+            };
+
+            ws.onclose = function(event) {
+                log(`WebSocket disconnected: ${event.code} - ${event.reason}`, 'warning');
+                connectionStatus.textContent = 'Disconnected';
+                connectionStatus.className = 'status disconnected';
+                updateButtonStates();
+            };
+
+            ws.onerror = function(error) {
+                log(`WebSocket error: ${error}`, 'error');
+                connectionStatus.textContent = 'Error';
+                connectionStatus.className = 'status disconnected';
+            };
+        }
+
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        // IVR subscription management
+        function subscribeToIVR() {
+            const ivrId = ivrIdInput.value.trim();
+            if (!ivrId) {
+                log('Please enter an IVR ID', 'warning');
+                return;
+            }
+
+            const message = {
+                type: 'subscribe_ivr',
+                content: { ivr_id: ivrId }
+            };
+
+            sendWebSocketMessage(message);
+            log(`📋 Subscribing to IVR: ${ivrId}`, 'info');
+        }
+
+        function unsubscribeFromIVR() {
+            const ivrId = ivrIdInput.value.trim();
+            if (!ivrId) {
+                log('Please enter an IVR ID', 'warning');
+                return;
+            }
+
+            const message = {
+                type: 'unsubscribe_ivr',
+                content: { ivr_id: ivrId }
+            };
+
+            sendWebSocketMessage(message);
+            log(`📋 Unsubscribing from IVR: ${ivrId}`, 'info');
+        }
+
+        // Test functions
+        async function updateIVRStatus() {
+            const ivrId = ivrIdInput.value.trim();
+            const newStatus = statusSelect.value;
+
+            if (!ivrId) {
+                log('Please enter an IVR ID', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/ivr/requests/${ivrId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        coverage_percentage: 80,
+                        deductible_amount: 500,
+                        copay_amount: 25,
+                        out_of_pocket_max: 2000,
+                        coverage_notes: `Test status update to ${newStatus}`
+                    })
+                });
+
+                if (response.ok) {
+                    log(`✅ IVR status update triggered for ${ivrId}`, 'success');
+                } else {
+                    log(`❌ Failed to update IVR status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error updating IVR status: ${error.message}`, 'error');
+            }
+        }
+
+        async function sendTestMessage() {
+            const ivrId = ivrIdInput.value.trim();
+            const message = messageInput.value.trim();
+
+            if (!ivrId || !message) {
+                log('Please enter both IVR ID and message', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/ivr/requests/${ivrId}/messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        message_type: 'text'
+                    })
+                });
+
+                if (response.ok) {
+                    log(`✅ Test message sent for IVR ${ivrId}`, 'success');
+                } else {
+                    log(`❌ Failed to send test message: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Error sending test message: ${error.message}`, 'error');
+            }
+        }
+
+        // Utility functions
+        function sendWebSocketMessage(message) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+                inspectMessage('SENT', message);
+                return true;
+            } else {
+                log('WebSocket is not connected', 'warning');
+                return false;
+            }
+        }
+
+        function updateButtonStates() {
+            const isConnected = ws && ws.readyState === WebSocket.OPEN;
+            const hasAuth = !!authToken;
+
+            connectBtn.disabled = isConnected || !hasAuth;
+            disconnectBtn.disabled = !isConnected;
+            subscribeBtn.disabled = !isConnected;
+            unsubscribeBtn.disabled = !isConnected;
+            updateStatusBtn.disabled = !hasAuth;
+            sendMessageBtn.disabled = !hasAuth;
+        }
+
+        function updateSubscriptionStatus() {
+            if (subscribedIVRs.size > 0) {
+                subscriptionStatus.innerHTML = `<span class="success">Subscribed to: ${Array.from(subscribedIVRs).join(', ')}</span>`;
+            } else {
+                subscriptionStatus.innerHTML = '<span class="info">No active subscriptions</span>';
+            }
+        }
+
+        function clearLog() {
+            eventLog.innerHTML = '';
+            messageInspector.innerHTML = '';
+        }
+
+        // Event listeners
+        connectBtn.addEventListener('click', connectWebSocket);
+        disconnectBtn.addEventListener('click', disconnectWebSocket);
+        clearLogBtn.addEventListener('click', clearLog);
+        loginBtn.addEventListener('click', login);
+        subscribeBtn.addEventListener('click', subscribeToIVR);
+        unsubscribeBtn.addEventListener('click', unsubscribeFromIVR);
+        updateStatusBtn.addEventListener('click', updateIVRStatus);
+        sendMessageBtn.addEventListener('click', sendTestMessage);
+
+        // Initialize
+        log('WebSocket IVR Test Page Loaded', 'info');
+        updateButtonStates();
+        updateSubscriptionStatus();
+
+        // Auto-login for testing
+        setTimeout(() => {
+            log('Auto-login for testing...', 'info');
+            login();
+        }, 1000);
+    </script>
+</body>
+</html>

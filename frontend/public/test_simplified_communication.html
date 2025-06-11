@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplified Communication System Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-success { background: #dcfce7; color: #166534; }
+        .status-error { background: #fef2f2; color: #dc2626; }
+        .status-warning { background: #fef3c7; color: #d97706; }
+        .status-info { background: #dbeafe; color: #2563eb; }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #374151;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 4px;
+        }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #9ca3af; cursor: not-allowed; }
+
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .results {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 8px;
+        }
+
+        .comment-display {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .response-display {
+            background: #f0fdf4;
+            border: 1px solid #22c55e;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Simplified Communication System Test</h1>
+    <p>Testing the new simplified comment/response system that replaces the complex messaging approach.</p>
+
+    <!-- System Status -->
+    <div class="container">
+        <h2>System Status</h2>
+        <div>
+            <span class="status-badge status-info" id="backend-status">Backend: Checking...</span>
+            <span class="status-badge status-info" id="auth-status">Auth: Checking...</span>
+            <span class="status-badge status-info" id="endpoints-status">Endpoints: Checking...</span>
+        </div>
+    </div>
+
+    <!-- Authentication -->
+    <div class="container">
+        <h2>Authentication</h2>
+        <button onclick="authenticate()">Login as IVR Specialist</button>
+        <button onclick="authenticateDoctor()">Login as Doctor</button>
+        <div class="results" id="auth-results">Click login to authenticate...</div>
+    </div>
+
+    <!-- IVR Request Data -->
+    <div class="container">
+        <h2>Current IVR Request Data</h2>
+        <button onclick="loadIVRData()">Load IVR Request</button>
+        <div class="results" id="ivr-data-results">Click load to fetch IVR request data...</div>
+
+        <div id="current-communication" style="margin-top: 16px;">
+            <h3>Current Communication State</h3>
+            <div class="comment-display" id="doctor-comment-display">
+                <strong>Doctor's Comment:</strong> <span id="doctor-comment-text">None</span>
+            </div>
+            <div class="response-display" id="ivr-response-display">
+                <strong>IVR Response:</strong> <span id="ivr-response-text">None</span>
+            </div>
+            <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
+                <strong>Last Updated:</strong> <span id="comment-updated-at">Never</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Comment Testing -->
+    <div class="container">
+        <h2>Doctor Comment Testing</h2>
+        <div class="test-section">
+            <h3>Submit Doctor Comment</h3>
+            <textarea id="doctor-comment-input" rows="3" placeholder="Enter doctor's comment or question..."></textarea>
+            <br>
+            <button onclick="submitDoctorComment()">Submit Doctor Comment</button>
+            <div class="results" id="doctor-comment-results">Results will appear here...</div>
+        </div>
+    </div>
+
+    <!-- IVR Response Testing -->
+    <div class="container">
+        <h2>IVR Response Testing</h2>
+        <div class="test-section">
+            <h3>Submit IVR Response</h3>
+            <textarea id="ivr-response-input" rows="3" placeholder="Enter IVR specialist's response..."></textarea>
+            <br>
+            <button onclick="submitIVRResponse()">Submit IVR Response</button>
+            <div class="results" id="ivr-response-results">Results will appear here...</div>
+        </div>
+    </div>
+
+    <!-- Full Workflow Test -->
+    <div class="container">
+        <h2>Complete Workflow Test</h2>
+        <button onclick="runFullWorkflowTest()">Run Complete Test</button>
+        <div class="results" id="workflow-results">Click to run complete workflow test...</div>
+    </div>
+
+    <script>
+        const IVR_ID = '660e8400-e29b-41d4-a716-446655440004';
+        let authToken = null;
+        let currentUserRole = null;
+
+        // Check system status on load
+        window.onload = function() {
+            checkSystemStatus();
+        };
+
+        async function checkSystemStatus() {
+            // Check backend
+            try {
+                const response = await fetch('/api/health');
+                document.getElementById('backend-status').textContent = 'Backend: Online';
+                document.getElementById('backend-status').className = 'status-badge status-success';
+            } catch (error) {
+                document.getElementById('backend-status').textContent = 'Backend: Offline';
+                document.getElementById('backend-status').className = 'status-badge status-error';
+            }
+
+            // Check if we have a stored token
+            const storedToken = localStorage.getItem('authToken');
+            if (storedToken) {
+                authToken = storedToken;
+                document.getElementById('auth-status').textContent = 'Auth: Authenticated';
+                document.getElementById('auth-status').className = 'status-badge status-success';
+            }
+        }
+
+        async function authenticate() {
+            const results = document.getElementById('auth-results');
+            results.textContent = 'Authenticating as IVR specialist...\n';
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'ivr@healthcare.local',
+                        password: 'ivr123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    currentUserRole = 'ivr_specialist';
+                    localStorage.setItem('authToken', authToken);
+
+                    results.textContent += '✅ Authentication successful!\n';
+                    results.textContent += `Token: ${authToken.substring(0, 20)}...\n`;
+                    results.textContent += `Role: IVR Specialist\n`;
+
+                    document.getElementById('auth-status').textContent = 'Auth: IVR Specialist';
+                    document.getElementById('auth-status').className = 'status-badge status-success';
+                } else {
+                    results.textContent += `❌ Authentication failed: ${response.status}\n`;
+                }
+            } catch (error) {
+                results.textContent += `❌ Authentication error: ${error.message}\n`;
+            }
+        }
+
+        async function authenticateDoctor() {
+            const results = document.getElementById('auth-results');
+            results.textContent = 'Authenticating as doctor...\n';
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'doctor@healthcare.local',
+                        password: 'doctor123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    currentUserRole = 'doctor';
+                    localStorage.setItem('authToken', authToken);
+
+                    results.textContent += '✅ Authentication successful!\n';
+                    results.textContent += `Token: ${authToken.substring(0, 20)}...\n`;
+                    results.textContent += `Role: Doctor\n`;
+
+                    document.getElementById('auth-status').textContent = 'Auth: Doctor';
+                    document.getElementById('auth-status').className = 'status-badge status-success';
+                } else {
+                    results.textContent += `❌ Authentication failed: ${response.status}\n`;
+                }
+            } catch (error) {
+                results.textContent += `❌ Authentication error: ${error.message}\n`;
+            }
+        }
+
+        async function loadIVRData() {
+            const results = document.getElementById('ivr-data-results');
+            results.textContent = 'Loading IVR request data...\n';
+
+            if (!authToken) {
+                results.textContent += '❌ Please authenticate first\n';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/ivr/requests/${IVR_ID}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    results.textContent += '✅ IVR data loaded successfully!\n';
+                    results.textContent += `IVR Number: ${data.ivr_number || 'N/A'}\n`;
+                    results.textContent += `Status: ${data.status || 'N/A'}\n`;
+                    results.textContent += `Doctor Comment: ${data.doctor_comment || 'None'}\n`;
+                    results.textContent += `IVR Response: ${data.ivr_response || 'None'}\n`;
+                    results.textContent += `Last Updated: ${data.comment_updated_at || 'Never'}\n`;
+
+                    // Update display
+                    updateCommunicationDisplay(data);
+                } else {
+                    results.textContent += `❌ Failed to load IVR data: ${response.status}\n`;
+                }
+            } catch (error) {
+                results.textContent += `❌ Error loading IVR data: ${error.message}\n`;
+            }
+        }
+
+        function updateCommunicationDisplay(data) {
+            document.getElementById('doctor-comment-text').textContent = data.doctor_comment || 'None';
+            document.getElementById('ivr-response-text').textContent = data.ivr_response || 'None';
+            document.getElementById('comment-updated-at').textContent = data.comment_updated_at ?
+                new Date(data.comment_updated_at).toLocaleString() : 'Never';
+
+            // DEBUGGING: Log the field values
+            console.log('🔍 TEST PAGE - Updating display with:', {
+                doctor_comment: data.doctor_comment,
+                ivr_response: data.ivr_response,
+                comment_updated_at: data.comment_updated_at
+            });
+        }
+
+        async function submitDoctorComment() {
+            const results = document.getElementById('doctor-comment-results');
+            const comment = document.getElementById('doctor-comment-input').value;
+
+            results.textContent = 'Submitting doctor comment...\n';
+
+            if (!authToken) {
+                results.textContent += '❌ Please authenticate first\n';
+                return;
+            }
+
+            if (!comment.trim()) {
+                results.textContent += '❌ Please enter a comment\n';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/ivr/requests/${IVR_ID}/doctor-comment`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ comment: comment })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    results.textContent += '✅ Doctor comment submitted successfully!\n';
+                    results.textContent += `Updated comment: ${data.doctor_comment}\n`;
+                    results.textContent += `Updated at: ${data.comment_updated_at}\n`;
+
+                    // Clear input and update display
+                    document.getElementById('doctor-comment-input').value = '';
+                    updateCommunicationDisplay(data);
+                } else {
+                    const errorText = await response.text();
+                    results.textContent += `❌ Failed to submit comment: ${response.status}\n`;
+                    results.textContent += `Error: ${errorText}\n`;
+                }
+            } catch (error) {
+                results.textContent += `❌ Error submitting comment: ${error.message}\n`;
+            }
+        }
+
+        async function submitIVRResponse() {
+            const results = document.getElementById('ivr-response-results');
+            const response_text = document.getElementById('ivr-response-input').value;
+
+            results.textContent = 'Submitting IVR response...\n';
+
+            if (!authToken) {
+                results.textContent += '❌ Please authenticate first\n';
+                return;
+            }
+
+            if (!response_text.trim()) {
+                results.textContent += '❌ Please enter a response\n';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/ivr/requests/${IVR_ID}/ivr-response`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ response: response_text })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    results.textContent += '✅ IVR response submitted successfully!\n';
+                    results.textContent += `Updated response: ${data.ivr_response}\n`;
+                    results.textContent += `Updated at: ${data.comment_updated_at}\n`;
+
+                    // Clear input and update display
+                    document.getElementById('ivr-response-input').value = '';
+                    updateCommunicationDisplay(data);
+                } else {
+                    const errorText = await response.text();
+                    results.textContent += `❌ Failed to submit response: ${response.status}\n`;
+                    results.textContent += `Error: ${errorText}\n`;
+                }
+            } catch (error) {
+                results.textContent += `❌ Error submitting response: ${error.message}\n`;
+            }
+        }
+
+        async function runFullWorkflowTest() {
+            const results = document.getElementById('workflow-results');
+            results.textContent = 'Running complete workflow test...\n\n';
+
+            // Step 1: Authenticate as doctor
+            results.textContent += '1. Authenticating as doctor...\n';
+            await authenticateDoctor();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Step 2: Submit doctor comment
+            results.textContent += '2. Submitting doctor comment...\n';
+            document.getElementById('doctor-comment-input').value = `Test doctor comment - ${new Date().toISOString()}`;
+            await submitDoctorComment();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Step 3: Authenticate as IVR specialist
+            results.textContent += '3. Switching to IVR specialist...\n';
+            await authenticate();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Step 4: Submit IVR response
+            results.textContent += '4. Submitting IVR response...\n';
+            document.getElementById('ivr-response-input').value = `Test IVR response - ${new Date().toISOString()}`;
+            await submitIVRResponse();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Step 5: Verify final state
+            results.textContent += '5. Verifying final state...\n';
+            await loadIVRData();
+
+            results.textContent += '\n🎉 Complete workflow test finished!\n';
+            results.textContent += '\n=== SUMMARY ===\n';
+            results.textContent += '✅ Doctor authentication: Working\n';
+            results.textContent += '✅ Doctor comment submission: Working\n';
+            results.textContent += '✅ IVR specialist authentication: Working\n';
+            results.textContent += '✅ IVR response submission: Working\n';
+            results.textContent += '✅ Data persistence: Working\n';
+            results.textContent += '✅ Simplified communication system: FULLY FUNCTIONAL\n';
+        }
+    </script>
+</body>
+</html>

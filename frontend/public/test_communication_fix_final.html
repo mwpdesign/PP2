@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Communication History Fix - Final Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-success { background: #28a745; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .log-container {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .log-success { color: #68d391; }
+        .log-error { color: #fc8181; }
+        .log-warning { color: #f6e05e; }
+        .log-info { color: #63b3ed; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🩺 Communication History Fix - Final Test</h1>
+        <p>Verifying "Unknown User • Invalid Date" bug fix</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 What Was Fixed</h2>
+        <p><strong>Problem:</strong> Communication history showing "Unknown User • Invalid Date" instead of proper names and dates.</p>
+        <p><strong>Solution:</strong> Fixed author name handling and date formatting in both frontend and backend.</p>
+
+        <h3>Files Modified:</h3>
+        <ul>
+            <li><code>frontend/src/pages/doctor/ivr/[id].tsx</code> - Fixed author names and date formatting</li>
+            <li><code>frontend/src/pages/ivr/review/[id].tsx</code> - Fixed author names and date formatting</li>
+            <li><code>backend/app/api/v1/endpoints/ivr.py</code> - Fixed backend author name construction</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Automated Tests</h2>
+        <button class="btn" onclick="testBackend()">Test Backend</button>
+        <button class="btn" onclick="testAuthentication()">Test Authentication</button>
+        <button class="btn" onclick="testCommunicationAPI()">Test Communication API</button>
+        <button class="btn btn-success" onclick="runAllTests()">Run All Tests</button>
+        <button class="btn btn-warning" onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div class="log-container" id="testLog">
+            <div class="log-info">🚀 Test suite ready. Click "Run All Tests" to begin.</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 Manual Testing Links</h2>
+        <p>Use these links to manually verify the fix:</p>
+        <a href="/login" class="btn" target="_blank">🔐 Login Page</a>
+        <a href="/doctor/ivr/IVR-2024-001" class="btn" target="_blank">👨‍⚕️ Doctor IVR Detail</a>
+        <a href="/ivr-company/review/IVR-2024-001" class="btn" target="_blank">🏢 IVR Company Review</a>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ Manual Verification Steps</h2>
+        <ol>
+            <li>Login as doctor (doctor@healthcare.local / doctor123)</li>
+            <li>Navigate to Doctor IVR detail page</li>
+            <li>Check Communication History section - should show proper names, not "Unknown User"</li>
+            <li>Check timestamps - should show formatted dates, not "Invalid Date"</li>
+            <li>Login as IVR specialist (ivr@healthcare.local / ivr123)</li>
+            <li>Navigate to IVR Company review page</li>
+            <li>Verify Communication History shows proper names and dates</li>
+        </ol>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('authToken');
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-${type}`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        async function testBackend() {
+            log('🔍 Testing backend health...', 'info');
+
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Backend healthy: ${data.service} v${data.version}`, 'success');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ Backend test failed: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function testAuthentication() {
+            log('🔐 Testing authentication...', 'info');
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'doctor@healthcare.local',
+                        password: 'doctor123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    log('✅ Authentication successful', 'success');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ Authentication failed: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function testCommunicationAPI() {
+            log('💬 Testing communication API...', 'info');
+
+            if (!authToken) {
+                log('⚠️ No auth token, running authentication first...', 'warning');
+                const authSuccess = await testAuthentication();
+                if (!authSuccess) return false;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/ivr/requests/IVR-2024-001/messages', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Communication API accessible - ${data.length || 0} messages found`, 'success');
+
+                    // Check for the bug fix
+                    let hasUnknownUser = false;
+                    let hasInvalidDate = false;
+
+                    data.forEach(msg => {
+                        if (msg.author === 'Unknown User') {
+                            hasUnknownUser = true;
+                        }
+                        if (msg.timestamp === 'Invalid Date') {
+                            hasInvalidDate = true;
+                        }
+                    });
+
+                    if (hasUnknownUser) {
+                        log('❌ Still found "Unknown User" in messages', 'error');
+                        return false;
+                    }
+
+                    if (hasInvalidDate) {
+                        log('❌ Still found "Invalid Date" in messages', 'error');
+                        return false;
+                    }
+
+                    log('✅ No "Unknown User" or "Invalid Date" found - fix is working!', 'success');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ Communication API test failed: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function runAllTests() {
+            log('🚀 Starting comprehensive test suite...', 'info');
+
+            const backendOk = await testBackend();
+            const authOk = await testAuthentication();
+            const commOk = await testCommunicationAPI();
+
+            if (backendOk && authOk && commOk) {
+                log('🎉 All tests passed! Communication history fix is working correctly.', 'success');
+            } else {
+                log('⚠️ Some tests failed. Please check the issues above.', 'warning');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('testLog').innerHTML = '<div class="log-info">🧹 Log cleared. Ready for new tests.</div>';
+        }
+
+        // Initialize
+        window.onload = function() {
+            log('🚀 Communication History Fix Test Suite loaded', 'info');
+            testBackend();
+        };
+    </script>
+</body>
+</html>

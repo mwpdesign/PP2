@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Style Debugging Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f8f9fa;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #007bff;
+            background: white;
+            border-radius: 8px;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            border: 1px solid #dee2e6;
+            margin: 10px 0;
+        }
+        .highlight { background: yellow; }
+        .error { color: red; font-weight: bold; }
+        .success { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Table Style Debugging Tool</h1>
+
+    <div class="instructions">
+        <h2>📋 Step-by-Step Debugging Instructions</h2>
+        <p><strong>Follow these steps to identify the styling differences:</strong></p>
+    </div>
+
+    <div class="debug-section">
+        <h3>Step 1: Clear Browser Cache</h3>
+        <ol>
+            <li>Open Chrome/Edge DevTools (F12)</li>
+            <li>Right-click the refresh button → "Empty Cache and Hard Reload"</li>
+            <li>Or use: <code>Ctrl+Shift+R</code> (Windows) / <code>Cmd+Shift+R</code> (Mac)</li>
+        </ol>
+    </div>
+
+    <div class="debug-section">
+        <h3>Step 2: Navigate to Both Pages</h3>
+        <p><strong>Doctor's IVR Management:</strong></p>
+        <div class="code-block">
+            <a href="http://localhost:3000/doctor/ivr" target="_blank">http://localhost:3000/doctor/ivr</a>
+        </div>
+
+        <p><strong>IVR Company Dashboard:</strong></p>
+        <div class="code-block">
+            <a href="http://localhost:3000/ivr-company/dashboard" target="_blank">http://localhost:3000/ivr-company/dashboard</a>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>Step 3: Inspect Table Elements</h3>
+        <p><strong>For BOTH pages, do the following:</strong></p>
+        <ol>
+            <li>Right-click on the table header → "Inspect Element"</li>
+            <li>Look for the <code>&lt;thead&gt;</code> element</li>
+            <li>Check the computed styles in DevTools</li>
+            <li>Note the following values:</li>
+        </ol>
+
+        <h4>🎯 Key CSS Properties to Check:</h4>
+        <div class="code-block">
+            <strong>Table Header (thead th):</strong><br>
+            - font-size: ___________<br>
+            - padding: ___________<br>
+            - text-transform: ___________<br>
+            - font-weight: ___________<br><br>
+
+            <strong>Table Rows (tbody tr):</strong><br>
+            - height: ___________<br>
+            - padding: ___________<br>
+            - font-size: ___________<br><br>
+
+            <strong>Table Cells (tbody td):</strong><br>
+            - padding: ___________<br>
+            - font-size: ___________<br>
+            - line-height: ___________
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>Step 4: Check for CSS Overrides</h3>
+        <p>In DevTools, look for:</p>
+        <ul>
+            <li><span class="highlight">Crossed-out styles</span> (overridden CSS)</li>
+            <li>Multiple CSS rules applying to the same element</li>
+            <li>Different CSS classes being applied</li>
+        </ul>
+    </div>
+
+    <div class="debug-section">
+        <h3>Step 5: Compare HTML Structure</h3>
+        <p>Check if the HTML structure is identical:</p>
+        <div class="code-block">
+            Expected structure for BOTH tables:<br>
+            &lt;table class="w-full"&gt;<br>
+            &nbsp;&nbsp;&lt;thead class="bg-gray-50 sticky top-0 z-10 shadow-sm"&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;tr&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/tr&gt;<br>
+            &nbsp;&nbsp;&lt;/thead&gt;<br>
+            &nbsp;&nbsp;&lt;tbody&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;tr class="group h-12 cursor-pointer transition-colors hover:bg-slate-100"&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;td class="px-4 py-3 font-medium text-gray-900"&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/tr&gt;<br>
+            &nbsp;&nbsp;&lt;/tbody&gt;<br>
+            &lt;/table&gt;
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>Step 6: Console Error Check</h3>
+        <p>Open the Console tab in DevTools and look for:</p>
+        <ul>
+            <li class="error">Red error messages</li>
+            <li>CSS loading failures</li>
+            <li>JavaScript errors that might affect styling</li>
+        </ul>
+    </div>
+
+    <div class="debug-section">
+        <h3>Step 7: Network Tab Check</h3>
+        <p>In the Network tab, verify:</p>
+        <ul>
+            <li>All CSS files are loading successfully (200 status)</li>
+            <li>No 404 errors for stylesheets</li>
+            <li>Tailwind CSS is being loaded</li>
+        </ul>
+    </div>
+
+    <div class="debug-section">
+        <h3>🚨 Common Issues to Look For:</h3>
+        <ul>
+            <li><strong>Different CSS classes:</strong> One table might have different Tailwind classes</li>
+            <li><strong>CSS specificity conflicts:</strong> More specific selectors overriding Tailwind</li>
+            <li><strong>Component wrapper differences:</strong> Different parent containers affecting layout</li>
+            <li><strong>Conditional rendering:</strong> Different code paths rendering different HTML</li>
+            <li><strong>CSS-in-JS conflicts:</strong> Styled components overriding Tailwind</li>
+        </ul>
+    </div>
+
+    <div class="debug-section">
+        <h3>📊 Report Your Findings:</h3>
+        <p>After completing the above steps, report back with:</p>
+        <ol>
+            <li>Any differences in computed CSS values</li>
+            <li>Different HTML classes being applied</li>
+            <li>Console errors (if any)</li>
+            <li>Screenshots of the DevTools showing the differences</li>
+        </ol>
+    </div>
+
+    <script>
+        console.log('🔍 Table Style Debugging Tool Loaded');
+        console.log('📝 Follow the step-by-step instructions above');
+        console.log('🎯 Focus on comparing computed styles between both tables');
+
+        // Auto-check if we're on localhost
+        if (window.location.hostname === 'localhost') {
+            console.log('✅ Running on localhost - ready for debugging');
+        } else {
+            console.warn('⚠️ Not running on localhost - make sure frontend server is running');
+        }
+    </script>
+</body>
+</html>

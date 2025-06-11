@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Request Communication Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .test-button { background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .test-button:hover { background: #2563eb; }
+        .success { color: #059669; font-weight: bold; }
+        .error { color: #dc2626; font-weight: bold; }
+        .result { background: #f3f4f6; padding: 15px; border-radius: 5px; margin: 10px 0; white-space: pre-wrap; }
+        .step { margin: 10px 0; padding: 10px; border-left: 4px solid #3b82f6; background: #eff6ff; }
+        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 10px; margin: 10px 0; }
+        .message-display { background: #f9fafb; border: 1px solid #d1d5db; border-radius: 5px; padding: 15px; margin: 10px 0; max-height: 300px; overflow-y: auto; }
+        .message { padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .message.system { background: #fef3c7; border-left: 4px solid #f59e0b; }
+        .message.doctor { background: #dbeafe; border-left: 4px solid #3b82f6; }
+        .message.ivr { background: #d1fae5; border-left: 4px solid #10b981; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Document Request Communication Test</h1>
+        <p>This page tests that document requests appear in the communication thread for both Doctor and IVR Company views.</p>
+
+        <div class="warning">
+            <strong>⚠️ Prerequisites:</strong>
+            <ul>
+                <li>Backend server running on localhost:8000</li>
+                <li>Frontend server running on localhost:3000</li>
+                <li>Test IVR ID: 660e8400-e29b-41d4-a716-446655440004</li>
+                <li>Login as IVR Company: ivr@healthcare.local / ivr123</li>
+                <li>Login as Doctor: doctor@healthcare.local / doctor123</li>
+            </ul>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="test-section">
+            <h2>🔐 Authentication</h2>
+            <button class="test-button" onclick="loginAsIVR()">Login as IVR Company</button>
+            <button class="test-button" onclick="loginAsDoctor()">Login as Doctor</button>
+            <button class="test-button" onclick="checkAuth()">Check Current Auth</button>
+            <div id="auth-result" class="result"></div>
+        </div>
+
+        <!-- Document Request Test -->
+        <div class="test-section">
+            <h2>📋 Document Request Test</h2>
+            <div class="step">
+                <strong>Step 1:</strong> Login as IVR Company and submit a document request
+            </div>
+            <button class="test-button" onclick="submitDocumentRequest()">Submit Document Request</button>
+            <div id="doc-request-result" class="result"></div>
+        </div>
+
+        <!-- Communication Display Test -->
+        <div class="test-section">
+            <h2>💬 Communication Thread Display</h2>
+            <div class="step">
+                <strong>Step 2:</strong> Check if document request appears in communication threads
+            </div>
+            <button class="test-button" onclick="loadDoctorCommunication()">Load Doctor View Communication</button>
+            <button class="test-button" onclick="loadIVRCommunication()">Load IVR Company View Communication</button>
+            <button class="test-button" onclick="loadComplexMessages()">Load Complex Messages</button>
+
+            <h3>Doctor View Communication:</h3>
+            <div id="doctor-communication" class="message-display">No data loaded yet</div>
+
+            <h3>IVR Company View Communication:</h3>
+            <div id="ivr-communication" class="message-display">No data loaded yet</div>
+
+            <h3>Complex Messages (System Messages):</h3>
+            <div id="complex-messages" class="message-display">No data loaded yet</div>
+        </div>
+
+        <!-- Full Workflow Test -->
+        <div class="test-section">
+            <h2>🔄 Full Workflow Test</h2>
+            <div class="step">
+                <strong>Complete Workflow:</strong> Test the entire document request → communication display flow
+            </div>
+            <button class="test-button" onclick="runFullWorkflowTest()">Run Full Workflow Test</button>
+            <div id="workflow-result" class="result"></div>
+        </div>
+
+        <!-- Manual Testing Instructions -->
+        <div class="test-section">
+            <h2>📝 Manual Testing Instructions</h2>
+            <div class="step">
+                <strong>Manual Test Steps:</strong>
+                <ol>
+                    <li>Login as IVR Company (ivr@healthcare.local)</li>
+                    <li>Navigate to: <a href="http://localhost:3000/ivr/review/660e8400-e29b-41d4-a716-446655440004" target="_blank">IVR Review Page</a></li>
+                    <li>Click "Request Documents" button</li>
+                    <li>Fill out the document request form and submit</li>
+                    <li>Check the "Communication History" section - should show the document request</li>
+                    <li>Login as Doctor (doctor@healthcare.local)</li>
+                    <li>Navigate to: <a href="http://localhost:3000/doctor/ivr/660e8400-e29b-41d4-a716-446655440004" target="_blank">Doctor IVR Page</a></li>
+                    <li>Go to Communication tab</li>
+                    <li>Check the "Communication History" section - should show the document request</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        const TEST_IVR_ID = '660e8400-e29b-41d4-a716-446655440004';
+
+        // Authentication functions
+        async function loginAsIVR() {
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'ivr@healthcare.local',
+                        password: 'ivr123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    document.getElementById('auth-result').innerHTML = `<span class="success">✅ Logged in as IVR Company</span>\nToken: ${data.access_token.substring(0, 50)}...`;
+                } else {
+                    document.getElementById('auth-result').innerHTML = `<span class="error">❌ Login failed: ${response.status}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('auth-result').innerHTML = `<span class="error">❌ Login error: ${error.message}</span>`;
+            }
+        }
+
+        async function loginAsDoctor() {
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'doctor@healthcare.local',
+                        password: 'doctor123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    document.getElementById('auth-result').innerHTML = `<span class="success">✅ Logged in as Doctor</span>\nToken: ${data.access_token.substring(0, 50)}...`;
+                } else {
+                    document.getElementById('auth-result').innerHTML = `<span class="error">❌ Login failed: ${response.status}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('auth-result').innerHTML = `<span class="error">❌ Login error: ${error.message}</span>`;
+            }
+        }
+
+        async function checkAuth() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                document.getElementById('auth-result').innerHTML = `<span class="success">✅ Token exists</span>\nToken: ${token.substring(0, 50)}...`;
+            } else {
+                document.getElementById('auth-result').innerHTML = `<span class="error">❌ No auth token found</span>`;
+            }
+        }
+
+        // Document request test
+        async function submitDocumentRequest() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                document.getElementById('doc-request-result').innerHTML = `<span class="error">❌ Please login first</span>`;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/${TEST_IVR_ID}/request-documents`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        requested_documents: [
+                            'Medical Records',
+                            'Insurance Card Copy',
+                            'Prescription Documentation'
+                        ],
+                        other_document: 'Lab Results',
+                        additional_instructions: 'Please provide the most recent lab results from the past 30 days. Ensure all documents are legible and complete.'
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    document.getElementById('doc-request-result').innerHTML = `<span class="success">✅ Document request submitted successfully!</span>\nResponse: ${JSON.stringify(result, null, 2)}`;
+                } else {
+                    const errorText = await response.text();
+                    document.getElementById('doc-request-result').innerHTML = `<span class="error">❌ Document request failed: ${response.status}</span>\nError: ${errorText}`;
+                }
+            } catch (error) {
+                document.getElementById('doc-request-result').innerHTML = `<span class="error">❌ Document request error: ${error.message}</span>`;
+            }
+        }
+
+        // Communication loading functions
+        async function loadDoctorCommunication() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                document.getElementById('doctor-communication').innerHTML = `<span class="error">❌ Please login first</span>`;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/${TEST_IVR_ID}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    let html = '<h4>Simplified Communication Fields:</h4>';
+                    html += `<div class="message doctor">Doctor Comment: ${data.doctor_comment || 'None'}</div>`;
+                    html += `<div class="message ivr">IVR Response: ${data.ivr_response || 'None'}</div>`;
+                    html += `<div>Last Updated: ${data.comment_updated_at || 'Never'}</div>`;
+                    document.getElementById('doctor-communication').innerHTML = html;
+                } else {
+                    document.getElementById('doctor-communication').innerHTML = `<span class="error">❌ Failed to load: ${response.status}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('doctor-communication').innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function loadIVRCommunication() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                document.getElementById('ivr-communication').innerHTML = `<span class="error">❌ Please login first</span>`;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/${TEST_IVR_ID}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    let html = '<h4>Simplified Communication Fields:</h4>';
+                    html += `<div class="message doctor">Doctor Comment: ${data.doctor_comment || 'None'}</div>`;
+                    html += `<div class="message ivr">IVR Response: ${data.ivr_response || 'None'}</div>`;
+                    html += `<div>Last Updated: ${data.comment_updated_at || 'Never'}</div>`;
+                    document.getElementById('ivr-communication').innerHTML = html;
+                } else {
+                    document.getElementById('ivr-communication').innerHTML = `<span class="error">❌ Failed to load: ${response.status}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('ivr-communication').innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function loadComplexMessages() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                document.getElementById('complex-messages').innerHTML = `<span class="error">❌ Please login first</span>`;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/ivr/requests/${TEST_IVR_ID}/messages`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    let html = `<h4>Complex Messages (${messages.length} total):</h4>`;
+
+                    if (messages.length === 0) {
+                        html += '<div class="message">No messages found</div>';
+                    } else {
+                        messages.forEach(msg => {
+                            const messageClass = msg.message_type === 'system' ? 'system' :
+                                               msg.author_type === 'doctor' ? 'doctor' : 'ivr';
+                            html += `<div class="message ${messageClass}">
+                                <strong>${msg.author}</strong> (${msg.author_type}) - ${new Date(msg.timestamp).toLocaleString()}
+                                <br>${msg.message}
+                            </div>`;
+                        });
+                    }
+
+                    document.getElementById('complex-messages').innerHTML = html;
+                } else {
+                    document.getElementById('complex-messages').innerHTML = `<span class="error">❌ Failed to load: ${response.status}</span>`;
+                }
+            } catch (error) {
+                document.getElementById('complex-messages').innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        // Full workflow test
+        async function runFullWorkflowTest() {
+            const resultDiv = document.getElementById('workflow-result');
+            resultDiv.innerHTML = 'Running full workflow test...\n';
+
+            try {
+                // Step 1: Login as IVR Company
+                resultDiv.innerHTML += 'Step 1: Logging in as IVR Company...\n';
+                await loginAsIVR();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 2: Submit document request
+                resultDiv.innerHTML += 'Step 2: Submitting document request...\n';
+                await submitDocumentRequest();
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Step 3: Load complex messages
+                resultDiv.innerHTML += 'Step 3: Loading complex messages...\n';
+                await loadComplexMessages();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 4: Login as Doctor
+                resultDiv.innerHTML += 'Step 4: Logging in as Doctor...\n';
+                await loginAsDoctor();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 5: Load doctor communication
+                resultDiv.innerHTML += 'Step 5: Loading doctor communication...\n';
+                await loadDoctorCommunication();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 6: Load complex messages as doctor
+                resultDiv.innerHTML += 'Step 6: Loading complex messages as doctor...\n';
+                await loadComplexMessages();
+
+                resultDiv.innerHTML += '\n<span class="success">✅ Full workflow test completed!</span>\n';
+                resultDiv.innerHTML += 'Check the communication sections above to verify document requests appear in both views.';
+
+            } catch (error) {
+                resultDiv.innerHTML += `\n<span class="error">❌ Workflow test failed: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Communication History Fix Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        .message-item { margin: 10px 0; padding: 10px; border-left: 4px solid #007bff; background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Final Communication History Fix Verification</h1>
+    <p><strong>Task ID:</strong> mbrf8d843zpsb2fmbgp - Fix "Unknown User • Invalid Date" in Communication History</p>
+
+    <div class="test-section info">
+        <h2>📋 Test Summary</h2>
+        <p>This test verifies that the communication history now shows proper author names and formatted dates instead of "Unknown User • Invalid Date".</p>
+        <p><strong>Expected Results:</strong></p>
+        <ul>
+            <li>✅ Author names: "Dr. John Smith", "IVR Specialist", "IVR System"</li>
+            <li>✅ Formatted dates: "Jun 11, 2025 12:24 AM" format (not "Invalid Date")</li>
+            <li>✅ No console errors</li>
+            <li>✅ WebSocket connections working</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔐 Step 1: Authentication Test</h2>
+        <button onclick="testAuth()">Test Authentication</button>
+        <div id="auth-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>💬 Step 2: Communication Messages API Test</h2>
+        <button onclick="testMessagesAPI()">Test Messages API</button>
+        <div id="messages-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📅 Step 3: Date Formatting Test</h2>
+        <button onclick="testDateFormatting()">Test Date Formatting</button>
+        <div id="date-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 Step 4: Frontend Integration Test</h2>
+        <p>Navigate to the actual pages to verify the fix:</p>
+        <ul>
+            <li><a href="/doctor/ivr/660e8400-e29b-41d4-a716-446655440001?tab=communication" target="_blank">Doctor IVR Communication Tab</a></li>
+            <li><a href="/ivr-company/review/660e8400-e29b-41d4-a716-446655440001" target="_blank">IVR Company Review Page</a></li>
+        </ul>
+        <p><strong>What to check:</strong></p>
+        <ul>
+            <li>Communication History section shows proper author names (not "Unknown User")</li>
+            <li>Timestamps show formatted dates (not "Invalid Date")</li>
+            <li>No JavaScript errors in browser console</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="overall-results"></div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let testResults = {
+            auth: false,
+            messages: false,
+            dates: false
+        };
+
+        // Date formatting utility (same as frontend)
+        function formatMessageTimestamp(timestamp) {
+            if (!timestamp) return "Not available";
+
+            try {
+                const date = new Date(timestamp);
+                if (isNaN(date.getTime())) return "Invalid date";
+
+                return date.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            } catch (error) {
+                console.error('Date formatting error:', error);
+                return "Invalid date";
+            }
+        }
+
+        async function testAuth() {
+            const resultDiv = document.getElementById('auth-result');
+            resultDiv.innerHTML = '<p>🔄 Testing authentication...</p>';
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'username=doctor@healthcare.local&password=doctor123'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    testResults.auth = true;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Authentication Successful</h3>
+                            <p>Token received: ${authToken.substring(0, 50)}...</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                testResults.auth = false;
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Authentication Failed</h3>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+            updateOverallResults();
+        }
+
+        async function testMessagesAPI() {
+            const resultDiv = document.getElementById('messages-result');
+
+            if (!authToken) {
+                resultDiv.innerHTML = '<div class="error"><p>❌ Please run authentication test first</p></div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>🔄 Testing messages API...</p>';
+
+            try {
+                const response = await fetch('/api/v1/ivr/requests/660e8400-e29b-41d4-a716-446655440001/messages', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    console.log('📨 Messages received:', messages);
+
+                    let hasUnknownUser = false;
+                    let hasInvalidDate = false;
+                    let messagesHtml = '<h4>📨 Messages Retrieved:</h4>';
+
+                    messages.forEach((msg, index) => {
+                        const formattedDate = formatMessageTimestamp(msg.timestamp);
+
+                        if (msg.author === 'Unknown User') hasUnknownUser = true;
+                        if (formattedDate === 'Invalid date') hasInvalidDate = true;
+
+                        messagesHtml += `
+                            <div class="message-item">
+                                <strong>Message ${index + 1}:</strong><br>
+                                <strong>Author:</strong> ${msg.author} (${msg.author_type})<br>
+                                <strong>Date:</strong> ${formattedDate}<br>
+                                <strong>Message:</strong> ${msg.message.substring(0, 100)}${msg.message.length > 100 ? '...' : ''}
+                            </div>
+                        `;
+                    });
+
+                    if (!hasUnknownUser && !hasInvalidDate) {
+                        testResults.messages = true;
+                        resultDiv.innerHTML = `
+                            <div class="success">
+                                <h3>✅ Messages API Test Successful</h3>
+                                <p>✅ No "Unknown User" found</p>
+                                <p>✅ No "Invalid Date" found</p>
+                                <p>✅ Found ${messages.length} messages with proper formatting</p>
+                                ${messagesHtml}
+                            </div>
+                        `;
+                    } else {
+                        testResults.messages = false;
+                        resultDiv.innerHTML = `
+                            <div class="error">
+                                <h3>❌ Messages API Test Failed</h3>
+                                ${hasUnknownUser ? '<p>❌ Found "Unknown User" in messages</p>' : ''}
+                                ${hasInvalidDate ? '<p>❌ Found "Invalid Date" in timestamps</p>' : ''}
+                                ${messagesHtml}
+                            </div>
+                        `;
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                testResults.messages = false;
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Messages API Test Failed</h3>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+            updateOverallResults();
+        }
+
+        function testDateFormatting() {
+            const resultDiv = document.getElementById('date-result');
+
+            const testDates = [
+                '2025-06-11T00:24:15.612510+00:00',
+                '2025-06-11T00:26:25.251437+00:00',
+                '2025-06-11T01:10:11.040038+00:00',
+                null,
+                undefined,
+                'invalid-date',
+                ''
+            ];
+
+            let allPassed = true;
+            let resultsHtml = '<h4>📅 Date Formatting Test Results:</h4>';
+
+            testDates.forEach((testDate, index) => {
+                const formatted = formatMessageTimestamp(testDate);
+                const expected = testDate && testDate !== 'invalid-date' && testDate !== '' ?
+                    'Valid formatted date' :
+                    (testDate === null || testDate === undefined ? 'Not available' : 'Invalid date');
+
+                const passed = (testDate && testDate !== 'invalid-date' && testDate !== '' && formatted !== 'Invalid date' && formatted !== 'Not available') ||
+                              ((!testDate || testDate === '') && (formatted === 'Not available' || formatted === 'Invalid date')) ||
+                              (testDate === 'invalid-date' && formatted === 'Invalid date');
+
+                if (!passed) allPassed = false;
+
+                resultsHtml += `
+                    <div class="message-item">
+                        <strong>Test ${index + 1}:</strong> ${testDate || 'null/undefined'}<br>
+                        <strong>Result:</strong> ${formatted}<br>
+                        <strong>Status:</strong> ${passed ? '✅ PASS' : '❌ FAIL'}
+                    </div>
+                `;
+            });
+
+            testResults.dates = allPassed;
+
+            resultDiv.innerHTML = `
+                <div class="${allPassed ? 'success' : 'error'}">
+                    <h3>${allPassed ? '✅' : '❌'} Date Formatting Test ${allPassed ? 'Passed' : 'Failed'}</h3>
+                    ${resultsHtml}
+                </div>
+            `;
+            updateOverallResults();
+        }
+
+        function updateOverallResults() {
+            const resultsDiv = document.getElementById('overall-results');
+            const allPassed = testResults.auth && testResults.messages && testResults.dates;
+
+            resultsDiv.innerHTML = `
+                <div class="${allPassed ? 'success' : 'info'}">
+                    <h3>📊 Overall Test Results</h3>
+                    <p>🔐 Authentication: ${testResults.auth ? '✅ PASS' : '❌ FAIL'}</p>
+                    <p>💬 Messages API: ${testResults.messages ? '✅ PASS' : '❌ FAIL'}</p>
+                    <p>📅 Date Formatting: ${testResults.dates ? '✅ PASS' : '❌ FAIL'}</p>
+                    <hr>
+                    <h4>${allPassed ? '🎉 ALL TESTS PASSED!' : '⚠️ Some tests need attention'}</h4>
+                    ${allPassed ?
+                        '<p><strong>✅ The "Unknown User • Invalid Date" issue has been RESOLVED!</strong></p>' :
+                        '<p><strong>❌ The issue still needs to be addressed.</strong></p>'
+                    }
+                </div>
+            `;
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            console.log('🔍 Starting automatic test verification...');
+            setTimeout(() => {
+                testAuth().then(() => {
+                    setTimeout(() => {
+                        testMessagesAPI();
+                        testDateFormatting();
+                    }, 1000);
+                });
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

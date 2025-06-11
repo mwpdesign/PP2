@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useIVR } from '../../../contexts/IVRContext';
 import {
   ArrowLeftIcon,
   UserIcon,
   DocumentTextIcon,
-  PhoneIcon,
   CheckCircleIcon,
   XMarkIcon,
   DocumentArrowDownIcon,
@@ -14,12 +14,14 @@ import {
   HeartIcon,
   ShieldCheckIcon,
   ClipboardDocumentListIcon,
+  ClipboardDocumentCheckIcon,
   BeakerIcon,
   ClockIcon,
   DocumentCheckIcon
 } from '@heroicons/react/24/outline';
 import UniversalFileUpload from '../../../components/shared/UniversalFileUpload';
 import { ApprovalModal, RejectionModal, DocumentRequestModal } from '../../../components/ivr/modals';
+import { formatMessageTimestamp, formatDateOnly } from '../../../utils/formatters';
 
 interface Product {
   id: string;
@@ -54,7 +56,7 @@ interface IVRRequest {
   patientName: string;
   doctorName: string;
   insurance: string;
-  status: 'pending_review' | 'awaiting_docs' | 'ready' | 'completed' | 'approved';
+  status: 'submitted' | 'in_review' | 'pending_approval' | 'documents_requested' | 'approved' | 'rejected' | 'escalated' | 'cancelled';
   priority: 'high' | 'medium' | 'low';
   daysPending: number;
   submittedDate: string;
@@ -112,13 +114,9 @@ interface IVRRequest {
     description: string;
     status: string;
   }>;
-  communications: Array<{
-    id: string;
-    message: string;
-    author: string;
-    timestamp: string;
-    type: 'internal' | 'external';
-  }>;
+  doctor_comment?: string;
+  ivr_response?: string;
+  comment_updated_at?: string;
 }
 
 interface ChecklistItem {
@@ -131,10 +129,12 @@ interface ChecklistItem {
 const IVRReviewDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { updateIVRStatus, getIVRById } = useIVR();
   const [loading, setLoading] = useState(true);
   const [ivrRequest, setIvrRequest] = useState<IVRRequest | null>(null);
-  const [newMessage, setNewMessage] = useState('');
+  const [ivrResponse, setIvrResponse] = useState('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([
     { id: '1', label: 'Verify patient identity', completed: false, required: true },
     { id: '2', label: 'Confirm insurance coverage', completed: false, required: true },
@@ -150,15 +150,112 @@ const IVRReviewDetailPage: React.FC = () => {
   const [isDocumentRequestModalOpen, setIsDocumentRequestModalOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
+  // Load communication messages from API
+  const loadCommunications = async (ivrId: string) => {
+    try {
+      const response = await fetch(`/api/v1/ivr/requests/${ivrId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+
+      if (response.ok) {
+        const ivrData = await response.json();
+        return {
+          doctor_comment: ivrData.doctor_comment || '',
+          ivr_response: ivrData.ivr_response || '',
+          comment_updated_at: ivrData.comment_updated_at || null
+        };
+      } else {
+        console.error('Failed to load IVR data:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Error loading IVR data:', error);
+    }
+    return {
+      doctor_comment: '',
+      ivr_response: '',
+      comment_updated_at: null
+    };
+  };
+
+  // Load complex messages (including system messages like document requests)
+  const loadComplexMessages = async () => {
+    try {
+      const response = await fetch(`/api/v1/ivr/requests/${id}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+
+      if (response.ok) {
+        const messages = await response.json();
+        console.log('🔍 IVR COMPANY VIEW - Complex messages:', messages);
+
+        const messagesContainer = document.getElementById('complex-messages-ivr');
+        if (messagesContainer) {
+          messagesContainer.innerHTML = '';
+
+          if (messages.length === 0) {
+            messagesContainer.innerHTML = '<p class="text-gray-500 italic text-sm">No system messages yet</p>';
+          } else {
+                        messages.forEach((msg: any) => {
+              const messageDiv = document.createElement('div');
+              messageDiv.className = `p-3 rounded-lg ${
+                msg.message_type === 'system'
+                  ? 'bg-yellow-50 border-l-4 border-yellow-400'
+                  : msg.author_type === 'doctor'
+                    ? 'bg-blue-50 border-l-4 border-blue-400'
+                    : 'bg-green-50 border-l-4 border-green-400'
+              }`;
+
+              // Format the timestamp using the formatMessageTimestamp utility
+              const formattedTimestamp = formatMessageTimestamp(msg.timestamp);
+
+              // Format the author name properly
+              let authorName = 'Unknown User';
+              if (msg.author && msg.author.trim() && msg.author !== 'Unknown User') {
+                authorName = msg.author;
+              } else if (msg.author_type === 'doctor') {
+                authorName = 'Dr. John Smith';
+              } else if (msg.author_type === 'ivr_specialist') {
+                authorName = 'IVR Specialist';
+              } else if (msg.author_type === 'system') {
+                authorName = 'IVR System';
+              }
+
+              messageDiv.innerHTML = `
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm font-medium text-gray-900">${authorName}</span>
+                  <span class="text-xs text-gray-500">
+                    ${formattedTimestamp}
+                  </span>
+                </div>
+                <p class="text-sm text-gray-700 whitespace-pre-wrap">${msg.message}</p>
+              `;
+
+              messagesContainer.appendChild(messageDiv);
+            });
+          }
+        }
+      } else {
+        console.error('🚨 IVR COMPANY VIEW - Failed to load complex messages:', response.status);
+      }
+    } catch (error) {
+      console.error('🚨 IVR COMPANY VIEW - Error loading complex messages:', error);
+    }
+  };
+
   // Mock data - replace with actual API call
   useEffect(() => {
+    const fetchData = async () => {
     const mockData: IVRRequest = {
       id: id || '660e8400-e29b-41d4-a716-446655440004',
       ivrNumber: 'IVR-2024-001',
       patientName: 'John Smith',
-      doctorName: 'Dr. Sarah Wilson',
+      doctorName: 'Dr. John Smith',
       insurance: 'Blue Cross Blue Shield',
-      status: 'pending_review',
+      status: 'approved',
       priority: 'high',
       daysPending: 3,
       submittedDate: '2024-03-15',
@@ -218,18 +315,19 @@ const IVRReviewDetailPage: React.FC = () => {
           totalCost: 165.00
         }
       ],
+      // IVR Results for approved status
       ivrResults: {
         caseNumber: 'CASE-2024-001234',
-        verificationDate: '2024-03-16',
+        verificationDate: '2024-03-18T14:30:00Z',
         coverageStatus: 'covered',
         coveragePercentage: 80,
-        deductibleAmount: 500,
-        copayAmount: 50,
-        outOfPocketMax: 550,
+        deductibleAmount: 1500,
+        copayAmount: 25,
+        outOfPocketMax: 5000,
         priorAuthRequired: true,
         priorAuthStatus: 'approved',
-        coverageDetails: 'Wound care supplies covered at 80% after deductible. Prior authorization approved for 6-week treatment period.',
-        coverageNotes: 'Patient has met 50% of annual deductible. Coverage effective through end of plan year.'
+        coverageDetails: 'Coverage approved at 80% with specified cost-sharing amounts. Advanced wound care products are covered under DME benefit.',
+        coverageNotes: 'Patient meets medical necessity criteria for chronic wound care. Prior authorization approved for 90-day supply with option to renew.'
       },
       documents: [
         {
@@ -277,28 +375,53 @@ const IVRReviewDetailPage: React.FC = () => {
           status: 'completed'
         }
       ],
-      communications: [
-        {
-          id: 'comm1',
-          message: 'Initial IVR request submitted. Awaiting review.',
-          author: 'Dr. Sarah Wilson',
-          timestamp: '2024-03-15T10:30:00Z',
-          type: 'external'
-        },
-        {
-          id: 'comm2',
-          message: 'Patient insurance verification in progress.',
-          author: 'IVR Specialist',
-          timestamp: '2024-03-15T14:15:00Z',
-          type: 'internal'
-        }
-      ]
+      doctor_comment: '',
+      ivr_response: '',
+      comment_updated_at: null
     };
 
-    setTimeout(() => {
+      // DEBUGGING: Load actual data from API to get real communication data
+      try {
+        const response = await fetch(`/api/v1/ivr/requests/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+
+        if (response.ok) {
+          const apiData = await response.json();
+          console.log('🔍 IVR COMPANY VIEW - Full API Response:', apiData);
+          console.log('🔍 IVR COMPANY VIEW - Doctor Comment:', apiData.doctor_comment);
+          console.log('🔍 IVR COMPANY VIEW - IVR Response:', apiData.ivr_response);
+          console.log('🔍 IVR COMPANY VIEW - Comment Updated At:', apiData.comment_updated_at);
+
+          // Update mock data with real communication data
+          mockData.doctor_comment = apiData.doctor_comment || '';
+          mockData.ivr_response = apiData.ivr_response || '';
+          mockData.comment_updated_at = apiData.comment_updated_at || null;
+        } else {
+          console.error('🚨 IVR COMPANY VIEW - Failed to load real data:', response.status);
+        }
+      } catch (error) {
+        console.error('🚨 IVR COMPANY VIEW - Error loading real data:', error);
+      }
+
+      console.log('🔍 IVR COMPANY VIEW - Final IVR Request:', mockData);
       setIvrRequest(mockData);
       setLoading(false);
-    }, 500);
+
+      // Load complex messages (including document requests)
+      loadComplexMessages();
+    };
+
+    fetchData();
+
+    // POLLING COMPLETELY DISABLED TO STOP RATE LIMITING
+    console.log('🚨 POLLING DISABLED - Manual refresh only');
+
+    return () => {
+      // No cleanup needed since no polling
+    };
   }, [id]);
 
   const handleChecklistToggle = (itemId: string) => {
@@ -340,26 +463,30 @@ const IVRReviewDetailPage: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json();
-        // Update the IVR request status and add approval results
-        if (ivrRequest) {
-          const updatedRequest = {
-            ...ivrRequest,
-            status: 'approved' as const,
-            ivrResults: {
-              caseNumber: `CASE-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
-              verificationDate: new Date().toISOString(),
-              coverageStatus: 'covered' as const,
-              coveragePercentage: approvalData.coveragePercentage,
-              deductibleAmount: approvalData.deductibleAmount,
-              copayAmount: approvalData.copayAmount,
-              outOfPocketMax: approvalData.outOfPocketMax,
-              priorAuthRequired: true,
-              priorAuthStatus: 'approved' as const,
-              coverageDetails: `Coverage approved at ${approvalData.coveragePercentage}% with specified cost-sharing amounts.`,
-              coverageNotes: approvalData.coverageNotes
-            }
-          };
-          setIvrRequest(updatedRequest);
+        // Update the IVR request status in shared context
+        if (id) {
+          updateIVRStatus(id, 'approved');
+          // Also update local state for immediate UI feedback
+          if (ivrRequest) {
+            const updatedRequest = {
+              ...ivrRequest,
+              status: 'approved' as const,
+              ivrResults: {
+                caseNumber: `CASE-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
+                verificationDate: new Date().toISOString(),
+                coverageStatus: 'covered' as const,
+                coveragePercentage: approvalData.coveragePercentage,
+                deductibleAmount: approvalData.deductibleAmount,
+                copayAmount: approvalData.copayAmount,
+                outOfPocketMax: approvalData.outOfPocketMax,
+                priorAuthRequired: true,
+                priorAuthStatus: 'approved' as const,
+                coverageDetails: `Coverage approved at ${approvalData.coveragePercentage}% with specified cost-sharing amounts.`,
+                coverageNotes: approvalData.coverageNotes
+              }
+            };
+            setIvrRequest(updatedRequest);
+          }
         }
         setIsApprovalModalOpen(false);
         // Show success notification with coverage details
@@ -390,9 +517,13 @@ const IVRReviewDetailPage: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json();
-        // Update the IVR request status
-        if (ivrRequest) {
-          setIvrRequest({ ...ivrRequest, status: 'rejected' });
+        // Update the IVR request status in shared context
+        if (id) {
+          updateIVRStatus(id, 'rejected');
+          // Also update local state for immediate UI feedback
+          if (ivrRequest) {
+            setIvrRequest({ ...ivrRequest, status: 'rejected' });
+          }
         }
         setIsRejectionModalOpen(false);
         // Show success notification
@@ -426,13 +557,20 @@ const IVRReviewDetailPage: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json();
-        // Update the IVR request status
-        if (ivrRequest) {
-          setIvrRequest({ ...ivrRequest, status: 'awaiting_docs' });
+        // Update the IVR request status in shared context
+        if (id) {
+          updateIVRStatus(id, 'documents_requested');
+          // Also update local state for immediate UI feedback
+          if (ivrRequest) {
+            setIvrRequest({ ...ivrRequest, status: 'documents_requested' });
+          }
         }
         setIsDocumentRequestModalOpen(false);
         // Show success notification
         alert('Document request sent successfully!');
+
+        // Refresh complex messages to show the document request
+        loadComplexMessages();
       } else {
         throw new Error('Failed to request documents');
       }
@@ -444,23 +582,67 @@ const IVRReviewDetailPage: React.FC = () => {
     }
   };
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+  const handleSubmitResponse = async () => {
+    if (!ivrResponse.trim() || !ivrRequest) return;
 
-    const newComm = {
-      id: `comm${Date.now()}`,
-      message: newMessage,
-      author: 'IVR Specialist',
-      timestamp: new Date().toISOString(),
-      type: 'internal' as const
-    };
+    setIsSubmittingResponse(true);
+    try {
+      const response = await fetch(`/api/v1/ivr/requests/${id}/ivr-response`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          response: ivrResponse
+        })
+      });
 
-    setIvrRequest(prev => prev ? {
-      ...prev,
-      communications: [...prev.communications, newComm]
-    } : null);
+            if (response.ok) {
+        const updatedRequest = await response.json();
+        console.log('🔍 IVR COMPANY VIEW - Response submission response:', updatedRequest);
 
-    setNewMessage('');
+        // Refresh the entire IVR request to get latest data
+        const refreshResponse = await fetch(`/api/v1/ivr/requests/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+
+        if (refreshResponse.ok) {
+          const refreshedData = await refreshResponse.json();
+          console.log('🔍 IVR COMPANY VIEW - Refreshed data after response:', refreshedData);
+
+          setIvrRequest({
+            ...ivrRequest,
+            doctor_comment: refreshedData.doctor_comment || '',
+            ivr_response: refreshedData.ivr_response || '',
+            comment_updated_at: refreshedData.comment_updated_at || null
+          });
+        } else {
+          // Fallback to response data
+          setIvrRequest({
+            ...ivrRequest,
+            ivr_response: updatedRequest.ivr_response,
+            comment_updated_at: updatedRequest.comment_updated_at
+          });
+        }
+
+        setIvrResponse('');
+        alert('Response submitted successfully!');
+
+        // Refresh complex messages to show any new system messages
+        loadComplexMessages();
+      } else {
+        console.error('Failed to submit response');
+        alert('Failed to submit response. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting response:', error);
+      alert('Failed to submit response. Please try again.');
+    } finally {
+      setIsSubmittingResponse(false);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -473,13 +655,16 @@ const IVRReviewDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending_review: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'Pending Review' },
-      awaiting_docs: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Awaiting Docs' },
-      ready: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Ready' },
-      completed: { bg: 'bg-slate-100', text: 'text-slate-800', label: 'Completed' },
-      approved: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' }
+      submitted: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Submitted' },
+      in_review: { bg: 'bg-amber-100', text: 'text-amber-800', label: 'In Review' },
+      pending_approval: { bg: 'bg-emerald-100', text: 'text-emerald-800', label: 'Pending Approval' },
+      documents_requested: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Documents Requested' },
+      approved: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
+      rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
+      escalated: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'Escalated' },
+      cancelled: { bg: 'bg-slate-100', text: 'text-slate-800', label: 'Cancelled' }
     };
-    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending_review;
+    return statusConfig[status as keyof typeof statusConfig] || statusConfig.in_review;
   };
 
   const getPriorityBadge = (priority: string) => {
@@ -565,7 +750,7 @@ const IVRReviewDetailPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="font-medium text-gray-700">Date of Birth</label>
-                  <p className="text-gray-900">{new Date(ivrRequest.patient.dateOfBirth).toLocaleDateString()}</p>
+                  <p className="text-gray-900">{formatDateOnly(ivrRequest.patient.dateOfBirth)}</p>
                 </div>
 
                 <div className="col-span-2">
@@ -603,7 +788,7 @@ const IVRReviewDetailPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="font-medium text-gray-700">Effective Date</label>
-                  <p className="text-gray-900">{new Date(ivrRequest.insuranceDetails.effectiveDate).toLocaleDateString()}</p>
+                  <p className="text-gray-900">{formatDateOnly(ivrRequest.insuranceDetails.effectiveDate)}</p>
                 </div>
                 <div>
                   <label className="font-medium text-gray-700">Copay</label>
@@ -654,7 +839,7 @@ const IVRReviewDetailPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="font-medium text-gray-700">Treatment Start Date</label>
-                    <p className="text-gray-900">{new Date(ivrRequest.medicalInfo.treatmentStartDate).toLocaleDateString()}</p>
+                    <p className="text-gray-900">{formatDateOnly(ivrRequest.medicalInfo.treatmentStartDate)}</p>
                   </div>
                   <div>
                     <label className="font-medium text-gray-700">Frequency</label>
@@ -718,8 +903,8 @@ const IVRReviewDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* IVR Results Display - Show if approved */}
-            {ivrRequest.ivrResults && (
+            {/* IVR Results Display - Show ONLY when approved */}
+            {ivrRequest.status === 'approved' && ivrRequest.ivrResults && (
               <div className="bg-emerald-50 rounded-lg p-4">
                 <div className="flex items-center space-x-2 mb-4">
                   <DocumentCheckIcon className="h-5 w-5 text-emerald-600" />
@@ -733,7 +918,7 @@ const IVRReviewDetailPage: React.FC = () => {
                     </div>
                     <div>
                       <label className="font-medium text-gray-700">Verification Date</label>
-                      <p className="text-gray-900">{new Date(ivrRequest.ivrResults.verificationDate).toLocaleDateString()}</p>
+                      <p className="text-gray-900">{formatDateOnly(ivrRequest.ivrResults.verificationDate)}</p>
                     </div>
                   </div>
                   <div>
@@ -819,7 +1004,7 @@ const IVRReviewDetailPage: React.FC = () => {
                   <div key={item.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                     <div>
                       <p className="text-sm font-medium text-gray-900">{item.description}</p>
-                      <p className="text-xs text-gray-500">{new Date(item.date).toLocaleDateString()}</p>
+                      <p className="text-xs text-gray-500">{formatDateOnly(item.date)}</p>
                     </div>
                     <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full capitalize">
                       {item.status}
@@ -850,7 +1035,7 @@ const IVRReviewDetailPage: React.FC = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-900">{doc.name}</p>
                         <p className="text-xs text-gray-500">
-                          {formatFileSize(doc.size)} • {new Date(doc.uploadedAt).toLocaleDateString()}
+                          {formatFileSize(doc.size)} • {formatDateOnly(doc.uploadedAt)}
                         </p>
                       </div>
                     </div>
@@ -873,10 +1058,10 @@ const IVRReviewDetailPage: React.FC = () => {
               />
             </div>
 
-            {/* Phone Call Checklist */}
+            {/* Verification Checklist */}
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <PhoneIcon className="h-5 w-5 text-gray-600" />
+                <ClipboardDocumentCheckIcon className="h-5 w-5 text-gray-600" />
                 <h3 className="text-lg font-semibold text-gray-900">Verification Checklist</h3>
               </div>
               <div className="space-y-2">
@@ -930,46 +1115,103 @@ const IVRReviewDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Communication Thread */}
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Communication</h3>
-              </div>
+            {/* Simplified Communication */}
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Communication with Doctor</h3>
 
-              {/* Messages */}
-              <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                {ivrRequest.communications.map((comm) => (
-                  <div key={comm.id} className={`p-3 rounded-lg ${
-                    comm.type === 'internal' ? 'bg-blue-50 border-l-4 border-blue-400' : 'bg-gray-50 border-l-4 border-gray-400'
-                  }`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-gray-900">{comm.author}</span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(comm.timestamp).toLocaleDateString()}
-                      </span>
+                <div className="space-y-6">
+                  {/* System Messages and Complex Communication Thread */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Communication History</h4>
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {/* Load and display complex messages from API */}
+                      <div id="complex-messages-ivr">
+                        {/* This will be populated by the loadComplexMessages function */}
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-700">{comm.message}</p>
                   </div>
-                ))}
-              </div>
 
-              {/* Add Message */}
-              <div className="space-y-2">
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Add a note or message..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                  rows={3}
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim()}
-                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Send Message
-                </button>
+                  {/* Doctor's Comment Section */}
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Doctor's Comment/Question</h4>
+                    {ivrRequest.doctor_comment ? (
+                      <div className="bg-white rounded-lg p-4 border border-blue-200">
+                        <p className="text-gray-900 mb-2">{ivrRequest.doctor_comment}</p>
+                        {ivrRequest.comment_updated_at && (
+                          <p className="text-xs text-gray-500">
+                            Updated: {formatMessageTimestamp(ivrRequest.comment_updated_at)}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 italic">No comment from doctor yet</p>
+                    )}
+                  </div>
+
+                  {/* IVR Response Section */}
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <h4 className="text-md font-medium text-gray-900 mb-3">Your Response</h4>
+                    {ivrRequest.ivr_response ? (
+                      <div className="bg-white rounded-lg p-4 border border-green-200">
+                        <p className="text-gray-900">{ivrRequest.ivr_response}</p>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 italic">No response submitted yet</p>
+                    )}
+                  </div>
+
+                  {/* Add/Update Response */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-md font-medium text-gray-900">
+                        {ivrRequest.ivr_response ? 'Update Your Response' : 'Respond to Doctor'}
+                      </h4>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/v1/ivr/requests/${id}`, {
+                              headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                            });
+                            if (response.ok) {
+                              const data = await response.json();
+                              console.log('🔄 IVR COMPANY VIEW - Manual refresh data:', data);
+                              setIvrRequest({
+                                ...ivrRequest,
+                                doctor_comment: data.doctor_comment || '',
+                                ivr_response: data.ivr_response || '',
+                                comment_updated_at: data.comment_updated_at || null
+                              });
+                              // Also refresh complex messages
+                              loadComplexMessages();
+                            }
+                          } catch (error) {
+                            console.error('🚨 Manual refresh error:', error);
+                          }
+                        }}
+                        className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
+                      >
+                        🔄 Refresh
+                      </button>
+                    </div>
+                    <div className="space-y-4">
+                      <textarea
+                        value={ivrResponse}
+                        onChange={(e) => setIvrResponse(e.target.value)}
+                        placeholder="Type your response to the doctor..."
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        rows={4}
+                      />
+                      <button
+                        onClick={handleSubmitResponse}
+                        disabled={!ivrResponse.trim() || isSubmittingResponse}
+                        className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSubmittingResponse ? 'Submitting...' : (ivrRequest.ivr_response ? 'Update Response' : 'Submit Response')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -979,7 +1221,7 @@ const IVRReviewDetailPage: React.FC = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Submitted:</span>
-                  <span className="text-gray-900">{new Date(ivrRequest.submittedDate).toLocaleDateString()}</span>
+                  <span className="text-gray-900">{formatDateOnly(ivrRequest.submittedDate)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Days Pending:</span>
@@ -1001,7 +1243,7 @@ const IVRReviewDetailPage: React.FC = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Name:</span>
-                  <span className="text-gray-900">Dr. Jane Smith</span>
+                  <span className="text-gray-900">{ivrRequest.doctorName}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">NPI:</span>

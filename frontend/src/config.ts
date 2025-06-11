@@ -26,4 +26,4 @@ const config = {
   getAPIEndpoint: (path: string) => `${env.VITE_API_URL}${path}`,
 } as const;
 
-export default config; 
+export default config;

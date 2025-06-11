@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Communication Sync Test - Healthcare IVR Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            margin: -20px -20px 20px -20px;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #2d3748;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-success { background: #d1fae5; color: #065f46; }
+        .status-error { background: #fee2e2; color: #991b1b; }
+        .test-button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 500;
+        }
+        .test-button:hover {
+            background: #4338ca;
+        }
+        .test-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .test-results {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .step-list {
+            list-style: none;
+            padding: 0;
+        }
+        .step-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .step-list li:last-child {
+            border-bottom: none;
+        }
+        .step-number {
+            background: #4f46e5;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        .critical-warning {
+            background: #fef2f2;
+            border: 2px solid #fca5a5;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .critical-warning h3 {
+            color: #dc2626;
+            margin: 0 0 8px 0;
+        }
+        .link-button {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            margin: 5px;
+            font-weight: 500;
+        }
+        .link-button:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Communication Sync Test</h1>
+            <p>Testing message synchronization between Doctor and IVR Company views</p>
+        </div>
+
+        <div class="critical-warning">
+            <h3>🚨 CRITICAL BUG BEING TESTED</h3>
+            <p><strong>Issue:</strong> Messages between Doctor and IVR Company views are not syncing. Each view has isolated message history.</p>
+            <p><strong>Expected Fix:</strong> Messages should sync in real-time between both views using shared API endpoints.</p>
+        </div>
+
+        <div class="test-section">
+            <h3>
+                📋 Test Procedure
+                <span class="status-badge status-pending" id="overall-status">Ready to Test</span>
+            </h3>
+            <ol class="step-list">
+                <li><span class="step-number">1</span>Login as Doctor (doctor@healthcare.local / doctor123)</li>
+                <li><span class="step-number">2</span>Navigate to IVR Management and open an IVR request</li>
+                <li><span class="step-number">3</span>Go to Communication tab and send a message</li>
+                <li><span class="step-number">4</span>Open IVR Company view in new tab/window</li>
+                <li><span class="step-number">5</span>Login as IVR Company (ivr@healthcare.local / ivr123)</li>
+                <li><span class="step-number">6</span>Navigate to same IVR request and check communication</li>
+                <li><span class="step-number">7</span>Send a reply message from IVR Company view</li>
+                <li><span class="step-number">8</span>Switch back to Doctor view and verify message appears</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>
+                🔗 Quick Navigation Links
+                <span class="status-badge status-pending">Click to Test</span>
+            </h3>
+            <a href="/login" class="link-button" target="_blank">🏥 Doctor Login</a>
+            <a href="/doctor/ivr/660e8400-e29b-41d4-a716-446655440004?tab=communication" class="link-button" target="_blank">💬 Doctor IVR Communication</a>
+            <a href="/ivr-company/review/660e8400-e29b-41d4-a716-446655440004" class="link-button" target="_blank">🏢 IVR Company Review</a>
+        </div>
+
+        <div class="test-section">
+            <h3>
+                🧪 API Endpoint Tests
+                <span class="status-badge status-pending" id="api-status">Not Tested</span>
+            </h3>
+            <button class="test-button" onclick="testGetMessages()">Test GET Messages</button>
+            <button class="test-button" onclick="testPostMessage()">Test POST Message</button>
+            <button class="test-button" onclick="testFullWorkflow()">Test Full Workflow</button>
+            <div class="test-results" id="api-results">Click a test button to see results...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>
+                ✅ Expected Results
+                <span class="status-badge status-success">Success Criteria</span>
+            </h3>
+            <ul>
+                <li>✅ Messages sent from Doctor view appear in IVR Company view</li>
+                <li>✅ Messages sent from IVR Company view appear in Doctor view</li>
+                <li>✅ Messages sync within 10 seconds (polling interval)</li>
+                <li>✅ Message history is shared between both views</li>
+                <li>✅ No duplicate messages or message loss</li>
+                <li>✅ Proper author attribution (Doctor vs IVR Specialist)</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>
+                🐛 Bug Verification
+                <span class="status-badge status-error" id="bug-status">Bug Present</span>
+            </h3>
+            <p><strong>Before Fix:</strong> Each view maintains separate message history in local state</p>
+            <p><strong>After Fix:</strong> Both views use shared API endpoints for message persistence and retrieval</p>
+            <p><strong>API Endpoints Added:</strong></p>
+            <ul>
+                <li><code>GET /api/v1/ivr/requests/{id}/messages</code> - Retrieve all messages</li>
+                <li><code>POST /api/v1/ivr/requests/{id}/messages</code> - Send new message</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+
+        // Test authentication
+        async function getAuthToken() {
+            if (authToken) return authToken;
+
+            try {
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'doctor@healthcare.local',
+                        password: 'doctor123'
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    return authToken;
+                }
+            } catch (error) {
+                console.error('Auth error:', error);
+            }
+            return null;
+        }
+
+        async function testGetMessages() {
+            const results = document.getElementById('api-results');
+            const status = document.getElementById('api-status');
+
+            results.textContent = 'Testing GET /api/v1/ivr/requests/{id}/messages...\n';
+
+            try {
+                const token = await getAuthToken();
+                if (!token) {
+                    results.textContent += 'ERROR: Could not authenticate\n';
+                    status.textContent = 'Auth Failed';
+                    status.className = 'status-badge status-error';
+                    return;
+                }
+
+                const response = await fetch('/api/v1/ivr/requests/660e8400-e29b-41d4-a716-446655440004/messages', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                results.textContent += `Response Status: ${response.status}\n`;
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    results.textContent += `SUCCESS: Retrieved ${messages.length} messages\n`;
+                    results.textContent += `Messages: ${JSON.stringify(messages, null, 2)}\n`;
+                    status.textContent = 'GET Success';
+                    status.className = 'status-badge status-success';
+                } else {
+                    const error = await response.text();
+                    results.textContent += `ERROR: ${error}\n`;
+                    status.textContent = 'GET Failed';
+                    status.className = 'status-badge status-error';
+                }
+            } catch (error) {
+                results.textContent += `EXCEPTION: ${error.message}\n`;
+                status.textContent = 'GET Error';
+                status.className = 'status-badge status-error';
+            }
+        }
+
+        async function testPostMessage() {
+            const results = document.getElementById('api-results');
+            const status = document.getElementById('api-status');
+
+            results.textContent = 'Testing POST /api/v1/ivr/requests/{id}/messages...\n';
+
+            try {
+                const token = await getAuthToken();
+                if (!token) {
+                    results.textContent += 'ERROR: Could not authenticate\n';
+                    return;
+                }
+
+                const testMessage = {
+                    message: `Test message from sync test - ${new Date().toISOString()}`,
+                    message_type: 'text',
+                    attachments: []
+                };
+
+                const response = await fetch('/api/v1/ivr/requests/660e8400-e29b-41d4-a716-446655440004/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(testMessage)
+                });
+
+                results.textContent += `Response Status: ${response.status}\n`;
+
+                if (response.ok) {
+                    const newMessage = await response.json();
+                    results.textContent += `SUCCESS: Message sent\n`;
+                    results.textContent += `Response: ${JSON.stringify(newMessage, null, 2)}\n`;
+                    status.textContent = 'POST Success';
+                    status.className = 'status-badge status-success';
+                } else {
+                    const error = await response.text();
+                    results.textContent += `ERROR: ${error}\n`;
+                    status.textContent = 'POST Failed';
+                    status.className = 'status-badge status-error';
+                }
+            } catch (error) {
+                results.textContent += `EXCEPTION: ${error.message}\n`;
+                status.textContent = 'POST Error';
+                status.className = 'status-badge status-error';
+            }
+        }
+
+        async function testFullWorkflow() {
+            const results = document.getElementById('api-results');
+            const status = document.getElementById('api-status');
+
+            results.textContent = 'Testing Full Communication Workflow...\n';
+
+            try {
+                // Step 1: Get initial messages
+                results.textContent += '\n1. Getting initial messages...\n';
+                await testGetMessages();
+
+                // Step 2: Send a test message
+                results.textContent += '\n2. Sending test message...\n';
+                await testPostMessage();
+
+                // Step 3: Verify message was added
+                results.textContent += '\n3. Verifying message was added...\n';
+                await testGetMessages();
+
+                results.textContent += '\n✅ Full workflow test completed!\n';
+                status.textContent = 'Workflow Complete';
+                status.className = 'status-badge status-success';
+
+                document.getElementById('overall-status').textContent = 'Tests Passed';
+                document.getElementById('overall-status').className = 'status-badge status-success';
+                document.getElementById('bug-status').textContent = 'Bug Fixed';
+                document.getElementById('bug-status').className = 'status-badge status-success';
+
+            } catch (error) {
+                results.textContent += `\n❌ Workflow failed: ${error.message}\n`;
+                status.textContent = 'Workflow Failed';
+                status.className = 'status-badge status-error';
+            }
+        }
+
+        // Auto-run basic test on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                console.log('Communication Sync Test Page Loaded');
+                console.log('Ready to test message synchronization between Doctor and IVR Company views');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

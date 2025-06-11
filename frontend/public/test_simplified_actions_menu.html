@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Simplified IVR Actions Menu</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .info {
+            border-left-color: #17a2b8;
+            background: #d1ecf1;
+        }
+        .warning {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        .test-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 10px 10px 0;
+        }
+        .test-link:hover {
+            background: #0056b3;
+        }
+        .code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        ol li {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 Test: Simplified IVR Company Actions Menu</h1>
+
+    <div class="test-section info">
+        <h2>📋 Task Completed</h2>
+        <p><strong>Task ID:</strong> mbpx6cwmqreyoikp1di</p>
+        <p><strong>Description:</strong> Simplify the IVR Company dashboard Actions dropdown menu</p>
+
+        <h3>✅ Changes Made:</h3>
+        <ul>
+            <li>❌ <strong>Removed:</strong> "Quick Approve" button (not needed)</li>
+            <li>❌ <strong>Removed:</strong> "Request Docs" from dropdown (moved to review details)</li>
+            <li>✅ <strong>Kept:</strong> "Review Details" as the single action</li>
+        </ul>
+    </div>
+
+    <div class="test-section success">
+        <h2>🔍 Verification Steps</h2>
+        <p>Follow these steps to verify the simplified Actions menu:</p>
+
+        <ol>
+            <li><strong>Login as IVR Company User:</strong>
+                <br>Email: <code class="code">ivr@healthcare.local</code>
+                <br>Password: <code class="code">ivr123</code>
+            </li>
+
+            <li><strong>Navigate to IVR Company Dashboard:</strong>
+                <br>Should redirect to <code class="code">/ivr-company/dashboard</code>
+            </li>
+
+            <li><strong>Check Actions Dropdown:</strong>
+                <br>• Click the "•••" button on any IVR request row
+                <br>• Verify only <strong>"Review Details"</strong> option appears
+                <br>• Confirm "Quick Approve" and "Request Docs" are removed
+            </li>
+
+            <li><strong>Verify Request Docs in Review Details:</strong>
+                <br>• Click "Review Details" to open the review page
+                <br>• Confirm "Request Documents" button exists in Actions panel
+                <br>• Verify the button opens the document request modal
+            </li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 Quick Test Links</h2>
+        <a href="/login" class="test-link">Login Page</a>
+        <a href="/ivr-company/dashboard" class="test-link">IVR Company Dashboard</a>
+        <a href="/ivr-company/review/IVR-2024-001" class="test-link">Sample Review Details</a>
+    </div>
+
+    <div class="test-section warning">
+        <h2>⚠️ Expected Behavior</h2>
+        <p><strong>Before (Old):</strong> Actions dropdown had 3 options: Review Details, Quick Approve, Request Docs</p>
+        <p><strong>After (New):</strong> Actions dropdown has 1 option: Review Details only</p>
+        <p><strong>Request Docs Location:</strong> Now available inside the review details page in the Actions panel</p>
+    </div>
+
+    <div class="test-section info">
+        <h2>📁 Files Modified</h2>
+        <ul>
+            <li><code class="code">frontend/src/components/ivr/SimpleIVRDashboard.tsx</code> - Simplified Actions dropdown</li>
+        </ul>
+
+        <h3>🔧 Technical Details:</h3>
+        <ul>
+            <li>Removed "Quick Approve" button and its click handler</li>
+            <li>Removed "Request Docs" button and its click handler</li>
+            <li>Kept only "Review Details" button with navigation to review page</li>
+            <li>Request Documents functionality remains fully available in review details page</li>
+        </ul>
+    </div>
+
+    <div class="test-section success">
+        <h2>✅ Benefits of Simplification</h2>
+        <ul>
+            <li><strong>Cleaner UI:</strong> Reduced clutter in the Actions dropdown</li>
+            <li><strong>Better UX:</strong> Single clear action from dashboard (Review Details)</li>
+            <li><strong>Logical Flow:</strong> Document requests happen within the review context</li>
+            <li><strong>Consistent Pattern:</strong> All detailed actions happen in the review page</li>
+        </ul>
+    </div>
+
+    <script>
+        // Auto-refresh status
+        console.log('✅ IVR Company Actions Menu Simplified');
+        console.log('📍 Task ID: mbpx6cwmqreyoikp1di');
+        console.log('🔗 Test the changes at /ivr-company/dashboard');
+
+        // Add click handlers for testing
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 Test page loaded - ready for verification');
+        });
+    </script>
+</body>
+</html>

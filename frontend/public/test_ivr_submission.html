@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVR Submission Route Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #2C3E50;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 10px 10px 0;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background-color: #375788;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 IVR Submission Route Test</h1>
+
+    <div class="test-container">
+        <h2>Critical Bug Fix Verification</h2>
+        <p><strong>Issue:</strong> IVR submission route /doctor/ivr/submit/P-1234 showing "Something went wrong" error page</p>
+        <p><strong>Expected:</strong> Should load IVR submission form for patient P-1234</p>
+
+        <div class="status info">
+            <strong>✅ Fixes Applied:</strong>
+            <ul>
+                <li>Fixed IVRStatus.DRAFT → IVRStatus.SUBMITTED (enum value didn't exist)</li>
+                <li>Fixed TypeScript compilation errors in IVR submission page</li>
+                <li>Fixed type mismatch in ivrService.createIVRRequest call</li>
+                <li>Removed unused imports and variables</li>
+                <li>Added proper type conversion from IVRFormData to IVRRequest</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Test Routes</h2>
+        <p>Click the links below to test the IVR submission routes:</p>
+
+        <a href="http://localhost:3000/doctor/ivr/submit/P-1234" class="test-link" target="_blank">
+            🎯 Test IVR Submission for P-1234
+        </a>
+
+        <a href="http://localhost:3000/doctor/ivr/submit/P-5678" class="test-link" target="_blank">
+            🎯 Test IVR Submission for P-5678
+        </a>
+
+        <a href="http://localhost:3000/doctor/ivr/submit/test/P-1234" class="test-link" target="_blank">
+            🧪 Test IVR Submission (Test Mode)
+        </a>
+
+        <a href="http://localhost:3000/doctor/ivr" class="test-link" target="_blank">
+            📋 Doctor IVR Management
+        </a>
+
+        <a href="http://localhost:3000/doctor/patients/select" class="test-link" target="_blank">
+            👥 Patient Selection
+        </a>
+    </div>
+
+    <div class="test-container">
+        <h2>Route Configuration Verification</h2>
+        <div class="status success">
+            <strong>✅ Route Exists:</strong> /doctor/ivr/submit/:patientId
+            <br><strong>✅ Component:</strong> IVRSubmissionPage
+            <br><strong>✅ File:</strong> frontend/src/pages/ivr/submit/[patientId].tsx
+            <br><strong>✅ Import:</strong> Properly imported in App.tsx
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Expected Behavior</h2>
+        <ol>
+            <li><strong>Route Access:</strong> /doctor/ivr/submit/P-1234 should load without errors</li>
+            <li><strong>Loading State:</strong> Should show loading spinner initially</li>
+            <li><strong>Patient Data:</strong> Should load mock patient data for the given ID</li>
+            <li><strong>Form Display:</strong> Should show IVR submission form with steps:
+                <ul>
+                    <li>Patient & Treatment Information</li>
+                    <li>Insurance Details</li>
+                    <li>Supporting Documents</li>
+                    <li>Review & Submit</li>
+                </ul>
+            </li>
+            <li><strong>Smart Features:</strong> Should show auto-population suggestions and patient history</li>
+        </ol>
+    </div>
+
+    <div class="test-container">
+        <h2>Troubleshooting</h2>
+        <p>If you still see errors, check:</p>
+        <ul>
+            <li><strong>Browser Console:</strong> Open DevTools → Console for JavaScript errors</li>
+            <li><strong>Network Tab:</strong> Check for failed API requests</li>
+            <li><strong>Authentication:</strong> Ensure you're logged in as a doctor</li>
+            <li><strong>Backend:</strong> Verify backend server is running on localhost:8000</li>
+        </ul>
+
+        <div class="status info">
+            <strong>Quick Login:</strong> Use test credentials doctor@healthcare.local / doctor123
+        </div>
+    </div>
+
+    <script>
+        // Add some basic testing functionality
+        function testRoute(url) {
+            window.open(url, '_blank');
+        }
+
+        // Check if servers are running
+        async function checkServers() {
+            const frontendStatus = document.getElementById('frontend-status');
+            const backendStatus = document.getElementById('backend-status');
+
+            try {
+                const frontendResponse = await fetch('http://localhost:3000');
+                frontendStatus.textContent = frontendResponse.ok ? '✅ Running' : '❌ Error';
+                frontendStatus.className = frontendResponse.ok ? 'success' : 'error';
+            } catch (e) {
+                frontendStatus.textContent = '❌ Not Running';
+                frontendStatus.className = 'error';
+            }
+
+            try {
+                const backendResponse = await fetch('http://localhost:8000/health');
+                backendStatus.textContent = backendResponse.ok ? '✅ Running' : '❌ Error';
+                backendStatus.className = backendResponse.ok ? 'success' : 'error';
+            } catch (e) {
+                backendStatus.textContent = '❌ Not Running';
+                backendStatus.className = 'error';
+            }
+        }
+
+        // Check servers on page load
+        window.addEventListener('load', checkServers);
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Patient, TreatmentInfo, ProductsWithSizes, FrequencyOptions, Document } from '../../types/ivr';
 import { ExclamationCircleIcon, CheckCircleIcon, DocumentIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import UniversalFileUpload from '../shared/UniversalFileUpload';
-import { toast } from 'react-toastify';
+import { toast } from 'react-hot-toast';
 
 interface PatientAndTreatmentStepProps {
   patient: Patient;
