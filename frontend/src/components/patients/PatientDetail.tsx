@@ -3,16 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
   ArrowLeftIcon,
-  CheckIcon,
-  XMarkIcon,
   UserIcon,
   PhoneIcon,
   EnvelopeIcon,
   MapPinIcon,
-  CalendarIcon,
   ClipboardDocumentListIcon,
   DocumentTextIcon,
-  ClipboardDocumentListIcon,
   ChatBubbleLeftRightIcon,
   PencilIcon,
   PrinterIcon,

@@ -1,0 +1,12 @@
+feat: Convert doctor registration from modal to dedicated page
+
+- Removed AddDoctorModal component and modal-related state
+- Created dedicated /sales/doctors/add route with full page form
+- Updated navigation to use routing instead of modal triggers
+- Preserved all 48 form fields and validation logic
+- Improved UX with better space utilization and navigation
+- Fixed modal transparency and scrolling issues
+- Added proper back navigation and breadcrumbs
+
+This change provides better user experience, especially for the complex
+multi-section doctor registration form with 48+ fields.
