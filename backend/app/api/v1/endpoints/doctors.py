@@ -16,7 +16,10 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.doctor_profile import DoctorProfile
+from app.models.rbac import Role
+from app.models.organization import Organization
 from app.schemas.token import TokenData
+from app.core.password import get_password_hash
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,168 @@ class DoctorListResponse:
         self.total = total
         self.page = page
         self.pages = pages
+
+
+@router.post("/")
+async def create_doctor_with_profile(
+    doctor_data: dict,
+    current_user: TokenData = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Create a new doctor user account with profile.
+
+    This endpoint creates both the user account and doctor profile in one call.
+    """
+    try:
+        # Get current user's organization and role info
+        user_role = current_user.role.lower() if current_user.role else ""
+
+        # Check permissions
+        allowed_roles = [
+            "sales", "distributor", "master_distributor", "admin", "chp_admin"
+        ]
+        if user_role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to create doctors"
+            )
+
+        # Get organization
+        org_query = select(Organization).where(
+            Organization.id == current_user.organization_id
+        )
+        org_result = await db.execute(org_query)
+        organization = org_result.scalar_one_or_none()
+
+        if not organization:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Organization not found"
+            )
+
+        # Get or create Doctor role
+        role_query = select(Role).where(
+            Role.name == "Doctor",
+            Role.organization_id == current_user.organization_id
+        )
+        role_result = await db.execute(role_query)
+        doctor_role = role_result.scalar_one_or_none()
+
+        if not doctor_role:
+            # Create Doctor role if it doesn't exist
+            doctor_role = Role(
+                name="Doctor",
+                description="Doctor role for healthcare providers",
+                organization_id=current_user.organization_id,
+                permissions={}
+            )
+            db.add(doctor_role)
+            await db.flush()
+
+        # Check if user already exists
+        existing_user_query = select(User).where(
+            or_(
+                User.email == doctor_data["email"],
+                User.username == doctor_data["username"]
+            )
+        )
+        existing_result = await db.execute(existing_user_query)
+        existing_user = existing_result.scalar_one_or_none()
+
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User with this email or username already exists"
+            )
+
+        # Create user
+        new_user = User(
+            username=doctor_data["username"],
+            email=doctor_data["email"],
+            encrypted_password=get_password_hash(doctor_data["password"]),
+            first_name=doctor_data["first_name"],
+            last_name=doctor_data["last_name"],
+            role_id=doctor_role.id,
+            organization_id=current_user.organization_id,
+            is_active=doctor_data.get("is_active", True),
+            is_superuser=False,
+            added_by_id=current_user.id,
+            force_password_change=doctor_data.get("force_password_change", True)
+        )
+
+        db.add(new_user)
+        await db.flush()  # Get the user ID
+
+        # Create doctor profile if profile data is provided
+        profile_created = False
+        if any(key.startswith(('professional_', 'specialty', 'medical_', 'npi_',
+                              'medicare_', 'medicaid_', 'tax_', 'primary_facility',
+                              'facility_', 'office_', 'shipping_'))
+               for key in doctor_data.keys()):
+
+            # Create doctor profile
+            profile_data = {
+                'user_id': new_user.id,
+                'professional_title': doctor_data.get('professional_title'),
+                'specialty': doctor_data.get('specialty'),
+                'medical_license_number': doctor_data.get('medical_license_number'),
+                'npi_number': doctor_data.get('npi_number'),
+                'medicare_ptan': doctor_data.get('medicare_ptan'),
+                'medicaid_provider_number': doctor_data.get('medicaid_provider_number'),
+                'tax_id': doctor_data.get('tax_id'),
+                'primary_facility_name': doctor_data.get('primary_facility_name'),
+                'facility_address_line1': doctor_data.get('facility_address_line1'),
+                'facility_city': doctor_data.get('facility_city'),
+                'facility_state': doctor_data.get('facility_state'),
+                'facility_zip_code': doctor_data.get('facility_zip_code'),
+                'facility_phone': doctor_data.get('facility_phone'),
+                'facility_fax': doctor_data.get('facility_fax'),
+                'office_contact_name': doctor_data.get('office_contact_name'),
+                'office_contact_phone': doctor_data.get('office_contact_phone'),
+                'shipping_address_line1': doctor_data.get('shipping_address_line1'),
+                'shipping_city': doctor_data.get('shipping_city'),
+                'shipping_state': doctor_data.get('shipping_state'),
+                'shipping_zip_code': doctor_data.get('shipping_zip_code'),
+                'shipping_contact_name': doctor_data.get('shipping_contact_name'),
+                'shipping_contact_phone': doctor_data.get('shipping_contact_phone'),
+                'delivery_instructions': doctor_data.get('delivery_instructions'),
+                'created_by_id': current_user.id
+            }
+
+            # Remove None values
+            profile_data = {k: v for k, v in profile_data.items() if v is not None}
+
+            new_profile = DoctorProfile(**profile_data)
+            db.add(new_profile)
+            profile_created = True
+
+        await db.commit()
+
+        # Return user data
+        response = {
+            "id": str(new_user.id),
+            "username": new_user.username,
+            "email": new_user.email,
+            "first_name": new_user.first_name,
+            "last_name": new_user.last_name,
+            "is_active": new_user.is_active,
+            "role_id": str(new_user.role_id),
+            "organization_id": str(new_user.organization_id),
+            "profile_created": profile_created
+        }
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error creating doctor: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create doctor: {str(e)}"
+        )
 
 
 @router.get("/")
@@ -98,7 +263,7 @@ async def get_doctors(
             # Get all sales reps under these distributors
             sales_reps_query = select(User.id).where(
                 or_(
-                    User.parent_distributor_id.in_(distributor_id_list),  # noqa: E501
+                    User.parent_distributor_id.in_(distributor_id_list),
                     User.parent_master_distributor_id == current_user.id
                 )
             )
@@ -159,7 +324,8 @@ async def get_doctors(
             profile = doctor.doctor_profile
             added_by_name = "System"
             if doctor.added_by:
-                added_by_name = f"{doctor.added_by.first_name} {doctor.added_by.last_name}".strip()  # noqa: E501
+                added_by_name = (f"{doctor.added_by.first_name} "
+                               f"{doctor.added_by.last_name}").strip()
                 if not added_by_name:
                     added_by_name = doctor.added_by.username
 
@@ -169,10 +335,12 @@ async def get_doctors(
                 "last_name": doctor.last_name or "",
                 "email": doctor.email,
                 "specialty": profile.specialty if profile else "Not specified",
-                "facility": profile.primary_facility_name if profile else "Not specified",  # noqa: E501
+                "facility": (profile.primary_facility_name if profile
+                           else "Not specified"),
                 "status": "active" if doctor.is_active else "inactive",
                 "added_by_name": added_by_name,
-                "created_at": doctor.created_at.isoformat() if doctor.created_at else None  # noqa: E501
+                "created_at": (doctor.created_at.isoformat()
+                             if doctor.created_at else None)
             })
 
         # Calculate pagination info
@@ -226,7 +394,7 @@ async def get_doctor_detail(
                 detail="Doctor not found"
             )
 
-        # Check if current user can access this doctor (same hierarchy logic as list)  # noqa: E501
+        # Check if current user can access this doctor
         user_role = current_user.role.lower() if current_user.role else ""
         can_access = False
 
@@ -249,7 +417,8 @@ async def get_doctor_detail(
         profile = doctor.doctor_profile
         added_by_name = "System"
         if doctor.added_by:
-            added_by_name = f"{doctor.added_by.first_name} {doctor.added_by.last_name}".strip()  # noqa: E501
+            added_by_name = (f"{doctor.added_by.first_name} "
+                           f"{doctor.added_by.last_name}").strip()
             if not added_by_name:
                 added_by_name = doctor.added_by.username
 
@@ -260,25 +429,37 @@ async def get_doctor_detail(
             "email": doctor.email,
             "username": doctor.username,
             "is_active": doctor.is_active,
-            "created_at": doctor.created_at.isoformat() if doctor.created_at else None,  # noqa: E501
+            "created_at": (doctor.created_at.isoformat()
+                         if doctor.created_at else None),
             "added_by_name": added_by_name,
             "profile": {
-                "professional_title": profile.professional_title if profile else None,  # noqa: E501
+                "professional_title": (profile.professional_title
+                                      if profile else None),
                 "specialty": profile.specialty if profile else None,
-                "medical_license_number": profile.medical_license_number if profile else None,  # noqa: E501
+                "medical_license_number": (profile.medical_license_number
+                                         if profile else None),
                 "npi_number": profile.npi_number if profile else None,
-                "primary_facility_name": profile.primary_facility_name if profile else None,  # noqa: E501
-                "facility_address_line1": profile.facility_address_line1 if profile else None,  # noqa: E501
+                "primary_facility_name": (profile.primary_facility_name
+                                        if profile else None),
+                "facility_address_line1": (profile.facility_address_line1
+                                         if profile else None),
                 "facility_city": profile.facility_city if profile else None,
                 "facility_state": profile.facility_state if profile else None,
-                "facility_zip_code": profile.facility_zip_code if profile else None,  # noqa: E501
+                "facility_zip_code": (profile.facility_zip_code
+                                    if profile else None),
                 "facility_phone": profile.facility_phone if profile else None,
-                "office_contact_name": profile.office_contact_name if profile else None,  # noqa: E501
-                "office_contact_phone": profile.office_contact_phone if profile else None,  # noqa: E501
-                "years_in_practice": profile.years_in_practice if profile else None,  # noqa: E501
-                "wound_care_percentage": profile.wound_care_percentage if profile else None,  # noqa: E501
-                "accepts_medicare": profile.accepts_medicare if profile else None,  # noqa: E501
-                "accepts_medicaid": profile.accepts_medicaid if profile else None  # noqa: E501
+                "office_contact_name": (profile.office_contact_name
+                                      if profile else None),
+                "office_contact_phone": (profile.office_contact_phone
+                                       if profile else None),
+                "years_in_practice": (profile.years_in_practice
+                                    if profile else None),
+                "wound_care_percentage": (profile.wound_care_percentage
+                                        if profile else None),
+                "accepts_medicare": (profile.accepts_medicare
+                                   if profile else None),
+                "accepts_medicaid": (profile.accepts_medicaid
+                                   if profile else None)
             } if profile else None
         }
 

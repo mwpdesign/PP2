@@ -310,40 +310,18 @@ const AddDoctor: React.FC = () => {
       // Generate temporary password (user will be required to change on first login)
       const tempPassword = `TempPass${Math.random().toString(36).slice(-8)}!`;
 
-      // First, create the user account
-      const userPayload = {
+      // Create both user and profile in one call
+      const payload = {
+        // User data
         username: username,
         email: formData.email,
         password: tempPassword,
         first_name: formData.firstName,
         last_name: formData.lastName,
-        role_name: 'doctor', // This will be mapped to the doctor role
         is_active: true,
-        force_password_change: true
-      };
+        force_password_change: true,
 
-      console.log('Creating user with payload:', userPayload);
-
-      const userResponse = await fetch('/api/v1/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(userPayload)
-      });
-
-      if (!userResponse.ok) {
-        const errorData = await userResponse.json();
-        throw new Error(errorData.detail || 'Failed to create user account');
-      }
-
-      const userData = await userResponse.json();
-      console.log('User created successfully:', userData);
-
-      // Then, create the doctor profile
-      const doctorProfilePayload = {
-        user_id: userData.id,
+        // Profile data
         professional_title: formData.professionalTitle,
         specialty: formData.specialty,
         medical_license_number: formData.licenseNumber,
@@ -368,27 +346,24 @@ const AddDoctor: React.FC = () => {
         delivery_instructions: formData.deliveryInstructions
       };
 
-      console.log('Creating doctor profile with payload:', doctorProfilePayload);
+      console.log('Creating doctor with payload:', payload);
 
-      const profileResponse = await fetch('/api/v1/doctor-profiles', {
+      const response = await fetch('/api/v1/doctors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(doctorProfilePayload)
+        body: JSON.stringify(payload)
       });
 
-      if (!profileResponse.ok) {
-        const errorData = await profileResponse.json();
-        console.error('Doctor profile creation failed:', errorData);
-        // If profile creation fails, we should ideally clean up the user account
-        // For now, we'll just log the error and continue
-        console.warn('Doctor profile creation failed, but user account was created');
-      } else {
-        const profileData = await profileResponse.json();
-        console.log('Doctor profile created successfully:', profileData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create doctor account');
       }
+
+      const userData = await response.json();
+      console.log('Doctor created successfully:', userData);
 
       // Success
       setSubmitSuccess(`Doctor account created successfully!\n\nEmail: ${formData.email}\nTemporary Password: ${tempPassword}\n\nThe doctor will be required to change their password on first login.`);
