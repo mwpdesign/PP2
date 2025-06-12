@@ -2,6 +2,8 @@ import React from 'react';
 import {
   HomeIcon,
   UsersIcon,
+  UserPlusIcon,
+  ListBulletIcon,
   PhoneIcon,
   ChartBarIcon,
   DocumentTextIcon,
@@ -15,6 +17,9 @@ import UnifiedDashboardLayout from '../shared/layout/UnifiedDashboardLayout';
 const SimpleSalesDashboard: React.FC = () => {
   const { logout, user } = useAuth();
 
+  // Check if user has permission to manage doctors
+  const canManageDoctors = user?.role && ['Sales', 'Distributor', 'Master Distributor', 'Admin', 'CHP Admin'].includes(user.role);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -27,6 +32,9 @@ const SimpleSalesDashboard: React.FC = () => {
   const navigation = [
     { name: 'Dashboard', href: '/sales/dashboard', icon: HomeIcon },
     { name: 'Customer Accounts', href: '/sales/customers', icon: UsersIcon },
+    ...(canManageDoctors ? [
+      { name: 'Doctors', href: '/sales/doctors', icon: UsersIcon },
+    ] : []),
     { name: 'Lead Management', href: '/sales/leads', icon: PhoneIcon },
     { name: 'Sales Reports', href: '/sales/reports', icon: ChartBarIcon },
     { name: 'Proposals', href: '/sales/proposals', icon: DocumentTextIcon },

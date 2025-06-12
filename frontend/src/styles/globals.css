@@ -11,30 +11,30 @@
     width: 100%;
     position: relative;
   }
-  
+
   * {
     max-width: 100%;
     box-sizing: border-box;
   }
-  
+
   /* Prevent horizontal scroll on mobile */
   .mobile-container {
     width: 100vw;
     overflow-x: hidden;
   }
-  
+
   /* Ensure all containers are mobile-friendly */
   .container, main, section, div {
     max-width: 100%;
     overflow-x: hidden;
   }
-  
+
   /* Fix for tables and wide content */
   table {
     width: 100%;
     table-layout: fixed;
   }
-  
+
   /* Responsive padding for mobile */
   .mobile-safe-padding {
     padding-left: 1rem;
@@ -47,7 +47,7 @@
   .xs\:block {
     display: block;
   }
-  
+
   .xs\:hidden {
     display: none;
   }
@@ -124,7 +124,7 @@
   }
 
   /* Interactive Element Base Styles */
-  button, 
+  button,
   [role="button"],
   a {
     @apply cursor-pointer;
@@ -181,4 +181,33 @@
   .brand-gradient {
     @apply bg-gradient-to-b from-brand-gray to-brand-secondary;
   }
-} 
+
+  /* Modal Animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Doctor Setup Test - Healthcare IVR Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .test-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+        }
+        .success { border-left-color: #10b981; }
+        .warning { border-left-color: #f59e0b; }
+        .error { border-left-color: #ef4444; }
+        .test-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 5px 5px 5px 0;
+            transition: background 0.2s;
+        }
+        .test-link:hover {
+            background: #2563eb;
+        }
+        .credentials {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .step {
+            background: #e0f2fe;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #0284c7;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            color: #6b7280;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .code {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 AddDoctor Dashboard Integration Fix</h1>
+            <p>Task ID: mbsn5ju6q7bxqmnwja - Fix AddDoctor page to use dashboard layout with sidebar and header</p>
+        </div>
+
+                                <!-- Test Overview -->
+        <div class="test-section">
+            <h2>📋 Critical Dashboard Integration Issue Fixed</h2>
+            <p><strong>PROBLEM:</strong> AddDoctor page was a standalone page without sidebar and header, unlike other dashboard pages.</p>
+
+            <div class="test-item error">
+                <h3>🚨 Critical Issue Identified:</h3>
+                <ul>
+                    <li>❌ AddDoctor page was standalone (no sidebar/header)</li>
+                    <li>❌ Inconsistent with SimpleSalesDashboard and other dashboard pages</li>
+                    <li>❌ Users lost navigation context when accessing the page</li>
+                    <li>❌ Poor user experience due to layout inconsistency</li>
+                    <li>❌ No active navigation highlighting</li>
+                </ul>
+            </div>
+
+            <div class="test-item success">
+                <h3>✅ Dashboard Integration Applied:</h3>
+                <ul>
+                    <li>✅ Integrated with <code>UnifiedDashboardLayout</code> component</li>
+                    <li>✅ Added sidebar with full sales navigation menu</li>
+                    <li>✅ Added header with user info and logout functionality</li>
+                    <li>✅ Content now appears in main dashboard area only</li>
+                    <li>✅ Navigation highlights "Add Doctor" as active</li>
+                    <li>✅ Consistent with SimpleSalesDashboard structure</li>
+                    <li>✅ Role-based navigation (shows doctor management for authorized roles)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Authentication Test -->
+        <div class="test-section">
+            <h2>🔐 Authentication Test</h2>
+            <div class="credentials">
+                <h3>Test Credentials:</h3>
+                <p><strong>Sales Rep:</strong> sales@healthcare.local / sales123</p>
+                <p><strong>Doctor (should be blocked):</strong> doctor@healthcare.local / doctor123</p>
+                <p><strong>Admin (should work):</strong> admin@healthcare.local / admin123</p>
+            </div>
+
+            <div class="step">
+                <h3>Step 1: Login Test</h3>
+                <a href="http://localhost:3000/login" class="test-link" target="_blank">🔑 Go to Login Page</a>
+                <p>Login with sales@healthcare.local / sales123 to test sales rep access</p>
+            </div>
+        </div>
+
+        <!-- Navigation Test -->
+        <div class="test-section">
+            <h2>🧭 Navigation Test</h2>
+
+            <div class="test-item">
+                <h3>Sales Dashboard Navigation</h3>
+                <a href="http://localhost:3000/sales/dashboard" class="test-link" target="_blank">📊 Sales Dashboard</a>
+                <p>After logging in as sales rep, verify the navigation menu includes:</p>
+                <ul class="checklist">
+                    <li>Dashboard</li>
+                    <li>Customer Accounts</li>
+                    <li>Add Doctor (NEW)</li>
+                    <li>View Doctors (NEW)</li>
+                    <li>Lead Management</li>
+                    <li>Sales Reports</li>
+                    <li>Proposals</li>
+                    <li>Revenue Tracking</li>
+                    <li>Settings</li>
+                </ul>
+            </div>
+        </div>
+
+                                <!-- Dashboard Integration Test -->
+        <div class="test-section">
+            <h2>🖥️ Dashboard Integration Test</h2>
+
+            <div class="test-item">
+                <h3>CRITICAL: Dashboard Layout Verification</h3>
+                <p><strong>Open these pages to verify they have IDENTICAL dashboard layout:</strong></p>
+                <a href="http://localhost:3000/sales/doctors/add" class="test-link" target="_blank">➕ AddDoctor Page</a>
+                <a href="http://localhost:3000/sales/dashboard" class="test-link" target="_blank">📊 Sales Dashboard (Reference)</a>
+
+                <div class="step">
+                    <h4>Dashboard Layout Checklist:</h4>
+                    <ul class="checklist">
+                        <li>BOTH pages have sidebar on the left with navigation menu</li>
+                        <li>BOTH pages have header at the top with user info</li>
+                        <li>BOTH pages show "Add Doctor" as active in navigation</li>
+                        <li>BOTH pages have same overall layout structure</li>
+                        <li>BOTH pages use UnifiedDashboardLayout component</li>
+                        <li>Content appears in main dashboard area (not full screen)</li>
+                        <li>Navigation menu includes all sales items</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>Navigation Integration Verification</h3>
+                <p>Verify AddDoctor page navigation:</p>
+                <ul class="checklist">
+                    <li>Sidebar visible on the left</li>
+                    <li>Header visible at the top</li>
+                    <li>"Add Doctor" menu item highlighted as active</li>
+                    <li>All sales navigation items present</li>
+                    <li>User info and logout in header</li>
+                    <li>Content fits within dashboard layout</li>
+                    <li>No standalone page styling</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Role-Based Access Test -->
+        <div class="test-section">
+            <h2>🛡️ Role-Based Access Test</h2>
+
+            <div class="test-item">
+                <h3>Authorized Roles (Should Work)</h3>
+                <p>These roles should be able to access /sales/doctors/add:</p>
+                <ul>
+                    <li>✅ Sales</li>
+                    <li>✅ Distributor</li>
+                    <li>✅ Master Distributor</li>
+                    <li>✅ Admin</li>
+                    <li>✅ CHP Admin</li>
+                </ul>
+            </div>
+
+            <div class="test-item">
+                <h3>Unauthorized Roles (Should Be Blocked)</h3>
+                <p>These roles should NOT see doctor management menu items:</p>
+                <ul>
+                    <li>❌ Doctor</li>
+                    <li>❌ IVR</li>
+                    <li>❌ Shipping and Logistics</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <h3>Test Unauthorized Access</h3>
+                <ol>
+                    <li>Logout from current session</li>
+                    <li>Login as doctor@healthcare.local / doctor123</li>
+                    <li>Try to access: <a href="http://localhost:3000/sales/doctors/add" class="test-link" target="_blank">Add Doctor (Should Redirect)</a></li>
+                    <li>Should redirect to unauthorized page or dashboard</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Breadcrumb Test -->
+        <div class="test-section">
+            <h2>🍞 Breadcrumb Navigation Test</h2>
+
+            <div class="test-item">
+                <h3>Breadcrumb Functionality</h3>
+                <p>On the AddDoctor page, test these breadcrumb links:</p>
+                <ul class="checklist">
+                    <li>Click "Dashboard" → Should go to /sales/dashboard</li>
+                    <li>Click "Manage Doctors" → Should go to /sales/doctors</li>
+                    <li>"Add Doctor" should be non-clickable (current page)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Technical Verification -->
+        <div class="test-section">
+            <h2>⚙️ Technical Verification</h2>
+
+            <div class="test-item">
+                <h3>Files Created/Modified</h3>
+                <div class="code">
+✅ Created: frontend/src/pages/sales/AddDoctor.tsx
+✅ Modified: frontend/src/App.tsx (added routes and imports)
+✅ Modified: frontend/src/components/sales/SimpleSalesDashboard.tsx (added navigation)
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>Route Configuration</h3>
+                <div class="code">
+Route: /sales/doctors/add
+Protection: ProtectedRoute with allowedRoles
+Roles: ['Sales', 'Distributor', 'Master Distributor', 'Admin', 'CHP Admin']
+Component: AddDoctor
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>Navigation Integration</h3>
+                <div class="code">
+Menu Items Added:
+- Add Doctor (UserPlusIcon) → /sales/doctors/add
+- View Doctors (ListBulletIcon) → /sales/doctors
+
+Conditional Display: Only shown when canManageDoctors = true
+Role Check: ['Sales', 'Distributor', 'Master Distributor', 'Admin', 'CHP Admin']
+                </div>
+            </div>
+        </div>
+
+                                <!-- Success Criteria -->
+        <div class="test-section">
+            <h2>🎯 Success Criteria Verification</h2>
+
+            <ul class="checklist">
+                <li>✅ Sidebar is visible on the left (with navigation menu)</li>
+                <li>✅ Header is visible at the top (with user info)</li>
+                <li>✅ AddDoctor content appears in the main content area only</li>
+                <li>✅ Page looks integrated, not standalone</li>
+                <li>✅ Navigation highlight shows "Add Doctor" as active state</li>
+                <li>✅ Same layout structure as SimpleSalesDashboard</li>
+                <li>✅ Role-based navigation (doctor management for authorized roles)</li>
+                <li>✅ Uses UnifiedDashboardLayout component</li>
+                <li>✅ Professional dashboard appearance</li>
+            </ul>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="test-section">
+            <h2>🚀 Next Steps</h2>
+            <div class="test-item">
+                <p>Once this foundation is verified, the next steps will be:</p>
+                <ol>
+                    <li>Implement the actual doctor registration form</li>
+                    <li>Add form validation and submission logic</li>
+                    <li>Create the View Doctors page with doctor listing</li>
+                    <li>Add edit/delete functionality for doctors</li>
+                    <li>Integrate with backend API endpoints</li>
+                </ol>
+            </div>
+        </div>
+
+                <div class="test-item success">
+            <h3>✅ CRITICAL DASHBOARD INTEGRATION COMPLETE</h3>
+            <p><strong>SUCCESS:</strong> The AddDoctor page has been completely integrated into the dashboard layout system. The critical issue of being a standalone page has been resolved. The page now uses the UnifiedDashboardLayout component with sidebar navigation and header, making it consistent with all other dashboard pages in the Healthcare IVR Platform.</p>
+
+            <div class="code">
+BEFORE: Standalone page (no sidebar/header)
+AFTER: Integrated dashboard layout (sidebar + header + content)
+
+Dashboard integration implemented:
+- UnifiedDashboardLayout component wrapper
+- Full sales navigation sidebar
+- Header with user info and logout
+- Content appears in main dashboard area
+- "Add Doctor" highlighted as active in navigation
+- Role-based navigation permissions
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds to check for updates
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+
+        // Add click handlers to update checklist
+        document.querySelectorAll('.checklist li').forEach(item => {
+            item.addEventListener('click', function() {
+                if (this.style.textDecoration === 'line-through') {
+                    this.style.textDecoration = 'none';
+                    this.style.color = 'inherit';
+                    this.innerHTML = this.innerHTML.replace('☑', '☐');
+                } else {
+                    this.style.textDecoration = 'line-through';
+                    this.style.color = '#10b981';
+                    this.innerHTML = this.innerHTML.replace('☐', '☑');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

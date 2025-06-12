@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctors List Page with Modal & Backend Integration - Test Suite</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #3b82f6;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.pending { background: #fef3c7; color: #92400e; }
+        .status.pass { background: #d1fae5; color: #065f46; }
+        .status.fail { background: #fee2e2; color: #991b1b; }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .button:hover { background: #2563eb; }
+        .button.secondary { background: #6b7280; }
+        .button.success { background: #10b981; }
+        .button.danger { background: #ef4444; }
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            color: #6b7280;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .checklist li.completed:before {
+            content: "✅ ";
+        }
+        .api-test {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .api-test h4 {
+            margin: 0 0 10px 0;
+            color: #374151;
+        }
+        .endpoint {
+            font-family: monospace;
+            background: #1f2937;
+            color: #10b981;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Doctors List Page with Modal & Backend Integration</h1>
+            <p><strong>Task ID:</strong> mbsnq4g7zq3kj0bu7id</p>
+            <p>Comprehensive test suite for the redesigned doctor management feature with backend user creation</p>
+        </div>
+
+        <!-- Quick Navigation -->
+        <div class="test-section">
+            <h2>🚀 Quick Navigation</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Frontend Testing</h3>
+                    <a href="http://localhost:3000/sales/doctors" class="button" target="_blank">
+                        Open Doctors List Page
+                    </a>
+                    <p>Test the main doctors list page with modal functionality</p>
+                </div>
+                <div class="card">
+                    <h3>Backend Testing</h3>
+                    <a href="http://localhost:8000/docs" class="button secondary" target="_blank">
+                        API Documentation
+                    </a>
+                    <p>View Swagger docs for user creation endpoints</p>
+                </div>
+                <div class="card">
+                    <h3>Authentication</h3>
+                    <a href="http://localhost:3000/login" class="button success" target="_blank">
+                        Login Page
+                    </a>
+                    <p>Login as sales user to test doctor creation</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authentication Setup -->
+        <div class="test-section">
+            <h2>🔐 Authentication Setup</h2>
+            <div class="warning">
+                <strong>Important:</strong> You must be logged in as a sales user to test doctor creation functionality.
+            </div>
+
+            <div class="api-test">
+                <h4>Test Credentials</h4>
+                <div class="code-block">
+Email: sales@healthcare.local
+Password: sales123
+Role: Sales Representative</div>
+                <p>Use these credentials to login and test the doctor creation workflow.</p>
+            </div>
+
+            <div class="checklist">
+                <li>Navigate to login page</li>
+                <li>Enter sales credentials</li>
+                <li>Verify redirect to sales dashboard</li>
+                <li>Check that "Doctors" menu item is visible</li>
+                <li>Verify authToken is stored in localStorage</li>
+            </div>
+        </div>
+
+        <!-- Frontend UI Testing -->
+        <div class="test-section">
+            <h2>🎨 Frontend UI Testing</h2>
+
+            <div class="api-test">
+                <h4>1. Doctors List Page Structure</h4>
+                <div class="checklist">
+                    <li>Page uses UnifiedDashboardLayout</li>
+                    <li>Header shows "Manage Doctors"</li>
+                    <li>"Add New Doctor" button visible in header</li>
+                    <li>Search bar for filtering doctors</li>
+                    <li>Table shows doctor columns (Name, Specialty, Location, Date Added, Actions)</li>
+                    <li>Empty state shows "No doctors added yet"</li>
+                    <li>Professional appearance with consistent styling</li>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>2. Navigation Integration</h4>
+                <div class="checklist">
+                    <li>Single "Doctors" menu item in sales navigation</li>
+                    <li>No separate "Add Doctor" or "View Doctors" items</li>
+                    <li>Route /sales/doctors loads correctly</li>
+                    <li>Old /sales/doctors/add route removed</li>
+                    <li>Navigation highlights "Doctors" when active</li>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>3. Modal Functionality</h4>
+                <div class="checklist">
+                    <li>Click "Add New Doctor" opens modal overlay</li>
+                    <li>Modal is wider (max-w-4xl) to accommodate all fields</li>
+                    <li>Modal can be closed with X button</li>
+                    <li>Modal can be closed by clicking backdrop</li>
+                    <li>Modal has proper animations (fade-in, slide-up)</li>
+                    <li>Modal is scrollable if content exceeds viewport</li>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comprehensive Form Testing -->
+        <div class="test-section">
+            <h2>📋 Comprehensive Form Testing</h2>
+
+            <div class="api-test">
+                <h4>Section 1: Personal Information (6 fields)</h4>
+                <div class="checklist">
+                    <li>First Name* (required, validation)</li>
+                    <li>Last Name* (required, validation)</li>
+                    <li>Professional Title (dropdown: Dr., MD, DO, DPM, etc.)</li>
+                    <li>Specialty* (dropdown with medical specialties, required)</li>
+                    <li>Email* (required, email validation)</li>
+                    <li>Phone* (required, format: (555) 123-4567)</li>
+                    <li>Section completion indicator works</li>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>Section 2: Professional Credentials (5 fields)</h4>
+                <div class="checklist">
+                    <li>License Number* (required)</li>
+                    <li>NPI Number* (required, exactly 10 digits)</li>
+                    <li>Medicare Provider # (PTAN)</li>
+                    <li>Medicaid Provider #</li>
+                    <li>Tax ID (format: XX-XXXXXXX)</li>
+                    <li>NPI validation works (10 digits only)</li>
+                    <li>Tax ID formatting works</li>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>Section 3: Facility Information (4 fields)</h4>
+                <div class="checklist">
+                    <li>Primary Facility* (required)</li>
+                    <li>Office Contact Name</li>
+                    <li>Office Phone (format: (555) 234-5678)</li>
+                    <li>Office Fax (format: (555) 234-5679)</li>
+                    <li>Phone number formatting works</li>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>Section 4: Shipping Information (7 fields)</h4>
+                <div class="checklist">
+                    <li>Street Address* (required)</li>
+                    <li>City* (required)</li>
+                    <li>State* (dropdown with all US states, required)</li>
+                    <li>ZIP Code* (required, format: XXXXX or XXXXX-XXXX)</li>
+                    <li>Shipping Contact Name</li>
+                    <li>Shipping Phone (format: (555) 345-6789)</li>
+                    <li>Delivery Instructions (textarea, 3 rows)</li>
+                    <li>ZIP code formatting works</li>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>Form Validation & UX</h4>
+                <div class="checklist">
+                    <li>Required fields marked with red asterisk (*)</li>
+                    <li>Helpful placeholder text for each field</li>
+                    <li>Section completion indicators work</li>
+                    <li>Real-time validation (errors clear when typing)</li>
+                    <li>Form submission validation works</li>
+                    <li>Loading states during submission</li>
+                    <li>Error messages display properly</li>
+                </div>
+            </div>
+        </div>
+
+        <!-- Backend Integration Testing -->
+        <div class="test-section">
+            <h2>🔧 Backend Integration Testing</h2>
+
+            <div class="warning">
+                <strong>Prerequisites:</strong> Backend server must be running on localhost:8000 and user must be authenticated.
+            </div>
+
+            <div class="api-test">
+                <h4>1. User Account Creation</h4>
+                <div class="endpoint">POST /api/v1/users</div>
+                <div class="checklist">
+                    <li>Creates user account with doctor role</li>
+                    <li>Generates username from email</li>
+                    <li>Creates temporary password</li>
+                    <li>Sets force_password_change to true</li>
+                    <li>Assigns to current user's organization</li>
+                    <li>Handles duplicate email errors</li>
+                    <li>Returns user ID for profile creation</li>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>2. Doctor Profile Creation</h4>
+                <div class="endpoint">POST /api/v1/doctor-profiles</div>
+                <div class="checklist">
+                    <li>Creates comprehensive doctor profile</li>
+                    <li>Links to created user account</li>
+                    <li>Stores all 48+ profile fields</li>
+                    <li>Handles profile creation errors gracefully</li>
+                    <li>Maps form fields to database schema</li>
+                    <li>Validates NPI number format</li>
+                    <li>Stores shipping and facility information</li>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>3. Error Handling</h4>
+                <div class="checklist">
+                    <li>Authentication errors (missing token)</li>
+                    <li>Validation errors (invalid email, NPI)</li>
+                    <li>Duplicate user errors</li>
+                    <li>Network errors</li>
+                    <li>Server errors (500)</li>
+                    <li>Partial success (user created, profile failed)</li>
+                    <li>User-friendly error messages</li>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>4. Success Flow</h4>
+                <div class="checklist">
+                    <li>Shows success message with credentials</li>
+                    <li>Displays temporary password</li>
+                    <li>Calls onSuccess callback</li>
+                    <li>Closes modal</li>
+                    <li>Refreshes doctors list</li>
+                    <li>Logs creation details to console</li>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Data -->
+        <div class="test-section">
+            <h2>🧪 Test Data</h2>
+
+            <div class="api-test">
+                <h4>Sample Doctor Data for Testing</h4>
+                <div class="code-block">
+{
+  "firstName": "Sarah",
+  "lastName": "Johnson",
+  "professionalTitle": "MD",
+  "specialty": "Wound Care Specialist",
+  "email": "sarah.johnson@example.com",
+  "phone": "(555) 123-4567",
+  "licenseNumber": "MD123456",
+  "npiNumber": "1234567890",
+  "medicareProvider": "K234567",
+  "medicaidProvider": "MP987654",
+  "taxId": "12-3456789",
+  "primaryFacility": "City General Hospital",
+  "officeContactName": "Mary Smith",
+  "officePhone": "(555) 234-5678",
+  "officeFax": "(555) 234-5679",
+  "streetAddress": "123 Medical Center Drive",
+  "city": "San Francisco",
+  "state": "CA",
+  "zipCode": "94143",
+  "shippingContactName": "Mark Wilson",
+  "shippingPhone": "(555) 345-6789",
+  "deliveryInstructions": "Deliver to main reception desk during business hours"
+}</div>
+            </div>
+
+            <div class="api-test">
+                <h4>Expected API Payloads</h4>
+                <div class="code-block">
+// User Creation Payload
+{
+  "username": "sarah.johnson@example.com",
+  "email": "sarah.johnson@example.com",
+  "password": "TempPassXXXXXXXX!",
+  "first_name": "Sarah",
+  "last_name": "Johnson",
+  "role_name": "doctor",
+  "is_active": true,
+  "force_password_change": true
+}
+
+// Doctor Profile Payload
+{
+  "user_id": "uuid-from-user-creation",
+  "professional_title": "MD",
+  "specialty": "Wound Care Specialist",
+  "medical_license_number": "MD123456",
+  "npi_number": "1234567890",
+  // ... all other profile fields
+}</div>
+            </div>
+        </div>
+
+        <!-- Manual Testing Steps -->
+        <div class="test-section">
+            <h2>🧑‍💻 Manual Testing Steps</h2>
+
+            <div class="api-test">
+                <h4>Complete Workflow Test</h4>
+                <ol style="padding-left: 20px;">
+                    <li><strong>Setup:</strong> Ensure backend and frontend servers are running</li>
+                    <li><strong>Login:</strong> Login as sales@healthcare.local / sales123</li>
+                    <li><strong>Navigate:</strong> Go to /sales/doctors</li>
+                    <li><strong>Open Modal:</strong> Click "Add New Doctor" button</li>
+                    <li><strong>Fill Form:</strong> Complete all required fields using test data</li>
+                    <li><strong>Validate:</strong> Test field validation (try invalid email, short NPI)</li>
+                    <li><strong>Submit:</strong> Click "Create Doctor Account"</li>
+                    <li><strong>Verify:</strong> Check success message with temporary password</li>
+                    <li><strong>Confirm:</strong> Verify doctor appears in list</li>
+                    <li><strong>Backend:</strong> Check database for user and profile records</li>
+                </ol>
+            </div>
+
+            <div class="api-test">
+                <h4>Error Testing</h4>
+                <ol style="padding-left: 20px;">
+                    <li><strong>Duplicate Email:</strong> Try creating doctor with existing email</li>
+                    <li><strong>Invalid NPI:</strong> Enter NPI with less than 10 digits</li>
+                    <li><strong>Invalid Email:</strong> Enter malformed email address</li>
+                    <li><strong>Missing Required:</strong> Leave required fields empty</li>
+                    <li><strong>Network Error:</strong> Stop backend and try submission</li>
+                    <li><strong>Auth Error:</strong> Clear localStorage and try submission</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Success Criteria -->
+        <div class="test-section">
+            <h2>✅ Success Criteria</h2>
+
+            <div class="success">
+                <h3>All criteria must be met for successful implementation:</h3>
+                <div class="checklist">
+                    <li>Single "Doctors" menu item in sales navigation</li>
+                    <li>Doctors list page shows with proper dashboard layout</li>
+                    <li>"Add New Doctor" button opens modal overlay</li>
+                    <li>Modal contains all 48+ comprehensive form fields</li>
+                    <li>Modal can be closed with X or backdrop click</li>
+                    <li>Form validation works for all field types</li>
+                    <li>Backend integration creates user accounts</li>
+                    <li>Backend integration creates doctor profiles</li>
+                    <li>Error handling works for all scenarios</li>
+                    <li>Success flow shows temporary password</li>
+                    <li>Clean, professional appearance matching the app</li>
+                    <li>Better UX with everything on one page</li>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Information -->
+        <div class="test-section">
+            <h2>🐛 Debug Information</h2>
+
+            <div class="info">
+                <h3>Console Logging</h3>
+                <p>The modal logs detailed information to the browser console:</p>
+                <ul>
+                    <li>User creation payload and response</li>
+                    <li>Doctor profile creation payload and response</li>
+                    <li>Error details and stack traces</li>
+                    <li>Authentication token status</li>
+                </ul>
+                <p><strong>Open browser DevTools → Console tab to view logs during testing.</strong></p>
+            </div>
+
+            <div class="api-test">
+                <h4>Common Issues & Solutions</h4>
+                <div class="code-block">
+Issue: "Authentication required" error
+Solution: Login as sales user and verify authToken in localStorage
+
+Issue: "Failed to create user account"
+Solution: Check backend server is running and user has permissions
+
+Issue: "Doctor profile creation failed"
+Solution: Check doctor-profiles API endpoint exists and user ID is valid
+
+Issue: Modal doesn't open
+Solution: Check console for JavaScript errors and component imports
+
+Issue: Form validation not working
+Solution: Verify all required field validations are implemented</div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #6b7280;">
+            <p>Healthcare IVR Platform - Doctors List Page with Modal & Backend Integration Test Suite</p>
+            <p>Task ID: mbsnq4g7zq3kj0bu7id | Updated: <span id="timestamp"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // Set timestamp
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+
+        // Auto-check some items based on current state
+        function checkCurrentState() {
+            // Check if we're on the right page
+            if (window.location.href.includes('localhost:3000')) {
+                // We're on the frontend, can do some basic checks
+                console.log('Frontend test page loaded');
+            }
+        }
+
+        checkCurrentState();
+    </script>
+</body>
+</html>

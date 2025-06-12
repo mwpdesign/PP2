@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { PrivateRoute } from './components/auth/PrivateRoute';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AdminRoute } from './components/auth/AdminRoute';
 import { DashboardRouter } from './components/auth/DashboardRouter';
 import { TestLogin } from './components/auth/TestLogin';
@@ -47,6 +48,8 @@ const SimpleIVRDashboard = React.lazy(() => import('./components/ivr/SimpleIVRDa
 const SimpleCHPAdminDashboard = React.lazy(() => import('./components/chp/SimpleCHPAdminDashboard'));
 const SimpleDistributorDashboard = React.lazy(() => import('./components/distributor/SimpleDistributorDashboard'));
 const SimpleSalesDashboard = React.lazy(() => import('./components/sales/SimpleSalesDashboard'));
+const Doctors = React.lazy(() => import('./pages/sales/Doctors'));
+const AddDoctor = React.lazy(() => import('./pages/sales/AddDoctor'));
 const SimpleLogisticsDashboard = React.lazy(() => import('./components/logistics/SimpleLogisticsDashboard'));
 const ShippingQueuePage = React.lazy(() => import('./pages/logistics/shipping-queue'));
 const OrderProcessingPage = React.lazy(() => import('./pages/logistics/orders/[id]/process'));
@@ -225,6 +228,16 @@ const App = () => {
                 {/* Sales Routes */}
                 <Route element={<PrivateRoute />}>
                   <Route path="/sales/dashboard" element={<SimpleSalesDashboard />} />
+                  <Route path="/sales/doctors" element={
+                    <ProtectedRoute allowedRoles={['Sales', 'Distributor', 'Master Distributor', 'Admin', 'CHP Admin']}>
+                      <Doctors />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/sales/doctors/add" element={
+                    <ProtectedRoute allowedRoles={['Sales', 'Distributor', 'Master Distributor', 'Admin', 'CHP Admin']}>
+                      <AddDoctor />
+                    </ProtectedRoute>
+                  } />
                 </Route>
 
                 {/* Shipping and Logistics Routes */}
