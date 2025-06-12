@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctors API Integration Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #1e293b;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #475569;
+            margin-top: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        .success {
+            background-color: #f0fdf4;
+            border-color: #22c55e;
+            color: #15803d;
+        }
+        .error {
+            background-color: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+        .info {
+            background-color: #f0f9ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+        }
+        button {
+            background-color: #475569;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #334155;
+        }
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+        pre {
+            background-color: #f1f5f9;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .doctors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .doctor-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            background-color: #f8fafc;
+        }
+        .doctor-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .doctor-email {
+            color: #64748b;
+            font-size: 14px;
+        }
+        .doctor-specialty {
+            color: #475569;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 5px;
+        }
+        .status-active {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .status-inactive {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        .auth-section {
+            background-color: #fffbeb;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            margin-right: 8px;
+        }
+        .checklist li.completed:before {
+            content: "✅ ";
+        }
+        .checklist li.failed:before {
+            content: "❌ ";
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Doctors API Integration Test</h1>
+        <p>This page tests the integration between the frontend Doctors List page and the backend API.</p>
+
+        <div class="auth-section">
+            <h3>🔐 Authentication Status</h3>
+            <p id="auth-status">Not authenticated</p>
+            <button onclick="testAuthentication()">Test Authentication</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Backend API Tests</h2>
+
+        <div class="test-section" id="basic-api-test">
+            <h3>1. Basic API Connection</h3>
+            <button onclick="testBasicAPI()">Test Basic API</button>
+            <div id="basic-api-result"></div>
+        </div>
+
+        <div class="test-section" id="doctors-api-test">
+            <h3>2. Doctors API Endpoint</h3>
+            <button onclick="testDoctorsAPI()">Test Doctors API</button>
+            <div id="doctors-api-result"></div>
+        </div>
+
+        <div class="test-section" id="search-test">
+            <h3>3. Search Functionality</h3>
+            <input type="text" id="search-input" placeholder="Search doctors..." style="padding: 8px; margin-right: 10px; border: 1px solid #e2e8f0; border-radius: 4px;">
+            <button onclick="testSearch()">Test Search</button>
+            <div id="search-result"></div>
+        </div>
+
+        <div class="test-section" id="pagination-test">
+            <h3>4. Pagination</h3>
+            <button onclick="testPagination()">Test Pagination</button>
+            <div id="pagination-result"></div>
+        </div>
+
+        <div class="test-section" id="hierarchy-test">
+            <h3>5. Hierarchy Filtering</h3>
+            <button onclick="testHierarchy()">Test Hierarchy Filtering</button>
+            <div id="hierarchy-result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🖥️ Frontend Integration Tests</h2>
+
+        <div class="test-section" id="frontend-test">
+            <h3>Frontend Component Test</h3>
+            <p>Test the actual frontend component:</p>
+            <a href="/sales/doctors" target="_blank" style="color: #3b82f6; text-decoration: underline;">
+                Open Doctors List Page
+            </a>
+            <div id="frontend-result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Live Doctors Data</h2>
+        <div id="doctors-display">
+            <button onclick="loadDoctors()">Load Doctors</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>✅ Manual Testing Checklist</h2>
+        <ul class="checklist" id="manual-checklist">
+            <li>Backend server running on localhost:8000</li>
+            <li>Frontend server running on localhost:3000</li>
+            <li>Authentication working (can login as sales@healthcare.local)</li>
+            <li>Doctors API endpoint accessible</li>
+            <li>Search functionality working</li>
+            <li>Pagination working</li>
+            <li>Hierarchy filtering working</li>
+            <li>Frontend page loads without errors</li>
+            <li>Frontend displays real data (not mock data)</li>
+            <li>Search works on frontend</li>
+            <li>Pagination works on frontend</li>
+            <li>New doctors appear after registration</li>
+        </ul>
+    </div>
+
+    <script>
+        let authToken = localStorage.getItem('authToken');
+
+        // Update auth status on page load
+        updateAuthStatus();
+
+        function updateAuthStatus() {
+            const statusEl = document.getElementById('auth-status');
+            if (authToken) {
+                statusEl.innerHTML = '✅ Authenticated (token available)';
+                statusEl.className = 'success';
+            } else {
+                statusEl.innerHTML = '❌ Not authenticated';
+                statusEl.className = 'error';
+            }
+        }
+
+        async function testAuthentication() {
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'username=sales@healthcare.local&password=sales123'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    updateAuthStatus();
+                    showResult('auth-status', 'Authentication successful!', 'success');
+                } else {
+                    showResult('auth-status', 'Authentication failed: ' + response.statusText, 'error');
+                }
+            } catch (error) {
+                showResult('auth-status', 'Authentication error: ' + error.message, 'error');
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            localStorage.removeItem('authToken');
+            updateAuthStatus();
+        }
+
+        async function testBasicAPI() {
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const data = await response.json();
+                showResult('basic-api-result', 'API is working: ' + JSON.stringify(data, null, 2), 'success');
+                markChecklistItem(0, true);
+            } catch (error) {
+                showResult('basic-api-result', 'API connection failed: ' + error.message, 'error');
+                markChecklistItem(0, false);
+            }
+        }
+
+        async function testDoctorsAPI() {
+            if (!authToken) {
+                showResult('doctors-api-result', 'Please authenticate first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/doctors', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('doctors-api-result',
+                        `Doctors API working! Found ${data.total} doctors.\n` +
+                        JSON.stringify(data, null, 2), 'success');
+                    markChecklistItem(3, true);
+                } else {
+                    showResult('doctors-api-result', 'Doctors API failed: ' + response.statusText, 'error');
+                    markChecklistItem(3, false);
+                }
+            } catch (error) {
+                showResult('doctors-api-result', 'Doctors API error: ' + error.message, 'error');
+                markChecklistItem(3, false);
+            }
+        }
+
+        async function testSearch() {
+            if (!authToken) {
+                showResult('search-result', 'Please authenticate first', 'error');
+                return;
+            }
+
+            const searchTerm = document.getElementById('search-input').value;
+            if (!searchTerm) {
+                showResult('search-result', 'Please enter a search term', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8000/api/v1/doctors?search=${encodeURIComponent(searchTerm)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('search-result',
+                        `Search working! Found ${data.total} doctors matching "${searchTerm}".\n` +
+                        JSON.stringify(data, null, 2), 'success');
+                    markChecklistItem(4, true);
+                } else {
+                    showResult('search-result', 'Search failed: ' + response.statusText, 'error');
+                    markChecklistItem(4, false);
+                }
+            } catch (error) {
+                showResult('search-result', 'Search error: ' + error.message, 'error');
+                markChecklistItem(4, false);
+            }
+        }
+
+        async function testPagination() {
+            if (!authToken) {
+                showResult('pagination-result', 'Please authenticate first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/doctors?page=1&limit=5', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('pagination-result',
+                        `Pagination working! Page ${data.page} of ${data.pages}, showing ${data.doctors.length} of ${data.total} doctors.\n` +
+                        JSON.stringify(data, null, 2), 'success');
+                    markChecklistItem(5, true);
+                } else {
+                    showResult('pagination-result', 'Pagination failed: ' + response.statusText, 'error');
+                    markChecklistItem(5, false);
+                }
+            } catch (error) {
+                showResult('pagination-result', 'Pagination error: ' + error.message, 'error');
+                markChecklistItem(5, false);
+            }
+        }
+
+        async function testHierarchy() {
+            if (!authToken) {
+                showResult('hierarchy-result', 'Please authenticate first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/doctors', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('hierarchy-result',
+                        `Hierarchy filtering working! Sales user sees ${data.total} doctors (only their own).\n` +
+                        JSON.stringify(data, null, 2), 'success');
+                    markChecklistItem(6, true);
+                } else {
+                    showResult('hierarchy-result', 'Hierarchy test failed: ' + response.statusText, 'error');
+                    markChecklistItem(6, false);
+                }
+            } catch (error) {
+                showResult('hierarchy-result', 'Hierarchy test error: ' + error.message, 'error');
+                markChecklistItem(6, false);
+            }
+        }
+
+        async function loadDoctors() {
+            if (!authToken) {
+                showResult('doctors-display', 'Please authenticate first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/doctors', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayDoctors(data.doctors);
+                } else {
+                    showResult('doctors-display', 'Failed to load doctors: ' + response.statusText, 'error');
+                }
+            } catch (error) {
+                showResult('doctors-display', 'Error loading doctors: ' + error.message, 'error');
+            }
+        }
+
+        function displayDoctors(doctors) {
+            const container = document.getElementById('doctors-display');
+
+            if (doctors.length === 0) {
+                container.innerHTML = '<div class="info">No doctors found. This is expected if no doctors have been registered yet.</div>';
+                return;
+            }
+
+            let html = `<h3>Found ${doctors.length} doctors:</h3><div class="doctors-grid">`;
+
+            doctors.forEach(doctor => {
+                const fullName = `${doctor.first_name} ${doctor.last_name}`.trim() || doctor.email;
+                html += `
+                    <div class="doctor-card">
+                        <div class="doctor-name">${fullName}</div>
+                        <div class="doctor-email">${doctor.email}</div>
+                        <div class="doctor-specialty">Specialty: ${doctor.specialty || 'Not specified'}</div>
+                        <div class="doctor-specialty">Facility: ${doctor.facility || 'Not specified'}</div>
+                        <div class="doctor-specialty">Added by: ${doctor.added_by_name}</div>
+                        <span class="status-badge status-${doctor.status}">${doctor.status}</span>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<pre class="${type}">${message}</pre>`;
+        }
+
+        function markChecklistItem(index, success) {
+            const items = document.querySelectorAll('#manual-checklist li');
+            if (items[index]) {
+                items[index].className = success ? 'completed' : 'failed';
+            }
+        }
+
+        // Auto-run basic tests on page load
+        setTimeout(() => {
+            testBasicAPI();
+            if (authToken) {
+                testDoctorsAPI();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -286,3 +286,31 @@ export { APIClient };
 
 // Legacy export for backward compatibility
 export const api = apiClient;
+
+// Doctors API functions
+export const getDoctors = async (params?: {
+  search?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const searchParams = new URLSearchParams();
+
+  if (params?.search) {
+    searchParams.append('search', params.search);
+  }
+  if (params?.page) {
+    searchParams.append('page', params.page.toString());
+  }
+  if (params?.limit) {
+    searchParams.append('limit', params.limit.toString());
+  }
+
+  const url = `/api/v1/doctors${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+  const response = await apiClient.get(url);
+  return response.data;
+};
+
+export const getDoctorDetail = async (doctorId: string) => {
+  const response = await apiClient.get(`/api/v1/doctors/${doctorId}`);
+  return response.data;
+};

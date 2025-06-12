@@ -18,6 +18,7 @@ from app.api.v1.endpoints import (
     permissions,
     team,
     practice,
+    doctors,
 )
 from app.api.auth.routes import router as auth_router
 
@@ -86,4 +87,9 @@ api_router.include_router(
     practice.router,
     prefix="/practice",
     tags=["practice"]
+)
+api_router.include_router(
+    doctors.router,
+    prefix="/doctors",
+    tags=["doctors"]
 )
