@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Navigation Consistency Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .test-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .test-link {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 5px 10px 5px 0;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background: #2563eb;
+        }
+        .critical {
+            background: #dc2626;
+        }
+        .critical:hover {
+            background: #b91c1c;
+        }
+        .success {
+            background: #059669;
+        }
+        .success:hover {
+            background: #047857;
+        }
+        .checklist {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .checklist h3 {
+            color: #0c4a6e;
+            margin-top: 0;
+        }
+        .checklist ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .checklist li {
+            margin: 8px 0;
+            color: #0c4a6e;
+        }
+        .expected-nav {
+            background: #f0fdf4;
+            border: 1px solid #16a34a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .expected-nav h3 {
+            color: #15803d;
+            margin-top: 0;
+        }
+        .nav-item {
+            display: inline-block;
+            background: #dcfce7;
+            color: #15803d;
+            padding: 6px 12px;
+            margin: 4px;
+            border-radius: 4px;
+            font-size: 14px;
+            border: 1px solid #16a34a;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.fixed {
+            background: #dcfce7;
+            color: #15803d;
+        }
+        .status.critical {
+            background: #fecaca;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 CRITICAL FIX: Sales Navigation Consistency</h1>
+        <p>Testing that ALL sales pages now use the same 8-item navigation</p>
+        <p><strong>Issue:</strong> Different pages were showing different navigation menus</p>
+        <p><strong>Solution:</strong> Centralized navigation configuration in createSalesNavigation()</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🚨 CRITICAL ISSUE RESOLVED</h2>
+        <p><strong>Problem:</strong> Sales rep navigation was inconsistent across pages:</p>
+        <ul>
+            <li><code>/sales/dashboard</code> - Showed correct 8-item navigation</li>
+            <li><code>/sales/doctors</code> - Showed different navigation with "Customer Accounts", "Lead Management", etc.</li>
+            <li><code>/sales/doctors/[id]</code> - Same inconsistent navigation</li>
+            <li><code>/sales/doctors/[id]/edit</code> - Same inconsistent navigation</li>
+            <li><code>/sales/doctors/add</code> - Same inconsistent navigation</li>
+        </ul>
+
+        <p><strong>Root Cause:</strong> Each page had its own hardcoded navigation array instead of using a centralized configuration.</p>
+
+        <p><strong>Solution Applied:</strong></p>
+        <ol>
+            <li>Created <code>createSalesNavigation(logout)</code> function in SimpleSalesDashboard.tsx</li>
+            <li>Updated all sales pages to import and use this centralized navigation</li>
+            <li>Removed all hardcoded navigation arrays from individual pages</li>
+        </ol>
+
+        <div class="expected-nav">
+            <h3>✅ Expected Navigation (All Pages Should Show This)</h3>
+            <div class="nav-item">Dashboard</div>
+            <div class="nav-item">My Doctors</div>
+            <div class="nav-item">Schedule</div>
+            <div class="nav-item">Analytics</div>
+            <div class="nav-item">Profile</div>
+            <div class="nav-item">IVR Management</div>
+            <div class="nav-item">Order Management</div>
+            <div class="nav-item">Shipping & Logistics</div>
+            <div class="nav-item">Settings</div>
+            <div class="nav-item">Sign Out</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Navigation Consistency Test</h2>
+        <p>Test each sales page to verify they ALL show the same 8-item navigation:</p>
+
+        <div class="test-grid">
+            <div class="test-card">
+                <h3>Sales Dashboard <span class="status fixed">FIXED</span></h3>
+                <p>Main sales dashboard with metrics</p>
+                <a href="http://localhost:3000/sales/dashboard" class="test-link success" target="_blank">
+                    Test Dashboard
+                </a>
+                <p><small>✅ Should show 8-item navigation</small></p>
+            </div>
+
+            <div class="test-card">
+                <h3>Doctors List <span class="status fixed">FIXED</span></h3>
+                <p>List of doctors managed by sales rep</p>
+                <a href="http://localhost:3000/sales/doctors" class="test-link success" target="_blank">
+                    Test Doctors List
+                </a>
+                <p><small>✅ Should show SAME 8-item navigation</small></p>
+            </div>
+
+            <div class="test-card">
+                <h3>Add Doctor <span class="status fixed">FIXED</span></h3>
+                <p>Form to add new doctor</p>
+                <a href="http://localhost:3000/sales/doctors/add" class="test-link success" target="_blank">
+                    Test Add Doctor
+                </a>
+                <p><small>✅ Should show SAME 8-item navigation</small></p>
+            </div>
+
+            <div class="test-card">
+                <h3>Doctor Detail <span class="status fixed">FIXED</span></h3>
+                <p>Individual doctor details page</p>
+                <a href="http://localhost:3000/sales/doctors/123" class="test-link success" target="_blank">
+                    Test Doctor Detail
+                </a>
+                <p><small>✅ Should show SAME 8-item navigation</small></p>
+            </div>
+
+            <div class="test-card">
+                <h3>Edit Doctor <span class="status fixed">FIXED</span></h3>
+                <p>Edit doctor information form</p>
+                <a href="http://localhost:3000/sales/doctors/123/edit" class="test-link success" target="_blank">
+                    Test Edit Doctor
+                </a>
+                <p><small>✅ Should show SAME 8-item navigation</small></p>
+            </div>
+
+            <div class="test-card">
+                <h3>Medical Sections <span class="status fixed">FIXED</span></h3>
+                <p>View-only medical oversight pages</p>
+                <a href="http://localhost:3000/sales/ivr" class="test-link success" target="_blank">Test IVR</a>
+                <a href="http://localhost:3000/sales/orders" class="test-link success" target="_blank">Test Orders</a>
+                <a href="http://localhost:3000/sales/shipping" class="test-link success" target="_blank">Test Shipping</a>
+                <p><small>✅ Should show SAME 8-item navigation</small></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Authentication Setup</h2>
+        <p>Login as a sales representative to test navigation:</p>
+
+        <a href="http://localhost:3000/login" class="test-link" target="_blank">
+            Login Page
+        </a>
+
+        <div style="background: #f3f4f6; padding: 15px; border-radius: 6px; margin-top: 15px;">
+            <strong>Test Credentials:</strong><br>
+            Email: <code>sales@healthcare.local</code><br>
+            Password: <code>sales123</code><br>
+            Role: <code>Sales</code>
+        </div>
+    </div>
+
+    <div class="checklist">
+        <h3>✅ Verification Checklist</h3>
+        <ul>
+            <li>Login as sales representative</li>
+            <li>Navigate to /sales/dashboard - verify 8-item navigation</li>
+            <li>Navigate to /sales/doctors - verify SAME navigation (not different menu)</li>
+            <li>Click on any doctor to view details - verify SAME navigation</li>
+            <li>Click "Edit" on any doctor - verify SAME navigation</li>
+            <li>Click "Add New Doctor" - verify SAME navigation</li>
+            <li>Navigate to medical sections (IVR, Orders, Shipping) - verify SAME navigation</li>
+            <li>Confirm NO pages show "Customer Accounts", "Lead Management", "Sales Reports", etc.</li>
+            <li>Confirm ALL pages show: Dashboard, My Doctors, Schedule, Analytics, Profile, IVR Management, Order Management, Shipping & Logistics, Settings, Sign Out</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Success Criteria</h2>
+        <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; border: 1px solid #16a34a;">
+            <h3 style="color: #15803d; margin-top: 0;">✅ CRITICAL FIX SUCCESSFUL IF:</h3>
+            <ul style="color: #15803d;">
+                <li><strong>Consistent Navigation:</strong> ALL sales pages show identical 8-item navigation</li>
+                <li><strong>No More Inconsistency:</strong> No pages show "Customer Accounts", "Lead Management", etc.</li>
+                <li><strong>Professional Appearance:</strong> Clean navigation without badges or warnings</li>
+                <li><strong>Functional Layout:</strong> All pages maintain sidebar and header consistency</li>
+                <li><strong>Centralized Configuration:</strong> All pages use createSalesNavigation() function</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Technical Implementation</h2>
+        <p><strong>Files Modified:</strong></p>
+        <ul>
+            <li><code>frontend/src/components/sales/SimpleSalesDashboard.tsx</code> - Added createSalesNavigation() export</li>
+            <li><code>frontend/src/pages/sales/Doctors.tsx</code> - Replaced hardcoded navigation</li>
+            <li><code>frontend/src/pages/sales/DoctorDetail.tsx</code> - Replaced hardcoded navigation</li>
+            <li><code>frontend/src/pages/sales/DoctorEdit.tsx</code> - Replaced hardcoded navigation</li>
+            <li><code>frontend/src/pages/sales/AddDoctor.tsx</code> - Replaced hardcoded navigation</li>
+        </ul>
+
+        <p><strong>Centralized Navigation Configuration:</strong></p>
+        <pre style="background: #f3f4f6; padding: 15px; border-radius: 6px; overflow-x: auto;">
+export const createSalesNavigation = (logout: () => Promise&lt;void&gt;) => [
+  { name: 'Dashboard', href: '/sales/dashboard', icon: HomeIcon },
+  { name: 'My Doctors', href: '/sales/doctors', icon: UsersIcon },
+  { name: 'Schedule', href: '/sales/schedule', icon: CalendarDaysIcon },
+  { name: 'Analytics', href: '/sales/analytics', icon: ChartBarIcon },
+  { name: 'Profile', href: '/sales/profile', icon: UserIcon },
+  { name: 'IVR Management', href: '/sales/ivr', icon: ClipboardDocumentListIcon },
+  { name: 'Order Management', href: '/sales/orders', icon: ClipboardDocumentListIcon },
+  { name: 'Shipping & Logistics', href: '/sales/shipping', icon: TruckIcon },
+  { name: 'Settings', href: '/sales/settings', icon: Cog6ToothIcon },
+  { name: 'Sign Out', href: '#', icon: ArrowRightOnRectangleIcon, onClick: logout }
+];
+        </pre>
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds to check for updates
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+
+        console.log('🔧 Sales Navigation Consistency Test Page Loaded');
+        console.log('✅ Critical navigation inconsistency issue should now be resolved');
+        console.log('🧪 Test all sales pages to verify consistent 8-item navigation');
+    </script>
+</body>
+</html>

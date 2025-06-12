@@ -17,6 +17,8 @@ interface NavigationItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   onClick?: () => void;
+  badge?: string;
+  viewOnly?: boolean;
 }
 
 interface UserInfo {
@@ -104,7 +106,12 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInf
                   className="w-full flex items-center px-4 py-3 text-sm font-medium text-[rgba(255,255,255,0.9)] hover:text-white hover:bg-[rgba(255,255,255,0.1)] rounded-lg transition-colors"
                 >
                   <item.icon className="mr-4 h-5 w-5" />
-                  {item.name}
+                  <span className="flex-1 text-left">{item.name}</span>
+                  {item.badge && (
+                    <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               );
             }
@@ -121,7 +128,12 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInf
                 `}
               >
                 <item.icon className="mr-4 h-5 w-5" />
-                {item.name}
+                <span className="flex-1">{item.name}</span>
+                {item.badge && (
+                  <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

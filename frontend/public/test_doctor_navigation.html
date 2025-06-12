@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Navigation Fix Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .test-link {
+            display: inline-block;
+            margin: 10px;
+            padding: 12px 20px;
+            background-color: #4f46e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background-color: #3730a3;
+        }
+        .success {
+            color: #059669;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .info {
+            color: #0891b2;
+            font-weight: bold;
+        }
+        .checklist {
+            background-color: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .checklist h3 {
+            color: #0369a1;
+            margin-top: 0;
+        }
+        .checklist ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .checklist li {
+            margin: 8px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background-color: #10b981; }
+        .status-error { background-color: #ef4444; }
+        .status-warning { background-color: #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🩺 Doctor Navigation Fix Test</h1>
+            <p>Testing the doctor detail page fixes for TypeScript errors and "Something went wrong" issues</p>
+        </div>
+
+        <div class="test-section">
+            <h2>🔧 Fixes Applied</h2>
+            <ul>
+                <li><span class="success">✅ Enhanced userInfo object with better fallbacks</span></li>
+                <li><span class="success">✅ Added null safety checks to getFullName function</span></li>
+                <li><span class="success">✅ Improved date formatting with error handling</span></li>
+                <li><span class="success">✅ Fixed avatar display with fallback values</span></li>
+                <li><span class="success">✅ Added TypeScript error prevention</span></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Test Authentication</h2>
+            <p>First, log in with sales credentials:</p>
+            <a href="http://localhost:3000/login" class="test-link" target="_blank">
+                🔐 Login Page
+            </a>
+            <p><strong>Credentials:</strong> sales@healthcare.local / sales123</p>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Test Doctor List Page</h2>
+            <p>Navigate to the doctors list to see all available doctors:</p>
+            <a href="http://localhost:3000/sales/doctors" class="test-link" target="_blank">
+                👥 Doctors List
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Test Doctor Detail Pages</h2>
+            <p>Test each doctor detail page to ensure they load without errors:</p>
+
+            <h3>Mock Doctors Available:</h3>
+            <a href="http://localhost:3000/sales/doctors/f867a41c-83b1-4ef3-96ec-c3ed1fea07a2" class="test-link" target="_blank">
+                👨‍⚕️ Dr. John Smith
+            </a>
+            <a href="http://localhost:3000/sales/doctors/a123b456-789c-4def-9012-3456789abcde" class="test-link" target="_blank">
+                👩‍⚕️ Dr. Sarah Johnson
+            </a>
+            <a href="http://localhost:3000/sales/doctors/b987c654-321d-4afe-8765-4321098765ba" class="test-link" target="_blank">
+                👨‍⚕️ Dr. Michael Brown
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>✏️ Test Edit Pages</h2>
+            <p>Test the edit functionality for each doctor:</p>
+
+            <a href="http://localhost:3000/sales/doctors/f867a41c-83b1-4ef3-96ec-c3ed1fea07a2/edit" class="test-link" target="_blank">
+                ✏️ Edit Dr. John Smith
+            </a>
+            <a href="http://localhost:3000/sales/doctors/a123b456-789c-4def-9012-3456789abcde/edit" class="test-link" target="_blank">
+                ✏️ Edit Dr. Sarah Johnson
+            </a>
+            <a href="http://localhost:3000/sales/doctors/b987c654-321d-4afe-8765-4321098765ba/edit" class="test-link" target="_blank">
+                ✏️ Edit Dr. Michael Brown
+            </a>
+        </div>
+
+        <div class="checklist">
+            <h3>🎯 Verification Checklist</h3>
+            <ul>
+                <li>□ Login works with sales@healthcare.local / sales123</li>
+                <li>□ Doctors list page loads without errors</li>
+                <li>□ All three doctor detail pages load successfully</li>
+                <li>□ No "Something went wrong" error pages</li>
+                <li>□ Doctor information displays correctly (name, email, specialty, etc.)</li>
+                <li>□ Avatar initials display properly</li>
+                <li>□ Date formatting works (Date Added field)</li>
+                <li>□ Navigation breadcrumbs work</li>
+                <li>□ "Back to Doctors" button works</li>
+                <li>□ "Edit Doctor" button navigates correctly</li>
+                <li>□ Edit pages load without errors</li>
+                <li>□ No TypeScript errors in browser console</li>
+                <li>□ All cards display properly (Basic Info, Practice Info, Account Info)</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🐛 Console Error Check</h2>
+            <p>Open browser developer tools (F12) and check for:</p>
+            <ul>
+                <li><span class="success">✅ No TypeScript compilation errors</span></li>
+                <li><span class="success">✅ No React component errors</span></li>
+                <li><span class="success">✅ No undefined property access errors</span></li>
+                <li><span class="info">ℹ️ API 500 errors are expected (backend endpoints not implemented)</span></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Expected Results</h2>
+            <div style="background-color: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 15px;">
+                <h3 style="color: #15803d; margin-top: 0;">✅ Success Criteria:</h3>
+                <ul>
+                    <li>All doctor detail pages load without "Something went wrong" error</li>
+                    <li>Doctor information displays correctly with proper formatting</li>
+                    <li>Navigation works smoothly between pages</li>
+                    <li>No TypeScript errors in console</li>
+                    <li>Avatar initials display properly</li>
+                    <li>Dates format correctly</li>
+                    <li>Edit pages are accessible</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔄 Server Status</h2>
+            <p id="server-status">Checking server status...</p>
+            <button onclick="checkServerStatus()" style="padding: 8px 16px; background-color: #059669; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                🔄 Refresh Status
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function checkServerStatus() {
+            const statusElement = document.getElementById('server-status');
+            statusElement.innerHTML = 'Checking...';
+
+            try {
+                const response = await fetch('http://localhost:3000');
+                if (response.ok) {
+                    statusElement.innerHTML = '<span class="success">✅ Frontend server is running on localhost:3000</span>';
+                } else {
+                    statusElement.innerHTML = '<span class="error">❌ Frontend server returned error: ' + response.status + '</span>';
+                }
+            } catch (error) {
+                statusElement.innerHTML = '<span class="error">❌ Frontend server is not accessible</span>';
+            }
+        }
+
+        // Check server status on page load
+        checkServerStatus();
+
+        // Auto-refresh status every 30 seconds
+        setInterval(checkServerStatus, 30000);
+    </script>
+</body>
+</html>

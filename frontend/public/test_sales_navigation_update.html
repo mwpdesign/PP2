@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Rep Navigation Update - Professional Version</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .test-section h2 {
+            color: #1f2937;
+            margin-top: 0;
+            border-bottom: 1px solid #d1d5db;
+            padding-bottom: 10px;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        .test-link:hover {
+            background-color: #2563eb;
+        }
+        .test-link.medical {
+            background-color: #6366f1;
+        }
+        .test-link.medical:hover {
+            background-color: #4f46e5;
+        }
+        .checklist {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            color: #6b7280;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .credentials {
+            background-color: #f3f4f6;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .warning {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .code {
+            background-color: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        .navigation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .nav-item {
+            padding: 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            text-align: center;
+            background-color: white;
+        }
+        .nav-item.full-access {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .nav-item.medical {
+            border-color: #6366f1;
+            background-color: #f0f9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Sales Rep Navigation - Professional Version</h1>
+            <p>Clean, professional navigation with consistent layout and medical oversight</p>
+            <div class="success">
+                <strong>✅ Updated:</strong> Removed unprofessional badges, maintained consistent sidebar/header layout
+            </div>
+        </div>
+
+        <!-- Authentication Test -->
+        <div class="test-section">
+            <h2>🔐 Authentication Test</h2>
+            <div class="credentials">
+                <h3>Test Credentials:</h3>
+                <p><strong>Sales Rep:</strong> sales@healthcare.local / sales123</p>
+                <p><strong>Doctor (comparison):</strong> doctor@healthcare.local / doctor123</p>
+            </div>
+
+            <div class="step">
+                <h3>Step 1: Login as Sales Rep</h3>
+                <a href="http://localhost:3000/login" class="test-link" target="_blank">🔑 Go to Login Page</a>
+                <p>Login with sales@healthcare.local / sales123</p>
+            </div>
+        </div>
+
+        <!-- Navigation Structure Test -->
+        <div class="test-section">
+            <h2>🧭 Professional Navigation Structure</h2>
+
+            <div class="success">
+                <strong>✅ Clean Navigation (8 items total):</strong>
+            </div>
+
+            <div class="navigation-grid">
+                <div class="nav-item full-access">
+                    <strong>Dashboard</strong><br>
+                    <small>Sales Overview</small>
+                </div>
+                <div class="nav-item full-access">
+                    <strong>My Doctors</strong><br>
+                    <small>Customer Management</small>
+                </div>
+                <div class="nav-item full-access">
+                    <strong>Schedule</strong><br>
+                    <small>Appointments</small>
+                </div>
+                <div class="nav-item full-access">
+                    <strong>Analytics</strong><br>
+                    <small>Performance Metrics</small>
+                </div>
+                <div class="nav-item full-access">
+                    <strong>Profile</strong><br>
+                    <small>User Settings</small>
+                </div>
+                <div class="nav-item medical">
+                    <strong>IVR Management</strong><br>
+                    <small>Medical Oversight</small>
+                </div>
+                <div class="nav-item medical">
+                    <strong>Order Management</strong><br>
+                    <small>Medical Oversight</small>
+                </div>
+                <div class="nav-item medical">
+                    <strong>Shipping & Logistics</strong><br>
+                    <small>Medical Oversight</small>
+                </div>
+            </div>
+
+            <div class="step">
+                <h3>Navigation Verification</h3>
+                <a href="http://localhost:3000/sales/dashboard" class="test-link" target="_blank">📊 Sales Dashboard</a>
+                <p>After logging in, verify the sidebar shows all 8 menu items with clean, professional appearance</p>
+
+                <ul class="checklist">
+                    <li>Dashboard (clean, no badges)</li>
+                    <li>My Doctors (clean, no badges)</li>
+                    <li>Schedule (clean, no badges)</li>
+                    <li>Analytics (clean, no badges)</li>
+                    <li>Profile (clean, no badges)</li>
+                    <li>IVR Management (clean, professional)</li>
+                    <li>Order Management (clean, professional)</li>
+                    <li>Shipping & Logistics (clean, professional)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Consistent Layout Test -->
+        <div class="test-section">
+            <h2>🏗️ Consistent Layout Test</h2>
+
+            <div class="step">
+                <h3>Test Medical Sections with Proper Layout</h3>
+                <p>Click each link and verify they maintain the same sidebar/header layout:</p>
+
+                <a href="http://localhost:3000/sales/ivr" class="test-link medical" target="_blank">📋 IVR Management</a>
+                <a href="http://localhost:3000/sales/orders" class="test-link medical" target="_blank">📦 Order Management</a>
+                <a href="http://localhost:3000/sales/shipping" class="test-link medical" target="_blank">🚚 Shipping & Logistics</a>
+
+                <div class="success">
+                    <strong>Expected Behavior:</strong>
+                    <ul>
+                        <li>✅ Same sidebar navigation visible</li>
+                        <li>✅ Same header layout maintained</li>
+                        <li>✅ Professional, consistent appearance</li>
+                        <li>✅ No unprofessional banners or badges</li>
+                        <li>✅ Interactive elements subtly disabled (reduced opacity)</li>
+                        <li>✅ Navigation and viewing works normally</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Metrics Test -->
+        <div class="test-section">
+            <h2>📊 Enhanced Dashboard Test</h2>
+
+            <div class="step">
+                <h3>Dashboard Metrics Verification</h3>
+                <a href="http://localhost:3000/sales/dashboard" class="test-link" target="_blank">📊 Sales Dashboard</a>
+
+                <p>Verify the dashboard shows enhanced metrics:</p>
+                <ul class="checklist">
+                    <li>Monthly Sales: $45,200</li>
+                    <li>Pending IVRs: 12</li>
+                    <li>Active Orders: 8</li>
+                    <li>In Transit: 5</li>
+                </ul>
+
+                <p>Verify Recent Activity section shows:</p>
+                <ul class="checklist">
+                    <li>IVR Approved - Dr. Johnson (2 hours ago)</li>
+                    <li>Order Shipped - Dr. Martinez (4 hours ago)</li>
+                    <li>New Doctor Added - Dr. Chen (1 day ago)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Route Testing -->
+        <div class="test-section">
+            <h2>🛣️ Route Testing</h2>
+
+            <div class="step">
+                <h3>Sales Management Routes</h3>
+                <a href="http://localhost:3000/sales/dashboard" class="test-link" target="_blank">🏠 Dashboard</a>
+                <a href="http://localhost:3000/sales/doctors" class="test-link" target="_blank">👥 My Doctors</a>
+                <a href="http://localhost:3000/sales/schedule" class="test-link" target="_blank">📅 Schedule</a>
+                <a href="http://localhost:3000/sales/analytics" class="test-link" target="_blank">📈 Analytics</a>
+                <a href="http://localhost:3000/sales/profile" class="test-link" target="_blank">👤 Profile</a>
+                <a href="http://localhost:3000/sales/settings" class="test-link" target="_blank">⚙️ Settings</a>
+            </div>
+
+            <div class="step">
+                <h3>Medical Oversight Routes</h3>
+                <a href="http://localhost:3000/sales/ivr" class="test-link medical" target="_blank">📋 IVR Management</a>
+                <a href="http://localhost:3000/sales/orders" class="test-link medical" target="_blank">📦 Order Management</a>
+                <a href="http://localhost:3000/sales/shipping" class="test-link medical" target="_blank">🚚 Shipping & Logistics</a>
+            </div>
+        </div>
+
+        <!-- Comparison Test -->
+        <div class="test-section">
+            <h2>🔄 Comparison Test</h2>
+
+            <div class="step">
+                <h3>Compare with Doctor Navigation</h3>
+                <p>Login as doctor@healthcare.local / doctor123 and compare navigation:</p>
+                <a href="http://localhost:3000/login" class="test-link" target="_blank">🔑 Login as Doctor</a>
+                <a href="http://localhost:3000/doctor/dashboard" class="test-link" target="_blank">👨‍⚕️ Doctor Dashboard</a>
+
+                <div class="warning">
+                    <strong>Key Differences:</strong>
+                    <ul>
+                        <li>Doctor: Full access to medical sections with full functionality</li>
+                        <li>Sales Rep: View-only access with subtle interaction restrictions</li>
+                        <li>Sales Rep: Additional sales-specific sections (Schedule, Profile)</li>
+                        <li>Sales Rep: Enhanced dashboard with medical oversight metrics</li>
+                        <li>Both: Same professional layout and navigation structure</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Verification -->
+        <div class="test-section">
+            <h2>⚙️ Technical Verification</h2>
+
+            <div class="step">
+                <h3>Files Modified</h3>
+                <div class="code">
+✅ Updated: frontend/src/components/shared/ReadOnlyView.tsx
+✅ Updated: frontend/src/components/sales/SimpleSalesDashboard.tsx
+✅ Maintained: frontend/src/components/shared/layout/UnifiedDashboardLayout.tsx
+✅ Maintained: frontend/src/components/shared/layout/Sidebar.tsx
+✅ Maintained: frontend/src/App.tsx
+                </div>
+            </div>
+
+            <div class="step">
+                <h3>Key Improvements Made</h3>
+                <ul class="checklist">
+                    <li>Removed unprofessional yellow "View Only" badges</li>
+                    <li>Maintained consistent sidebar/header layout across all pages</li>
+                    <li>Clean, professional navigation appearance</li>
+                    <li>Subtle interaction restrictions (reduced opacity on disabled elements)</li>
+                    <li>Enhanced dashboard with medical metrics</li>
+                    <li>Recent activity section with medical events</li>
+                    <li>Professional medical oversight capabilities</li>
+                </ul>
+            </div>
+
+            <div class="step">
+                <h3>Navigation Structure</h3>
+                <div class="code">
+SALES MANAGEMENT (5 items):
+- Dashboard (/sales/dashboard)
+- My Doctors (/sales/doctors)
+- Schedule (/sales/schedule)
+- Analytics (/sales/analytics)
+- Profile (/sales/profile)
+
+MEDICAL OVERSIGHT (3 items):
+- IVR Management (/sales/ivr) [Professional, no badges]
+- Order Management (/sales/orders) [Professional, no badges]
+- Shipping & Logistics (/sales/shipping) [Professional, no badges]
+
+SYSTEM:
+- Settings (/sales/settings)
+- Sign Out
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Criteria -->
+        <div class="test-section">
+            <h2>✅ Success Criteria</h2>
+
+            <div class="success">
+                <strong>Test Passes If:</strong>
+                <ul>
+                    <li>✅ Sales rep sees 8 clean menu items (no badges)</li>
+                    <li>✅ All navigation items look professional and consistent</li>
+                    <li>✅ Medical sections maintain same sidebar/header layout</li>
+                    <li>✅ No unprofessional yellow banners or badges</li>
+                    <li>✅ Dashboard shows enhanced medical metrics</li>
+                    <li>✅ Recent activity includes medical events</li>
+                    <li>✅ Interactive elements subtly disabled in medical sections</li>
+                    <li>✅ Professional appearance throughout the application</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>Business Impact:</strong>
+                <p>Sales reps now have professional access to medical oversight data with a clean, consistent interface. They can monitor IVR status, order progress, and shipping information to provide excellent customer service while maintaining appropriate access controls through subtle UI restrictions.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -19,6 +19,8 @@ import IVRResultsDisplay from '../../../components/ivr/IVRResultsDisplay';
 import { formatMessageTimestamp, formatDateOnly } from '../../../utils/formatters';
 import { useIVRWebSocket, IVRStatusUpdate } from '../../../hooks/useIVRWebSocket';
 import { mockIVRRequests } from '../../../data/mockIVRData';
+import UniversalFileUpload from '../../../components/shared/UniversalFileUpload';
+import { toast } from 'react-hot-toast';
 
 interface DoctorIVRDetail {
   id: string;
@@ -96,6 +98,8 @@ const DoctorIVRDetailPage: React.FC = () => {
   const [ivrDetail, setIVRDetail] = useState<DoctorIVRDetail | null>(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [complexMessages, setComplexMessages] = useState<any[]>([]);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Mock IVR Results data for approved requests
   const mockIVRResults = {
@@ -482,6 +486,67 @@ const DoctorIVRDetailPage: React.FC = () => {
     navigate(`/doctor/orders?orderId=${orderId}`);
   };
 
+  const handleDocumentUpload = async (file: File | null) => {
+    if (!file || !ivrDetail) {
+      setUploadedFile(null);
+      setUploadProgress(0);
+      return;
+    }
+
+    setUploadedFile(file);
+    setUploadProgress(0);
+
+    try {
+      // Simulate upload progress
+      const uploadInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(uploadInterval);
+            return 100;
+          }
+          return prev + 20;
+        });
+      }, 200);
+
+      // Wait for upload to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create new document entry
+      const newDocument = {
+        id: `doc-${Date.now()}`,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        uploadedAt: new Date().toISOString(),
+        url: URL.createObjectURL(file)
+      };
+
+      // Update the IVR detail with the new document
+      setIVRDetail(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          documents: [...prev.documents, newDocument]
+        };
+      });
+
+      // Show success message
+      toast.success(`${file.name} uploaded successfully`);
+
+      // Reset upload state after a delay
+      setTimeout(() => {
+        setUploadedFile(null);
+        setUploadProgress(0);
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error uploading document:', error);
+      toast.error('Failed to upload document. Please try again.');
+      setUploadedFile(null);
+      setUploadProgress(0);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-100 p-6">
@@ -804,14 +869,29 @@ const DoctorIVRDetailPage: React.FC = () => {
 
         {activeTab === 'documents' && (
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
-                              <button className="inline-flex items-center px-3 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 text-sm">
-                <PlusIcon className="w-4 h-4 mr-2" />
-                Upload Document
-              </button>
             </div>
+
+            {/* Document Upload Section */}
+            <div className="mb-8">
+              <UniversalFileUpload
+                label="Upload Additional Document"
+                description="Upload supporting documents for this IVR request (PDF, images, medical records)"
+                value={uploadedFile}
+                onChange={handleDocumentUpload}
+                onUploadProgress={setUploadProgress}
+                status={uploadProgress > 0 && uploadProgress < 100 ? 'uploading' : uploadedFile ? 'success' : 'pending'}
+                acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.tiff', '.doc', '.docx']}
+                maxSizeMB={25}
+                showCamera={true}
+                multiple={false}
+              />
+            </div>
+
+            {/* Existing Documents List */}
             <div className="space-y-3">
+              <h4 className="text-md font-medium text-gray-900 mb-3">Uploaded Documents</h4>
               {ivrDetail.documents.map((doc) => (
                 <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
                   <div className="flex items-center space-x-3">
@@ -828,6 +908,14 @@ const DoctorIVRDetailPage: React.FC = () => {
                   </button>
                 </div>
               ))}
+
+              {ivrDetail.documents.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <DocumentTextIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No documents uploaded yet</p>
+                  <p className="text-sm">Use the upload area above to add supporting documents</p>
+                </div>
+              )}
             </div>
           </div>
         )}

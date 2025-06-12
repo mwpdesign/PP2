@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import UnifiedDashboardLayout from '../../components/shared/layout/UnifiedDashboardLayout';
+import { createSalesNavigation } from '../../components/sales/SimpleSalesDashboard';
 
 interface DoctorFormData {
   // Personal Information
@@ -94,7 +95,7 @@ const AddDoctor: React.FC = () => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string>('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string>('');
 
   // Check if user can manage doctors
@@ -105,24 +106,7 @@ const AddDoctor: React.FC = () => {
     navigate('/login');
   };
 
-  const navigation = [
-    { name: 'Dashboard', href: '/sales/dashboard', icon: HomeIcon },
-    { name: 'Customer Accounts', href: '/sales/customers', icon: UsersIcon },
-    ...(canManageDoctors ? [
-      { name: 'Doctors', href: '/sales/doctors', icon: UsersIcon },
-    ] : []),
-    { name: 'Lead Management', href: '/sales/leads', icon: PhoneIcon },
-    { name: 'Sales Reports', href: '/sales/reports', icon: ChartBarIcon },
-    { name: 'Proposals', href: '/sales/proposals', icon: DocumentTextIcon },
-    { name: 'Revenue Tracking', href: '/sales/revenue', icon: CurrencyDollarIcon },
-    { name: 'Settings', href: '/sales/settings', icon: Cog6ToothIcon },
-    {
-      name: 'Sign Out',
-      href: '#',
-      icon: ArrowRightOnRectangleIcon,
-      onClick: handleLogout
-    }
-  ];
+  const navigation = createSalesNavigation(logout);
 
   const userInfo = {
     name: user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.username || 'User',
@@ -287,120 +271,113 @@ const AddDoctor: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      setSubmitError('Please correct the errors above');
-      return;
-    }
-
     setIsSubmitting(true);
-    setSubmitError('');
-    setSubmitSuccess('');
+    setSubmitError(null);
 
     try {
-      // Get auth token from AuthContext
+      // Get token from AuthContext
       const token = getToken();
-      console.log('Auth token from getToken():', token ? 'present' : 'null');
-      console.log('Auth token from localStorage:', localStorage.getItem('authToken') ? 'present' : 'null');
-      console.log('User from context:', user);
+      console.log('[AddDoctor] Token available:', !!token);
+      console.log('[AddDoctor] Current user:', user?.email, 'Role:', user?.role);
 
       if (!token) {
-        throw new Error('Authentication required');
+        throw new Error('Authentication required. Please log in again.');
       }
 
-      // Generate username from email
-      const username = formData.email.toLowerCase();
-
-      // Generate temporary password (user will be required to change on first login)
-      const tempPassword = `TempPass${Math.random().toString(36).slice(-8)}!`;
-
-      // Create both user and profile in one call
-      const payload = {
-        // User data
-        username: username,
-        email: formData.email,
-        password: tempPassword,
+      // Prepare doctor data for sales representative
+      const doctorData = {
+        // Personal Information
         first_name: formData.firstName,
         last_name: formData.lastName,
-        is_active: true,
-        force_password_change: true,
+        email: formData.email,
+        phone: formData.phone,
+        date_of_birth: formData.dateOfBirth || null,
 
-        // Profile data
-        professional_title: formData.professionalTitle,
-        specialty: formData.specialty,
+        // Professional Information
+        npi_number: formData.npiNumber,
         medical_license_number: formData.licenseNumber,
-        npi_number: formData.npiNumber.replace(/\D/g, ''),
-        medicare_ptan: formData.medicareProvider,
-        medicaid_provider_number: formData.medicaidProvider,
-        tax_id: formData.taxId,
-        primary_facility_name: formData.primaryFacility,
-        office_contact_name: formData.officeContactName,
-        facility_phone: formData.officePhone,
-        facility_fax: formData.officeFax,
-        facility_address_line1: formData.streetAddress,
-        facility_city: formData.city,
-        facility_state: formData.state,
-        facility_zip_code: formData.zipCode,
+        dea_number: formData.deaNumber || null,
+        tax_id: formData.taxId || null,
+        specialty: formData.specialty,
+        board_certifications: formData.boardCertifications ? [formData.boardCertifications] : [],
+        years_of_experience: formData.yearsOfExperience ? parseInt(formData.yearsOfExperience) : null,
+        wound_care_percentage: formData.woundCarePercentage ? parseInt(formData.woundCarePercentage) : null,
+
+        // Practice Information
+        practice_name: formData.primaryFacility,
+        practice_address_line1: formData.streetAddress,
+        practice_address_line2: formData.practiceAddressLine2 || null,
+        practice_city: formData.city,
+        practice_state: formData.state,
+        practice_zip: formData.zipCode,
+        practice_phone: formData.officePhone || null,
+        practice_fax: formData.officeFax || null,
+
+        // Shipping Information
         shipping_address_line1: formData.streetAddress,
+        shipping_address_line2: formData.shippingAddressLine2 || null,
         shipping_city: formData.city,
         shipping_state: formData.state,
-        shipping_zip_code: formData.zipCode,
-        shipping_contact_name: formData.shippingContactName,
-        shipping_contact_phone: formData.shippingPhone,
-        delivery_instructions: formData.deliveryInstructions
+        shipping_zip: formData.zipCode,
+
+        // Additional Information
+        preferred_contact_method: formData.preferredContactMethod || 'email',
+        emergency_contact_name: formData.emergencyContactName || null,
+        emergency_contact_phone: formData.emergencyContactPhone || null,
+        notes: formData.notes || null,
+
+        // Sales context - this doctor is being added by a sales rep
+        added_by_sales: true,
+        sales_rep_id: user?.sub, // Current sales rep's ID
+        sales_rep_email: user?.email
       };
 
-      console.log('Creating doctor with payload:', payload);
+      console.log('[AddDoctor] Submitting doctor data:', {
+        email: doctorData.email,
+        name: `${doctorData.first_name} ${doctorData.last_name}`,
+        npi: doctorData.npi_number,
+        sales_rep: doctorData.sales_rep_email
+      });
 
-      const response = await fetch('/api/v1/doctors/', {
+      // Make API call to create doctor
+      const response = await fetch('http://localhost:8000/api/v1/doctors/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(doctorData),
       });
+
+      console.log('[AddDoctor] API Response status:', response.status);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create doctor account');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[AddDoctor] API Error:', errorData);
+
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please log in again.');
+        } else if (response.status === 403) {
+          throw new Error('You do not have permission to add doctors. Please contact your administrator.');
+        } else if (response.status === 422) {
+          throw new Error(errorData.detail || 'Invalid data provided. Please check all required fields.');
+        } else {
+          throw new Error(errorData.detail || `Server error (${response.status}). Please try again.`);
+        }
       }
 
-      const userData = await response.json();
-      console.log('Doctor created successfully:', userData);
+      const result = await response.json();
+      console.log('[AddDoctor] Doctor created successfully:', result);
 
-      // Success
-      setSubmitSuccess(`Doctor account created successfully!\n\nEmail: ${formData.email}\nTemporary Password: ${tempPassword}\n\nThe doctor will be required to change their password on first login.`);
+      // Show success message
+      alert(`Doctor ${doctorData.first_name} ${doctorData.last_name} has been successfully added to your network!`);
 
-      // Reset form
-      setFormData({
-        firstName: '',
-        lastName: '',
-        professionalTitle: 'Dr.',
-        specialty: '',
-        email: '',
-        phone: '',
-        licenseNumber: '',
-        npiNumber: '',
-        medicareProvider: '',
-        medicaidProvider: '',
-        taxId: '',
-        primaryFacility: '',
-        officeContactName: '',
-        officePhone: '',
-        officeFax: '',
-        streetAddress: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        shippingContactName: '',
-        shippingPhone: '',
-        deliveryInstructions: ''
-      });
+      // Navigate back to doctors list
+      navigate('/sales/doctors');
 
-    } catch (error) {
-      console.error('Error creating doctor:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Failed to create doctor account');
+    } catch (error: any) {
+      console.error('[AddDoctor] Error creating doctor:', error);
+      setSubmitError(error.message || 'Failed to create doctor. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

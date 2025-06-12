@@ -11,6 +11,8 @@ interface NavigationItem {
   href: string;
   icon: any;
   onClick?: () => void;
+  badge?: string;
+  viewOnly?: boolean;
 }
 
 interface UnifiedDashboardLayoutProps {

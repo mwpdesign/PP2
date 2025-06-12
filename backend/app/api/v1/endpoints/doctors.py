@@ -17,7 +17,6 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.doctor_profile import DoctorProfile
 from app.models.rbac import Role
-from app.models.organization import Organization
 from app.schemas.token import TokenData
 from app.core.password import get_password_hash
 
@@ -49,22 +48,37 @@ async def create_doctor_simple(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Create a new doctor user account.
+    Create a new doctor user account with profile.
+    Designed for sales representatives adding doctors to their network.
     """
     try:
-        # Basic permission check
+        # Basic permission check for sales hierarchy
         user_role = current_user.role.lower() if current_user.role else ""
-        if user_role not in ["sales", "distributor", "master_distributor", "admin", "chp_admin"]:
+        allowed_roles = [
+            "sales", "distributor", "master_distributor", "admin", "chp_admin"
+        ]
+        if user_role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to create doctors"
+            )
+
+        # Validate required fields
+        required_fields = ["email", "first_name", "last_name", "npi_number"]
+        missing_fields = [
+            field for field in required_fields if not doctor_data.get(field)
+        ]
+        if missing_fields:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Missing required fields: {', '.join(missing_fields)}"
             )
 
         # Check if user already exists
         existing_user_query = select(User).where(
             or_(
                 User.email == doctor_data["email"],
-                User.username == doctor_data["username"]
+                User.username == doctor_data["email"]  # Use email as username
             )
         )
         existing_result = await db.execute(existing_user_query)
@@ -73,10 +87,10 @@ async def create_doctor_simple(
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email or username already exists"
+                detail="A user with this email already exists"
             )
 
-        # Get a default role (we'll create a Doctor role or use existing)
+        # Get or create Doctor role
         role_query = select(Role).where(
             Role.name == "Doctor",
             Role.organization_id == current_user.organization_id
@@ -95,26 +109,93 @@ async def create_doctor_simple(
             db.add(doctor_role)
             await db.flush()
 
-        # Create user with minimal required fields
+        # Generate temporary password
+        first_name_part = doctor_data['first_name'][:2]
+        last_name_part = doctor_data['last_name'][:2]
+        email_hash = str(hash(doctor_data['email']))[-4:]
+        temp_password = f"TempPass{first_name_part}{last_name_part}{email_hash}!"
+
+        # Create user account
         new_user = User(
-            username=doctor_data["username"],
+            username=doctor_data["email"],  # Use email as username
             email=doctor_data["email"],
-            encrypted_password=get_password_hash(doctor_data["password"]),
-            first_name=doctor_data.get("first_name", ""),
-            last_name=doctor_data.get("last_name", ""),
+            encrypted_password=get_password_hash(temp_password),
+            first_name=doctor_data["first_name"],
+            last_name=doctor_data["last_name"],
             role_id=doctor_role.id,
             organization_id=current_user.organization_id,
-            is_active=doctor_data.get("is_active", True),
+            is_active=True,
             is_superuser=False,
             added_by_id=current_user.id,
-            force_password_change=doctor_data.get("force_password_change", True)
+            force_password_change=True,
+            # Sales hierarchy fields
+            parent_sales_id=(
+                current_user.id if user_role == "sales" else None
+            ),
+            parent_distributor_id=(
+                current_user.id if user_role == "distributor" else None
+            ),
+            parent_master_distributor_id=(
+                current_user.id if user_role == "master_distributor" else None
+            )
         )
 
         db.add(new_user)
+        await db.flush()  # Get the user ID
+
+        # Create doctor profile
+        doctor_profile = DoctorProfile(
+            user_id=new_user.id,
+            # Professional Information
+            professional_title="Dr.",
+            specialty=doctor_data.get("specialty", ""),
+            medical_license_number=doctor_data.get("medical_license_number", ""),
+            medical_license_state=doctor_data.get("practice_state", ""),  # Use practice state for license
+            npi_number=doctor_data["npi_number"],
+            dea_number=doctor_data.get("dea_number"),
+            tax_id=doctor_data.get("tax_id"),
+            board_certifications=doctor_data.get("board_certifications", []),
+            wound_care_percentage=doctor_data.get("wound_care_percentage"),
+
+            # Practice Information
+            primary_facility_name=doctor_data.get("practice_name", ""),
+            facility_address_line1=doctor_data.get("practice_address_line1", ""),
+            facility_address_line2=doctor_data.get("practice_address_line2"),
+            facility_city=doctor_data.get("practice_city", ""),
+            facility_state=doctor_data.get("practice_state", ""),
+            facility_zip_code=doctor_data.get("practice_zip", ""),
+            facility_phone=doctor_data.get("practice_phone"),
+            facility_fax=doctor_data.get("practice_fax"),
+
+            # Contact Information (phone goes here, not in User model)
+            office_contact_phone=doctor_data.get("phone"),  # Primary phone
+            office_contact_name=doctor_data.get("emergency_contact_name"),
+
+            # Shipping Information
+            shipping_address_line1=doctor_data.get("shipping_address_line1", ""),
+            shipping_address_line2=doctor_data.get("shipping_address_line2"),
+            shipping_city=doctor_data.get("shipping_city", ""),
+            shipping_state=doctor_data.get("shipping_state", ""),
+            shipping_zip_code=doctor_data.get("shipping_zip", ""),
+
+            # Default values for required fields
+            accepts_medicare=True,
+            accepts_medicaid=True,
+            years_in_practice=doctor_data.get("years_of_experience", 0)
+        )
+
+        db.add(doctor_profile)
         await db.commit()
         await db.refresh(new_user)
+        await db.refresh(doctor_profile)
 
-        # Return user data
+        # Log the successful creation
+        logger.info(
+            f"Doctor created by {current_user.role} {current_user.email}: "
+            f"{new_user.email}"
+        )
+
+        # Return success response with temporary password
         return {
             "id": str(new_user.id),
             "username": new_user.username,
@@ -122,7 +203,13 @@ async def create_doctor_simple(
             "first_name": new_user.first_name,
             "last_name": new_user.last_name,
             "is_active": new_user.is_active,
-            "message": "Doctor user created successfully"
+            "temporary_password": temp_password,
+            "force_password_change": True,
+            "added_by": f"{current_user.role}: {current_user.email}",
+            "message": (
+                f"Doctor {new_user.first_name} {new_user.last_name} has been "
+                f"successfully added to your network!"
+            )
         }
 
     except HTTPException:

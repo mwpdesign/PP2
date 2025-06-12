@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoicing Page Test - Healthcare IVR Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .test-section {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .test-pass { border-color: #10b981; background-color: #f0fdf4; }
+        .test-fail { border-color: #ef4444; background-color: #fef2f2; }
+        .test-pending { border-color: #f59e0b; background-color: #fffbeb; }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">🧾 Invoicing Page Test Suite</h1>
+            <p class="text-gray-600 mb-6">Comprehensive testing for Master Distributor Invoicing & Billing Management</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-blue-900">Test Environment</h3>
+                    <p class="text-blue-700 text-sm">Frontend: localhost:3000</p>
+                    <p class="text-blue-700 text-sm">Route: /distributor/invoicing</p>
+                    <p class="text-blue-700 text-sm">Role: Master Distributor</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-green-900">Test Coverage</h3>
+                    <p class="text-green-700 text-sm">✅ Invoice Management</p>
+                    <p class="text-green-700 text-sm">✅ Financial Reporting</p>
+                    <p class="text-green-700 text-sm">✅ Payment Tracking</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Results Summary -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">📊 Test Results Summary</h2>
+            <div class="grid grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div id="total-tests" class="text-2xl font-bold text-gray-900">0</div>
+                    <div class="text-sm text-gray-600">Total Tests</div>
+                </div>
+                <div class="text-center">
+                    <div id="passed-tests" class="text-2xl font-bold text-green-600">0</div>
+                    <div class="text-sm text-gray-600">Passed</div>
+                </div>
+                <div class="text-center">
+                    <div id="failed-tests" class="text-2xl font-bold text-red-600">0</div>
+                    <div class="text-sm text-gray-600">Failed</div>
+                </div>
+                <div class="text-center">
+                    <div id="pending-tests" class="text-2xl font-bold text-yellow-600">0</div>
+                    <div class="text-sm text-gray-600">Pending</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 1: Page Access and Authentication -->
+        <div class="test-section test-pending" id="test-1">
+            <h3 class="text-lg font-semibold mb-3">🔐 Test 1: Page Access and Authentication</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify Master Distributor can access Invoicing page</p>
+                <p><strong>Steps:</strong></p>
+                <ol class="list-decimal list-inside ml-4 space-y-1">
+                    <li>Navigate to <a href="http://localhost:3000/distributor/invoicing" target="_blank" class="text-blue-600 underline">http://localhost:3000/distributor/invoicing</a></li>
+                    <li>Verify page loads without errors</li>
+                    <li>Check for proper authentication and role-based access</li>
+                </ol>
+                <div class="mt-4">
+                    <button onclick="markTest(1, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(1, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 2: Header Section -->
+        <div class="test-section test-pending" id="test-2">
+            <h3 class="text-lg font-semibold mb-3">📋 Test 2: Header Section</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify header contains all required elements</p>
+                <p><strong>Expected Elements:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>Title: "Invoicing & Billing"</li>
+                    <li>Subtitle: "Manage invoices, payments, and financial reporting"</li>
+                    <li>Currency dollar icon</li>
+                    <li>Date range picker (Current Month, Last Month, etc.)</li>
+                    <li>"Create Invoice" button (slate-600 color)</li>
+                </ul>
+                <div class="mt-4">
+                    <button onclick="markTest(2, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(2, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 3: Summary Cards -->
+        <div class="test-section test-pending" id="test-3">
+            <h3 class="text-lg font-semibold mb-3">💰 Test 3: Financial Summary Cards</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify all 4 summary cards display correctly</p>
+                <p><strong>Expected Cards:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>Total Revenue (green icon, currency format)</li>
+                    <li>Outstanding Invoices (amber clock icon, currency format)</li>
+                    <li>Paid This Month (green check icon, currency format)</li>
+                    <li>Overdue Invoices (red warning icon, count + amount)</li>
+                </ul>
+                <p><strong>Expected Values:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>Total Revenue: $108,600.00 (3 paid invoices)</li>
+                    <li>Outstanding: $88,200.00 (3 pending invoices)</li>
+                    <li>Paid This Month: $63,600.00 (February payments)</li>
+                    <li>Overdue: 2 ($44,350.00)</li>
+                </ul>
+                <div class="mt-4">
+                    <button onclick="markTest(3, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(3, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 4: Filters and Search -->
+        <div class="test-section test-pending" id="test-4">
+            <h3 class="text-lg font-semibold mb-3">🔍 Test 4: Filters and Search</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify search and filtering functionality</p>
+                <p><strong>Test Actions:</strong></p>
+                <ol class="list-decimal list-inside ml-4 space-y-1">
+                    <li>Test search by invoice number (e.g., "INV-2025-001")</li>
+                    <li>Test search by distributor name (e.g., "Regional")</li>
+                    <li>Filter by status: All Status, Paid, Pending, Overdue</li>
+                    <li>Filter by distributor from dropdown</li>
+                    <li>Verify Export and Bulk Actions buttons are present</li>
+                </ol>
+                <div class="mt-4">
+                    <button onclick="markTest(4, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(4, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 5: Invoices Table -->
+        <div class="test-section test-pending" id="test-5">
+            <h3 class="text-lg font-semibold mb-3">📊 Test 5: Invoices Table</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify invoice table displays all data correctly</p>
+                <p><strong>Expected Columns:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>Invoice # (INV-2025-XXX format)</li>
+                    <li>Distributor/Customer (with building icon)</li>
+                    <li>Invoice Date (formatted: Jan 15, 2025)</li>
+                    <li>Due Date (formatted: Feb 14, 2025)</li>
+                    <li>Amount (currency format: $45,000.00)</li>
+                    <li>Status (colored badges: green/amber/red)</li>
+                    <li>Payment Method (Wire Transfer, ACH, Check, or -)</li>
+                    <li>Actions (View, Download, Mark as Paid, Send Reminder)</li>
+                </ul>
+                <p><strong>Expected Data:</strong> 8 sample invoices with mixed statuses</p>
+                <div class="mt-4">
+                    <button onclick="markTest(5, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(5, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 6: View Invoice Modal -->
+        <div class="test-section test-pending" id="test-6">
+            <h3 class="text-lg font-semibold mb-3">👁️ Test 6: View Invoice Modal</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify invoice detail modal functionality</p>
+                <p><strong>Test Actions:</strong></p>
+                <ol class="list-decimal list-inside ml-4 space-y-1">
+                    <li>Click "View" (eye icon) on any invoice</li>
+                    <li>Verify modal opens with professional invoice layout</li>
+                    <li>Check invoice header with logo placeholder and invoice number</li>
+                    <li>Verify billing information (Bill To address)</li>
+                    <li>Check line items table with descriptions, quantities, rates</li>
+                    <li>Verify totals calculation (Subtotal, Tax 10%, Total)</li>
+                    <li>Test action buttons: Download PDF, Email Invoice, Mark as Paid</li>
+                    <li>Verify modal closes with X button</li>
+                </ol>
+                <div class="mt-4">
+                    <button onclick="markTest(6, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(6, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 7: Create Invoice Modal -->
+        <div class="test-section test-pending" id="test-7">
+            <h3 class="text-lg font-semibold mb-3">➕ Test 7: Create Invoice Modal</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify invoice creation modal functionality</p>
+                <p><strong>Test Actions:</strong></p>
+                <ol class="list-decimal list-inside ml-4 space-y-1">
+                    <li>Click "Create Invoice" button in header</li>
+                    <li>Verify modal opens with "Create New Invoice" title</li>
+                    <li>Check invoice details section (auto-generated number, dates, status)</li>
+                    <li>Test "Bill To" distributor selection dropdown</li>
+                    <li>Verify line items table with add/remove functionality</li>
+                    <li>Check totals calculation area</li>
+                    <li>Test notes/instructions textarea</li>
+                    <li>Verify Cancel and Create Invoice buttons</li>
+                </ol>
+                <div class="mt-4">
+                    <button onclick="markTest(7, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(7, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 8: Mark as Paid Functionality -->
+        <div class="test-section test-pending" id="test-8">
+            <h3 class="text-lg font-semibold mb-3">✅ Test 8: Mark as Paid Functionality</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify payment status update functionality</p>
+                <p><strong>Test Actions:</strong></p>
+                <ol class="list-decimal list-inside ml-4 space-y-1">
+                    <li>Find a pending or overdue invoice</li>
+                    <li>Click "Mark as Paid" (green check icon)</li>
+                    <li>Verify status changes to "Paid" with green badge</li>
+                    <li>Check payment method updates to "Manual Entry"</li>
+                    <li>Verify paid date is set to today</li>
+                    <li>Confirm summary cards update automatically</li>
+                    <li>Check that "Mark as Paid" button disappears for paid invoices</li>
+                </ol>
+                <div class="mt-4">
+                    <button onclick="markTest(8, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(8, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 9: Responsive Design -->
+        <div class="test-section test-pending" id="test-9">
+            <h3 class="text-lg font-semibold mb-3">📱 Test 9: Responsive Design</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify responsive design across different screen sizes</p>
+                <p><strong>Test Actions:</strong></p>
+                <ol class="list-decimal list-inside ml-4 space-y-1">
+                    <li>Test on desktop (1920x1080)</li>
+                    <li>Test on tablet (768px width)</li>
+                    <li>Test on mobile (375px width)</li>
+                    <li>Verify summary cards stack properly (4 cols → 2 cols → 1 col)</li>
+                    <li>Check table horizontal scrolling on small screens</li>
+                    <li>Verify modals are responsive and readable</li>
+                    <li>Test filter section stacking on mobile</li>
+                </ol>
+                <div class="mt-4">
+                    <button onclick="markTest(9, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(9, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test 10: Professional Appearance -->
+        <div class="test-section test-pending" id="test-10">
+            <h3 class="text-lg font-semibold mb-3">🎨 Test 10: Professional Appearance</h3>
+            <div class="space-y-2">
+                <p><strong>Objective:</strong> Verify professional business-appropriate design</p>
+                <p><strong>Design Requirements:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>White background for full access page</li>
+                    <li>Consistent slate-600 primary color for buttons</li>
+                    <li>Proper status colors: Green (Paid), Amber (Pending), Red (Overdue)</li>
+                    <li>Professional invoice formatting in view modal</li>
+                    <li>Proper currency formatting ($X,XXX.XX)</li>
+                    <li>Clean, business-appropriate typography</li>
+                    <li>Consistent spacing and alignment</li>
+                    <li>Professional icons from Heroicons</li>
+                </ul>
+                <div class="mt-4">
+                    <button onclick="markTest(10, 'pass')" class="bg-green-500 text-white px-4 py-2 rounded mr-2">✅ Pass</button>
+                    <button onclick="markTest(10, 'fail')" class="bg-red-500 text-white px-4 py-2 rounded">❌ Fail</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">🔗 Quick Test Links</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="http://localhost:3000/distributor/invoicing" target="_blank"
+                   class="bg-blue-600 text-white px-4 py-3 rounded-lg text-center hover:bg-blue-700 transition-colors">
+                    🧾 Open Invoicing Page
+                </a>
+                <a href="http://localhost:3000/distributor/dashboard" target="_blank"
+                   class="bg-slate-600 text-white px-4 py-3 rounded-lg text-center hover:bg-slate-700 transition-colors">
+                    📊 Master Distributor Dashboard
+                </a>
+                <a href="http://localhost:3000/login" target="_blank"
+                   class="bg-green-600 text-white px-4 py-3 rounded-lg text-center hover:bg-green-700 transition-colors">
+                    🔐 Login Page
+                </a>
+                <button onclick="runAllTests()"
+                        class="bg-purple-600 text-white px-4 py-3 rounded-lg text-center hover:bg-purple-700 transition-colors">
+                    🚀 Run All Tests
+                </button>
+            </div>
+        </div>
+
+        <!-- Test Instructions -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-8">
+            <h2 class="text-xl font-bold text-yellow-900 mb-4">📋 Testing Instructions</h2>
+            <ol class="list-decimal list-inside space-y-2 text-yellow-800">
+                <li><strong>Start Frontend Server:</strong> Ensure React app is running on localhost:3000</li>
+                <li><strong>Authentication:</strong> Login as Master Distributor role to access invoicing features</li>
+                <li><strong>Test Each Section:</strong> Go through each test systematically</li>
+                <li><strong>Mark Results:</strong> Use Pass/Fail buttons to track test results</li>
+                <li><strong>Report Issues:</strong> Note any failures or unexpected behavior</li>
+                <li><strong>Verify Data:</strong> Check that all 8 sample invoices display correctly</li>
+                <li><strong>Test Interactions:</strong> Click buttons, open modals, test filtering</li>
+                <li><strong>Check Calculations:</strong> Verify financial summaries are accurate</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            total: 10,
+            passed: 0,
+            failed: 0,
+            pending: 10
+        };
+
+        function updateSummary() {
+            document.getElementById('total-tests').textContent = testResults.total;
+            document.getElementById('passed-tests').textContent = testResults.passed;
+            document.getElementById('failed-tests').textContent = testResults.failed;
+            document.getElementById('pending-tests').textContent = testResults.pending;
+        }
+
+        function markTest(testNumber, result) {
+            const testElement = document.getElementById(`test-${testNumber}`);
+            const currentClass = testElement.classList.contains('test-pass') ? 'pass' :
+                               testElement.classList.contains('test-fail') ? 'fail' : 'pending';
+
+            // Remove current status
+            testElement.classList.remove('test-pass', 'test-fail', 'test-pending');
+
+            // Update counters
+            if (currentClass === 'pass') testResults.passed--;
+            else if (currentClass === 'fail') testResults.failed--;
+            else testResults.pending--;
+
+            // Add new status
+            if (result === 'pass') {
+                testElement.classList.add('test-pass');
+                testResults.passed++;
+            } else {
+                testElement.classList.add('test-fail');
+                testResults.failed++;
+            }
+
+            updateSummary();
+
+            // Show completion message
+            if (testResults.pending === 0) {
+                const passRate = (testResults.passed / testResults.total * 100).toFixed(1);
+                alert(`Testing Complete! Pass Rate: ${passRate}% (${testResults.passed}/${testResults.total})`);
+            }
+        }
+
+        function runAllTests() {
+            alert('🚀 Automated testing not implemented. Please run tests manually by:\n\n1. Opening the Invoicing page\n2. Testing each feature systematically\n3. Marking each test as Pass/Fail\n4. Verifying all functionality works correctly\n\nFocus on: Header, Summary Cards, Table, Modals, Filtering, and Payment Updates');
+        }
+
+        // Initialize summary
+        updateSummary();
+    </script>
+</body>
+</html>

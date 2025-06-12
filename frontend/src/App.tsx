@@ -43,16 +43,29 @@ const SegmentedIVRManagement = React.lazy(() => import('./components/distributor
 const NetworkManagement = React.lazy(() => import('./components/distributor/network/NetworkManagement'));
 const DistributorAnalytics = React.lazy(() => import('./components/distributor/analytics/DistributorAnalytics'));
 const OrderFulfillmentDashboard = React.lazy(() => import('./components/distributor/orders/OrderFulfillmentDashboard'));
-const ShippingLogistics = React.lazy(() => import('./components/distributor/orders/ShippingLogistics'));
+const ShippingLogistics = React.lazy(() => import('./pages/distributor/ShippingLogistics'));
 const SimpleIVRDashboard = React.lazy(() => import('./components/ivr/SimpleIVRDashboard'));
 const SimpleCHPAdminDashboard = React.lazy(() => import('./components/chp/SimpleCHPAdminDashboard'));
 const SimpleDistributorDashboard = React.lazy(() => import('./components/distributor/SimpleDistributorDashboard'));
 const SimpleSalesDashboard = React.lazy(() => import('./components/sales/SimpleSalesDashboard'));
 const Doctors = React.lazy(() => import('./pages/sales/Doctors'));
 const AddDoctor = React.lazy(() => import('./pages/sales/AddDoctor'));
+const DoctorDetail = React.lazy(() => import('./pages/sales/DoctorDetail'));
+const DoctorEdit = React.lazy(() => import('./pages/sales/DoctorEdit'));
 const SimpleLogisticsDashboard = React.lazy(() => import('./components/logistics/SimpleLogisticsDashboard'));
 const ShippingQueuePage = React.lazy(() => import('./pages/logistics/shipping-queue'));
+const LogisticsOrderDetailPage = React.lazy(() => import('./pages/logistics/orders/[id]/index'));
 const OrderProcessingPage = React.lazy(() => import('./pages/logistics/orders/[id]/process'));
+const LogisticsSettings = React.lazy(() => import('./pages/logistics/Settings'));
+const ReadOnlyView = React.lazy(() => import('./components/shared/ReadOnlyView'));
+const Schedule = React.lazy(() => import('./pages/sales/Schedule'));
+const SalesAnalytics = React.lazy(() => import('./pages/sales/Analytics'));
+const SalesSettings = React.lazy(() => import('./pages/sales/Settings'));
+const OrderProcessing = React.lazy(() => import('./pages/distributor/OrderProcessing'));
+const DistributorsManagement = React.lazy(() => import('./pages/distributor/DistributorsManagement'));
+const SalespeopleManagement = React.lazy(() => import('./pages/distributor/SalespeopleManagement'));
+const Invoicing = React.lazy(() => import('./pages/distributor/Invoicing'));
+const DistributorSettings = React.lazy(() => import('./pages/distributor/Settings'));
 
 const App = () => {
   console.log('App component rendering');
@@ -182,6 +195,15 @@ const App = () => {
                   <Route path="/distributor" element={<DistributorLayout />}>
                     <Route index element={<Navigate to="/distributor/dashboard" replace />} />
                     <Route path="dashboard" element={<MasterDistributorDashboard />} />
+                    <Route path="ivr-management" element={<SegmentedIVRManagement />} />
+                    <Route path="orders" element={<OrderProcessing />} />
+                    <Route path="shipping" element={<ShippingLogistics />} />
+                    <Route path="distributors" element={<DistributorsManagement />} />
+                    <Route path="salespeople" element={<SalespeopleManagement />} />
+                    <Route path="invoicing" element={<Invoicing />} />
+                    <Route path="settings" element={<DistributorSettings />} />
+
+                    {/* Legacy routes for backward compatibility */}
                     <Route path="ivr/management" element={<SegmentedIVRManagement />} />
                     <Route path="network" element={<NetworkManagement />} />
                     <Route path="orders/management" element={<OrderFulfillmentDashboard />} />
@@ -190,7 +212,6 @@ const App = () => {
                     <Route path="shipping/*" element={<ShippingPage />} />
                     <Route path="logistics/*" element={<ShippingLogistics />} />
                     <Route path="analytics" element={<DistributorAnalytics />} />
-                    <Route path="settings" element={<SettingsPage />} />
                   </Route>
                 </Route>
 
@@ -238,19 +259,74 @@ const App = () => {
                       <AddDoctor />
                     </ProtectedRoute>
                   } />
+                  <Route path="/sales/doctors/:id" element={
+                    <ProtectedRoute allowedRoles={['Sales', 'Distributor', 'Master Distributor', 'Admin', 'CHP Admin']}>
+                      <DoctorDetail />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/sales/doctors/:id/edit" element={
+                    <ProtectedRoute allowedRoles={['Sales', 'Distributor', 'Master Distributor', 'Admin', 'CHP Admin']}>
+                      <DoctorEdit />
+                    </ProtectedRoute>
+                  } />
+
+                  {/* Read-Only Medical Sections for Sales */}
+                  <Route path="/sales/ivr" element={
+                    <ProtectedRoute allowedRoles={['Sales']}>
+                      <ReadOnlyView
+                        component={IVRManagementPage}
+                        title="IVR Management - View Only"
+                      />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/sales/orders" element={
+                    <ProtectedRoute allowedRoles={['Sales']}>
+                      <ReadOnlyView
+                        component={OrderManagementPage}
+                        title="Order Management - View Only"
+                      />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/sales/shipping" element={
+                    <ProtectedRoute allowedRoles={['Sales']}>
+                      <ReadOnlyView
+                        component={ShippingPage}
+                        title="Shipping & Logistics - View Only"
+                      />
+                    </ProtectedRoute>
+                  } />
+
+                  {/* Placeholder routes for other sales sections */}
+                  <Route path="/sales/schedule" element={
+                    <ProtectedRoute allowedRoles={['sales', 'sales_rep', 'Sales']}>
+                      <Schedule />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/sales/analytics" element={
+                    <ProtectedRoute allowedRoles={['sales', 'sales_rep', 'Sales']}>
+                      <SalesAnalytics />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/sales/settings" element={
+                    <ProtectedRoute allowedRoles={['sales', 'sales_rep', 'Sales']}>
+                      <SalesSettings />
+                    </ProtectedRoute>
+                  } />
                 </Route>
 
                 {/* Shipping and Logistics Routes */}
                 <Route element={<PrivateRoute />}>
                   <Route path="/logistics/dashboard" element={<SimpleLogisticsDashboard />} />
                   <Route path="/logistics/shipping-queue" element={<ShippingQueuePage />} />
+                  <Route path="/logistics/orders/:id" element={<LogisticsOrderDetailPage />} />
                   <Route path="/logistics/orders/:id/process" element={<OrderProcessingPage />} />
-                  <Route path="/logistics/shipments" element={<SimpleLogisticsDashboard />} />
-                  <Route path="/logistics/inventory" element={<SimpleLogisticsDashboard />} />
-                  <Route path="/logistics/tracking" element={<SimpleLogisticsDashboard />} />
-                  <Route path="/logistics/warehouse" element={<SimpleLogisticsDashboard />} />
-                  <Route path="/logistics/reports" element={<SimpleLogisticsDashboard />} />
-                  <Route path="/logistics/settings" element={<SimpleLogisticsDashboard />} />
+                  <Route path="/logistics/settings" element={<LogisticsSettings />} />
+                  {/* Removed routes - now redirect to dashboard */}
+                  <Route path="/logistics/shipments" element={<Navigate to="/logistics/dashboard" replace />} />
+                  <Route path="/logistics/inventory" element={<Navigate to="/logistics/dashboard" replace />} />
+                  <Route path="/logistics/tracking" element={<Navigate to="/logistics/dashboard" replace />} />
+                  <Route path="/logistics/warehouse" element={<Navigate to="/logistics/dashboard" replace />} />
+                  <Route path="/logistics/reports" element={<Navigate to="/logistics/dashboard" replace />} />
                 </Route>
 
                 {/* Root Redirect */}

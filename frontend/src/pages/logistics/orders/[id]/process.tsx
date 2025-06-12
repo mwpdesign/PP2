@@ -157,11 +157,6 @@ const OrderProcessingPage: React.FC = () => {
   const navigation = [
     { name: 'Dashboard', href: '/logistics/dashboard', icon: HomeIcon },
     { name: 'Shipping Queue', href: '/logistics/shipping-queue', icon: QueueListIcon },
-    { name: 'Shipment Processing', href: '/logistics/shipments', icon: TruckIcon },
-    { name: 'Inventory Management', href: '/logistics/inventory', icon: ArchiveBoxIcon },
-    { name: 'Delivery Tracking', href: '/logistics/tracking', icon: MapIcon },
-    { name: 'Warehouse Operations', href: '/logistics/warehouse', icon: BuildingStorefrontIcon },
-    { name: 'Reports', href: '/logistics/reports', icon: ClipboardDocumentListIcon },
     { name: 'Settings', href: '/logistics/settings', icon: Cog6ToothIcon },
     {
       name: 'Sign Out',

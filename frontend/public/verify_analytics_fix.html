@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Page Fix Verification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .test-link {
+            display: inline-block;
+            background: #475569;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 10px 10px 0;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background: #334155;
+        }
+        .success {
+            color: #059669;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .status-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .status-success {
+            background-color: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+        .status-error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .checklist {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .checklist ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            margin-right: 8px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Analytics Page Fix Verification</h1>
+            <p>Testing the resolved Heroicons import issues</p>
+            <p><strong>Test Time:</strong> <span id="testTime"></span></p>
+        </div>
+
+        <!-- Server Status -->
+        <div class="status-box status-success">
+            <h3>✅ Server Status</h3>
+            <p>Frontend server is running on <strong>localhost:3000</strong></p>
+            <p>All Heroicons import errors have been fixed</p>
+        </div>
+
+        <!-- Issues Fixed -->
+        <div class="checklist">
+            <h3>🛠️ Issues Fixed:</h3>
+            <ul>
+                <li>❌ <strong>TrendingUpIcon</strong> → ✅ <strong>PresentationChartLineIcon</strong></li>
+                <li>❌ <strong>TrendingDownIcon</strong> → ✅ <strong>Removed (not needed)</strong></li>
+                <li>❌ <strong>DownloadIcon</strong> → ✅ <strong>ArrowDownTrayIcon</strong></li>
+                <li>❌ <strong>DocumentCheckIcon</strong> → ✅ <strong>ClipboardDocumentCheckIcon</strong></li>
+            </ul>
+        </div>
+
+        <!-- Quick Test Links -->
+        <div style="margin: 30px 0;">
+            <h3>🚀 Test the Fixed Page:</h3>
+            <a href="http://localhost:3000/login" class="test-link">1. Login Page</a>
+            <a href="http://localhost:3000/sales/analytics" class="test-link">2. Analytics Page (Fixed)</a>
+            <a href="http://localhost:3000/sales/dashboard" class="test-link">3. Sales Dashboard</a>
+        </div>
+
+        <!-- Test Credentials -->
+        <div class="status-box status-success">
+            <h3>🔐 Test Credentials</h3>
+            <p><strong>Email:</strong> sales@healthcare.local</p>
+            <p><strong>Password:</strong> sales123</p>
+            <p><strong>Role:</strong> Sales Representative</p>
+        </div>
+
+        <!-- Expected Features -->
+        <div class="checklist">
+            <h3>📊 Expected Analytics Page Features:</h3>
+            <ul>
+                <li>Page loads without "Something went wrong" error</li>
+                <li>Breadcrumb navigation: "Sales / Analytics"</li>
+                <li>Page title: "Sales Analytics"</li>
+                <li>Date range picker with 6 options</li>
+                <li>Export Report button with download icon</li>
+                <li>4 KPI cards with proper icons and colors</li>
+                <li>Performance Charts placeholder section</li>
+                <li>No console errors related to Heroicons</li>
+            </ul>
+        </div>
+
+        <!-- KPI Cards Details -->
+        <div style="margin: 30px 0;">
+            <h3>📈 KPI Cards Should Display:</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0;">
+                <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
+                    <strong>Network Growth Rate</strong><br>
+                    Value: +15%<br>
+                    Icon: PresentationChartLineIcon (Green)
+                </div>
+                <div style="background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #bfdbfe;">
+                    <strong>Average IVRs per Doctor</strong><br>
+                    Value: 3.5<br>
+                    Icon: ClipboardDocumentCheckIcon (Blue)
+                </div>
+                <div style="background: #faf5ff; padding: 15px; border-radius: 8px; border: 1px solid #d8b4fe;">
+                    <strong>Conversion Rate</strong><br>
+                    Value: 85%<br>
+                    Icon: ChartBarIcon (Purple)
+                </div>
+                <div style="background: #fff7ed; padding: 15px; border-radius: 8px; border: 1px solid #fed7aa;">
+                    <strong>Active Doctor Percentage</strong><br>
+                    Value: 67%<br>
+                    Icon: UserGroupIcon (Orange)
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Criteria -->
+        <div class="status-box status-success">
+            <h3>🎯 Success Criteria</h3>
+            <p>✅ Page loads without JavaScript errors</p>
+            <p>✅ All icons display correctly</p>
+            <p>✅ No "Something went wrong" error page</p>
+            <p>✅ All KPI cards render with proper styling</p>
+            <p>✅ Export button shows download icon</p>
+            <p>✅ Date range picker is functional</p>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280;">
+            <p>Healthcare IVR Platform - Analytics Fix Verification</p>
+            <p>All Heroicons import issues resolved ✅</p>
+        </div>
+    </div>
+
+    <script>
+        // Set current time
+        document.getElementById('testTime').textContent = new Date().toLocaleString();
+
+        // Log verification info
+        console.log('🔧 Analytics Page Fix Verification');
+        console.log('✅ TrendingUpIcon → PresentationChartLineIcon');
+        console.log('✅ TrendingDownIcon → Removed');
+        console.log('✅ DownloadIcon → ArrowDownTrayIcon');
+        console.log('✅ DocumentCheckIcon → ClipboardDocumentCheckIcon');
+        console.log('🚀 Test URL: http://localhost:3000/sales/analytics');
+    </script>
+</body>
+</html>

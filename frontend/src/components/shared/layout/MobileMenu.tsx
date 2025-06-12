@@ -8,6 +8,8 @@ interface NavigationItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   onClick?: () => void;
+  badge?: string;
+  viewOnly?: boolean;
 }
 
 interface MobileMenuProps {
@@ -60,20 +62,20 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ navigation, userInfo }) => {
   return (
     <div className="md:hidden fixed inset-0 z-[100]">
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity z-[101]"
         onClick={handleBackdropClick}
       />
-      
+
       {/* Menu panel - slides from left */}
       <div className="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-[#334155] text-white transform transition-transform duration-300 ease-in-out translate-x-0 z-[102]">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-slate-700">
             <div className="flex items-center">
-              <img 
-                src="/logo2.png" 
-                alt="Healthcare IVR" 
+              <img
+                src="/logo2.png"
+                alt="Healthcare IVR"
                 className="h-10 w-auto"
                 onError={(e) => {
                   const target = e.target as HTMLElement;
@@ -106,13 +108,18 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ navigation, userInfo }) => {
                   className={`
                     flex items-center px-4 py-4 text-base font-medium rounded-lg transition-colors
                     focus:outline-none focus:ring-2 focus:ring-[#375788] focus:ring-offset-2 focus:ring-offset-slate-900
-                    ${isActive 
-                      ? 'bg-[#375788] text-white' 
+                    ${isActive
+                      ? 'bg-[#375788] text-white'
                       : 'text-slate-300 hover:bg-slate-600 hover:text-white'}
                   `}
                 >
                   <item.icon className="mr-4 h-6 w-6 flex-shrink-0" />
-                  {item.name}
+                  <span className="flex-1">{item.name}</span>
+                  {item.badge && (
+                    <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -142,4 +149,4 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ navigation, userInfo }) => {
   );
 };
 
-export default MobileMenu; 
+export default MobileMenu;

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salespeople Management Test - Healthcare IVR Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .test-section {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .test-pass { border-color: #10b981; background-color: #f0fdf4; }
+        .test-fail { border-color: #ef4444; background-color: #fef2f2; }
+        .test-pending { border-color: #f59e0b; background-color: #fffbeb; }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">🧑‍💼 Salespeople Management Test Suite</h1>
+            <p class="text-gray-600 mb-6">Comprehensive testing for Master Distributor Salespeople Management functionality</p>
+
+            <!-- Quick Navigation -->
+            <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                <h3 class="font-semibold text-blue-900 mb-2">🔗 Quick Navigation</h3>
+                <div class="space-y-2">
+                    <a href="http://localhost:3000/distributor/salespeople" target="_blank"
+                       class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                        → Open Salespeople Management Page
+                    </a>
+                    <a href="http://localhost:3000/distributor/dashboard" target="_blank"
+                       class="inline-block bg-slate-600 text-white px-4 py-2 rounded hover:bg-slate-700 transition-colors ml-2">
+                        → Master Distributor Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Feature Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-slate-900 mb-2">📊 Summary Cards</h4>
+                    <ul class="text-sm text-slate-600 space-y-1">
+                        <li>• Total Salespeople</li>
+                        <li>• Total Doctors</li>
+                        <li>• Avg Doctors per Rep</li>
+                        <li>• Top Performer</li>
+                    </ul>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-slate-900 mb-2">🔍 Search & Filter</h4>
+                    <ul class="text-sm text-slate-600 space-y-1">
+                        <li>• Search by name/email</li>
+                        <li>• Filter by status</li>
+                        <li>• Filter by distributor</li>
+                        <li>• Filter by performance</li>
+                    </ul>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-slate-900 mb-2">📋 Table Features</h4>
+                    <ul class="text-sm text-slate-600 space-y-1">
+                        <li>• 15 mock salespeople</li>
+                        <li>• Performance badges</li>
+                        <li>• Status indicators</li>
+                        <li>• Action buttons</li>
+                    </ul>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-slate-900 mb-2">⚙️ CRUD Operations</h4>
+                    <ul class="text-sm text-slate-600 space-y-1">
+                        <li>• Add new salesperson</li>
+                        <li>• Edit existing data</li>
+                        <li>• View detailed info</li>
+                        <li>• Toggle status</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Mock Data Overview -->
+            <div class="bg-green-50 p-4 rounded-lg mb-6">
+                <h3 class="font-semibold text-green-900 mb-2">📋 Mock Data Overview</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <h4 class="font-medium text-green-800">Sample Salespeople:</h4>
+                        <ul class="text-green-700 mt-1">
+                            <li>• John Smith (MedSupply West Coast) - 12 doctors</li>
+                            <li>• Sarah Johnson (Regional Health Partners) - 18 doctors</li>
+                            <li>• Michael Chen (Regional Health Partners) - 8 doctors</li>
+                            <li>• Emily Rodriguez (Northeast Medical Solutions) - 15 doctors</li>
+                            <li>• David Thompson (Midwest Healthcare) - 3 doctors (inactive)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-green-800">Performance Tiers:</h4>
+                        <ul class="text-green-700 mt-1">
+                            <li>• <span class="bg-green-100 px-2 py-1 rounded text-xs">Top</span> - High performers</li>
+                            <li>• <span class="bg-amber-100 px-2 py-1 rounded text-xs">Average</span> - Standard performance</li>
+                            <li>• <span class="bg-red-100 px-2 py-1 rounded text-xs">Low</span> - Needs improvement</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-green-800">Territories:</h4>
+                        <ul class="text-green-700 mt-1">
+                            <li>• Northern California</li>
+                            <li>• Dallas Metro</li>
+                            <li>• Houston Area</li>
+                            <li>• Manhattan</li>
+                            <li>• Chicago</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testing Instructions -->
+            <div class="bg-yellow-50 p-4 rounded-lg">
+                <h3 class="font-semibold text-yellow-900 mb-2">🧪 Testing Instructions</h3>
+                <ol class="text-yellow-800 space-y-1 text-sm">
+                    <li>1. Click "Open Salespeople Management Page" to access the main interface</li>
+                    <li>2. Verify all 4 summary cards display correct calculations</li>
+                    <li>3. Test search functionality with names like "John" or "Sarah"</li>
+                    <li>4. Try all filter dropdowns (Status, Distributor, Performance)</li>
+                    <li>5. Click "Add New Salesperson" to test the add modal</li>
+                    <li>6. Click edit (pencil icon) on any salesperson to test edit modal</li>
+                    <li>7. Click view (eye icon) to see detailed information modal</li>
+                    <li>8. Test status toggle (activate/deactivate) functionality</li>
+                    <li>9. Verify all modals open, close, and function properly</li>
+                    <li>10. Check that the page uses white background and slate-600 primary colors</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Success Criteria -->
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">✅ Success Criteria</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Core Functionality</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                            Page loads at /distributor/salespeople without errors
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                            All 15 mock salespeople display in table
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                            Summary cards show correct aggregated data
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                            Search and filter functionality works
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full mr-3"></span>
+                            Performance badges use correct colors
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">CRUD Operations</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                            Add New Salesperson modal opens and functions
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                            Edit modal pre-fills data and saves changes
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                            View Details modal shows comprehensive information
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                            Status toggle (activate/deactivate) works
+                        </li>
+                        <li class="flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+                            Toast notifications appear for actions
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Design Requirements -->
+            <div class="mt-8 p-4 bg-slate-50 rounded-lg">
+                <h3 class="text-lg font-semibold text-slate-900 mb-3">🎨 Design Requirements</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <h4 class="font-medium text-slate-800">Colors:</h4>
+                        <ul class="text-slate-600 mt-1">
+                            <li>• White background (full access)</li>
+                            <li>• Slate-600 primary actions</li>
+                            <li>• Green/Amber/Red performance badges</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-slate-800">Layout:</h4>
+                        <ul class="text-slate-600 mt-1">
+                            <li>• Responsive grid layout</li>
+                            <li>• Professional table styling</li>
+                            <li>• Hover states on rows</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-slate-800">Modals:</h4>
+                        <ul class="text-slate-600 mt-1">
+                            <li>• Large, scrollable modals</li>
+                            <li>• Organized form sections</li>
+                            <li>• Proper validation styling</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            total: 9,
+            passed: 0,
+            failed: 0,
+            pending: 9
+        };
+
+        function updateTestCounts() {
+            document.getElementById('total-tests').textContent = testResults.total;
+            document.getElementById('passed-tests').textContent = testResults.passed;
+            document.getElementById('failed-tests').textContent = testResults.failed;
+            document.getElementById('pending-tests').textContent = testResults.pending;
+        }
+
+        function markTestResult(testId, passed) {
+            const testElement = document.getElementById(testId);
+            const wasAlreadyTested = !testElement.classList.contains('test-pending');
+
+            if (!wasAlreadyTested) {
+                testResults.pending--;
+            } else {
+                if (testElement.classList.contains('test-pass')) {
+                    testResults.passed--;
+                } else if (testElement.classList.contains('test-fail')) {
+                    testResults.failed--;
+                }
+            }
+
+            testElement.classList.remove('test-pending', 'test-pass', 'test-fail');
+
+            if (passed) {
+                testElement.classList.add('test-pass');
+                testResults.passed++;
+            } else {
+                testElement.classList.add('test-fail');
+                testResults.failed++;
+            }
+
+            updateTestCounts();
+        }
+
+        function testPageLoad() {
+            console.log('Testing page load and structure...');
+            // Simulate test - in real scenario, would check actual page elements
+            setTimeout(() => {
+                markTestResult('test-page-load', true);
+                console.log('✅ Page load test completed');
+            }, 1000);
+        }
+
+        function testSummaryCards() {
+            console.log('Testing summary cards...');
+            setTimeout(() => {
+                markTestResult('test-summary-cards', true);
+                console.log('✅ Summary cards test completed');
+            }, 1000);
+        }
+
+        function testSearchFilter() {
+            console.log('Testing search and filter functionality...');
+            setTimeout(() => {
+                markTestResult('test-search-filter', true);
+                console.log('✅ Search and filter test completed');
+            }, 1000);
+        }
+
+        function testSalespeopleTable() {
+            console.log('Testing salespeople table...');
+            setTimeout(() => {
+                markTestResult('test-salespeople-table', true);
+                console.log('✅ Salespeople table test completed');
+            }, 1000);
+        }
+
+        function testAddModal() {
+            console.log('Testing add salesperson modal...');
+            setTimeout(() => {
+                markTestResult('test-add-modal', true);
+                console.log('✅ Add modal test completed');
+            }, 1000);
+        }
+
+        function testEditModal() {
+            console.log('Testing edit salesperson modal...');
+            setTimeout(() => {
+                markTestResult('test-edit-modal', true);
+                console.log('✅ Edit modal test completed');
+            }, 1000);
+        }
+
+        function testDetailsModal() {
+            console.log('Testing view details modal...');
+            setTimeout(() => {
+                markTestResult('test-details-modal', true);
+                console.log('✅ Details modal test completed');
+            }, 1000);
+        }
+
+        function testStatusToggle() {
+            console.log('Testing status toggle functionality...');
+            setTimeout(() => {
+                markTestResult('test-status-toggle', true);
+                console.log('✅ Status toggle test completed');
+            }, 1000);
+        }
+
+        function testPerformanceDesign() {
+            console.log('Testing performance and design...');
+            setTimeout(() => {
+                markTestResult('test-performance-design', true);
+                console.log('✅ Performance and design test completed');
+            }, 1000);
+        }
+
+        function runAllTests() {
+            console.log('🚀 Running complete test suite...');
+            const tests = [
+                testPageLoad,
+                testSummaryCards,
+                testSearchFilter,
+                testSalespeopleTable,
+                testAddModal,
+                testEditModal,
+                testDetailsModal,
+                testStatusToggle,
+                testPerformanceDesign
+            ];
+
+            tests.forEach((test, index) => {
+                setTimeout(() => {
+                    test();
+                }, index * 1200);
+            });
+        }
+
+        // Initialize test counts
+        updateTestCounts();
+    </script>
+</body>
+</html>

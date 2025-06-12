@@ -1,17 +1,12 @@
 import React from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import {
-  HomeIcon,
-  DocumentTextIcon,
-  ArchiveBoxIcon,
-  TruckIcon,
-  ChartBarIcon,
   ArrowRightOnRectangleIcon
-  // TODO: Restore for post-demo - UsersIcon, Cog6ToothIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
 import MobileHeader from '../../shared/layout/MobileHeader';
 import MobileMenu from '../../shared/layout/MobileMenu';
+import { createMasterDistributorNavigation } from '../../../utils/navigation';
 
 const DistributorLayout: React.FC = () => {
   const location = useLocation();
@@ -26,16 +21,16 @@ const DistributorLayout: React.FC = () => {
     }
   };
 
-  // TODO: Demo configuration - Manage Network and Settings temporarily removed
-  // To restore post-demo, uncomment the following lines:
-  // { name: 'Manage Network', href: '/distributor/network', icon: UsersIcon },
-  // { name: 'Settings', href: '/distributor/settings', icon: Cog6ToothIcon },
+  // Get navigation from our centralized navigation utility
+  const baseNavigation = createMasterDistributorNavigation();
+
+  // Map our navigation items to the format expected by this layout
   const navigation = [
-    { name: 'Dashboard', href: '/distributor/dashboard', icon: HomeIcon },
-    { name: 'IVR Management', href: '/distributor/ivr/management', icon: DocumentTextIcon },
-    { name: 'Order Processing', href: '/distributor/orders/management', icon: ArchiveBoxIcon },
-    { name: 'Shipping & Logistics', href: '/distributor/orders/shipping', icon: TruckIcon },
-    { name: 'Analytics & Reports', href: '/distributor/analytics', icon: ChartBarIcon },
+    ...baseNavigation.map(item => ({
+      name: item.label,
+      href: item.path.replace('/master-distributor', '/distributor'), // Map paths to existing routes
+      icon: item.icon
+    })),
     {
       name: 'Sign Out',
       href: '#',

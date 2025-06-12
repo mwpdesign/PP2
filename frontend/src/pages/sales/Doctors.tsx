@@ -21,6 +21,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import UnifiedDashboardLayout from '../../components/shared/layout/UnifiedDashboardLayout';
 import { getDoctors } from '../../services/api';
+import { createSalesNavigation } from '../../components/sales/SimpleSalesDashboard';
 
 
 // Types for API response
@@ -116,24 +117,7 @@ const Doctors: React.FC = () => {
     }
   };
 
-  const navigation = [
-    { name: 'Dashboard', href: '/sales/dashboard', icon: HomeIcon },
-    { name: 'Customer Accounts', href: '/sales/customers', icon: UsersIconSolid },
-    ...(canManageDoctors ? [
-      { name: 'Doctors', href: '/sales/doctors', icon: UsersIconSolid },
-    ] : []),
-    { name: 'Lead Management', href: '/sales/leads', icon: PhoneIcon },
-    { name: 'Sales Reports', href: '/sales/reports', icon: ChartBarIcon },
-    { name: 'Proposals', href: '/sales/proposals', icon: DocumentTextIcon },
-    { name: 'Revenue Tracking', href: '/sales/revenue', icon: CurrencyDollarIcon },
-    { name: 'Settings', href: '/sales/settings', icon: Cog6ToothIcon },
-    {
-      name: 'Sign Out',
-      href: '#',
-      icon: ArrowRightOnRectangleIcon,
-      onClick: handleLogout
-    }
-  ];
+  const navigation = createSalesNavigation(logout);
 
   const userInfo = {
     name: user?.first_name ? `${user.first_name} ${user.last_name}` : 'Sales Rep',
@@ -322,7 +306,7 @@ const Doctors: React.FC = () => {
                           <div className="flex-shrink-0 h-10 w-10">
                             <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
                               <span className="text-sm font-medium text-slate-700">
-                                {doctor.first_name?.[0] || ''}{doctor.last_name?.[0] || ''}
+                                {(doctor.first_name?.[0] || '') + (doctor.last_name?.[0] || '') || doctor.email?.[0] || 'D'}
                               </span>
                             </div>
                           </div>
@@ -352,14 +336,14 @@ const Doctors: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => {/* TODO: Implement view doctor */}}
+                            onClick={() => navigate(`/sales/doctors/${doctor.id}`)}
                             className="text-slate-600 hover:text-slate-900 transition-colors"
                             title="View Doctor"
                           >
                             <EyeIcon className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => {/* TODO: Implement edit doctor */}}
+                            onClick={() => navigate(`/sales/doctors/${doctor.id}/edit`)}
                             className="text-slate-600 hover:text-slate-900 transition-colors"
                             title="Edit Doctor"
                           >

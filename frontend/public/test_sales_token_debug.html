@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Token Debug Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; color: #856404; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .token-display {
+            word-break: break-all;
+            font-size: 12px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Sales Dashboard Token Debug</h1>
+        <p>This page helps debug token issues with the sales dashboard API calls.</p>
+
+        <!-- Authentication Section -->
+        <div class="test-section">
+            <h2>🔐 Authentication Test</h2>
+            <div>
+                <label>Email: <input type="email" id="email" value="sales@healthcare.local" style="margin-left: 10px; padding: 5px;"></label>
+            </div>
+            <div style="margin-top: 10px;">
+                <label>Password: <input type="password" id="password" value="sales123" style="margin-left: 10px; padding: 5px;"></label>
+            </div>
+            <button onclick="testLogin()">Login</button>
+            <button onclick="checkStoredToken()">Check Stored Token</button>
+            <button onclick="clearTokens()">Clear All Tokens</button>
+            <div id="auth-result" style="margin-top: 15px;"></div>
+        </div>
+
+        <!-- Token Analysis Section -->
+        <div class="test-section">
+            <h2>🎫 Token Analysis</h2>
+            <button onclick="analyzeToken()">Analyze Current Token</button>
+            <div id="token-analysis" style="margin-top: 15px;"></div>
+        </div>
+
+        <!-- API Test Section -->
+        <div class="test-section">
+            <h2>📊 Sales Dashboard API Test</h2>
+            <button onclick="testSalesDashboardAPI()">Test Dashboard API</button>
+            <div id="api-result" style="margin-top: 15px;"></div>
+        </div>
+
+        <!-- LocalStorage Debug Section -->
+        <div class="test-section">
+            <h2>💾 LocalStorage Debug</h2>
+            <button onclick="showLocalStorage()">Show All LocalStorage</button>
+            <div id="storage-result" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+
+        // Check for existing token on page load
+        window.onload = function() {
+            checkStoredToken();
+        };
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('auth-result');
+
+            try {
+                resultDiv.innerHTML = '<div class="info">🔄 Logging in...</div>';
+
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Login successful!
+                            <div class="token-display">
+                                <strong>Token:</strong> ${authToken.substring(0, 100)}...
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Login failed: ${response.status}
+                            <pre>${errorText}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Login error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function checkStoredToken() {
+            const resultDiv = document.getElementById('auth-result');
+            const storedToken = localStorage.getItem('authToken');
+
+            if (storedToken) {
+                authToken = storedToken;
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        ✅ Token found in localStorage
+                        <div class="token-display">
+                            <strong>Token:</strong> ${storedToken.substring(0, 100)}...
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="warning">
+                        ⚠️ No token found in localStorage
+                    </div>
+                `;
+            }
+        }
+
+        function clearTokens() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            authToken = null;
+
+            document.getElementById('auth-result').innerHTML = `
+                <div class="info">
+                    🗑️ All tokens cleared
+                </div>
+            `;
+        }
+
+        function analyzeToken() {
+            const resultDiv = document.getElementById('token-analysis');
+            const token = authToken || localStorage.getItem('authToken');
+
+            if (!token) {
+                resultDiv.innerHTML = `
+                    <div class="warning">
+                        ⚠️ No token available to analyze
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                // Decode JWT payload
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(
+                    atob(base64)
+                        .split('')
+                        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                        .join('')
+                );
+                const payload = JSON.parse(jsonPayload);
+
+                // Check expiry
+                const now = Math.floor(Date.now() / 1000);
+                const isExpired = payload.exp < now;
+                const timeUntilExpiry = payload.exp - now;
+
+                resultDiv.innerHTML = `
+                    <div class="${isExpired ? 'error' : 'success'}">
+                        <h3>Token Analysis:</h3>
+                        <pre>${JSON.stringify(payload, null, 2)}</pre>
+                        <p><strong>Expired:</strong> ${isExpired ? 'YES ❌' : 'NO ✅'}</p>
+                        <p><strong>Time until expiry:</strong> ${isExpired ? 'Already expired' : Math.floor(timeUntilExpiry / 60) + ' minutes'}</p>
+                        <p><strong>User Role:</strong> ${payload.role}</p>
+                        <p><strong>User Email:</strong> ${payload.sub}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Token analysis failed: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function testSalesDashboardAPI() {
+            const resultDiv = document.getElementById('api-result');
+            const token = authToken || localStorage.getItem('authToken');
+
+            if (!token) {
+                resultDiv.innerHTML = `
+                    <div class="warning">
+                        ⚠️ No token available. Please login first.
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                resultDiv.innerHTML = '<div class="info">🔄 Testing API...</div>';
+
+                const response = await fetch('/api/v1/sales-dashboard/dashboard-stats', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ API call successful!
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ API call failed: ${response.status}
+                            <pre>${errorText}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ API error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function showLocalStorage() {
+            const resultDiv = document.getElementById('storage-result');
+            const storage = {};
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                storage[key] = value && value.length > 100 ? value.substring(0, 100) + '...' : value;
+            }
+
+            resultDiv.innerHTML = `
+                <div class="info">
+                    <h3>LocalStorage Contents:</h3>
+                    <pre>${JSON.stringify(storage, null, 2)}</pre>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

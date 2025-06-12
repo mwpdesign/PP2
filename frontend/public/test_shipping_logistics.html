@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping & Logistics Page Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1e293b;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: #f8fafc;
+        }
+        .test-section h2 {
+            color: #475569;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .test-link {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 5px 10px 5px 0;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background: #2563eb;
+        }
+        .test-link.secondary {
+            background: #64748b;
+        }
+        .test-link.secondary:hover {
+            background: #475569;
+        }
+        .checklist {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .checklist h3 {
+            color: #1e293b;
+            margin-top: 0;
+        }
+        .checklist ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .status.critical {
+            background: #fecaca;
+            color: #dc2626;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .feature-card h4 {
+            color: #1e293b;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .feature-card ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .feature-card li {
+            margin-bottom: 5px;
+            color: #475569;
+        }
+        .auth-section {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .auth-section h3 {
+            color: #dc2626;
+            margin-top: 0;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .carrier-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .carrier-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .carrier-card h5 {
+            margin: 0 0 10px 0;
+            color: #1e293b;
+        }
+        .carrier-card .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+        }
+        .ups { background-color: #d97706; }
+        .fedex { background-color: #7c3aed; }
+        .usps { background-color: #2563eb; }
+        .dhl { background-color: #dc2626; }
+        .other { background-color: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚛 Shipping & Logistics Page - Master Distributor Test Suite</h1>
+
+        <div class="auth-section">
+            <h3>🔐 Authentication Required</h3>
+            <p>To test the Shipping & Logistics page, you need to be logged in as a Master Distributor user.</p>
+            <div class="code-block">
+                Test Credentials:
+                Email: distributor@healthcare.local
+                Password: distributor123
+                Role: Master Distributor
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 Direct Page Access</h2>
+            <p>Test the Shipping & Logistics page directly with Master Distributor authentication:</p>
+            <a href="http://localhost:3000/distributor/shipping" class="test-link" target="_blank">
+                🚛 Shipping & Logistics - Network Overview
+            </a>
+            <a href="http://localhost:3000/login" class="test-link secondary" target="_blank">
+                🔑 Login Page (if needed)
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h2>🧭 Navigation Testing</h2>
+            <p>Test navigation from Master Distributor Dashboard:</p>
+            <a href="http://localhost:3000/distributor/dashboard" class="test-link" target="_blank">
+                🏠 Master Distributor Dashboard
+            </a>
+            <p style="margin-top: 15px; color: #475569;">
+                <strong>Navigation Path:</strong> Dashboard → Click "Shipping & Logistics" in sidebar → Should load Shipping & Logistics page
+            </p>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>📈 Summary Cards (5 cards)</h4>
+                <ul>
+                    <li>Total Shipments: 45</li>
+                    <li>In Transit: 18 (indigo)</li>
+                    <li>Out for Delivery: 8 (orange)</li>
+                    <li>Delivered Today: 12 (green)</li>
+                    <li>Exceptions: 3 (red)</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>🔍 Advanced Search & Filters</h4>
+                <ul>
+                    <li>Search by Shipment ID, Tracking, Doctor, Destination</li>
+                    <li>Filter by Status (6 statuses)</li>
+                    <li>Filter by Carrier (UPS, FedEx, USPS, DHL)</li>
+                    <li>Filter by Distributor</li>
+                    <li>Filter by Priority (Standard, Expedited, Overnight)</li>
+                    <li>Filter by Date Range</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>📋 Shipment Table Columns</h4>
+                <ul>
+                    <li>Shipment ID (SHP-2024-XXX)</li>
+                    <li>Order/Doctor (Order ID + Doctor + Facility)</li>
+                    <li>Tracking (Carrier icon + clickable tracking link)</li>
+                    <li>Status (6 color-coded badges + priority)</li>
+                    <li>Destination (Location + current location)</li>
+                    <li>Delivery (Estimated/Actual dates)</li>
+                    <li>Distributor (Name + package info)</li>
+                    <li>Actions (View Details only)</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>🎨 READ-ONLY Design</h4>
+                <ul>
+                    <li>Gray background (bg-slate-50)</li>
+                    <li>"View Only Access" badge</li>
+                    <li>Table opacity 95%</li>
+                    <li>Disabled "View Details" buttons</li>
+                    <li>Read-only warning message</li>
+                    <li>Consistent with IVR & Order pages</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🚚 Carrier Integration</h2>
+            <p>The page includes carrier-specific features:</p>
+            <div class="carrier-grid">
+                <div class="carrier-card">
+                    <h5>UPS</h5>
+                    <div class="color-dot ups"></div>
+                    <p style="margin: 0; font-size: 12px; color: #64748b;">Amber color • Direct tracking links</p>
+                </div>
+                <div class="carrier-card">
+                    <h5>FedEx</h5>
+                    <div class="color-dot fedex"></div>
+                    <p style="margin: 0; font-size: 12px; color: #64748b;">Purple color • Direct tracking links</p>
+                </div>
+                <div class="carrier-card">
+                    <h5>USPS</h5>
+                    <div class="color-dot usps"></div>
+                    <p style="margin: 0; font-size: 12px; color: #64748b;">Blue color • Direct tracking links</p>
+                </div>
+                <div class="carrier-card">
+                    <h5>DHL</h5>
+                    <div class="color-dot dhl"></div>
+                    <p style="margin: 0; font-size: 12px; color: #64748b;">Red color • Direct tracking links</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="checklist">
+            <h3>✅ Verification Checklist</h3>
+            <ul>
+                <li>□ Page loads without errors <span class="status critical">CRITICAL</span></li>
+                <li>□ Header shows "Shipping & Logistics - Network Overview" <span class="status success">UI</span></li>
+                <li>□ "View Only Access" badge is visible <span class="status warning">READ-ONLY</span></li>
+                <li>□ Summary cards display correct numbers (45, 18, 8, 12, 3) <span class="status success">DATA</span></li>
+                <li>□ Search functionality works <span class="status info">FILTER</span></li>
+                <li>□ Status filter dropdown works (6 statuses) <span class="status info">FILTER</span></li>
+                <li>□ Carrier filter shows UPS, FedEx, USPS, DHL <span class="status info">FILTER</span></li>
+                <li>□ Distributor filter shows unique distributors <span class="status info">FILTER</span></li>
+                <li>□ Priority filter works (Standard, Expedited, Overnight) <span class="status info">FILTER</span></li>
+                <li>□ Date range filter functions <span class="status info">FILTER</span></li>
+                <li>□ Table displays 12 mock shipments <span class="status success">DATA</span></li>
+                <li>□ Status badges are color-coded correctly <span class="status success">UI</span></li>
+                <li>□ Priority badges display properly <span class="status success">UI</span></li>
+                <li>□ Carrier icons have correct colors <span class="status success">UI</span></li>
+                <li>□ Tracking numbers are clickable links <span class="status info">INTEGRATION</span></li>
+                <li>□ Tracking links open carrier websites <span class="status info">INTEGRATION</span></li>
+                <li>□ Current location displays for shipments <span class="status success">DATA</span></li>
+                <li>□ Delivery dates format correctly <span class="status success">FORMAT</span></li>
+                <li>□ Package count and weight display <span class="status success">DATA</span></li>
+                <li>□ "View Details" buttons are disabled/read-only <span class="status warning">READ-ONLY</span></li>
+                <li>□ Gray background matches other read-only pages <span class="status warning">CONSISTENCY</span></li>
+                <li>□ Read-only warning message appears <span class="status warning">READ-ONLY</span></li>
+                <li>□ No "Create Shipment" or management buttons <span class="status warning">READ-ONLY</span></li>
+                <li>□ Empty state shows when no results <span class="status info">UX</span></li>
+                <li>□ Responsive design works on mobile <span class="status info">RESPONSIVE</span></li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h2>🔄 Filter Testing Scenarios</h2>
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                <h4>Test these filter combinations:</h4>
+                <ul>
+                    <li><strong>Status Filter:</strong> Select "In Transit" → Should show 2 shipments (SHP-2024-003, SHP-2024-008)</li>
+                    <li><strong>Carrier Filter:</strong> Select "UPS" → Should show UPS shipments with amber truck icons</li>
+                    <li><strong>Priority Filter:</strong> Select "Overnight" → Should show 2 shipments with purple priority badges</li>
+                    <li><strong>Search:</strong> Type "Dr. Sarah" → Should show SHP-2024-001</li>
+                    <li><strong>Search:</strong> Type tracking "1Z999AA1234567890" → Should show SHP-2024-001</li>
+                    <li><strong>Distributor:</strong> Select "MedSupply East" → Should show SHP-2024-001</li>
+                    <li><strong>Date Range:</strong> Select "Last 7 Days" → Should show recent shipments</li>
+                    <li><strong>Combined:</strong> Status "Delivered" + Carrier "UPS" → Should show delivered UPS shipments</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Mock Data Verification</h2>
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                <h4>Verify these sample shipments appear:</h4>
+                <ul>
+                    <li><strong>SHP-2024-001:</strong> Dr. Sarah Chen, UPS, Delivered, New York, NY</li>
+                    <li><strong>SHP-2024-002:</strong> Dr. Michael Rodriguez, FedEx, Out for Delivery, Phoenix, AZ</li>
+                    <li><strong>SHP-2024-003:</strong> Dr. Lisa Park, USPS, In Transit, Austin, TX</li>
+                    <li><strong>SHP-2024-006:</strong> Dr. Robert Chen, UPS, Exception, San Antonio, TX</li>
+                    <li><strong>SHP-2024-009:</strong> Dr. Amanda Foster, DHL, Out for Delivery, Houston, TX</li>
+                </ul>
+                <p style="color: #64748b; margin-top: 15px;">
+                    <strong>Total Expected:</strong> 12 shipments with various statuses, carriers, and destinations
+                </p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔗 Tracking Link Testing</h2>
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                <h4>Test carrier tracking integration:</h4>
+                <ul>
+                    <li><strong>UPS:</strong> Click tracking number → Should open ups.com tracking page</li>
+                    <li><strong>FedEx:</strong> Click tracking number → Should open fedex.com tracking page</li>
+                    <li><strong>USPS:</strong> Click tracking number → Should open usps.com tracking page</li>
+                    <li><strong>DHL:</strong> Click tracking number → Should open dhl.com tracking page</li>
+                </ul>
+                <p style="color: #64748b; margin-top: 10px;">
+                    <em>Note: Links open in new tabs and may require actual tracking numbers to work fully</em>
+                </p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🎯 Success Criteria</h2>
+            <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                <h4 style="color: #166534; margin-top: 0;">✅ Test Passes If:</h4>
+                <ul style="color: #166534;">
+                    <li>Page loads without console errors</li>
+                    <li>All 5 summary cards show correct numbers</li>
+                    <li>Search and all 6 filters work correctly</li>
+                    <li>Table displays all 12 mock shipments</li>
+                    <li>Carrier icons display with correct colors</li>
+                    <li>Tracking links are clickable and functional</li>
+                    <li>Status and priority badges are properly color-coded</li>
+                    <li>Current location and delivery info displays</li>
+                    <li>Read-only styling is consistent with other pages</li>
+                    <li>No management/editing capabilities are available</li>
+                    <li>"View Only Access" badge is prominently displayed</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🚨 Troubleshooting</h2>
+            <div style="background: #fef2f2; padding: 15px; border-radius: 6px; border: 1px solid #fecaca;">
+                <h4 style="color: #dc2626; margin-top: 0;">If page doesn't load:</h4>
+                <ol style="color: #dc2626;">
+                    <li>Check if frontend server is running on localhost:3000</li>
+                    <li>Verify you're logged in as Master Distributor</li>
+                    <li>Check browser console for JavaScript errors</li>
+                    <li>Ensure ShippingLogistics component is properly imported in App.tsx</li>
+                    <li>Verify route is correctly configured in App.tsx</li>
+                    <li>Check if Card component is properly imported</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Status Reference</h2>
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 10px;">
+                <h4>6 Shipment Statuses with Color Codes:</h4>
+                <ul>
+                    <li><strong>Preparing:</strong> Gray - Getting ready for pickup</li>
+                    <li><strong>Picked Up:</strong> Blue - Collected by carrier</li>
+                    <li><strong>In Transit:</strong> Indigo - Moving to destination</li>
+                    <li><strong>Out for Delivery:</strong> Orange - Final delivery attempt</li>
+                    <li><strong>Delivered:</strong> Green - Successfully delivered</li>
+                    <li><strong>Exception:</strong> Red - Issue requiring attention</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #f1f5f9; border-radius: 8px; text-align: center;">
+            <p style="margin: 0; color: #475569;">
+                <strong>Shipping & Logistics Page Test Suite</strong><br>
+                Master Distributor READ-ONLY Shipment Monitoring<br>
+                <em>Complete carrier integration with tracking links and status monitoring</em>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

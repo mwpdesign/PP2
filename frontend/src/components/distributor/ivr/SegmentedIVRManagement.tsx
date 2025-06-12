@@ -1,4 +1,11 @@
 import React, { useState } from 'react';
+import {
+  EyeIcon,
+  MagnifyingGlassIcon,
+  CalendarIcon,
+  ShieldCheckIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/react/24/outline';
 import { Card } from '../../shared/ui/Card';
 
 interface IVRSubmission {
@@ -13,9 +20,12 @@ interface IVRSubmission {
   type: string;
   processingTime?: number; // in hours
   linkedOrderId?: string;
+  insuranceCompany: string;
+  distributor: string;
+  region: string;
 }
 
-// Enhanced mock data with doctor/facility info and processing analytics
+// Enhanced mock data with comprehensive network information for Master Distributor monitoring
 const mockIVRSubmissions: IVRSubmission[] = [
   {
     id: 'IVR-2024-001',
@@ -28,7 +38,10 @@ const mockIVRSubmissions: IVRSubmission[] = [
     priority: 'high',
     type: 'Skin Graft Authorization',
     processingTime: 2,
-    linkedOrderId: 'ORD-2024-001'
+    linkedOrderId: 'ORD-2024-001',
+    insuranceCompany: 'Blue Cross Blue Shield',
+    distributor: 'MedSupply East',
+    region: 'East Coast'
   },
   {
     id: 'IVR-2024-002',
@@ -41,7 +54,10 @@ const mockIVRSubmissions: IVRSubmission[] = [
     priority: 'medium',
     type: 'Wound Matrix Request',
     processingTime: 2.5,
-    linkedOrderId: 'ORD-2024-002'
+    linkedOrderId: 'ORD-2024-002',
+    insuranceCompany: 'Aetna',
+    distributor: 'HealthCare Partners',
+    region: 'Southwest'
   },
   {
     id: 'IVR-2024-003',
@@ -51,7 +67,10 @@ const mockIVRSubmissions: IVRSubmission[] = [
     status: 'pending',
     submittedAt: '2024-12-19 11:00',
     priority: 'high',
-    type: 'Negative Pressure Therapy'
+    type: 'Negative Pressure Therapy',
+    insuranceCompany: 'UnitedHealthcare',
+    distributor: 'Texas Medical Supply',
+    region: 'Central'
   },
   {
     id: 'IVR-2024-004',
@@ -61,7 +80,10 @@ const mockIVRSubmissions: IVRSubmission[] = [
     status: 'in_review',
     submittedAt: '2024-12-19 09:00',
     priority: 'medium',
-    type: 'Collagen Dressing Auth'
+    type: 'Collagen Dressing Auth',
+    insuranceCompany: 'Cigna',
+    distributor: 'Regional Health Partners',
+    region: 'Central'
   },
   {
     id: 'IVR-2024-005',
@@ -71,7 +93,10 @@ const mockIVRSubmissions: IVRSubmission[] = [
     status: 'submitted',
     submittedAt: '2024-12-19 11:30',
     priority: 'low',
-    type: 'Advanced Wound Care'
+    type: 'Advanced Wound Care',
+    insuranceCompany: 'Humana',
+    distributor: 'Austin Medical Group',
+    region: 'Central'
   },
   {
     id: 'IVR-2024-006',
@@ -84,7 +109,10 @@ const mockIVRSubmissions: IVRSubmission[] = [
     priority: 'medium',
     type: 'Bioengineered Tissue',
     processingTime: 3,
-    linkedOrderId: 'ORD-2024-006'
+    linkedOrderId: 'ORD-2024-006',
+    insuranceCompany: 'Medicare',
+    distributor: 'MedSupply South',
+    region: 'Southwest'
   },
   {
     id: 'IVR-2024-007',
@@ -96,30 +124,117 @@ const mockIVRSubmissions: IVRSubmission[] = [
     reviewedAt: '2024-12-18 17:30',
     priority: 'low',
     type: 'Experimental Treatment',
-    processingTime: 2.5
+    processingTime: 2.5,
+    insuranceCompany: 'Medicaid',
+    distributor: 'Northwest Medical',
+    region: 'Northwest'
+  },
+  {
+    id: 'IVR-2024-008',
+    patientName: 'Jennifer L.',
+    doctorName: 'Dr. Mark Thompson',
+    facility: 'Dallas Medical Center',
+    status: 'approved',
+    submittedAt: '2024-12-18 14:00',
+    reviewedAt: '2024-12-18 16:30',
+    priority: 'high',
+    type: 'Skin Substitute',
+    processingTime: 2.5,
+    linkedOrderId: 'ORD-2024-008',
+    insuranceCompany: 'Blue Cross Blue Shield',
+    distributor: 'Dallas Health Supply',
+    region: 'Central'
+  },
+  {
+    id: 'IVR-2024-009',
+    patientName: 'Robert K.',
+    doctorName: 'Dr. Amanda Foster',
+    facility: 'Houston General',
+    status: 'in_review',
+    submittedAt: '2024-12-18 16:00',
+    priority: 'medium',
+    type: 'Wound Dressing Auth',
+    insuranceCompany: 'Aetna',
+    distributor: 'Gulf Coast Medical',
+    region: 'Southeast'
+  },
+  {
+    id: 'IVR-2024-010',
+    patientName: 'Lisa M.',
+    doctorName: 'Dr. Kevin Lee',
+    facility: 'Phoenix Medical Plaza',
+    status: 'pending',
+    submittedAt: '2024-12-18 13:00',
+    priority: 'high',
+    type: 'Advanced Therapy',
+    insuranceCompany: 'UnitedHealthcare',
+    distributor: 'Desert Medical Supply',
+    region: 'Southwest'
   }
 ];
 
 const SegmentedIVRManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'approved' | 'processing'>('all');
   const [statusFilter, setStatusFilter] = useState<string>('All');
-  const [facilityFilter, setFacilityFilter] = useState<string>('All');
+  const [distributorFilter, setDistributorFilter] = useState<string>('All');
+  const [regionFilter, setRegionFilter] = useState<string>('All');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [dateRange, setDateRange] = useState<string>('All');
 
   const approvedIVRs = mockIVRSubmissions.filter(ivr => ivr.status === 'approved');
   const processingIVRs = mockIVRSubmissions.filter(ivr => ['pending', 'in_review', 'submitted'].includes(ivr.status));
   const allIVRs = mockIVRSubmissions;
 
-  // Filter based on selected criteria
+    // Filter based on selected criteria
   const getFilteredIVRs = () => {
-    let filtered = activeTab === 'approved' ? approvedIVRs : 
+    let filtered = activeTab === 'approved' ? approvedIVRs :
                    activeTab === 'processing' ? processingIVRs : allIVRs;
 
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(ivr =>
+        ivr.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ivr.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ivr.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ivr.facility.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Status filter
     if (statusFilter !== 'All') {
       filtered = filtered.filter(ivr => ivr.status === statusFilter);
     }
 
-    if (facilityFilter !== 'All') {
-      filtered = filtered.filter(ivr => ivr.facility === facilityFilter);
+    // Distributor filter
+    if (distributorFilter !== 'All') {
+      filtered = filtered.filter(ivr => ivr.distributor === distributorFilter);
+    }
+
+    // Region filter
+    if (regionFilter !== 'All') {
+      filtered = filtered.filter(ivr => ivr.region === regionFilter);
+    }
+
+    // Date range filter
+    if (dateRange !== 'All') {
+      const now = new Date();
+      const filterDate = new Date();
+
+      switch (dateRange) {
+        case 'Today':
+          filterDate.setHours(0, 0, 0, 0);
+          break;
+        case 'Week':
+          filterDate.setDate(now.getDate() - 7);
+          break;
+        case 'Month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
+      }
+
+      if (dateRange !== 'All') {
+        filtered = filtered.filter(ivr => new Date(ivr.submittedAt) >= filterDate);
+      }
     }
 
     return filtered;
@@ -127,10 +242,10 @@ const SegmentedIVRManagement: React.FC = () => {
 
   // Calculate analytics
   const analytics = {
-    totalSubmissions: allIVRs.length,
-    approved: approvedIVRs.length,
-    pending: processingIVRs.length,
-    avgProcessingTime: calculateAvgProcessingTime(),
+    totalSubmissions: 234, // Updated to match dashboard
+    approved: 28, // Approved Today
+    pending: 45, // Pending Review
+    avgProcessingTime: 2.3, // Average Processing Time in days
     ordersGenerated: approvedIVRs.filter(ivr => ivr.linkedOrderId).length
   };
 
@@ -149,7 +264,7 @@ const SegmentedIVRManagement: React.FC = () => {
       submitted: 'bg-slate-50 text-slate-700 border-slate-200',
       denied: 'bg-red-50 text-red-700 border-red-200'
     };
-    
+
     return `px-3 py-1 rounded-full text-sm font-medium border ${statusStyles[status as keyof typeof statusStyles]}`;
   };
 
@@ -159,20 +274,27 @@ const SegmentedIVRManagement: React.FC = () => {
       medium: 'bg-orange-50 text-orange-700 border-orange-200',
       low: 'bg-slate-50 text-slate-700 border-slate-200'
     };
-    
+
     return `px-2 py-1 rounded text-xs font-medium border ${priorityStyles[priority as keyof typeof priorityStyles]}`;
   };
 
-  const uniqueFacilities = [...new Set(allIVRs.map(ivr => ivr.facility))];
+  const uniqueDistributors = [...new Set(allIVRs.map(ivr => ivr.distributor))];
+  const uniqueRegions = [...new Set(allIVRs.map(ivr => ivr.region))];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 bg-slate-50 min-h-screen">
       {/* Header */}
       <div className="pt-1 pb-3">
         <div className="flex justify-between items-center mb-3">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800 tracking-tight leading-tight">IVR Status Tracking</h1>
-            <p className="text-slate-600 mt-1 text-lg leading-normal">Monitor IVR submission progress and processing analytics</p>
+            <div className="flex items-center space-x-3">
+              <h1 className="text-3xl font-bold text-slate-800 tracking-tight leading-tight">IVR Management - Network Overview</h1>
+              <div className="flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-1">
+                <ShieldCheckIcon className="h-4 w-4 text-amber-600 mr-2" />
+                <span className="text-sm font-medium text-amber-700">View Only Access</span>
+              </div>
+            </div>
+            <p className="text-slate-600 mt-1 text-lg leading-normal">Monitor insurance verification requests across your network</p>
           </div>
           <div className="bg-white rounded-xl shadow-sm px-4 py-2 border border-slate-200">
             <span className="text-sm font-medium text-slate-600">Total IVRs: </span>
@@ -180,27 +302,27 @@ const SegmentedIVRManagement: React.FC = () => {
           </div>
         </div>
 
-        {/* Analytics Metrics */}
+        {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm">
+            <div className="text-2xl font-bold text-slate-700 leading-tight">{analytics.totalSubmissions}</div>
+            <div className="text-sm font-medium text-slate-600 mt-1">Total IVRs</div>
+            <div className="text-xs text-slate-500 mt-1">Network-wide</div>
+          </div>
+          <div className="bg-white border border-amber-200 rounded-xl p-4 text-center shadow-sm">
+            <div className="text-2xl font-bold text-amber-700 leading-tight">{analytics.pending}</div>
+            <div className="text-sm font-medium text-amber-600 mt-1">Pending Review</div>
+            <div className="text-xs text-amber-500 mt-1">Awaiting approval</div>
+          </div>
+          <div className="bg-white border border-green-200 rounded-xl p-4 text-center shadow-sm">
             <div className="text-2xl font-bold text-green-700 leading-tight">{analytics.approved}</div>
-            <div className="text-sm font-medium text-green-600 mt-1">Approved</div>
+            <div className="text-sm font-medium text-green-600 mt-1">Approved Today</div>
             <div className="text-xs text-green-500 mt-1">Ready for orders</div>
           </div>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-700 leading-tight">{analytics.pending}</div>
-            <div className="text-sm font-medium text-yellow-600 mt-1">Processing</div>
-            <div className="text-xs text-yellow-500 mt-1">Under review</div>
-          </div>
-          <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-purple-700 leading-tight">{analytics.avgProcessingTime}h</div>
-            <div className="text-sm font-medium text-purple-600 mt-1">Avg Processing</div>
-            <div className="text-xs text-purple-500 mt-1">Time to approval</div>
-          </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-blue-700 leading-tight">{analytics.ordersGenerated}</div>
-            <div className="text-sm font-medium text-blue-600 mt-1">Orders Generated</div>
-            <div className="text-xs text-blue-500 mt-1">From approved IVRs</div>
+          <div className="bg-white border border-blue-200 rounded-xl p-4 text-center shadow-sm">
+            <div className="text-2xl font-bold text-blue-700 leading-tight">{analytics.avgProcessingTime}</div>
+            <div className="text-sm font-medium text-blue-600 mt-1">Avg Processing Time</div>
+            <div className="text-xs text-blue-500 mt-1">Days to approval</div>
           </div>
         </div>
 
@@ -249,15 +371,31 @@ const SegmentedIVRManagement: React.FC = () => {
           </nav>
         </div>
 
-        {/* Filters */}
-        <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Search and Filters */}
+        <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Search */}
+            <div className="lg:col-span-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Search</label>
+              <div className="relative">
+                <MagnifyingGlassIcon className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search by IVR ID, patient, or doctor..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                />
+              </div>
+            </div>
+
+            {/* Status Filter */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Status Filter</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Status</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] focus:border-[#2E86AB]"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
               >
                 <option value="All">All Statuses</option>
                 <option value="approved">Approved</option>
@@ -267,67 +405,111 @@ const SegmentedIVRManagement: React.FC = () => {
                 <option value="denied">Denied</option>
               </select>
             </div>
+
+            {/* Distributor Filter */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Facility Filter</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Distributor</label>
               <select
-                value={facilityFilter}
-                onChange={(e) => setFacilityFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E86AB] focus:border-[#2E86AB]"
+                value={distributorFilter}
+                onChange={(e) => setDistributorFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
               >
-                <option value="All">All Facilities</option>
-                {uniqueFacilities.map(facility => (
-                  <option key={facility} value={facility}>{facility}</option>
+                <option value="All">All Distributors</option>
+                {uniqueDistributors.map(distributor => (
+                  <option key={distributor} value={distributor}>{distributor}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Date Range Filter */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Date Range</label>
+              <div className="relative">
+                <CalendarIcon className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <select
+                  value={dateRange}
+                  onChange={(e) => setDateRange(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                >
+                  <option value="All">All Time</option>
+                  <option value="Today">Today</option>
+                  <option value="Week">Last 7 Days</option>
+                  <option value="Month">Last 30 Days</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Region Filter Row */}
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Region</label>
+              <select
+                value={regionFilter}
+                onChange={(e) => setRegionFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+              >
+                <option value="All">All Regions</option>
+                {uniqueRegions.map(region => (
+                  <option key={region} value={region}>{region}</option>
+                ))}
+              </select>
+            </div>
+            <div className="md:col-span-2 flex items-end">
+              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg px-3 py-2">
+                <ExclamationTriangleIcon className="h-4 w-4 text-slate-500 mr-2" />
+                <span className="text-sm text-slate-600">Read-only monitoring access - no editing capabilities</span>
+              </div>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* IVR Submissions Table */}
-      <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+      {/* READ-ONLY IVR Submissions Table */}
+      <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden opacity-95">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-slate-100">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">IVR ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Patient</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Patient Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Doctor</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Facility</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Priority</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Processing Time</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Linked Order</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Insurance Company</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Submitted Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {getFilteredIVRs().map((ivr) => (
-                <tr key={ivr.id} className="hover:bg-gray-50">
+                <tr key={ivr.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-slate-900">{ivr.id}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{ivr.patientName}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{ivr.doctorName}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{ivr.facility}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{ivr.type}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span className={getStatusBadge(ivr.status)}>
-                      {ivr.status.replace('_', ' ').charAt(0).toUpperCase() + ivr.status.replace('_', ' ').slice(1)}
+                      {ivr.status === 'pending' ? 'Pending' :
+                       ivr.status === 'approved' ? 'Approved' :
+                       ivr.status === 'denied' ? 'Denied' :
+                       ivr.status === 'in_review' ? 'In Review' :
+                       'Submitted'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={getPriorityBadge(ivr.priority)}>
-                      {ivr.priority.charAt(0).toUpperCase() + ivr.priority.slice(1)}
-                    </span>
-                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{ivr.insuranceCompany}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">
-                    {ivr.processingTime ? `${ivr.processingTime}h` : 'In progress'}
+                    {new Date(ivr.submittedAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    {ivr.linkedOrderId ? (
-                      <span className="text-[#2E86AB] font-medium">{ivr.linkedOrderId}</span>
-                    ) : (
-                      <span className="text-slate-400">None</span>
-                    )}
+                    <button className="inline-flex items-center px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 opacity-70 cursor-default">
+                      <EyeIcon className="h-4 w-4 mr-1" />
+                      View Details
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -351,4 +533,4 @@ const SegmentedIVRManagement: React.FC = () => {
   );
 };
 
-export default SegmentedIVRManagement; 
+export default SegmentedIVRManagement;

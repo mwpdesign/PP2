@@ -19,6 +19,7 @@ from app.api.v1.endpoints import (
     team,
     practice,
     doctors,
+    sales_dashboard,
 )
 from app.api.auth.routes import router as auth_router
 
@@ -92,4 +93,9 @@ api_router.include_router(
     doctors.router,
     prefix="/doctors",
     tags=["doctors"]
+)
+api_router.include_router(
+    sales_dashboard.router,
+    prefix="/sales-dashboard",
+    tags=["sales-dashboard"]
 )

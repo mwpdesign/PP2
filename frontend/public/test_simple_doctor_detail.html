@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Doctor Detail Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-link {
+            display: inline-block;
+            margin: 10px;
+            padding: 12px 20px;
+            background-color: #4f46e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background-color: #3730a3;
+        }
+        .success {
+            color: #059669;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Simple Doctor Detail Component Test</h1>
+        <p>Testing if the basic routing and component loading works without complex dependencies.</p>
+
+        <h2>🔗 Test Links</h2>
+        <p>Try these links to see if the simple component loads:</p>
+
+        <a href="http://localhost:3000/sales/doctors/test-id-123" class="test-link" target="_blank">
+            🩺 Test Doctor Detail (test-id-123)
+        </a>
+
+        <a href="http://localhost:3000/sales/doctors/f867a41c-83b1-4ef3-96ec-c3ed1fea07a2" class="test-link" target="_blank">
+            👨‍⚕️ Dr. John Smith (Real ID)
+        </a>
+
+        <a href="http://localhost:3000/sales/doctors" class="test-link" target="_blank">
+            📋 Back to Doctors List
+        </a>
+
+        <h2>✅ Expected Results</h2>
+        <ul>
+            <li><span class="success">✅ Simple component should load without "Something went wrong" error</span></li>
+            <li><span class="success">✅ Should display the doctor ID from the URL</span></li>
+            <li><span class="success">✅ Should show current URL path</span></li>
+            <li><span class="success">✅ Back button should work</span></li>
+            <li><span class="success">✅ No TypeScript errors in console</span></li>
+        </ul>
+
+        <h2>🐛 If This Works</h2>
+        <p>If the simple component loads successfully, it means:</p>
+        <ul>
+            <li>✅ Routing is working correctly</li>
+            <li>✅ React lazy loading is working</li>
+            <li>✅ The issue is in the complex DoctorDetail component</li>
+            <li>✅ We can fix the original component step by step</li>
+        </ul>
+
+        <h2>🔄 Server Status</h2>
+        <p id="server-status">Checking server status...</p>
+        <button onclick="checkServerStatus()" style="padding: 8px 16px; background-color: #059669; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            🔄 Refresh Status
+        </button>
+    </div>
+
+    <script>
+        async function checkServerStatus() {
+            const statusElement = document.getElementById('server-status');
+            statusElement.innerHTML = 'Checking...';
+
+            try {
+                const response = await fetch('http://localhost:3000');
+                if (response.ok) {
+                    statusElement.innerHTML = '<span style="color: #059669; font-weight: bold;">✅ Frontend server is running on localhost:3000</span>';
+                } else {
+                    statusElement.innerHTML = '<span style="color: #dc2626; font-weight: bold;">❌ Frontend server returned error: ' + response.status + '</span>';
+                }
+            } catch (error) {
+                statusElement.innerHTML = '<span style="color: #dc2626; font-weight: bold;">❌ Frontend server is not accessible</span>';
+            }
+        }
+
+        // Check server status on page load
+        checkServerStatus();
+    </script>
+</body>
+</html>
