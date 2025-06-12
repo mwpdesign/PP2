@@ -58,7 +58,7 @@ interface FormErrors {
 
 const AddDoctor: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, getToken } = useAuth();
 
   const [formData, setFormData] = useState<DoctorFormData>({
     // Personal Information
@@ -298,8 +298,12 @@ const AddDoctor: React.FC = () => {
     setSubmitSuccess('');
 
     try {
-      // Get auth token
-      const token = localStorage.getItem('authToken');
+      // Get auth token from AuthContext
+      const token = getToken();
+      console.log('Auth token from getToken():', token ? 'present' : 'null');
+      console.log('Auth token from localStorage:', localStorage.getItem('authToken') ? 'present' : 'null');
+      console.log('User from context:', user);
+
       if (!token) {
         throw new Error('Authentication required');
       }
@@ -348,7 +352,7 @@ const AddDoctor: React.FC = () => {
 
       console.log('Creating doctor with payload:', payload);
 
-      const response = await fetch('/api/v1/doctors', {
+      const response = await fetch('/api/v1/doctors/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

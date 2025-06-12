@@ -36,45 +36,47 @@ class DoctorListResponse:
         self.pages = pages
 
 
+@router.get("/test")
+async def test_endpoint():
+    """Test endpoint to verify the router is working."""
+    return {"message": "Doctors router is working"}
+
+
 @router.post("/")
-async def create_doctor_with_profile(
+async def create_doctor_simple(
     doctor_data: dict,
     current_user: TokenData = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Create a new doctor user account with profile.
-
-    This endpoint creates both the user account and doctor profile in one call.
+    Create a new doctor user account.
     """
     try:
-        # Get current user's organization and role info
+        # Basic permission check
         user_role = current_user.role.lower() if current_user.role else ""
-
-        # Check permissions
-        allowed_roles = [
-            "sales", "distributor", "master_distributor", "admin", "chp_admin"
-        ]
-        if user_role not in allowed_roles:
+        if user_role not in ["sales", "distributor", "master_distributor", "admin", "chp_admin"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions to create doctors"
             )
 
-        # Get organization
-        org_query = select(Organization).where(
-            Organization.id == current_user.organization_id
+        # Check if user already exists
+        existing_user_query = select(User).where(
+            or_(
+                User.email == doctor_data["email"],
+                User.username == doctor_data["username"]
+            )
         )
-        org_result = await db.execute(org_query)
-        organization = org_result.scalar_one_or_none()
+        existing_result = await db.execute(existing_user_query)
+        existing_user = existing_result.scalar_one_or_none()
 
-        if not organization:
+        if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Organization not found"
+                detail="User with this email or username already exists"
             )
 
-        # Get or create Doctor role
+        # Get a default role (we'll create a Doctor role or use existing)
         role_query = select(Role).where(
             Role.name == "Doctor",
             Role.organization_id == current_user.organization_id
@@ -93,29 +95,13 @@ async def create_doctor_with_profile(
             db.add(doctor_role)
             await db.flush()
 
-        # Check if user already exists
-        existing_user_query = select(User).where(
-            or_(
-                User.email == doctor_data["email"],
-                User.username == doctor_data["username"]
-            )
-        )
-        existing_result = await db.execute(existing_user_query)
-        existing_user = existing_result.scalar_one_or_none()
-
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email or username already exists"
-            )
-
-        # Create user
+        # Create user with minimal required fields
         new_user = User(
             username=doctor_data["username"],
             email=doctor_data["email"],
             encrypted_password=get_password_hash(doctor_data["password"]),
-            first_name=doctor_data["first_name"],
-            last_name=doctor_data["last_name"],
+            first_name=doctor_data.get("first_name", ""),
+            last_name=doctor_data.get("last_name", ""),
             role_id=doctor_role.id,
             organization_id=current_user.organization_id,
             is_active=doctor_data.get("is_active", True),
@@ -125,67 +111,19 @@ async def create_doctor_with_profile(
         )
 
         db.add(new_user)
-        await db.flush()  # Get the user ID
-
-        # Create doctor profile if profile data is provided
-        profile_created = False
-        if any(key.startswith(('professional_', 'specialty', 'medical_', 'npi_',
-                              'medicare_', 'medicaid_', 'tax_', 'primary_facility',
-                              'facility_', 'office_', 'shipping_'))
-               for key in doctor_data.keys()):
-
-            # Create doctor profile
-            profile_data = {
-                'user_id': new_user.id,
-                'professional_title': doctor_data.get('professional_title'),
-                'specialty': doctor_data.get('specialty'),
-                'medical_license_number': doctor_data.get('medical_license_number'),
-                'npi_number': doctor_data.get('npi_number'),
-                'medicare_ptan': doctor_data.get('medicare_ptan'),
-                'medicaid_provider_number': doctor_data.get('medicaid_provider_number'),
-                'tax_id': doctor_data.get('tax_id'),
-                'primary_facility_name': doctor_data.get('primary_facility_name'),
-                'facility_address_line1': doctor_data.get('facility_address_line1'),
-                'facility_city': doctor_data.get('facility_city'),
-                'facility_state': doctor_data.get('facility_state'),
-                'facility_zip_code': doctor_data.get('facility_zip_code'),
-                'facility_phone': doctor_data.get('facility_phone'),
-                'facility_fax': doctor_data.get('facility_fax'),
-                'office_contact_name': doctor_data.get('office_contact_name'),
-                'office_contact_phone': doctor_data.get('office_contact_phone'),
-                'shipping_address_line1': doctor_data.get('shipping_address_line1'),
-                'shipping_city': doctor_data.get('shipping_city'),
-                'shipping_state': doctor_data.get('shipping_state'),
-                'shipping_zip_code': doctor_data.get('shipping_zip_code'),
-                'shipping_contact_name': doctor_data.get('shipping_contact_name'),
-                'shipping_contact_phone': doctor_data.get('shipping_contact_phone'),
-                'delivery_instructions': doctor_data.get('delivery_instructions'),
-                'created_by_id': current_user.id
-            }
-
-            # Remove None values
-            profile_data = {k: v for k, v in profile_data.items() if v is not None}
-
-            new_profile = DoctorProfile(**profile_data)
-            db.add(new_profile)
-            profile_created = True
-
         await db.commit()
+        await db.refresh(new_user)
 
         # Return user data
-        response = {
+        return {
             "id": str(new_user.id),
             "username": new_user.username,
             "email": new_user.email,
             "first_name": new_user.first_name,
             "last_name": new_user.last_name,
             "is_active": new_user.is_active,
-            "role_id": str(new_user.role_id),
-            "organization_id": str(new_user.organization_id),
-            "profile_created": profile_created
+            "message": "Doctor user created successfully"
         }
-
-        return response
 
     except HTTPException:
         raise
@@ -195,6 +133,29 @@ async def create_doctor_with_profile(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create doctor: {str(e)}"
+        )
+
+
+@router.get("/simple")
+async def get_doctors_simple(
+    current_user: TokenData = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Simple doctors list endpoint for testing."""
+    try:
+        # Just return a simple response for now
+        return {
+            "doctors": [],
+            "total": 0,
+            "page": 1,
+            "pages": 0,
+            "message": "Simple endpoint working"
+        }
+    except Exception as e:
+        logger.error(f"Error in simple endpoint: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error: {str(e)}"
         )
 
 
@@ -220,12 +181,12 @@ async def get_doctors(
         # Calculate offset
         offset = (page - 1) * limit
 
-        # Base query for doctors with profiles
+        # Base query for doctors (users with Doctor role)
         base_query = select(User).options(
             selectinload(User.doctor_profile),
             selectinload(User.role),
             selectinload(User.added_by)
-        ).join(DoctorProfile, User.id == DoctorProfile.user_id)
+        ).join(Role, User.role_id == Role.id).where(Role.name == "Doctor")
 
         # Apply hierarchy filtering based on user role
         user_role = current_user.role.lower() if current_user.role else ""
