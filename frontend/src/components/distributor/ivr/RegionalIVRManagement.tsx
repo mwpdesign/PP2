@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { SharedMedicalView, TableColumn } from '../../shared/SharedMedicalView';
 import { HierarchyFilteringService, IVRDataEntity, FilteringContext } from '../../../services/hierarchyFilteringService';
+import { mockIVRRequests, SharedIVRRequest } from '../../../data/mockIVRData';
 import {
   EyeIcon,
   ClockIcon,
@@ -11,149 +12,68 @@ import {
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
 
-// Mock IVR data for Regional Distributor (filtered to their network)
-const mockRegionalIVRData: IVRDataEntity[] = [
-  {
-    id: 'IVR-2024-001',
-    organizationId: 'org-healthcare-1',
-    createdBy: 'doctor-001',
-    territoryId: 'territory-midwest',
-    networkId: 'network-regional-health',
-    doctorId: 'doctor-001',
-    distributorId: 'distributor-regional-001',
-    salesRepId: 'sales-001',
-    status: 'approved',
-    createdAt: '2025-01-10T08:00:00Z',
-    updatedAt: '2025-01-10T10:30:00Z',
-    patientId: 'patient-001',
-    requestingDoctorId: 'doctor-001',
-    assignedSalesRepId: 'sales-001',
-    distributorNetworkId: 'network-regional-health',
-    priority: 'high' as const,
-    insuranceProvider: 'Blue Cross Blue Shield',
-    // Additional display fields
-    patientName: 'John D.',
-    doctorName: 'Dr. Sarah Chen',
-    facility: 'Metro General Hospital',
-    type: 'Skin Graft Authorization',
-    submittedDate: '2025-01-10',
-    reviewedDate: '2025-01-10',
-    processingTime: '2.5 hours',
-    orderGenerated: true
-  },
-  {
-    id: 'IVR-2024-002',
-    organizationId: 'org-healthcare-1',
-    createdBy: 'doctor-002',
-    territoryId: 'territory-midwest',
-    networkId: 'network-regional-health',
-    doctorId: 'doctor-002',
-    distributorId: 'distributor-regional-001',
-    salesRepId: 'sales-002',
-    status: 'in_review',
-    createdAt: '2025-01-10T09:15:00Z',
-    updatedAt: '2025-01-10T09:15:00Z',
-    patientId: 'patient-002',
-    requestingDoctorId: 'doctor-002',
-    assignedSalesRepId: 'sales-002',
-    distributorNetworkId: 'network-regional-health',
-    priority: 'medium' as const,
-    insuranceProvider: 'Aetna',
-    // Additional display fields
-    patientName: 'Sarah M.',
-    doctorName: 'Dr. Michael Rodriguez',
-    facility: 'St. Mary\'s Medical Center',
-    type: 'Wound Matrix Request',
-    submittedDate: '2025-01-10',
-    reviewedDate: null,
-    processingTime: 'In Progress',
-    orderGenerated: false
-  },
-  {
-    id: 'IVR-2024-003',
-    organizationId: 'org-healthcare-1',
-    createdBy: 'doctor-003',
-    territoryId: 'territory-midwest',
-    networkId: 'network-regional-health',
-    doctorId: 'doctor-003',
-    distributorId: 'distributor-regional-001',
-    salesRepId: 'sales-001',
-    status: 'documents_requested',
-    createdAt: '2025-01-09T14:30:00Z',
-    updatedAt: '2025-01-10T11:00:00Z',
-    patientId: 'patient-003',
-    requestingDoctorId: 'doctor-003',
-    assignedSalesRepId: 'sales-001',
-    distributorNetworkId: 'network-regional-health',
-    priority: 'high' as const,
-    insuranceProvider: 'UnitedHealthcare',
-    // Additional display fields
-    patientName: 'Michael C.',
-    doctorName: 'Dr. Lisa Park',
-    facility: 'Austin Regional Medical',
-    type: 'Negative Pressure Therapy',
-    submittedDate: '2025-01-09',
-    reviewedDate: null,
-    processingTime: 'Pending Docs',
-    orderGenerated: false
-  },
-  {
-    id: 'IVR-2024-004',
-    organizationId: 'org-healthcare-1',
-    createdBy: 'doctor-004',
-    territoryId: 'territory-midwest',
-    networkId: 'network-regional-health',
-    doctorId: 'doctor-004',
-    distributorId: 'distributor-regional-001',
-    salesRepId: 'sales-003',
-    status: 'approved',
-    createdAt: '2025-01-09T11:00:00Z',
-    updatedAt: '2025-01-09T16:45:00Z',
-    patientId: 'patient-004',
-    requestingDoctorId: 'doctor-004',
-    assignedSalesRepId: 'sales-003',
-    distributorNetworkId: 'network-regional-health',
-    priority: 'medium' as const,
-    insuranceProvider: 'Cigna',
-    // Additional display fields
-    patientName: 'Emily R.',
-    doctorName: 'Dr. James Wilson',
-    facility: 'Central Texas Medical',
-    type: 'Collagen Dressing Auth',
-    submittedDate: '2025-01-09',
-    reviewedDate: '2025-01-09',
-    processingTime: '5.75 hours',
-    orderGenerated: true
-  },
-  {
-    id: 'IVR-2024-005',
-    organizationId: 'org-healthcare-1',
-    createdBy: 'doctor-005',
-    territoryId: 'territory-midwest',
-    networkId: 'network-regional-health',
-    doctorId: 'doctor-005',
-    distributorId: 'distributor-regional-001',
-    salesRepId: 'sales-002',
-    status: 'submitted',
-    createdAt: '2025-01-10T13:20:00Z',
-    updatedAt: '2025-01-10T13:20:00Z',
-    patientId: 'patient-005',
-    requestingDoctorId: 'doctor-005',
-    assignedSalesRepId: 'sales-002',
-    distributorNetworkId: 'network-regional-health',
-    priority: 'low' as const,
-    insuranceProvider: 'Humana',
-    // Additional display fields
-    patientName: 'David K.',
-    doctorName: 'Dr. Amanda Foster',
-    facility: 'Houston General',
-    type: 'Wound Dressing Auth',
-    submittedDate: '2025-01-10',
-    reviewedDate: null,
-    processingTime: 'Just Submitted',
-    orderGenerated: false
-  }
-];
+// Convert SharedIVRRequest to IVRDataEntity format for hierarchy filtering
+const convertToIVRDataEntity = (sharedIVR: SharedIVRRequest): IVRDataEntity => {
+  return {
+    id: sharedIVR.id,
+    organizationId: sharedIVR.organizationId,
+    createdBy: sharedIVR.createdBy,
+    assignedTo: sharedIVR.assignedTo,
+    territoryId: sharedIVR.territoryId,
+    networkId: sharedIVR.networkId,
+    doctorId: sharedIVR.doctorId,
+    distributorId: sharedIVR.distributorId,
+    salesRepId: sharedIVR.salesRepId,
+    status: sharedIVR.status,
+    createdAt: sharedIVR.createdAt,
+    updatedAt: sharedIVR.updatedAt,
+    patientId: sharedIVR.patientId,
+    requestingDoctorId: sharedIVR.requestingDoctorId,
+    assignedSalesRepId: sharedIVR.assignedSalesRepId,
+    distributorNetworkId: sharedIVR.distributorNetworkId,
+    priority: sharedIVR.priority as 'low' | 'medium' | 'high' | 'urgent',
+    insuranceProvider: sharedIVR.insuranceProvider,
+    // Additional display fields for the table
+    patientName: sharedIVR.patientName,
+    doctorName: sharedIVR.doctorName,
+    facility: getRandomFacility(),
+    type: sharedIVR.serviceType,
+    submittedDate: sharedIVR.submittedDate,
+    reviewedDate: sharedIVR.status === 'approved' ? sharedIVR.lastUpdated : null,
+    processingTime: calculateProcessingTime(sharedIVR),
+    orderGenerated: sharedIVR.status === 'approved'
+  };
+};
+
+// Helper function to get random facility names
+const getRandomFacility = (): string => {
+  const facilities = [
+    'Metro General Hospital',
+    'St. Mary\'s Medical Center',
+    'Austin Regional Medical',
+    'Central Texas Medical',
+    'Houston General',
+    'Dallas Medical Center',
+    'San Antonio Regional'
+  ];
+  return facilities[Math.floor(Math.random() * facilities.length)];
+};
+
+// Helper function to calculate processing time
+const calculateProcessingTime = (ivr: SharedIVRRequest): string => {
+  if (ivr.status === 'submitted') return 'Just Submitted';
+  if (ivr.status === 'documents_requested') return 'Pending Docs';
+  if (ivr.status === 'in_review') return 'In Progress';
+
+  // For approved/rejected, calculate actual time
+  const submitted = new Date(ivr.submittedDate);
+  const updated = new Date(ivr.lastUpdated);
+  const diffHours = Math.abs(updated.getTime() - submitted.getTime()) / (1000 * 60 * 60);
+
+  if (diffHours < 1) return `${Math.round(diffHours * 60)} minutes`;
+  if (diffHours < 24) return `${diffHours.toFixed(1)} hours`;
+  return `${Math.round(diffHours / 24)} days`;
+};
 
 const RegionalIVRManagement: React.FC = () => {
   const { user } = useAuth();
@@ -170,6 +90,9 @@ const RegionalIVRManagement: React.FC = () => {
       try {
         setIsLoading(true);
 
+        // Convert shared mock data to IVRDataEntity format
+        const convertedData = mockIVRRequests.map(convertToIVRDataEntity);
+
         // Get user's hierarchy information
         const hierarchy = await hierarchyService.getUserHierarchy(user.id);
 
@@ -181,7 +104,7 @@ const RegionalIVRManagement: React.FC = () => {
         };
 
         // Filter IVR data based on hierarchy
-        const result = await hierarchyService.filterIVRData(mockRegionalIVRData, context);
+        const result = await hierarchyService.filterIVRData(convertedData, context);
 
         setFilteredData(result.data);
         setFilteringSummary({
@@ -192,10 +115,20 @@ const RegionalIVRManagement: React.FC = () => {
           restrictions: result.restrictions
         });
 
+        console.log('🎯 Hierarchy Filtering Results:', {
+          userRole: hierarchy.role,
+          accessScope: hierarchy.accessScope,
+          territoryId: hierarchy.territoryId,
+          totalIVRs: result.totalCount,
+          accessibleIVRs: result.accessibleCount,
+          appliedFilters: result.appliedFilters,
+          filteredData: result.data.map(d => ({ id: d.id, territoryId: d.territoryId, status: d.status }))
+        });
+
       } catch (error) {
         console.error('Error filtering IVR data:', error);
-        // Fallback to showing all data if filtering fails
-        setFilteredData(mockRegionalIVRData);
+        // Fallback to showing converted data if filtering fails
+        setFilteredData(mockIVRRequests.map(convertToIVRDataEntity));
       } finally {
         setIsLoading(false);
       }
@@ -209,6 +142,7 @@ const RegionalIVRManagement: React.FC = () => {
     const statusConfig = {
       submitted: { color: 'bg-blue-100 text-blue-800', icon: ClockIcon, label: 'Submitted' },
       in_review: { color: 'bg-yellow-100 text-yellow-800', icon: ClockIcon, label: 'In Review' },
+      pending_approval: { color: 'bg-purple-100 text-purple-800', icon: ClockIcon, label: 'Pending Approval' },
       documents_requested: { color: 'bg-orange-100 text-orange-800', icon: DocumentTextIcon, label: 'Docs Requested' },
       approved: { color: 'bg-green-100 text-green-800', icon: CheckCircleIcon, label: 'Approved' },
       rejected: { color: 'bg-red-100 text-red-800', icon: XCircleIcon, label: 'Rejected' }
@@ -278,7 +212,7 @@ const RegionalIVRManagement: React.FC = () => {
       label: 'IVR ID',
       sortable: true,
       render: (value) => (
-        <span className="font-medium text-slate-900">{value}</span>
+        <span className="font-medium text-slate-900">{value.replace('660e8400-e29b-41d4-a716-44665544000', 'IVR-2024-00')}</span>
       )
     },
     {
@@ -409,7 +343,7 @@ const RegionalIVRManagement: React.FC = () => {
           </div>
           <div className="bg-yellow-50 rounded-lg p-4">
             <div className="text-2xl font-bold text-yellow-900">
-              {filteredData.filter(ivr => ['submitted', 'in_review', 'documents_requested'].includes(ivr.status)).length}
+              {filteredData.filter(ivr => ['submitted', 'in_review', 'documents_requested', 'pending_approval'].includes(ivr.status)).length}
             </div>
             <div className="text-sm text-yellow-600">In Progress</div>
           </div>

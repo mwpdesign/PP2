@@ -3,614 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hierarchy Filtering Service Test</title>
+    <title>Hierarchy Filtering Test - Healthcare IVR Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .test-section {
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-            background: #f9fafb;
-        }
-        .success { border-color: #10b981; background: #ecfdf5; }
-        .warning { border-color: #f59e0b; background: #fffbeb; }
-        .error { border-color: #ef4444; background: #fef2f2; }
-        .info { border-color: #3b82f6; background: #eff6ff; }
-        .role-card {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .role-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        .role-card.active {
-            border-color: #3b82f6;
-            background: #eff6ff;
-        }
-        .data-item {
-            border-left: 4px solid #e5e7eb;
-            padding: 12px;
-            margin: 8px 0;
-            background: white;
-            border-radius: 0 8px 8px 0;
-        }
-        .data-item.accessible {
-            border-left-color: #10b981;
-            background: #f0fdf4;
-        }
-        .data-item.restricted {
-            border-left-color: #ef4444;
-            background: #fef2f2;
-            opacity: 0.6;
-        }
-        .hierarchy-tree {
-            font-family: monospace;
-            background: #1f2937;
-            color: #10b981;
-            padding: 20px;
-            border-radius: 8px;
-            overflow-x: auto;
-        }
-    </style>
 </head>
-<body class="bg-gray-100 p-8">
-    <div class="max-w-7xl mx-auto">
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">Hierarchy Filtering Service Test Suite</h1>
-
-        <!-- Test Overview -->
-        <div class="test-section info">
-            <h2 class="text-xl font-semibold mb-4">🔒 Hierarchy Filtering Service Overview</h2>
-            <p class="text-gray-700 mb-4">
-                This service ensures proper data isolation based on the sales hierarchy. Each role has specific access scopes
-                that determine what data they can view and interact with. Click on different roles below to see how data filtering works.
+<body class="bg-gray-50">
+    <div class="max-w-6xl mx-auto py-8 px-4">
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">
+                🎯 Hierarchy Filtering Test - Mock Data Fix
+            </h1>
+            <p class="text-gray-600 mb-4">
+                <strong>Task ID:</strong> mbuut3a419egv9os8vu<br>
+                <strong>Status:</strong> Testing updated mock data with proper hierarchy relationships
             </p>
 
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">✅ Mock Data Updates Applied</h3>
+                <ul class="text-blue-800 space-y-1">
+                    <li>• Added hierarchy fields to SharedIVRRequest interface</li>
+                    <li>• Updated all 6 IVR records with proper territory assignments</li>
+                    <li>• Territory 1: IVR-001, IVR-002, IVR-003, IVR-006 (4 IVRs)</li>
+                    <li>• Territory 2: IVR-004, IVR-005 (2 IVRs)</li>
+                    <li>• Regional Distributor (regional-dist-1) should see only Territory 1 IVRs</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Test Results Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Expected Results -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">📋 Expected Results</h2>
+
+                <div class="space-y-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-green-900">Regional Distributor (territory-1)</h3>
+                        <p class="text-green-800 text-sm mb-2">Should see 4 IVRs from their territory:</p>
+                        <ul class="text-green-700 text-sm space-y-1">
+                            <li>• IVR-2024-001 - John Smith (approved)</li>
+                            <li>• IVR-2024-002 - Emily Davis (in_review)</li>
+                            <li>• IVR-2024-003 - David Wilson (documents_requested)</li>
+                            <li>• IVR-2024-006 - Amanda Rodriguez (pending_approval)</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-red-900">Should NOT see (territory-2)</h3>
+                        <ul class="text-red-700 text-sm space-y-1">
+                            <li>• IVR-2024-004 - Sarah Johnson</li>
+                            <li>• IVR-2024-005 - Michael Brown</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Instructions -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">🧪 Test Instructions</h2>
+
+                <div class="space-y-4">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-yellow-900 mb-2">Step 1: Login as Regional Distributor</h3>
+                        <p class="text-yellow-800 text-sm">
+                            Use credentials: <code class="bg-yellow-100 px-1 rounded">regional@healthcare.local</code> / <code class="bg-yellow-100 px-1 rounded">regional123</code>
+                        </p>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-blue-900 mb-2">Step 2: Navigate to IVR Management</h3>
+                        <p class="text-blue-800 text-sm">
+                            Go to: <code class="bg-blue-100 px-1 rounded">/distributor-regional/ivr-management</code>
+                        </p>
+                    </div>
+
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-purple-900 mb-2">Step 3: Verify Filtering</h3>
+                        <ul class="text-purple-800 text-sm space-y-1">
+                            <li>• Check console for filtering debug logs</li>
+                            <li>• Verify only 4 IVRs are displayed</li>
+                            <li>• Confirm hierarchy banner shows correct scope</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mock Data Structure -->
+        <div class="bg-white shadow rounded-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">📊 Mock Data Structure</h2>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IVR ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Territory</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Distributor</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Visible to Regional?</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr class="bg-green-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">IVR-2024-001</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">John Smith</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">territory-1</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">regional-dist-1</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">approved</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-green-600">✅ YES</td>
+                        </tr>
+                        <tr class="bg-green-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">IVR-2024-002</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">Emily Davis</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">territory-1</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">regional-dist-1</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">in_review</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-green-600">✅ YES</td>
+                        </tr>
+                        <tr class="bg-green-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">IVR-2024-003</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">David Wilson</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">territory-1</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">regional-dist-1</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">documents_requested</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-green-600">✅ YES</td>
+                        </tr>
+                        <tr class="bg-red-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">IVR-2024-004</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">Sarah Johnson</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">territory-2</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">regional-dist-2</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">submitted</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-red-600">❌ NO</td>
+                        </tr>
+                        <tr class="bg-red-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">IVR-2024-005</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">Michael Brown</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">territory-2</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">regional-dist-2</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">rejected</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-red-600">❌ NO</td>
+                        </tr>
+                        <tr class="bg-green-50">
+                            <td class="px-4 py-3 text-sm font-medium text-gray-900">IVR-2024-006</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">Amanda Rodriguez</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">territory-1</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">regional-dist-1</td>
+                            <td class="px-4 py-3 text-sm text-gray-900">pending_approval</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-green-600">✅ YES</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Success Criteria -->
+        <div class="bg-white shadow rounded-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">✅ Success Criteria</h2>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-medium text-gray-900 mb-3">🏗️ Hierarchy Structure</h3>
-                    <div class="hierarchy-tree text-sm">
-<pre>System Admin (SYSTEM_WIDE)
-├── CHP Admin (ORGANIZATION_WIDE)
-    ├── Master Distributor (NETWORK_WIDE)
-        ├── Regional Distributor (TERRITORY_WIDE)
-            ├── Sales Representative (PERSONAL_ONLY)
-                └── Doctor (PRACTICE_ONLY)
-                    ├── Office Admin (PRACTICE_ONLY)
-                    └── Medical Staff (PRACTICE_ONLY)
-    ├── IVR Company (ORGANIZATION_WIDE)
-    └── Shipping Logistics (ORGANIZATION_WIDE)</pre>
-                    </div>
-                </div>
-
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-medium text-gray-900 mb-3">🎯 Access Scopes</h3>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                            <span><strong>SYSTEM_WIDE:</strong> All data across all organizations</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
-                            <span><strong>ORGANIZATION_WIDE:</strong> All data within organization</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                            <span><strong>NETWORK_WIDE:</strong> All data within distribution network</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-                            <span><strong>TERRITORY_WIDE:</strong> All data within territory</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                            <span><strong>PERSONAL_ONLY:</strong> Only assigned/created data</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
-                            <span><strong>PRACTICE_ONLY:</strong> Only practice-related data</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Role Selection -->
-        <div class="test-section">
-            <h2 class="text-xl font-semibold mb-4">👥 Select Role to Test Filtering</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" id="roleSelection">
-                <!-- Role cards will be populated by JavaScript -->
-            </div>
-        </div>
-
-        <!-- Current User Info -->
-        <div class="test-section" id="currentUserInfo" style="display: none;">
-            <h2 class="text-xl font-semibold mb-4">🔍 Current User Access Profile</h2>
-            <div class="bg-white p-6 rounded-lg shadow">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <h3 class="font-medium text-gray-900 mb-2">User Details</h3>
-                        <div class="space-y-1 text-sm">
-                            <div><strong>Role:</strong> <span id="userRole"></span></div>
-                            <div><strong>Access Scope:</strong> <span id="userScope"></span></div>
-                            <div><strong>Organization:</strong> <span id="userOrg"></span></div>
-                            <div><strong>Territory:</strong> <span id="userTerritory"></span></div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="font-medium text-gray-900 mb-2">Permissions</h3>
-                        <div id="userPermissions" class="space-y-1 text-sm"></div>
-                    </div>
-                    <div>
-                        <h3 class="font-medium text-gray-900 mb-2">Accessible Users</h3>
-                        <div id="accessibleUsers" class="space-y-1 text-sm"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- IVR Data Filtering Test -->
-        <div class="test-section" id="ivrFilteringTest" style="display: none;">
-            <h2 class="text-xl font-semibold mb-4">📋 IVR Data Filtering Test</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                    <h3 class="font-medium text-gray-900 mb-3">All IVR Requests (Unfiltered)</h3>
-                    <div id="allIVRData" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Hierarchy Filtering Working</h3>
+                    <ul class="text-gray-700 space-y-1 text-sm">
+                        <li>• Regional Distributor sees exactly 4 IVRs</li>
+                        <li>• All displayed IVRs have territoryId: 'territory-1'</li>
+                        <li>• Console shows filtering debug information</li>
+                        <li>• Hierarchy banner displays correct scope</li>
+                    </ul>
                 </div>
+
                 <div>
-                    <h3 class="font-medium text-gray-900 mb-3">Accessible IVR Requests (Filtered)</h3>
-                    <div id="filteredIVRData" class="space-y-2 max-h-64 overflow-y-auto"></div>
-                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <div class="text-sm">
-                            <div><strong>Applied Filters:</strong> <span id="ivrFilters"></span></div>
-                            <div><strong>Restrictions:</strong> <span id="ivrRestrictions"></span></div>
-                            <div><strong>Access Count:</strong> <span id="ivrAccessCount"></span> / <span id="ivrTotalCount"></span></div>
-                        </div>
-                    </div>
+                    <h3 class="font-semibold text-gray-900 mb-2">UI Components Working</h3>
+                    <ul class="text-gray-700 space-y-1 text-sm">
+                        <li>• SharedMedicalView displays filtered data</li>
+                        <li>• Document upload functionality available</li>
+                        <li>• Chat communication panel working</li>
+                        <li>• Export buttons (PDF/Excel) functional</li>
+                    </ul>
                 </div>
             </div>
         </div>
 
-        <!-- Order Data Filtering Test -->
-        <div class="test-section" id="orderFilteringTest" style="display: none;">
-            <h2 class="text-xl font-semibold mb-4">📦 Order Data Filtering Test</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                    <h3 class="font-medium text-gray-900 mb-3">All Orders (Unfiltered)</h3>
-                    <div id="allOrderData" class="space-y-2 max-h-64 overflow-y-auto"></div>
-                </div>
-                <div>
-                    <h3 class="font-medium text-gray-900 mb-3">Accessible Orders (Filtered)</h3>
-                    <div id="filteredOrderData" class="space-y-2 max-h-64 overflow-y-auto"></div>
-                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <div class="text-sm">
-                            <div><strong>Applied Filters:</strong> <span id="orderFilters"></span></div>
-                            <div><strong>Restrictions:</strong> <span id="orderRestrictions"></span></div>
-                            <div><strong>Access Count:</strong> <span id="orderAccessCount"></span> / <span id="orderTotalCount"></span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Quick Links -->
+        <div class="bg-white shadow rounded-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">🔗 Quick Links</h2>
 
-        <!-- Shipping Data Filtering Test -->
-        <div class="test-section" id="shippingFilteringTest" style="display: none;">
-            <h2 class="text-xl font-semibold mb-4">🚚 Shipping Data Filtering Test</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                    <h3 class="font-medium text-gray-900 mb-3">All Shipments (Unfiltered)</h3>
-                    <div id="allShippingData" class="space-y-2 max-h-64 overflow-y-auto"></div>
-                </div>
-                <div>
-                    <h3 class="font-medium text-gray-900 mb-3">Accessible Shipments (Filtered)</h3>
-                    <div id="filteredShippingData" class="space-y-2 max-h-64 overflow-y-auto"></div>
-                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <div class="text-sm">
-                            <div><strong>Applied Filters:</strong> <span id="shippingFilters"></span></div>
-                            <div><strong>Restrictions:</strong> <span id="shippingRestrictions"></span></div>
-                            <div><strong>Access Count:</strong> <span id="shippingAccessCount"></span> / <span id="shippingTotalCount"></span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Access Control Tests -->
-        <div class="test-section" id="accessControlTests" style="display: none;">
-            <h2 class="text-xl font-semibold mb-4">🔐 Access Control Tests</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-medium text-gray-900 mb-3">Individual Data Access</h3>
-                    <div id="dataAccessTests" class="space-y-2"></div>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-medium text-gray-900 mb-3">Hierarchy Validation</h3>
-                    <div id="hierarchyValidationTests" class="space-y-2"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Performance Metrics -->
-        <div class="test-section" id="performanceMetrics" style="display: none;">
-            <h2 class="text-xl font-semibold mb-4">⚡ Performance Metrics</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow text-center">
-                    <div class="text-2xl font-bold text-blue-600" id="filteringTime">-</div>
-                    <div class="text-sm text-gray-600">Filtering Time (ms)</div>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow text-center">
-                    <div class="text-2xl font-bold text-green-600" id="cacheHits">-</div>
-                    <div class="text-sm text-gray-600">Cache Hits</div>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow text-center">
-                    <div class="text-2xl font-bold text-purple-600" id="dataReduction">-</div>
-                    <div class="text-sm text-gray-600">Data Reduction (%)</div>
-                </div>
+                <a href="/login"
+                   class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-slate-600 hover:bg-slate-700">
+                    Login Page
+                </a>
+                <a href="/distributor-regional/ivr-management"
+                   class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Regional IVR Management
+                </a>
+                <a href="/distributor-regional/dashboard"
+                   class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Regional Dashboard
+                </a>
             </div>
         </div>
 
-        <!-- Testing Checklist -->
-        <div class="test-section warning">
-            <h2 class="text-xl font-semibold mb-4">✅ Testing Checklist</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h3 class="font-medium mb-3">Functional Tests</h3>
-                    <div class="space-y-2 text-sm">
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-role-scopes">
-                            <span>Role-based access scopes work correctly</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-ivr-filtering">
-                            <span>IVR data filtering by hierarchy</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-order-filtering">
-                            <span>Order data filtering by hierarchy</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-shipping-filtering">
-                            <span>Shipping data filtering by hierarchy</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-access-control">
-                            <span>Individual data access validation</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-hierarchy-validation">
-                            <span>Hierarchy relationship validation</span>
-                        </label>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="font-medium mb-3">Security Tests</h3>
-                    <div class="space-y-2 text-sm">
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-data-isolation">
-                            <span>Proper data isolation between roles</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-privilege-escalation">
-                            <span>No privilege escalation possible</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-cross-org-access">
-                            <span>No cross-organization data access</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-territory-boundaries">
-                            <span>Territory boundaries respected</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-practice-isolation">
-                            <span>Practice-level data isolation</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" class="rounded" id="test-caching-security">
-                            <span>Caching doesn't leak data between users</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="text-center text-gray-500 text-sm mt-8">
-            <p>Hierarchy Filtering Service Test Suite - Healthcare IVR Platform</p>
-            <p>Task ID: mbus5ytkr88ddznfd</p>
+        <!-- Debug Information -->
+        <div class="bg-gray-900 text-green-400 rounded-lg p-6 mt-6 font-mono text-sm">
+            <h2 class="text-lg font-semibold mb-4">🐛 Debug Console Output Expected</h2>
+            <pre class="whitespace-pre-wrap">
+🎯 Hierarchy Filtering Results: {
+  userRole: "regional_distributor",
+  accessScope: "territory_wide",
+  territoryId: "territory-1",
+  totalIVRs: 6,
+  accessibleIVRs: 4,
+  appliedFilters: ["territory_filter"],
+  filteredData: [
+    { id: "660e8400-e29b-41d4-a716-446655440001", territoryId: "territory-1", status: "approved" },
+    { id: "660e8400-e29b-41d4-a716-446655440002", territoryId: "territory-1", status: "in_review" },
+    { id: "660e8400-e29b-41d4-a716-446655440003", territoryId: "territory-1", status: "documents_requested" },
+    { id: "660e8400-e29b-41d4-a716-446655440006", territoryId: "territory-1", status: "pending_approval" }
+  ]
+}
+            </pre>
         </div>
     </div>
-
-    <script>
-        // Mock data and service simulation
-        const roles = [
-            { id: 'system-admin-1', name: 'System Admin', color: 'bg-red-500', scope: 'SYSTEM_WIDE' },
-            { id: 'chp-admin-1', name: 'CHP Admin', color: 'bg-orange-500', scope: 'ORGANIZATION_WIDE' },
-            { id: 'master-dist-1', name: 'Master Distributor', color: 'bg-yellow-500', scope: 'NETWORK_WIDE' },
-            { id: 'regional-dist-1', name: 'Regional Distributor', color: 'bg-blue-500', scope: 'TERRITORY_WIDE' },
-            { id: 'sales-rep-1', name: 'Sales Representative', color: 'bg-green-500', scope: 'PERSONAL_ONLY' },
-            { id: 'doctor-1', name: 'Doctor', color: 'bg-purple-500', scope: 'PRACTICE_ONLY' },
-            { id: 'ivr-company-1', name: 'IVR Company', color: 'bg-indigo-500', scope: 'ORGANIZATION_WIDE' },
-            { id: 'shipping-1', name: 'Shipping Logistics', color: 'bg-pink-500', scope: 'ORGANIZATION_WIDE' }
-        ];
-
-        const mockIVRData = [
-            { id: 'ivr-1', organizationId: 'org-1', territoryId: 'territory-1', salesRepId: 'sales-rep-1', patient: 'John Doe', status: 'submitted', priority: 'high' },
-            { id: 'ivr-2', organizationId: 'org-1', territoryId: 'territory-2', salesRepId: 'sales-rep-2', patient: 'Jane Smith', status: 'in_review', priority: 'medium' },
-            { id: 'ivr-3', organizationId: 'org-2', territoryId: 'territory-3', salesRepId: 'sales-rep-3', patient: 'Bob Johnson', status: 'approved', priority: 'low' },
-            { id: 'ivr-4', organizationId: 'org-1', territoryId: 'territory-1', salesRepId: 'sales-rep-1', patient: 'Alice Brown', status: 'documents_requested', priority: 'urgent' }
-        ];
-
-        const mockOrderData = [
-            { id: 'order-1', organizationId: 'org-1', territoryId: 'territory-1', salesRepId: 'sales-rep-1', customer: 'Hospital A', amount: '$1,500', status: 'pending' },
-            { id: 'order-2', organizationId: 'org-1', territoryId: 'territory-2', salesRepId: 'sales-rep-2', customer: 'Clinic B', amount: '$2,500', status: 'processing' },
-            { id: 'order-3', organizationId: 'org-2', territoryId: 'territory-3', salesRepId: 'sales-rep-3', customer: 'Medical Center C', amount: '$3,200', status: 'shipped' }
-        ];
-
-        const mockShippingData = [
-            { id: 'ship-1', organizationId: 'org-1', territoryId: 'territory-1', salesRepId: 'sales-rep-1', tracking: 'TRK-001', carrier: 'UPS', status: 'in_transit' },
-            { id: 'ship-2', organizationId: 'org-1', territoryId: 'territory-2', salesRepId: 'sales-rep-2', tracking: 'TRK-002', carrier: 'FedEx', status: 'delivered' },
-            { id: 'ship-3', organizationId: 'org-2', territoryId: 'territory-3', salesRepId: 'sales-rep-3', tracking: 'TRK-003', carrier: 'USPS', status: 'preparing' }
-        ];
-
-        let currentRole = null;
-
-        // Initialize role selection
-        function initializeRoleSelection() {
-            const container = document.getElementById('roleSelection');
-            roles.forEach(role => {
-                const card = document.createElement('div');
-                card.className = `role-card bg-white p-4 rounded-lg shadow border-2 border-gray-200`;
-                card.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-4 h-4 ${role.color} rounded-full"></div>
-                        <div>
-                            <div class="font-medium text-gray-900">${role.name}</div>
-                            <div class="text-xs text-gray-500">${role.scope}</div>
-                        </div>
-                    </div>
-                `;
-                card.onclick = () => selectRole(role);
-                container.appendChild(card);
-            });
-        }
-
-        // Select role and run tests
-        function selectRole(role) {
-            currentRole = role;
-
-            // Update UI
-            document.querySelectorAll('.role-card').forEach(card => card.classList.remove('active'));
-            event.target.closest('.role-card').classList.add('active');
-
-            // Show test sections
-            document.getElementById('currentUserInfo').style.display = 'block';
-            document.getElementById('ivrFilteringTest').style.display = 'block';
-            document.getElementById('orderFilteringTest').style.display = 'block';
-            document.getElementById('shippingFilteringTest').style.display = 'block';
-            document.getElementById('accessControlTests').style.display = 'block';
-            document.getElementById('performanceMetrics').style.display = 'block';
-
-            // Run tests
-            updateUserInfo(role);
-            runFilteringTests(role);
-            runAccessControlTests(role);
-            updatePerformanceMetrics();
-        }
-
-        // Update user info display
-        function updateUserInfo(role) {
-            document.getElementById('userRole').textContent = role.name;
-            document.getElementById('userScope').textContent = role.scope;
-            document.getElementById('userOrg').textContent = role.id.includes('org-2') ? 'org-2' : 'org-1';
-            document.getElementById('userTerritory').textContent = role.id.includes('territory') ? 'territory-1' : 'N/A';
-
-            // Mock permissions
-            const permissions = {
-                'system-admin-1': ['*'],
-                'chp-admin-1': ['view_all', 'manage_distributors', 'view_reports'],
-                'master-dist-1': ['view_network', 'manage_regional', 'view_reports'],
-                'regional-dist-1': ['view_territory', 'manage_sales', 'view_reports'],
-                'sales-rep-1': ['view_assigned', 'manage_doctors'],
-                'doctor-1': ['view_practice', 'manage_patients'],
-                'ivr-company-1': ['view_ivr', 'process_requests'],
-                'shipping-1': ['view_shipments', 'update_status']
-            };
-
-            const userPermissions = permissions[role.id] || ['view_assigned'];
-            document.getElementById('userPermissions').innerHTML = userPermissions.map(p =>
-                `<div class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">${p}</div>`
-            ).join('');
-
-            // Mock accessible users
-            const accessibleUsers = getAccessibleUsers(role);
-            document.getElementById('accessibleUsers').innerHTML = accessibleUsers.map(u =>
-                `<div class="text-xs">${u}</div>`
-            ).join('');
-        }
-
-        // Get accessible users based on role
-        function getAccessibleUsers(role) {
-            switch (role.scope) {
-                case 'SYSTEM_WIDE':
-                    return ['All Users'];
-                case 'ORGANIZATION_WIDE':
-                    return ['CHP Admin', 'Master Distributor', 'Regional Distributor', 'Sales Rep'];
-                case 'NETWORK_WIDE':
-                    return ['Master Distributor', 'Regional Distributor', 'Sales Rep'];
-                case 'TERRITORY_WIDE':
-                    return ['Regional Distributor', 'Sales Rep'];
-                case 'PERSONAL_ONLY':
-                    return ['Self Only'];
-                case 'PRACTICE_ONLY':
-                    return ['Practice Staff'];
-                default:
-                    return ['Self Only'];
-            }
-        }
-
-        // Run filtering tests
-        function runFilteringTests(role) {
-            const startTime = performance.now();
-
-            // IVR filtering
-            const ivrFiltered = filterData(mockIVRData, role, 'ivr');
-            displayFilteredData('ivr', mockIVRData, ivrFiltered);
-
-            // Order filtering
-            const orderFiltered = filterData(mockOrderData, role, 'orders');
-            displayFilteredData('order', mockOrderData, orderFiltered);
-
-            // Shipping filtering
-            const shippingFiltered = filterData(mockShippingData, role, 'shipping');
-            displayFilteredData('shipping', mockShippingData, shippingFiltered);
-
-            const endTime = performance.now();
-            document.getElementById('filteringTime').textContent = Math.round(endTime - startTime);
-        }
-
-        // Mock filtering logic
-        function filterData(data, role, type) {
-            let filtered = [...data];
-            const appliedFilters = [];
-            const restrictions = [];
-
-            switch (role.scope) {
-                case 'SYSTEM_WIDE':
-                    appliedFilters.push('system_wide_access');
-                    break;
-                case 'ORGANIZATION_WIDE':
-                    filtered = filtered.filter(item => item.organizationId === 'org-1');
-                    appliedFilters.push('organization_filter');
-                    break;
-                case 'NETWORK_WIDE':
-                    filtered = filtered.filter(item => item.organizationId === 'org-1');
-                    appliedFilters.push('network_filter');
-                    break;
-                case 'TERRITORY_WIDE':
-                    filtered = filtered.filter(item => item.territoryId === 'territory-1');
-                    appliedFilters.push('territory_filter');
-                    break;
-                case 'PERSONAL_ONLY':
-                    filtered = filtered.filter(item => item.salesRepId === role.id);
-                    appliedFilters.push('personal_filter');
-                    restrictions.push(`limited_to_assigned_${type}`);
-                    break;
-                case 'PRACTICE_ONLY':
-                    filtered = filtered.filter(item => item.doctorId === role.id);
-                    appliedFilters.push('practice_filter');
-                    break;
-            }
-
-            return {
-                data: filtered,
-                totalCount: data.length,
-                accessibleCount: filtered.length,
-                appliedFilters,
-                restrictions
-            };
-        }
-
-        // Display filtered data
-        function displayFilteredData(type, allData, filteredResult) {
-            // Display all data
-            const allContainer = document.getElementById(`all${type.charAt(0).toUpperCase() + type.slice(1)}Data`);
-            allContainer.innerHTML = allData.map(item => createDataItem(item, false)).join('');
-
-            // Display filtered data
-            const filteredContainer = document.getElementById(`filtered${type.charAt(0).toUpperCase() + type.slice(1)}Data`);
-            filteredContainer.innerHTML = filteredResult.data.map(item => createDataItem(item, true)).join('');
-
-            // Update filter info
-            document.getElementById(`${type}Filters`).textContent = filteredResult.appliedFilters.join(', ') || 'None';
-            document.getElementById(`${type}Restrictions`).textContent = filteredResult.restrictions.join(', ') || 'None';
-            document.getElementById(`${type}AccessCount`).textContent = filteredResult.accessibleCount;
-            document.getElementById(`${type}TotalCount`).textContent = filteredResult.totalCount;
-        }
-
-        // Create data item HTML
-        function createDataItem(item, accessible) {
-            const className = accessible ? 'data-item accessible' : 'data-item restricted';
-            const icon = accessible ? '✅' : '❌';
-
-            return `
-                <div class="${className}">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <div class="font-medium">${item.id}</div>
-                            <div class="text-sm text-gray-600">
-                                ${Object.entries(item).slice(1, 4).map(([key, value]) => `${key}: ${value}`).join(' • ')}
-                            </div>
-                        </div>
-                        <div class="text-lg">${icon}</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Run access control tests
-        function runAccessControlTests(role) {
-            const testItem = mockIVRData[0];
-            const canAccess = canAccessData(testItem, role);
-
-            document.getElementById('dataAccessTests').innerHTML = `
-                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span class="text-sm">Access to ${testItem.id}</span>
-                    <span class="text-lg">${canAccess ? '✅' : '❌'}</span>
-                </div>
-                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span class="text-sm">Cross-org data access</span>
-                    <span class="text-lg">${role.scope === 'SYSTEM_WIDE' ? '✅' : '❌'}</span>
-                </div>
-            `;
-
-            document.getElementById('hierarchyValidationTests').innerHTML = `
-                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span class="text-sm">Can manage lower roles</span>
-                    <span class="text-lg">${['SYSTEM_WIDE', 'ORGANIZATION_WIDE', 'NETWORK_WIDE'].includes(role.scope) ? '✅' : '❌'}</span>
-                </div>
-                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                    <span class="text-sm">Hierarchy validation</span>
-                    <span class="text-lg">✅</span>
-                </div>
-            `;
-        }
-
-        // Mock access control
-        function canAccessData(item, role) {
-            switch (role.scope) {
-                case 'SYSTEM_WIDE':
-                    return true;
-                case 'ORGANIZATION_WIDE':
-                    return item.organizationId === 'org-1';
-                case 'NETWORK_WIDE':
-                    return item.organizationId === 'org-1';
-                case 'TERRITORY_WIDE':
-                    return item.territoryId === 'territory-1';
-                case 'PERSONAL_ONLY':
-                    return item.salesRepId === role.id;
-                case 'PRACTICE_ONLY':
-                    return item.doctorId === role.id;
-                default:
-                    return false;
-            }
-        }
-
-        // Update performance metrics
-        function updatePerformanceMetrics() {
-            document.getElementById('cacheHits').textContent = Math.floor(Math.random() * 10) + 1;
-
-            const totalData = mockIVRData.length + mockOrderData.length + mockShippingData.length;
-            const accessibleData = currentRole ? filterData([...mockIVRData, ...mockOrderData, ...mockShippingData], currentRole, 'all').accessibleCount : 0;
-            const reduction = Math.round(((totalData - accessibleData) / totalData) * 100);
-            document.getElementById('dataReduction').textContent = reduction;
-        }
-
-        // Initialize the page
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeRoleSelection();
-        });
-    </script>
 </body>
 </html>

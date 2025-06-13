@@ -15,6 +15,20 @@ export interface SharedIVRRequest {
   patientId: string;
   doctorId: string;
   estimatedCompletion?: string;
+  // Hierarchy fields for filtering
+  organizationId: string;
+  territoryId?: string;
+  networkId?: string;
+  distributorNetworkId: string;
+  requestingDoctorId: string;
+  assignedSalesRepId?: string;
+  distributorId?: string;
+  salesRepId?: string;
+  createdBy: string;
+  assignedTo?: string;
+  createdAt: string;
+  updatedAt: string;
+  insuranceProvider: string;
 }
 
 export interface DashboardStats {
@@ -41,7 +55,14 @@ const getRecentDate = (daysAgo: number): string => {
   return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
 };
 
-// Shared mock data - single source of truth for all IVR data
+// Helper function to create ISO timestamp
+const getRecentTimestamp = (daysAgo: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString();
+};
+
+// Shared mock data - single source of truth for all IVR data with proper hierarchy
 export const mockIVRRequests: SharedIVRRequest[] = [
   {
     id: '660e8400-e29b-41d4-a716-446655440001',
@@ -59,7 +80,21 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     hasUnreadMessages: false,
     patientId: 'P-1234',
     doctorId: 'D-001',
-    estimatedCompletion: getRecentDate(-2) // 2 days from now
+    estimatedCompletion: getRecentDate(-2), // 2 days from now
+    // Hierarchy fields - Territory 1 (Regional Distributor's territory)
+    organizationId: 'org-1',
+    territoryId: 'territory-1',
+    networkId: 'network-1',
+    distributorNetworkId: 'network-1',
+    requestingDoctorId: 'D-001',
+    assignedSalesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    salesRepId: 'sales-rep-1',
+    createdBy: 'D-001',
+    assignedTo: 'sales-rep-1',
+    createdAt: getRecentTimestamp(3),
+    updatedAt: getRecentTimestamp(1),
+    insuranceProvider: 'Blue Cross Blue Shield'
   },
   {
     id: '660e8400-e29b-41d4-a716-446655440002',
@@ -77,7 +112,21 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     hasUnreadMessages: true,
     patientId: 'P-1235',
     doctorId: 'D-002',
-    estimatedCompletion: getRecentDate(-3) // 3 days from now
+    estimatedCompletion: getRecentDate(-3), // 3 days from now
+    // Hierarchy fields - Territory 1 (Regional Distributor's territory)
+    organizationId: 'org-1',
+    territoryId: 'territory-1',
+    networkId: 'network-1',
+    distributorNetworkId: 'network-1',
+    requestingDoctorId: 'D-002',
+    assignedSalesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    salesRepId: 'sales-rep-1',
+    createdBy: 'D-002',
+    assignedTo: 'sales-rep-1',
+    createdAt: getRecentTimestamp(2),
+    updatedAt: getRecentTimestamp(1),
+    insuranceProvider: 'UnitedHealthcare'
   },
   {
     id: '660e8400-e29b-41d4-a716-446655440003',
@@ -94,7 +143,21 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     daysPending: 4,
     hasUnreadMessages: true,
     patientId: 'P-1236',
-    doctorId: 'D-003'
+    doctorId: 'D-003',
+    // Hierarchy fields - Territory 1 (Regional Distributor's territory)
+    organizationId: 'org-1',
+    territoryId: 'territory-1',
+    networkId: 'network-1',
+    distributorNetworkId: 'network-1',
+    requestingDoctorId: 'D-003',
+    assignedSalesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    salesRepId: 'sales-rep-1',
+    createdBy: 'D-003',
+    assignedTo: 'sales-rep-1',
+    createdAt: getRecentTimestamp(4),
+    updatedAt: getRecentTimestamp(1),
+    insuranceProvider: 'Aetna'
   },
   {
     id: '660e8400-e29b-41d4-a716-446655440004',
@@ -111,7 +174,21 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     daysPending: 1,
     hasUnreadMessages: false,
     patientId: 'P-1237',
-    doctorId: 'D-004'
+    doctorId: 'D-004',
+    // Hierarchy fields - Territory 2 (Different territory - should NOT be visible to regional-dist-1)
+    organizationId: 'org-1',
+    territoryId: 'territory-2',
+    networkId: 'network-1',
+    distributorNetworkId: 'network-1',
+    requestingDoctorId: 'D-004',
+    assignedSalesRepId: 'sales-rep-2',
+    distributorId: 'regional-dist-2',
+    salesRepId: 'sales-rep-2',
+    createdBy: 'D-004',
+    assignedTo: 'sales-rep-2',
+    createdAt: getRecentTimestamp(1),
+    updatedAt: getRecentTimestamp(1),
+    insuranceProvider: 'Cigna'
   },
   {
     id: '660e8400-e29b-41d4-a716-446655440005',
@@ -128,7 +205,53 @@ export const mockIVRRequests: SharedIVRRequest[] = [
     daysPending: 6,
     hasUnreadMessages: true,
     patientId: 'P-1238',
-    doctorId: 'D-005'
+    doctorId: 'D-005',
+    // Hierarchy fields - Territory 2 (Different territory - should NOT be visible to regional-dist-1)
+    organizationId: 'org-1',
+    territoryId: 'territory-2',
+    networkId: 'network-1',
+    distributorNetworkId: 'network-1',
+    requestingDoctorId: 'D-005',
+    assignedSalesRepId: 'sales-rep-2',
+    distributorId: 'regional-dist-2',
+    salesRepId: 'sales-rep-2',
+    createdBy: 'D-005',
+    assignedTo: 'sales-rep-2',
+    createdAt: getRecentTimestamp(6),
+    updatedAt: getRecentTimestamp(2),
+    insuranceProvider: 'Medicare'
+  },
+  {
+    id: '660e8400-e29b-41d4-a716-446655440006',
+    ivrNumber: 'IVR-2024-006',
+    patientName: 'Amanda Rodriguez',
+    doctorName: 'Dr. Carlos Martinez',
+    serviceType: 'Bioengineered Skin Substitute',
+    insurance: 'Humana',
+    status: 'pending_approval',
+    priority: 'high',
+    submittedDate: getRecentDate(5), // 5 days ago
+    lastUpdated: getRecentDate(1), // 1 day ago
+    daysSinceSubmission: 5,
+    daysPending: 5,
+    hasUnreadMessages: false,
+    patientId: 'P-1239',
+    doctorId: 'D-006',
+    estimatedCompletion: getRecentDate(-1), // 1 day from now
+    // Hierarchy fields - Territory 1 (Regional Distributor's territory)
+    organizationId: 'org-1',
+    territoryId: 'territory-1',
+    networkId: 'network-1',
+    distributorNetworkId: 'network-1',
+    requestingDoctorId: 'D-006',
+    assignedSalesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    salesRepId: 'sales-rep-1',
+    createdBy: 'D-006',
+    assignedTo: 'sales-rep-1',
+    createdAt: getRecentTimestamp(5),
+    updatedAt: getRecentTimestamp(1),
+    insuranceProvider: 'Humana'
   }
 ].map(request => ({
   ...request,
