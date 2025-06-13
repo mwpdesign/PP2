@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { HierarchyFilteringService } from '../../services/hierarchyFilteringService';
+import { Card } from '../../components/shared/ui/Card';
 import {
   EyeIcon,
   MagnifyingGlassIcon,
   CalendarIcon,
+  CurrencyDollarIcon,
   ShieldCheckIcon,
   ExclamationTriangleIcon,
-  CurrencyDollarIcon
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
-import { Card } from '../../components/shared/ui/Card';
 
 interface Order {
   id: string;
   doctorName: string;
+  doctorId: string; // Add doctorId for hierarchy filtering
   facility: string;
   products: string;
   totalAmount: number;
@@ -23,93 +27,130 @@ interface Order {
   productCount: number;
   shippedDate?: string;
   deliveredDate?: string;
+  // Hierarchy fields for filtering
+  salesRepId?: string;
+  distributorId?: string;
+  regionalDistributorId?: string;
+  createdBy?: string;
 }
 
-// Comprehensive mock data for Master Distributor monitoring
+// Updated mock data with hierarchy relationships
 const mockOrders: Order[] = [
   {
     id: 'ORD-2024-001',
-    doctorName: 'Dr. Sarah Chen',
+    doctorName: 'Dr. John Smith',
+    doctorId: 'D-001', // Regional Distributor West
     facility: 'Metro General Hospital',
     products: '3 items',
     totalAmount: 2450.00,
     status: 'delivered',
     orderDate: '2024-12-18',
-    distributor: 'MedSupply East',
-    region: 'East Coast',
+    distributor: 'Regional Distributor West',
+    region: 'West',
     productCount: 3,
     shippedDate: '2024-12-19',
-    deliveredDate: '2024-12-20'
+    deliveredDate: '2024-12-20',
+    salesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    regionalDistributorId: 'regional-dist-1',
+    createdBy: 'D-001'
   },
   {
     id: 'ORD-2024-002',
-    doctorName: 'Dr. Michael Rodriguez',
+    doctorName: 'Dr. Michael Brown',
+    doctorId: 'D-002', // Regional Distributor West
     facility: 'St. Mary\'s Medical Center',
     products: '5 items',
     totalAmount: 3200.00,
     status: 'shipped',
     orderDate: '2024-12-19',
-    distributor: 'HealthCare Partners',
-    region: 'Southwest',
+    distributor: 'Regional Distributor West',
+    region: 'West',
     productCount: 5,
-    shippedDate: '2024-12-20'
+    shippedDate: '2024-12-20',
+    salesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    regionalDistributorId: 'regional-dist-1',
+    createdBy: 'D-002'
   },
   {
     id: 'ORD-2024-003',
-    doctorName: 'Dr. Lisa Park',
+    doctorName: 'Dr. Jennifer Lee',
+    doctorId: 'D-003', // Regional Distributor West
     facility: 'Austin Regional Medical',
     products: '2 items',
     totalAmount: 1850.00,
     status: 'processing',
     orderDate: '2024-12-20',
-    distributor: 'Texas Medical Supply',
-    region: 'Central',
-    productCount: 2
+    distributor: 'Regional Distributor West',
+    region: 'West',
+    productCount: 2,
+    salesRepId: 'sales-rep-3',
+    distributorId: 'regional-dist-1',
+    regionalDistributorId: 'regional-dist-1',
+    createdBy: 'D-003'
   },
   {
     id: 'ORD-2024-004',
-    doctorName: 'Dr. James Wilson',
+    doctorName: 'Dr. Carlos Martinez',
+    doctorId: 'D-006', // Regional Distributor West
     facility: 'Central Texas Medical',
     products: '4 items',
     totalAmount: 2900.00,
     status: 'shipped',
     orderDate: '2024-12-19',
-    distributor: 'Regional Health Partners',
-    region: 'Central',
+    distributor: 'Regional Distributor West',
+    region: 'West',
     productCount: 4,
-    shippedDate: '2024-12-20'
+    shippedDate: '2024-12-20',
+    salesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    regionalDistributorId: 'regional-dist-1',
+    createdBy: 'D-006'
   },
   {
     id: 'ORD-2024-005',
-    doctorName: 'Dr. Emma Davis',
-    facility: 'North Austin Clinic',
+    doctorName: 'Dr. Robert Chen',
+    doctorId: 'D-004', // Regional Distributor East
+    facility: 'East Coast Medical Center',
     products: '1 item',
     totalAmount: 890.00,
     status: 'delivered',
     orderDate: '2024-12-17',
-    distributor: 'Austin Medical Group',
-    region: 'Central',
+    distributor: 'Regional Distributor East',
+    region: 'East',
     productCount: 1,
     shippedDate: '2024-12-18',
-    deliveredDate: '2024-12-19'
+    deliveredDate: '2024-12-19',
+    salesRepId: 'sales-rep-2',
+    distributorId: 'regional-dist-2',
+    regionalDistributorId: 'regional-dist-2',
+    createdBy: 'D-004'
   },
   {
     id: 'ORD-2024-006',
-    doctorName: 'Dr. Robert Chen',
-    facility: 'South Austin Medical',
+    doctorName: 'Dr. Lisa Anderson',
+    doctorId: 'D-005', // Regional Distributor East
+    facility: 'Southeast Regional Hospital',
     products: '6 items',
     totalAmount: 4100.00,
     status: 'delivered',
     orderDate: '2024-12-16',
-    distributor: 'MedSupply South',
-    region: 'Southwest',
+    distributor: 'Regional Distributor East',
+    region: 'East',
     productCount: 6,
     shippedDate: '2024-12-17',
-    deliveredDate: '2024-12-18'
+    deliveredDate: '2024-12-18',
+    salesRepId: 'sales-rep-2',
+    distributorId: 'regional-dist-2',
+    regionalDistributorId: 'regional-dist-2',
+    createdBy: 'D-005'
   },
+  // Additional orders from other distributors (will be filtered out for Regional Distributors)
   {
     id: 'ORD-2024-007',
     doctorName: 'Dr. Jennifer Martinez',
+    doctorId: 'D-007',
     facility: 'Cedar Park Family Health',
     products: '2 items',
     totalAmount: 1650.00,
@@ -117,11 +158,16 @@ const mockOrders: Order[] = [
     orderDate: '2024-12-18',
     distributor: 'Northwest Medical',
     region: 'Northwest',
-    productCount: 2
+    productCount: 2,
+    salesRepId: 'sales-rep-4',
+    distributorId: 'regional-dist-3',
+    regionalDistributorId: 'regional-dist-3',
+    createdBy: 'D-007'
   },
   {
     id: 'ORD-2024-008',
     doctorName: 'Dr. Mark Thompson',
+    doctorId: 'D-008',
     facility: 'Dallas Medical Center',
     products: '7 items',
     totalAmount: 5200.00,
@@ -129,82 +175,130 @@ const mockOrders: Order[] = [
     orderDate: '2024-12-20',
     distributor: 'Dallas Health Supply',
     region: 'Central',
-    productCount: 7
-  },
-  {
-    id: 'ORD-2024-009',
-    doctorName: 'Dr. Amanda Foster',
-    facility: 'Houston General',
-    products: '3 items',
-    totalAmount: 2750.00,
-    status: 'shipped',
-    orderDate: '2024-12-19',
-    distributor: 'Gulf Coast Medical',
-    region: 'Southeast',
-    productCount: 3,
-    shippedDate: '2024-12-20'
-  },
-  {
-    id: 'ORD-2024-010',
-    doctorName: 'Dr. Kevin Lee',
-    facility: 'Phoenix Medical Plaza',
-    products: '4 items',
-    totalAmount: 3400.00,
-    status: 'delivered',
-    orderDate: '2024-12-15',
-    distributor: 'Desert Medical Supply',
-    region: 'Southwest',
-    productCount: 4,
-    shippedDate: '2024-12-16',
-    deliveredDate: '2024-12-17'
-  },
-  {
-    id: 'ORD-2024-011',
-    doctorName: 'Dr. Rachel Kim',
-    facility: 'Seattle Medical Center',
-    products: '5 items',
-    totalAmount: 3800.00,
-    status: 'processing',
-    orderDate: '2024-12-20',
-    distributor: 'Pacific Northwest Supply',
-    region: 'Northwest',
-    productCount: 5
-  },
-  {
-    id: 'ORD-2024-012',
-    doctorName: 'Dr. David Brown',
-    facility: 'Miami General Hospital',
-    products: '8 items',
-    totalAmount: 6200.00,
-    status: 'delivered',
-    orderDate: '2024-12-14',
-    distributor: 'Southeast Medical',
-    region: 'Southeast',
-    productCount: 8,
-    shippedDate: '2024-12-15',
-    deliveredDate: '2024-12-16'
+    productCount: 7,
+    salesRepId: 'sales-rep-5',
+    distributorId: 'regional-dist-4',
+    regionalDistributorId: 'regional-dist-4',
+    createdBy: 'D-008'
   }
 ];
 
 const OrderProcessing: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [filteredData, setFilteredData] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filterResult, setFilterResult] = useState<any>(null);
+
+  // Filter states
   const [statusFilter, setStatusFilter] = useState<string>('All');
-  const [distributorFilter, setDistributorFilter] = useState<string>('All');
+  const [doctorFilter, setDoctorFilter] = useState<string>('All'); // SECURITY: Changed from distributorFilter
   const [regionFilter, setRegionFilter] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState<string>('All');
   const [valueRange, setValueRange] = useState<string>('All');
 
-  // Filter orders based on selected criteria
-  const getFilteredOrders = () => {
-    let filtered = mockOrders;
+  useEffect(() => {
+    const loadFilteredData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-    // Search filter
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        console.log('🔍 [OrderProcessing] Applying hierarchy filtering...');
+        console.log('👤 Current user:', user.email, 'Role:', user.role);
+        console.log('🚨 SECURITY: Filtering orders to prevent data leakage between distributors');
+
+        // Convert Order[] to SharedOrder[] format for filtering
+        const ordersForFiltering = mockOrders.map(order => ({
+          id: order.id,
+          orderNumber: order.id,
+          date: order.orderDate,
+          time: '09:00 AM',
+          doctorId: order.doctorId,
+          doctorName: order.doctorName,
+          doctorEmail: `${order.doctorId}@healthcare.local`,
+          facility: order.facility,
+          patient: { initials: 'P.T.', patientId: 'PT-123' },
+          ivrReference: 'IVR-REF',
+          products: [],
+          shippingAddress: {
+            facility: order.facility,
+            address: '123 Medical Dr',
+            city: 'Austin',
+            state: 'TX',
+            zipCode: '78701'
+          },
+          priority: 'Standard' as const,
+          status: 'Pending Fulfillment' as const,
+          totalItems: order.productCount,
+          salesRepId: order.salesRepId,
+          distributorId: order.distributorId,
+          regionalDistributorId: order.regionalDistributorId,
+          createdBy: order.createdBy
+        }));
+
+        // Apply hierarchy filtering - CRITICAL SECURITY STEP
+        const result = HierarchyFilteringService.filterOrderDataByHierarchy(ordersForFiltering, user);
+
+        console.log('📦 Order hierarchy filtering result:', {
+          totalCount: result.totalCount,
+          filteredCount: result.filteredCount,
+          filterReason: result.filterReason,
+          allowedDoctorIds: result.allowedDoctorIds,
+          downlineDoctors: result.userHierarchyInfo.downlineDoctors.length
+        });
+
+        // SECURITY: Filter original orders based on allowed doctor IDs only
+        const allowedDoctorIds = result.allowedDoctorIds;
+        const hierarchyFilteredOrders = mockOrders.filter(order => {
+          const isAllowed = allowedDoctorIds.includes(order.doctorId) ||
+                           order.distributorId === result.userHierarchyInfo.userId ||
+                           order.regionalDistributorId === result.userHierarchyInfo.userId;
+
+          if (isAllowed) {
+            console.log(`✅ Including order ${order.id} from doctor ${order.doctorId} (${order.doctorName})`);
+          } else {
+            console.log(`❌ SECURITY: Excluding order ${order.id} from doctor ${order.doctorId} (${order.doctorName}) - not in downline`);
+          }
+
+          return isAllowed;
+        });
+
+        console.log(`🔒 SECURITY APPLIED: Showing ${hierarchyFilteredOrders.length} of ${mockOrders.length} orders`);
+
+        setFilterResult(result);
+        setFilteredData(hierarchyFilteredOrders);
+
+      } catch (error) {
+        console.error('❌ Error loading order data:', error);
+        setError('Failed to load order data');
+        setFilteredData([]);
+        setFilterResult(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFilteredData();
+  }, [user]);
+
+  // Filter orders based on selected criteria (applied to hierarchy-filtered data)
+  const getFilteredOrders = () => {
+    let filtered = filteredData;
+
+    // Search filter - only searches within allowed data
     if (searchTerm) {
       filtered = filtered.filter(order =>
         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.facility.toLowerCase().includes(searchTerm.toLowerCase())
+        order.facility.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.products.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -213,12 +307,12 @@ const OrderProcessing: React.FC = () => {
       filtered = filtered.filter(order => order.status === statusFilter);
     }
 
-    // Distributor filter
-    if (distributorFilter !== 'All') {
-      filtered = filtered.filter(order => order.distributor === distributorFilter);
+    // SECURITY: Doctor filter (replaces distributor filter) - only shows authorized doctors
+    if (doctorFilter !== 'All') {
+      filtered = filtered.filter(order => order.doctorName === doctorFilter);
     }
 
-    // Region filter
+    // Region filter - only shows regions from authorized data
     if (regionFilter !== 'All') {
       filtered = filtered.filter(order => order.region === regionFilter);
     }
@@ -263,12 +357,12 @@ const OrderProcessing: React.FC = () => {
     return filtered;
   };
 
-  // Calculate analytics
+  // Calculate analytics based on FILTERED data only (security requirement)
   const analytics = {
-    totalOrders: 89, // Updated to match dashboard
-    processing: 23, // Being prepared
-    shippedToday: 18, // Out for delivery
-    deliveredThisWeek: 67 // Completed
+    totalOrders: filteredData.length,
+    processing: filteredData.filter(o => o.status === 'processing').length,
+    shippedToday: filteredData.filter(o => o.status === 'shipped').length,
+    deliveredThisWeek: filteredData.filter(o => o.status === 'delivered').length
   };
 
   const getStatusBadge = (status: string) => {
@@ -291,12 +385,63 @@ const OrderProcessing: React.FC = () => {
     }).format(amount);
   };
 
-  const uniqueDistributors = [...new Set(mockOrders.map(order => order.distributor))];
-  const uniqueRegions = [...new Set(mockOrders.map(order => order.region))];
+  // SECURITY: Get unique doctors from FILTERED data only (not all distributors)
+  const uniqueDoctors = [...new Set(filteredData.map(order => order.doctorName))];
+  const uniqueRegions = [...new Set(filteredData.map(order => order.region))];
+
+  // Clear filters function for better UX
+  const clearAllFilters = () => {
+    setStatusFilter('All');
+    setDoctorFilter('All');
+    setRegionFilter('All');
+    setSearchTerm('');
+    setDateRange('All');
+    setValueRange('All');
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = statusFilter !== 'All' || doctorFilter !== 'All' ||
+                          regionFilter !== 'All' || searchTerm !== '' ||
+                          dateRange !== 'All' || valueRange !== 'All';
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading order data with security filtering...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Please log in to access this page.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 bg-slate-50 min-h-screen">
-      {/* Header */}
+      {/* Header with filtering summary */}
       <div className="pt-1 pb-3">
         <div className="flex justify-between items-center mb-3">
           <div>
@@ -308,6 +453,27 @@ const OrderProcessing: React.FC = () => {
               </div>
             </div>
             <p className="text-slate-600 mt-1 text-lg leading-normal">Monitor orders and fulfillment across your distribution network</p>
+
+            {/* SECURITY: Blue filtering banner showing hierarchy scope */}
+            {filterResult && (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-blue-900">
+                    {HierarchyFilteringService.getOrderFilteringSummary(filterResult)}
+                  </span>
+                  <CheckCircleIcon className="h-4 w-4 text-blue-600 ml-2" />
+                </div>
+                {filterResult.userHierarchyInfo.downlineDoctors.length > 0 && (
+                  <div className="mt-2 text-xs text-blue-700">
+                    Authorized doctors: {filterResult.userHierarchyInfo.downlineDoctors.map((d: any) => d.name).join(', ')}
+                  </div>
+                )}
+                <div className="mt-1 text-xs text-blue-600">
+                  🔒 Data isolation active - only showing authorized orders
+                </div>
+              </div>
+            )}
           </div>
           <div className="bg-white rounded-xl shadow-sm px-4 py-2 border border-slate-200">
             <span className="text-sm font-medium text-slate-600">Active Orders: </span>
@@ -315,12 +481,12 @@ const OrderProcessing: React.FC = () => {
           </div>
         </div>
 
-        {/* Summary Cards */}
+        {/* Summary Cards - based on filtered data only */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm">
             <div className="text-2xl font-bold text-slate-700 leading-tight">{analytics.totalOrders}</div>
             <div className="text-sm font-medium text-slate-600 mt-1">Total Orders</div>
-            <div className="text-xs text-slate-500 mt-1">Active orders</div>
+            <div className="text-xs text-slate-500 mt-1">Authorized orders</div>
           </div>
           <div className="bg-white border border-blue-200 rounded-xl p-4 text-center shadow-sm">
             <div className="text-2xl font-bold text-blue-700 leading-tight">{analytics.processing}</div>
@@ -341,6 +507,18 @@ const OrderProcessing: React.FC = () => {
 
         {/* Search and Filters */}
         <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">Filter Orders</h3>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="text-sm text-slate-600 hover:text-slate-800 underline"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Search */}
             <div className="lg:col-span-2">
@@ -363,7 +541,7 @@ const OrderProcessing: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
               >
                 <option value="All">All Statuses</option>
                 <option value="processing">Processing</option>
@@ -373,17 +551,20 @@ const OrderProcessing: React.FC = () => {
               </select>
             </div>
 
-            {/* Distributor Filter */}
+            {/* SECURITY: Doctor Filter (replaces Distributor Filter) */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Distributor</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Doctor
+                <span className="text-xs text-green-600 ml-1">(Authorized Only)</span>
+              </label>
               <select
-                value={distributorFilter}
-                onChange={(e) => setDistributorFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                value={doctorFilter}
+                onChange={(e) => setDoctorFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
               >
-                <option value="All">All Distributors</option>
-                {uniqueDistributors.map(distributor => (
-                  <option key={distributor} value={distributor}>{distributor}</option>
+                <option value="All">All Doctors ({uniqueDoctors.length})</option>
+                {uniqueDoctors.map(doctor => (
+                  <option key={doctor} value={doctor}>{doctor}</option>
                 ))}
               </select>
             </div>
@@ -396,7 +577,7 @@ const OrderProcessing: React.FC = () => {
                 <select
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                  className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
                 >
                   <option value="All">All Time</option>
                   <option value="Today">Today</option>
@@ -408,7 +589,7 @@ const OrderProcessing: React.FC = () => {
           </div>
 
           {/* Second Row of Filters */}
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Order Value</label>
               <div className="relative">
@@ -416,7 +597,7 @@ const OrderProcessing: React.FC = () => {
                 <select
                   value={valueRange}
                   onChange={(e) => setValueRange(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                  className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
                 >
                   <option value="All">All Values</option>
                   <option value="Under1000">Under $1,000</option>
@@ -425,8 +606,23 @@ const OrderProcessing: React.FC = () => {
                 </select>
               </div>
             </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Region</label>
+              <select
+                value={regionFilter}
+                onChange={(e) => setRegionFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+              >
+                <option value="All">All Regions ({uniqueRegions.length})</option>
+                {uniqueRegions.map(region => (
+                  <option key={region} value={region}>{region}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="md:col-span-2 flex items-end">
-              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg px-3 py-2">
+              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 w-full">
                 <ExclamationTriangleIcon className="h-4 w-4 text-slate-500 mr-2" />
                 <span className="text-sm text-slate-600">Read-only monitoring access - no editing capabilities</span>
               </div>
@@ -435,8 +631,21 @@ const OrderProcessing: React.FC = () => {
         </Card>
       </div>
 
-      {/* READ-ONLY Orders Table */}
-      <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden opacity-95">
+      {/* SECURITY: READ-ONLY Orders Table with filtered data */}
+      <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-slate-800">
+              Order Results ({getFilteredOrders().length} of {filteredData.length} orders)
+            </h3>
+            {hasActiveFilters && (
+              <span className="text-sm text-slate-600 bg-blue-50 px-2 py-1 rounded">
+                Filters active
+              </span>
+            )}
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-slate-100">
@@ -447,7 +656,7 @@ const OrderProcessing: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Total Amount</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Order Date</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Distributor</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Region</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -478,15 +687,13 @@ const OrderProcessing: React.FC = () => {
                       year: 'numeric'
                     })}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{order.distributor}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{order.region}</td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
                     <button
                       onClick={() => {
-                        console.log('🚀 CRITICAL DEBUG: Navigating to order detail');
+                        console.log('🚀 Navigating to order detail');
                         console.log('Order ID:', order.id);
                         console.log('Target URL:', `/distributor/orders/${order.id}`);
-                        console.log('Current location:', window.location.href);
-                        console.log('Using React Router navigate...');
                         navigate(`/distributor/orders/${order.id}`);
                       }}
                       className="inline-flex items-center px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors"
@@ -509,7 +716,20 @@ const OrderProcessing: React.FC = () => {
               </svg>
             </div>
             <h3 className="text-xl font-bold text-slate-800 mb-2 leading-tight">No Orders Found</h3>
-            <p className="text-slate-600 text-base">No orders match your current filter criteria</p>
+            <p className="text-slate-600 text-base">
+              {hasActiveFilters
+                ? 'No orders match your current filter criteria. Try adjusting your filters.'
+                : 'No orders available for your current access level.'
+              }
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="mt-4 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+              >
+                Clear All Filters
+              </button>
+            )}
           </div>
         )}
       </Card>
