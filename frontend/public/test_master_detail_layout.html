@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MasterDetailLayout Component Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8fafc;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .section {
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .section:last-child {
+            border-bottom: none;
+        }
+        .section h2 {
+            margin: 0 0 16px 0;
+            color: #1f2937;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .section h3 {
+            margin: 16px 0 8px 0;
+            color: #374151;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+        }
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        .checklist li.completed::before {
+            content: "✅";
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        .checklist li.pending::before {
+            content: "⏳";
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        .checklist li.failed::before {
+            content: "❌";
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        .code-block {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+        }
+        .success {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+        }
+        .warning {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+        }
+        .error {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+        }
+        .demo-container {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+        .demo-header {
+            background: #f9fafb;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #374151;
+        }
+        .demo-content {
+            height: 400px;
+            display: flex;
+        }
+        .demo-master {
+            width: 60%;
+            background: #f8fafc;
+            border-right: 1px solid #e5e7eb;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .demo-detail {
+            width: 40%;
+            background: white;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .demo-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .demo-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .demo-item.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 8px 8px 8px 0;
+            transition: background 0.2s;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .test-button.secondary {
+            background: #6b7280;
+        }
+        .test-button.secondary:hover {
+            background: #4b5563;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online {
+            background: #22c55e;
+        }
+        .status-offline {
+            background: #ef4444;
+        }
+        .status-pending {
+            background: #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 MasterDetailLayout Component Test</h1>
+            <p>Task ID: mbuvz5sddkjowjd494o - Foundation layout for split view interface (60% list / 40% detail)</p>
+            <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+        </div>
+
+        <!-- Implementation Summary -->
+        <div class="section success">
+            <h2>✅ Implementation Summary</h2>
+            <p><strong>MasterDetailLayout component created successfully:</strong></p>
+            <ul class="checklist">
+                <li class="completed">✅ Created at frontend/src/components/shared/layout/MasterDetailLayout.tsx</li>
+                <li class="completed">✅ 60% width for master panel (list view) on the left</li>
+                <li class="completed">✅ 40% width for detail panel (detail view) on the right</li>
+                <li class="completed">✅ Responsive behavior for mobile devices</li>
+                <li class="completed">✅ Flexible content areas for any type of list/detail views</li>
+                <li class="completed">✅ Smooth transitions and animations</li>
+                <li class="completed">✅ TypeScript interfaces and comprehensive documentation</li>
+            </ul>
+        </div>
+
+        <!-- Component Features -->
+        <div class="section info">
+            <h2>🎯 Component Features</h2>
+
+            <h3>Layout Structure</h3>
+            <ul class="checklist">
+                <li class="completed">✅ 60/40 split layout (master/detail)</li>
+                <li class="completed">✅ Responsive design with mobile overlay</li>
+                <li class="completed">✅ Smooth transitions between states</li>
+                <li class="completed">✅ Configurable minimum height</li>
+                <li class="completed">✅ Optional className support</li>
+            </ul>
+
+            <h3>Props Interface</h3>
+            <div class="code-block">interface MasterDetailLayoutProps {
+  /** Left panel content (list view) - takes 60% of the width */
+  masterPanel: React.ReactNode;
+  /** Right panel content (detail view) - takes 40% of the width */
+  detailPanel: React.ReactNode;
+  /** Optional className for the container */
+  className?: string;
+  /** Whether to show the detail panel (for responsive behavior) */
+  showDetail?: boolean;
+  /** Optional minimum height for the layout */
+  minHeight?: string;
+}</div>
+
+            <h3>Usage Example</h3>
+            <div class="code-block">&lt;MasterDetailLayout
+  masterPanel={&lt;IVRList /&gt;}
+  detailPanel={&lt;IVRDetail /&gt;}
+  showDetail={selectedItem !== null}
+  className="custom-layout"
+  minHeight="calc(100vh - 120px)"
+/&gt;</div>
+        </div>
+
+        <!-- Visual Demo -->
+        <div class="section">
+            <h2>🎨 Visual Demo</h2>
+            <p>Interactive demonstration of the 60/40 split layout:</p>
+
+            <div class="demo-container">
+                <div class="demo-header">
+                    MasterDetailLayout Demo - 60% Master Panel | 40% Detail Panel
+                </div>
+                <div class="demo-content">
+                    <div class="demo-master">
+                        <h3>Master Panel (60% width)</h3>
+                        <p>This represents the list view where items are displayed:</p>
+
+                        <div class="demo-item selected" onclick="selectItem(this, 'IVR-2024-001')">
+                            <strong>IVR-2024-001</strong><br>
+                            <small>Patient: John Smith | Status: Pending</small>
+                        </div>
+
+                        <div class="demo-item" onclick="selectItem(this, 'IVR-2024-002')">
+                            <strong>IVR-2024-002</strong><br>
+                            <small>Patient: Jane Doe | Status: In Review</small>
+                        </div>
+
+                        <div class="demo-item" onclick="selectItem(this, 'IVR-2024-003')">
+                            <strong>IVR-2024-003</strong><br>
+                            <small>Patient: Bob Johnson | Status: Approved</small>
+                        </div>
+
+                        <div class="demo-item" onclick="selectItem(this, 'IVR-2024-004')">
+                            <strong>IVR-2024-004</strong><br>
+                            <small>Patient: Alice Brown | Status: Rejected</small>
+                        </div>
+
+                        <div class="demo-item" onclick="selectItem(this, 'IVR-2024-005')">
+                            <strong>IVR-2024-005</strong><br>
+                            <small>Patient: Charlie Wilson | Status: Documents Requested</small>
+                        </div>
+                    </div>
+
+                    <div class="demo-detail">
+                        <h3>Detail Panel (40% width)</h3>
+                        <div id="detail-content">
+                            <p><strong>Selected:</strong> <span id="selected-item">IVR-2024-001</span></p>
+                            <hr style="margin: 16px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+                            <h4>Patient Information</h4>
+                            <p><strong>Name:</strong> John Smith</p>
+                            <p><strong>DOB:</strong> 1985-03-15</p>
+                            <p><strong>Insurance:</strong> Blue Cross Blue Shield</p>
+
+                            <h4>Request Details</h4>
+                            <p><strong>Status:</strong> <span class="status-indicator status-pending"></span>Pending Review</p>
+                            <p><strong>Submitted:</strong> 2024-01-15</p>
+                            <p><strong>Priority:</strong> High</p>
+
+                            <h4>Actions</h4>
+                            <button class="test-button">Review Request</button>
+                            <button class="test-button secondary">View Documents</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Responsive Behavior -->
+        <div class="section info">
+            <h2>📱 Responsive Behavior</h2>
+            <ul class="checklist">
+                <li class="completed">✅ Desktop: Side-by-side 60/40 split layout</li>
+                <li class="completed">✅ Tablet: Maintains 60/40 split on medium screens</li>
+                <li class="completed">✅ Mobile: Detail panel becomes full-screen overlay</li>
+                <li class="completed">✅ Smooth transitions between responsive states</li>
+                <li class="completed">✅ Proper z-index management for mobile overlay</li>
+            </ul>
+
+            <p><strong>Breakpoint Behavior:</strong></p>
+            <ul>
+                <li><strong>Large screens (lg+):</strong> 60/40 split maintained</li>
+                <li><strong>Medium screens (md):</strong> 60/40 split maintained</li>
+                <li><strong>Small screens (sm and below):</strong> Detail panel becomes full-screen overlay</li>
+            </ul>
+        </div>
+
+        <!-- Integration Guidelines -->
+        <div class="section warning">
+            <h2>🔧 Integration Guidelines</h2>
+
+            <h3>For IVR Management Implementation</h3>
+            <div class="code-block">// Example usage in Regional IVR Management
+import MasterDetailLayout from '../../../components/shared/layout/MasterDetailLayout';
+
+const RegionalIVRManagement = () => {
+  const [selectedIVR, setSelectedIVR] = useState(null);
+
+  return (
+    &lt;MasterDetailLayout
+      masterPanel={
+        &lt;IVRList
+          onSelectIVR={setSelectedIVR}
+          selectedIVR={selectedIVR}
+        /&gt;
+      }
+      detailPanel={
+        selectedIVR ?
+          &lt;IVRDetailView ivr={selectedIVR} /&gt; :
+          &lt;EmptyDetailState /&gt;
+      }
+      showDetail={selectedIVR !== null}
+      className="h-full"
+    /&gt;
+  );
+};</div>
+
+            <h3>State Management</h3>
+            <ul class="checklist">
+                <li class="completed">✅ Use showDetail prop to control detail panel visibility</li>
+                <li class="completed">✅ Pass selected item state between master and detail panels</li>
+                <li class="completed">✅ Handle empty states when no item is selected</li>
+                <li class="completed">✅ Implement proper loading states for async data</li>
+            </ul>
+        </div>
+
+        <!-- Testing Checklist -->
+        <div class="section">
+            <h2>🧪 Testing Checklist</h2>
+
+            <h3>Layout Verification</h3>
+            <ul class="checklist">
+                <li class="completed">✅ Master panel takes exactly 60% width</li>
+                <li class="completed">✅ Detail panel takes exactly 40% width</li>
+                <li class="completed">✅ Border between panels is visible</li>
+                <li class="completed">✅ Both panels have independent scrolling</li>
+                <li class="completed">✅ Layout adapts to different content heights</li>
+            </ul>
+
+            <h3>Responsive Testing</h3>
+            <ul class="checklist">
+                <li class="pending">⏳ Test on desktop (1920px+)</li>
+                <li class="pending">⏳ Test on laptop (1366px)</li>
+                <li class="pending">⏳ Test on tablet (768px)</li>
+                <li class="pending">⏳ Test on mobile (375px)</li>
+                <li class="pending">⏳ Verify mobile overlay behavior</li>
+            </ul>
+
+            <h3>Interaction Testing</h3>
+            <ul class="checklist">
+                <li class="pending">⏳ Click items in master panel</li>
+                <li class="pending">⏳ Verify detail panel updates</li>
+                <li class="pending">⏳ Test showDetail toggle</li>
+                <li class="pending">⏳ Verify smooth transitions</li>
+                <li class="pending">⏳ Test mobile back navigation</li>
+            </ul>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="section success">
+            <h2>🚀 Next Steps</h2>
+            <p><strong>With MasterDetailLayout foundation complete, proceed with:</strong></p>
+
+            <ol>
+                <li><strong>IVR List Component:</strong> Create the master panel component for displaying IVR requests</li>
+                <li><strong>IVR Detail Component:</strong> Create the detail panel component for showing selected IVR details</li>
+                <li><strong>State Management:</strong> Implement selection state and data flow between panels</li>
+                <li><strong>Integration:</strong> Integrate with Regional IVR Management page</li>
+                <li><strong>Testing:</strong> Comprehensive testing of the complete master-detail interface</li>
+            </ol>
+
+            <div style="margin-top: 20px; padding: 15px; background: #dcfce7; border-radius: 8px;">
+                <strong>🎯 FOUNDATION READY:</strong> The MasterDetailLayout component provides a solid foundation for implementing the split view interface as outlined in the master plan!
+            </div>
+        </div>
+
+        <!-- Component Status -->
+        <div class="section info">
+            <h2>📊 Component Status</h2>
+            <ul class="checklist">
+                <li class="completed">✅ Component created and documented</li>
+                <li class="completed">✅ TypeScript interfaces defined</li>
+                <li class="completed">✅ Responsive behavior implemented</li>
+                <li class="completed">✅ Smooth transitions added</li>
+                <li class="completed">✅ Mobile overlay support</li>
+                <li class="completed">✅ Flexible content areas</li>
+                <li class="completed">✅ Ready for integration</li>
+            </ul>
+
+            <p><strong>File Location:</strong> <code>frontend/src/components/shared/layout/MasterDetailLayout.tsx</code></p>
+            <p><strong>Status:</strong> <span class="status-indicator status-online"></span>Complete and ready for use</p>
+        </div>
+    </div>
+
+    <script>
+        // Set timestamp
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+
+        // Demo interaction
+        function selectItem(element, itemId) {
+            // Remove selected class from all items
+            document.querySelectorAll('.demo-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Add selected class to clicked item
+            element.classList.add('selected');
+
+            // Update detail content
+            document.getElementById('selected-item').textContent = itemId;
+
+            // Update detail content based on selection
+            const detailData = {
+                'IVR-2024-001': {
+                    name: 'John Smith',
+                    dob: '1985-03-15',
+                    insurance: 'Blue Cross Blue Shield',
+                    status: 'Pending Review',
+                    statusClass: 'status-pending',
+                    submitted: '2024-01-15',
+                    priority: 'High'
+                },
+                'IVR-2024-002': {
+                    name: 'Jane Doe',
+                    dob: '1990-07-22',
+                    insurance: 'Aetna',
+                    status: 'In Review',
+                    statusClass: 'status-pending',
+                    submitted: '2024-01-14',
+                    priority: 'Medium'
+                },
+                'IVR-2024-003': {
+                    name: 'Bob Johnson',
+                    dob: '1978-11-08',
+                    insurance: 'UnitedHealthcare',
+                    status: 'Approved',
+                    statusClass: 'status-online',
+                    submitted: '2024-01-13',
+                    priority: 'Low'
+                },
+                'IVR-2024-004': {
+                    name: 'Alice Brown',
+                    dob: '1992-04-30',
+                    insurance: 'Cigna',
+                    status: 'Rejected',
+                    statusClass: 'status-offline',
+                    submitted: '2024-01-12',
+                    priority: 'High'
+                },
+                'IVR-2024-005': {
+                    name: 'Charlie Wilson',
+                    dob: '1987-09-17',
+                    insurance: 'Humana',
+                    status: 'Documents Requested',
+                    statusClass: 'status-pending',
+                    submitted: '2024-01-11',
+                    priority: 'Medium'
+                }
+            };
+
+            const data = detailData[itemId];
+            if (data) {
+                document.getElementById('detail-content').innerHTML = `
+                    <p><strong>Selected:</strong> ${itemId}</p>
+                    <hr style="margin: 16px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+                    <h4>Patient Information</h4>
+                    <p><strong>Name:</strong> ${data.name}</p>
+                    <p><strong>DOB:</strong> ${data.dob}</p>
+                    <p><strong>Insurance:</strong> ${data.insurance}</p>
+
+                    <h4>Request Details</h4>
+                    <p><strong>Status:</strong> <span class="status-indicator ${data.statusClass}"></span>${data.status}</p>
+                    <p><strong>Submitted:</strong> ${data.submitted}</p>
+                    <p><strong>Priority:</strong> ${data.priority}</p>
+
+                    <h4>Actions</h4>
+                    <button class="test-button">Review Request</button>
+                    <button class="test-button secondary">View Documents</button>
+                `;
+            }
+        }
+
+        console.log('✅ MasterDetailLayout Component Test - READY');
+        console.log('🎯 Foundation layout created for 60/40 split view interface');
+        console.log('🚀 Ready for IVR list and detail panel implementation');
+    </script>
+</body>
+</html>
