@@ -17,10 +17,22 @@ import {
   UsersIcon,
   DocumentTextIcon,
   BanknotesIcon,
-  XMarkIcon
+  XMarkIcon,
+  ArrowDownTrayIcon,
+  FolderIcon
 } from '@heroicons/react/24/solid';
 import { Card } from '../../components/shared/ui/Card';
+import UniversalFileUpload from '../../components/shared/UniversalFileUpload';
 import toast from 'react-hot-toast';
+
+interface DistributorDocument {
+  id: string;
+  name: string;
+  category: 'VAA' | 'Contract' | 'Insurance Certificate' | 'Business License' | 'Tax Documents' | 'Other';
+  uploadDate: string;
+  size: number;
+  url: string;
+}
 
 interface Distributor {
   id: string;
@@ -40,11 +52,7 @@ interface Distributor {
     zipCode: string;
   };
   commissionRate: number;
-  bankingInfo: {
-    accountNumber: string;
-    routingNumber: string;
-    bankName: string;
-  };
+  documents?: DistributorDocument[];
   joinedDate: string;
   lastActivity: string;
   monthlyRevenue: number;
@@ -70,11 +78,24 @@ const mockDistributors: Distributor[] = [
       zipCode: '90210'
     },
     commissionRate: 12.5,
-    bankingInfo: {
-      accountNumber: '****1234',
-      routingNumber: '123456789',
-      bankName: 'Wells Fargo'
-    },
+    documents: [
+      {
+        id: '1',
+        name: 'VAA_Agreement_2024.pdf',
+        category: 'VAA',
+        uploadDate: '2024-01-15',
+        size: 2048000,
+        url: '/documents/vaa_agreement_2024.pdf'
+      },
+      {
+        id: '2',
+        name: 'Business_License_CA.pdf',
+        category: 'Business License',
+        uploadDate: '2024-01-10',
+        size: 1024000,
+        url: '/documents/business_license_ca.pdf'
+      }
+    ],
     joinedDate: '2023-01-15',
     lastActivity: '2 hours ago',
     monthlyRevenue: 125000
@@ -97,11 +118,24 @@ const mockDistributors: Distributor[] = [
       zipCode: '75201'
     },
     commissionRate: 15.0,
-    bankingInfo: {
-      accountNumber: '****5678',
-      routingNumber: '234567890',
-      bankName: 'Chase Bank'
-    },
+    documents: [
+      {
+        id: '3',
+        name: 'Contract_2024.pdf',
+        category: 'Contract',
+        uploadDate: '2024-01-15',
+        size: 1536000,
+        url: '/documents/contract_2024.pdf'
+      },
+      {
+        id: '4',
+        name: 'Insurance_Certificate_TX.pdf',
+        category: 'Insurance Certificate',
+        uploadDate: '2024-01-10',
+        size: 512000,
+        url: '/documents/insurance_certificate_tx.pdf'
+      }
+    ],
     joinedDate: '2022-08-20',
     lastActivity: '1 day ago',
     monthlyRevenue: 198000
@@ -124,11 +158,24 @@ const mockDistributors: Distributor[] = [
       zipCode: '10001'
     },
     commissionRate: 13.0,
-    bankingInfo: {
-      accountNumber: '****9012',
-      routingNumber: '345678901',
-      bankName: 'Bank of America'
-    },
+    documents: [
+      {
+        id: '5',
+        name: 'Tax_Documents_NY.pdf',
+        category: 'Tax Documents',
+        uploadDate: '2024-01-15',
+        size: 1024000,
+        url: '/documents/tax_documents_ny.pdf'
+      },
+      {
+        id: '6',
+        name: 'Other_Document_NY.pdf',
+        category: 'Other',
+        uploadDate: '2024-01-10',
+        size: 256000,
+        url: '/documents/other_document_ny.pdf'
+      }
+    ],
     joinedDate: '2023-03-10',
     lastActivity: '3 hours ago',
     monthlyRevenue: 87000
@@ -151,11 +198,24 @@ const mockDistributors: Distributor[] = [
       zipCode: '60601'
     },
     commissionRate: 11.0,
-    bankingInfo: {
-      accountNumber: '****3456',
-      routingNumber: '456789012',
-      bankName: 'US Bank'
-    },
+    documents: [
+      {
+        id: '7',
+        name: 'Insurance_Certificate_IL.pdf',
+        category: 'Insurance Certificate',
+        uploadDate: '2024-01-15',
+        size: 512000,
+        url: '/documents/insurance_certificate_il.pdf'
+      },
+      {
+        id: '8',
+        name: 'Tax_Documents_IL.pdf',
+        category: 'Tax Documents',
+        uploadDate: '2024-01-10',
+        size: 1024000,
+        url: '/documents/tax_documents_il.pdf'
+      }
+    ],
     joinedDate: '2022-11-05',
     lastActivity: '2 weeks ago',
     monthlyRevenue: 0
@@ -178,11 +238,24 @@ const mockDistributors: Distributor[] = [
       zipCode: '30309'
     },
     commissionRate: 14.0,
-    bankingInfo: {
-      accountNumber: '****7890',
-      routingNumber: '567890123',
-      bankName: 'SunTrust Bank'
-    },
+    documents: [
+      {
+        id: '9',
+        name: 'Business_License_GA.pdf',
+        category: 'Business License',
+        uploadDate: '2024-01-15',
+        size: 1024000,
+        url: '/documents/business_license_ga.pdf'
+      },
+      {
+        id: '10',
+        name: 'Contract_GA.pdf',
+        category: 'Contract',
+        uploadDate: '2024-01-10',
+        size: 1536000,
+        url: '/documents/contract_ga.pdf'
+      }
+    ],
     joinedDate: '2023-02-28',
     lastActivity: '5 hours ago',
     monthlyRevenue: 156000
@@ -198,6 +271,11 @@ const DistributorsManagement: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedDistributor, setSelectedDistributor] = useState<Distributor | null>(null);
   const [formData, setFormData] = useState<Partial<Distributor>>({});
+
+  // Document management state
+  const [selectedDocumentCategory, setSelectedDocumentCategory] = useState<DistributorDocument['category']>('VAA');
+  const [uploadingDocument, setUploadingDocument] = useState<File | null>(null);
+  const [distributorDocuments, setDistributorDocuments] = useState<DistributorDocument[]>([]);
 
   // Filter distributors based on search and status
   const filteredDistributors = distributors.filter(distributor => {
@@ -230,11 +308,6 @@ const DistributorsManagement: React.FC = () => {
         zipCode: ''
       },
       commissionRate: 12.0,
-      bankingInfo: {
-        accountNumber: '',
-        routingNumber: '',
-        bankName: ''
-      }
     });
     setShowAddModal(true);
   };
@@ -242,6 +315,7 @@ const DistributorsManagement: React.FC = () => {
   const handleEditDistributor = (distributor: Distributor) => {
     setSelectedDistributor(distributor);
     setFormData(distributor);
+    setDistributorDocuments(distributor.documents || []);
     setShowEditModal(true);
   };
 
@@ -294,6 +368,47 @@ const DistributorsManagement: React.FC = () => {
     setShowDetailModal(false);
     setSelectedDistributor(null);
     setFormData({});
+    setDistributorDocuments([]);
+    setUploadingDocument(null);
+  };
+
+  // Document management functions
+  const handleDocumentUpload = (file: File | null) => {
+    if (file) {
+      const newDocument: DistributorDocument = {
+        id: Date.now().toString(),
+        name: file.name,
+        category: selectedDocumentCategory,
+        uploadDate: new Date().toISOString().split('T')[0],
+        size: file.size,
+        url: URL.createObjectURL(file)
+      };
+      setDistributorDocuments(prev => [...prev, newDocument]);
+      setUploadingDocument(null);
+      toast.success(`${file.name} uploaded successfully`);
+    }
+  };
+
+  const handleDeleteDocument = (documentId: string) => {
+    setDistributorDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    toast.success('Document deleted successfully');
+  };
+
+  const handleDownloadDocument = (document: DistributorDocument) => {
+    // Simulate document download
+    const link = document.createElement('a');
+    link.href = document.url;
+    link.download = document.name;
+    link.click();
+    toast.success(`Downloading ${document.name}`);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
@@ -541,6 +656,27 @@ const DistributorsManagement: React.FC = () => {
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Commission Rate (%)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={formData.commissionRate || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, commissionRate: parseFloat(e.target.value) || 0 }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                  <select
+                    value={formData.status || 'active'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'active' | 'inactive' }))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
               </div>
 
               {/* Primary Contact */}
@@ -638,71 +774,82 @@ const DistributorsManagement: React.FC = () => {
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Commission Rate (%)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={formData.commissionRate || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, commissionRate: parseFloat(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-                    />
-                  </div>
                 </div>
               </div>
 
-              {/* Banking Information */}
+              {/* Documents & Agreements */}
               <div>
-                <h4 className="text-md font-medium text-slate-900 mb-4">Banking Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Bank Name</label>
-                    <input
-                      type="text"
-                      value={formData.bankingInfo?.bankName || ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        bankingInfo: { ...prev.bankingInfo, bankName: e.target.value } as any
-                      }))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-                    />
+                <h4 className="text-md font-medium text-slate-900 mb-4">Documents & Agreements</h4>
+
+                {/* Document Upload Section */}
+                <div className="mb-6">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-slate-700 mb-2">Document Category</label>
+                      <select
+                        value={selectedDocumentCategory}
+                        onChange={(e) => setSelectedDocumentCategory(e.target.value as DistributorDocument['category'])}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                      >
+                        <option value="VAA">VAA</option>
+                        <option value="Contract">Contract</option>
+                        <option value="Insurance Certificate">Insurance Certificate</option>
+                        <option value="Business License">Business License</option>
+                        <option value="Tax Documents">Tax Documents</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Routing Number</label>
-                    <input
-                      type="text"
-                      value={formData.bankingInfo?.routingNumber || ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        bankingInfo: { ...prev.bankingInfo, routingNumber: e.target.value } as any
-                      }))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Account Number</label>
-                    <input
-                      type="text"
-                      value={formData.bankingInfo?.accountNumber || ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        bankingInfo: { ...prev.bankingInfo, accountNumber: e.target.value } as any
-                      }))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                    <select
-                      value={formData.status || 'active'}
-                      onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'active' | 'inactive' }))}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
-                  </div>
+
+                  <UniversalFileUpload
+                    label="Upload Document"
+                    description={`Upload ${selectedDocumentCategory} document`}
+                    value={uploadingDocument}
+                    onChange={handleDocumentUpload}
+                    acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+                    maxSizeMB={10}
+                    showCamera={false}
+                    className="border border-slate-200"
+                  />
                 </div>
+
+                {/* Document List */}
+                {distributorDocuments.length > 0 && (
+                  <div>
+                    <h5 className="text-sm font-medium text-slate-700 mb-3">Uploaded Documents</h5>
+                    <div className="space-y-2">
+                      {distributorDocuments.map((document) => (
+                        <div key={document.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="flex items-center space-x-3">
+                            <FolderIcon className="h-5 w-5 text-slate-400" />
+                            <div>
+                              <p className="text-sm font-medium text-slate-900">{document.name}</p>
+                              <p className="text-xs text-slate-500">
+                                {document.category} • {formatFileSize(document.size)} • {new Date(document.uploadDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleDownloadDocument(document)}
+                              className="p-1 text-slate-400 hover:text-slate-600"
+                              title="Download"
+                            >
+                              <ArrowDownTrayIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDocument(document.id)}
+                              className="p-1 text-red-400 hover:text-red-600"
+                              title="Delete"
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -820,12 +967,36 @@ const DistributorsManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <h4 className="text-md font-medium text-slate-900 mb-4">Banking Information</h4>
-                  <div className="bg-slate-50 p-4 rounded-lg space-y-2">
-                    <p className="text-sm text-slate-900">Bank: {selectedDistributor.bankingInfo.bankName}</p>
-                    <p className="text-sm text-slate-900">Routing: {selectedDistributor.bankingInfo.routingNumber}</p>
-                    <p className="text-sm text-slate-900">Account: {selectedDistributor.bankingInfo.accountNumber}</p>
-                  </div>
+                  <h4 className="text-md font-medium text-slate-900 mb-4">Documents & Agreements</h4>
+                  {selectedDistributor.documents && selectedDistributor.documents.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedDistributor.documents.map((document) => (
+                        <div key={document.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <div className="flex items-center space-x-3">
+                            <FolderIcon className="h-5 w-5 text-slate-400" />
+                            <div>
+                              <p className="text-sm font-medium text-slate-900">{document.name}</p>
+                              <p className="text-xs text-slate-500">
+                                {document.category} • {formatFileSize(document.size)} • {new Date(document.uploadDate).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleDownloadDocument(document)}
+                            className="p-1 text-slate-400 hover:text-slate-600"
+                            title="Download"
+                          >
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 p-4 rounded-lg text-center">
+                      <FolderIcon className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm text-slate-500">No documents uploaded</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
