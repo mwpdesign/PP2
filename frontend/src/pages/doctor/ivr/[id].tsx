@@ -19,7 +19,7 @@ import IVRResultsDisplay from '../../../components/ivr/IVRResultsDisplay';
 import { formatMessageTimestamp, formatDateOnly } from '../../../utils/formatters';
 import { useIVRWebSocket, IVRStatusUpdate } from '../../../hooks/useIVRWebSocket';
 import { mockIVRRequests } from '../../../data/mockIVRData';
-import UniversalFileUpload from '../../../components/shared/UniversalFileUpload';
+import UniversalFileUpload from '../../components/shared/UniversalFileUpload';
 import { toast } from 'react-hot-toast';
 
 interface DoctorIVRDetail {
@@ -101,7 +101,7 @@ const DoctorIVRDetailPage: React.FC<DoctorIVRDetailPageProps> = ({ readOnly = fa
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'communication' | 'documents'>('overview');
-  const [doctorComment, setDoctorComment] = useState('');
+  const [newComment, setNewComment] = useState('');
   const [ivrDetail, setIVRDetail] = useState<DoctorIVRDetail | null>(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [complexMessages, setComplexMessages] = useState<any[]>([]);
@@ -109,6 +109,7 @@ const DoctorIVRDetailPage: React.FC<DoctorIVRDetailPageProps> = ({ readOnly = fa
   const [uploadProgress, setUploadProgress] = useState(0);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState<string | null>(null);
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false);
 
   // Mock IVR Results data for approved requests
   const mockIVRResults = {
@@ -423,12 +424,12 @@ const DoctorIVRDetailPage: React.FC<DoctorIVRDetailPageProps> = ({ readOnly = fa
   };
 
   const handleSubmitComment = async () => {
-    if (!doctorComment.trim() && !attachment) return;
+    if (!newComment.trim() && !attachment) return;
     setIsSubmittingComment(true);
     // Simulate sending message with attachment
     setTimeout(() => {
       toast.success('Message sent' + (attachment ? ' with attachment' : ''));
-      setDoctorComment('');
+      setNewComment('');
       setAttachment(null);
       setAttachmentPreviewUrl(null);
       setIsSubmittingComment(false);
@@ -781,86 +782,93 @@ const DoctorIVRDetailPage: React.FC<DoctorIVRDetailPageProps> = ({ readOnly = fa
                     </h4>
                   </div>
 
-                  {/* Attachment Preview Chips */}
+                  {/* Attachment Modal */}
+                  {showAttachmentModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900">Attach Document</h3>
+                          <button
+                            onClick={() => setShowAttachmentModal(false)}
+                            className="text-gray-400 hover:text-gray-600"
+                          >
+                            <XCircleIcon className="h-6 w-6" />
+                          </button>
+                        </div>
+                        <UniversalFileUpload
+                          label="Select Document"
+                          description="Upload supporting documents, insurance cards, or photos"
+                          value={attachment}
+                          onChange={(file) => {
+                            setAttachment(file);
+                            if (file) {
+                              setAttachmentPreviewUrl(URL.createObjectURL(file));
+                              setShowAttachmentModal(false);
+                            }
+                          }}
+                          acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png']}
+                          maxSizeMB={10}
+                          showCamera={true}
+                          className="border-0"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show selected attachment as chip */}
                   {attachment && (
                     <div className="mb-3">
-                      <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded-lg border">
-                        <PaperClipIcon className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm text-gray-700 flex-1">{attachment.name}</span>
-                        <span className="text-xs text-gray-500">
-                          {(attachment.size / 1024 / 1024).toFixed(1)} MB
-                        </span>
+                      <div className="inline-flex items-center bg-blue-50 border border-blue-200 rounded-full px-3 py-1 text-sm">
+                        <DocumentTextIcon className="h-4 w-4 text-blue-600 mr-2" />
+                        <span className="text-blue-800 font-medium">{attachment.name}</span>
+                        <span className="text-blue-600 ml-2">({(attachment.size / 1024 / 1024).toFixed(1)}MB)</span>
                         <button
                           onClick={() => {
                             setAttachment(null);
                             setAttachmentPreviewUrl(null);
                           }}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="ml-2 text-blue-600 hover:text-blue-800"
                         >
-                          <XCircleIcon className="w-4 h-4" />
+                          <XCircleIcon className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
                   )}
 
-                  <div className="space-y-4">
-                    {/* Message Compose Area */}
-                    <div className="relative border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
-                      <textarea
-                        value={doctorComment}
-                        onChange={(e) => setDoctorComment(e.target.value)}
-                        placeholder="Type your comment or question for the IVR specialist..."
-                        className="w-full p-3 pr-20 border-0 rounded-lg focus:outline-none resize-none"
-                        rows={4}
-                      />
+                  {/* Message compose area */}
+                  <div className="relative">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder={ivrDetail.doctor_comment ? 'Update your comment...' : 'Add a comment or question...'}
+                      className="w-full p-3 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      rows={3}
+                    />
 
-                      {/* Attachment and Send Buttons */}
-                      <div className="absolute bottom-3 right-3 flex items-center space-x-2">
-                        {/* Hidden UniversalFileUpload */}
-                        <div className="hidden">
-                          <UniversalFileUpload
-                            label=""
-                            value={null}
-                            onChange={(file) => {
-                              setAttachment(file);
-                              if (file && file.type.startsWith('image/')) {
-                                setAttachmentPreviewUrl(URL.createObjectURL(file));
-                              } else {
-                                setAttachmentPreviewUrl(null);
-                              }
-                            }}
-                            acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png']}
-                            maxSizeMB={10}
-                            showCamera={false}
-                            multiple={false}
-                            id="hidden-file-upload"
-                          />
-                        </div>
+                    {/* Paperclip and Send buttons */}
+                    <div className="absolute bottom-3 right-3 flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAttachmentModal(true)}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                        title="Attach document, photo, or use camera"
+                      >
+                        <PaperClipIcon className="h-5 w-5" />
+                      </button>
 
-                        {/* Paperclip Attachment Button */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const fileInput = document.querySelector('#hidden-file-upload input[type="file"]') as HTMLInputElement;
-                            if (fileInput) fileInput.click();
-                          }}
-                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                          title="Attach file"
-                        >
-                          <PaperClipIcon className="w-5 h-5" />
-                        </button>
-
-                        {/* Send Button */}
-                        <button
-                          onClick={handleSubmitComment}
-                          disabled={(!doctorComment.trim() && !attachment) || isSubmittingComment}
-                          className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                          {isSubmittingComment ? 'Sending...' : 'Send'}
-                        </button>
-                      </div>
+                      <button
+                        onClick={handleSubmitComment}
+                        disabled={isSubmittingComment || (!newComment.trim() && !attachment)}
+                        className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isSubmittingComment ? 'Sending...' : 'Send'}
+                      </button>
                     </div>
                   </div>
+
+                  <p className="text-xs text-gray-500 mt-2">
+                    Use the paperclip to attach documents, photos, or capture images with your camera
+                  </p>
                 </div>
               </div>
             </div>
