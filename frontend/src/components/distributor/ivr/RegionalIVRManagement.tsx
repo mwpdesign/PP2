@@ -75,23 +75,10 @@ const calculateProcessingTime = (ivr: SharedIVRRequest): string => {
   return `${Math.round(diffHours / 24)} days`;
 };
 
-// Helper functions for text truncation
-const truncatePatientName = (name: string) => {
-  const parts = name.split(' ');
-  if (parts.length >= 2) {
-    return `${parts[0]} ${parts[1].charAt(0)}.`;
-  }
-  return name.length > 10 ? name.substring(0, 10) + '...' : name;
-};
-
-const truncateDoctorName = (name: string) => {
-  const parts = name.split(' ');
-  if (parts.length >= 2) {
-    // Return "Dr. LastName" format
-    const lastName = parts[parts.length - 1];
-    return `Dr. ${lastName}`;
-  }
-  return name.length > 12 ? name.substring(0, 12) + '...' : name;
+// Helper functions for smart text truncation (less aggressive)
+const truncateText = (text: string, maxLength: number) => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
 };
 
 const RegionalIVRManagement: React.FC = () => {
@@ -179,23 +166,23 @@ const RegionalIVRManagement: React.FC = () => {
     loadFilteredData();
   }, [user, hierarchyService]);
 
-  // Status badge renderer - Compact version for narrow table
+  // Status badge renderer - Balanced readability and compactness
   const renderStatusBadge = (status: string) => {
     const statusConfig = {
-      submitted: { color: 'bg-blue-100 text-blue-800', icon: ClockIcon, label: 'New' },
+      submitted: { color: 'bg-blue-100 text-blue-800', icon: ClockIcon, label: 'Submitted' },
       in_review: { color: 'bg-yellow-100 text-yellow-800', icon: ClockIcon, label: 'Review' },
       pending_approval: { color: 'bg-purple-100 text-purple-800', icon: ClockIcon, label: 'Pending' },
-      documents_requested: { color: 'bg-orange-100 text-orange-800', icon: DocumentTextIcon, label: 'Docs' },
-      approved: { color: 'bg-green-100 text-green-800', icon: CheckCircleIcon, label: 'OK' },
-      rejected: { color: 'bg-red-100 text-red-800', icon: XCircleIcon, label: 'No' }
+      documents_requested: { color: 'bg-orange-100 text-orange-800', icon: DocumentTextIcon, label: 'Docs Req' },
+      approved: { color: 'bg-green-100 text-green-800', icon: CheckCircleIcon, label: 'Approved' },
+      rejected: { color: 'bg-red-100 text-red-800', icon: XCircleIcon, label: 'Rejected' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.submitted;
     const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${config.color}`} title={getFullStatusLabel(status)}>
-        <Icon className="h-3 w-3 mr-0.5" />
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`} title={getFullStatusLabel(status)}>
+        <Icon className="h-3 w-3 mr-1" />
         {config.label}
       </span>
     );
@@ -247,7 +234,7 @@ const RegionalIVRManagement: React.FC = () => {
     );
   };
 
-  // View details action - Compact version
+  // View details action - Balanced readability and compactness
   const renderViewAction = (value: any, row: any) => {
     return (
       <button
@@ -255,19 +242,21 @@ const RegionalIVRManagement: React.FC = () => {
         className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
         title="View IVR Details"
       >
-        <EyeIcon className="h-3 w-3" />
+        <EyeIcon className="h-3 w-3 mr-1" />
+        View
       </button>
     );
   };
 
-  // Define table columns - Maximum 5 columns for no horizontal scroll
+  // Define table columns - 6 columns with optimized widths
   const columns: TableColumn[] = [
     {
       key: 'id',
-      label: 'IVR#',
+      label: 'IVR ID',
       sortable: true,
+      width: '12%',
       render: (value) => (
-        <span className="font-medium text-slate-900 text-xs">
+        <span className="font-medium text-slate-900 text-sm">
           {value.replace('660e8400-e29b-41d4-a716-44665544000', 'IVR-00')}
         </span>
       )
@@ -276,9 +265,10 @@ const RegionalIVRManagement: React.FC = () => {
       key: 'patientName',
       label: 'Patient',
       sortable: true,
+      width: '18%',
       render: (value) => (
-        <span className="text-xs text-gray-900" title={value}>
-          {truncatePatientName(value)}
+        <span className="text-sm text-gray-900" title={value}>
+          {truncateText(value, 15)}
         </span>
       )
     },
@@ -286,9 +276,21 @@ const RegionalIVRManagement: React.FC = () => {
       key: 'doctorName',
       label: 'Doctor',
       sortable: true,
+      width: '18%',
       render: (value) => (
-        <span className="text-xs text-gray-900" title={value}>
-          {truncateDoctorName(value)}
+        <span className="text-sm text-gray-900" title={value}>
+          {truncateText(value, 16)}
+        </span>
+      )
+    },
+    {
+      key: 'serviceType',
+      label: 'Service',
+      sortable: true,
+      width: '15%',
+      render: (value) => (
+        <span className="text-sm text-gray-700" title={value}>
+          {truncateText(value, 12)}
         </span>
       )
     },
@@ -296,12 +298,21 @@ const RegionalIVRManagement: React.FC = () => {
       key: 'status',
       label: 'Status',
       sortable: true,
+      width: '15%',
       render: (value) => renderStatusBadge(value)
+    },
+    {
+      key: 'priority',
+      label: 'Priority',
+      sortable: true,
+      width: '12%',
+      render: (value) => renderPriorityBadge(value)
     },
     {
       key: 'actions',
       label: 'Actions',
       sortable: false,
+      width: '10%',
       render: renderViewAction
     }
   ];
