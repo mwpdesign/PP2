@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { HierarchyFilteringService } from '../../services/hierarchyFilteringService';
 import {
   EyeIcon,
   MagnifyingGlassIcon,
@@ -8,7 +10,8 @@ import {
   ExclamationTriangleIcon,
   TruckIcon,
   MapPinIcon,
-  ClockIcon
+  ClockIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { Card } from '../../components/shared/ui/Card';
 
@@ -16,6 +19,7 @@ interface Shipment {
   id: string;
   orderId: string;
   doctorName: string;
+  doctorId: string; // Add doctorId for hierarchy filtering
   facility: string;
   trackingNumber: string;
   carrier: 'UPS' | 'FedEx' | 'USPS' | 'DHL' | 'Other';
@@ -31,14 +35,20 @@ interface Shipment {
   priority: 'standard' | 'expedited' | 'overnight';
   lastUpdate: string;
   currentLocation?: string;
+  // Hierarchy fields for filtering
+  salesRepId?: string;
+  distributorId?: string;
+  regionalDistributorId?: string;
+  createdBy?: string;
 }
 
-// Comprehensive mock data for Master Distributor monitoring
+// Updated mock data with hierarchy relationships matching OrderProcessing
 const mockShipments: Shipment[] = [
   {
     id: 'SHP-2024-001',
     orderId: 'ORD-2024-001',
-    doctorName: 'Dr. Sarah Chen',
+    doctorName: 'Dr. John Smith',
+    doctorId: 'D-001', // Regional Distributor West
     facility: 'Metro General Hospital',
     trackingNumber: '1Z999AA1234567890',
     carrier: 'UPS',
@@ -46,38 +56,48 @@ const mockShipments: Shipment[] = [
     shippedDate: '2024-12-19',
     estimatedDelivery: '2024-12-20',
     actualDelivery: '2024-12-20',
-    destination: 'New York, NY',
-    distributor: 'MedSupply East',
-    region: 'East Coast',
+    destination: 'Austin, TX',
+    distributor: 'Regional Distributor West',
+    region: 'West',
     packageCount: 2,
     weight: '15.2 lbs',
     priority: 'standard',
     lastUpdate: '2024-12-20T14:30:00Z',
-    currentLocation: 'Delivered'
+    currentLocation: 'Delivered',
+    salesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    regionalDistributorId: 'regional-dist-1',
+    createdBy: 'D-001'
   },
   {
     id: 'SHP-2024-002',
     orderId: 'ORD-2024-002',
-    doctorName: 'Dr. Michael Rodriguez',
+    doctorName: 'Dr. Michael Brown',
+    doctorId: 'D-002', // Regional Distributor West
     facility: 'St. Mary\'s Medical Center',
     trackingNumber: '7712345678901234',
     carrier: 'FedEx',
     status: 'out_for_delivery',
     shippedDate: '2024-12-20',
     estimatedDelivery: '2024-12-21',
-    destination: 'Phoenix, AZ',
-    distributor: 'HealthCare Partners',
-    region: 'Southwest',
+    destination: 'Austin, TX',
+    distributor: 'Regional Distributor West',
+    region: 'West',
     packageCount: 3,
     weight: '22.8 lbs',
     priority: 'expedited',
     lastUpdate: '2024-12-21T08:15:00Z',
-    currentLocation: 'Phoenix, AZ - Out for delivery'
+    currentLocation: 'Austin, TX - Out for delivery',
+    salesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    regionalDistributorId: 'regional-dist-1',
+    createdBy: 'D-002'
   },
   {
     id: 'SHP-2024-003',
     orderId: 'ORD-2024-003',
-    doctorName: 'Dr. Lisa Park',
+    doctorName: 'Dr. Jennifer Lee',
+    doctorId: 'D-003', // Regional Distributor West
     facility: 'Austin Regional Medical',
     trackingNumber: '9400111899562123456789',
     carrier: 'USPS',
@@ -85,76 +105,97 @@ const mockShipments: Shipment[] = [
     shippedDate: '2024-12-20',
     estimatedDelivery: '2024-12-22',
     destination: 'Austin, TX',
-    distributor: 'Texas Medical Supply',
-    region: 'Central',
+    distributor: 'Regional Distributor West',
+    region: 'West',
     packageCount: 1,
     weight: '8.5 lbs',
     priority: 'standard',
     lastUpdate: '2024-12-21T06:45:00Z',
-    currentLocation: 'Dallas, TX - In transit'
+    currentLocation: 'Dallas, TX - In transit',
+    salesRepId: 'sales-rep-3',
+    distributorId: 'regional-dist-1',
+    regionalDistributorId: 'regional-dist-1',
+    createdBy: 'D-003'
   },
   {
     id: 'SHP-2024-004',
     orderId: 'ORD-2024-004',
-    doctorName: 'Dr. James Wilson',
+    doctorName: 'Dr. Carlos Martinez',
+    doctorId: 'D-006', // Regional Distributor West
     facility: 'Central Texas Medical',
     trackingNumber: '1Z999AA1987654321',
     carrier: 'UPS',
     status: 'picked_up',
     shippedDate: '2024-12-21',
     estimatedDelivery: '2024-12-23',
-    destination: 'Houston, TX',
-    distributor: 'Regional Health Partners',
-    region: 'Central',
+    destination: 'Austin, TX',
+    distributor: 'Regional Distributor West',
+    region: 'West',
     packageCount: 4,
     weight: '31.7 lbs',
     priority: 'standard',
     lastUpdate: '2024-12-21T10:20:00Z',
-    currentLocation: 'Origin facility'
+    currentLocation: 'Origin facility',
+    salesRepId: 'sales-rep-1',
+    distributorId: 'regional-dist-1',
+    regionalDistributorId: 'regional-dist-1',
+    createdBy: 'D-006'
   },
   {
     id: 'SHP-2024-005',
     orderId: 'ORD-2024-005',
-    doctorName: 'Dr. Emma Davis',
-    facility: 'North Austin Clinic',
+    doctorName: 'Dr. Robert Chen',
+    doctorId: 'D-004', // Regional Distributor East
+    facility: 'East Coast Medical Center',
     trackingNumber: '7712345678901235',
     carrier: 'FedEx',
     status: 'delivered',
     shippedDate: '2024-12-18',
     estimatedDelivery: '2024-12-19',
     actualDelivery: '2024-12-19',
-    destination: 'Austin, TX',
-    distributor: 'Austin Medical Group',
-    region: 'Central',
+    destination: 'Miami, FL',
+    distributor: 'Regional Distributor East',
+    region: 'East',
     packageCount: 1,
     weight: '5.3 lbs',
     priority: 'overnight',
     lastUpdate: '2024-12-19T11:45:00Z',
-    currentLocation: 'Delivered'
+    currentLocation: 'Delivered',
+    salesRepId: 'sales-rep-2',
+    distributorId: 'regional-dist-2',
+    regionalDistributorId: 'regional-dist-2',
+    createdBy: 'D-004'
   },
   {
     id: 'SHP-2024-006',
     orderId: 'ORD-2024-006',
-    doctorName: 'Dr. Robert Chen',
-    facility: 'South Austin Medical',
+    doctorName: 'Dr. Lisa Anderson',
+    doctorId: 'D-005', // Regional Distributor East
+    facility: 'Southeast Regional Hospital',
     trackingNumber: '1Z999AA1122334455',
     carrier: 'UPS',
     status: 'exception',
     shippedDate: '2024-12-19',
     estimatedDelivery: '2024-12-20',
-    destination: 'San Antonio, TX',
-    distributor: 'MedSupply South',
-    region: 'Southwest',
+    destination: 'Miami, FL',
+    distributor: 'Regional Distributor East',
+    region: 'East',
     packageCount: 5,
     weight: '45.2 lbs',
     priority: 'expedited',
     lastUpdate: '2024-12-20T16:30:00Z',
-    currentLocation: 'Exception - Address correction needed'
+    currentLocation: 'Exception - Address correction needed',
+    salesRepId: 'sales-rep-2',
+    distributorId: 'regional-dist-2',
+    regionalDistributorId: 'regional-dist-2',
+    createdBy: 'D-005'
   },
+  // Additional shipments from other distributors (will be filtered out for Regional Distributors)
   {
     id: 'SHP-2024-007',
     orderId: 'ORD-2024-007',
     doctorName: 'Dr. Jennifer Martinez',
+    doctorId: 'D-007',
     facility: 'Cedar Park Family Health',
     trackingNumber: '9400111899562123456790',
     carrier: 'USPS',
@@ -168,12 +209,17 @@ const mockShipments: Shipment[] = [
     weight: '12.1 lbs',
     priority: 'standard',
     lastUpdate: '2024-12-21T09:00:00Z',
-    currentLocation: 'Preparing for shipment'
+    currentLocation: 'Preparing for shipment',
+    salesRepId: 'sales-rep-4',
+    distributorId: 'regional-dist-3',
+    regionalDistributorId: 'regional-dist-3',
+    createdBy: 'D-007'
   },
   {
     id: 'SHP-2024-008',
     orderId: 'ORD-2024-008',
     doctorName: 'Dr. Mark Thompson',
+    doctorId: 'D-008',
     facility: 'Dallas Medical Center',
     trackingNumber: '7712345678901236',
     carrier: 'FedEx',
@@ -187,102 +233,124 @@ const mockShipments: Shipment[] = [
     weight: '38.9 lbs',
     priority: 'expedited',
     lastUpdate: '2024-12-21T07:30:00Z',
-    currentLocation: 'Fort Worth, TX - In transit'
-  },
-  {
-    id: 'SHP-2024-009',
-    orderId: 'ORD-2024-009',
-    doctorName: 'Dr. Amanda Foster',
-    facility: 'Houston General',
-    trackingNumber: '1234567890123456789',
-    carrier: 'DHL',
-    status: 'out_for_delivery',
-    shippedDate: '2024-12-20',
-    estimatedDelivery: '2024-12-21',
-    destination: 'Houston, TX',
-    distributor: 'Gulf Coast Medical',
-    region: 'Southeast',
-    packageCount: 3,
-    weight: '19.6 lbs',
-    priority: 'overnight',
-    lastUpdate: '2024-12-21T09:45:00Z',
-    currentLocation: 'Houston, TX - Out for delivery'
-  },
-  {
-    id: 'SHP-2024-010',
-    orderId: 'ORD-2024-010',
-    doctorName: 'Dr. Kevin Lee',
-    facility: 'Phoenix Medical Plaza',
-    trackingNumber: '1Z999AA1555666777',
-    carrier: 'UPS',
-    status: 'delivered',
-    shippedDate: '2024-12-16',
-    estimatedDelivery: '2024-12-17',
-    actualDelivery: '2024-12-17',
-    destination: 'Phoenix, AZ',
-    distributor: 'Desert Medical Supply',
-    region: 'Southwest',
-    packageCount: 4,
-    weight: '27.3 lbs',
-    priority: 'standard',
-    lastUpdate: '2024-12-17T13:20:00Z',
-    currentLocation: 'Delivered'
-  },
-  {
-    id: 'SHP-2024-011',
-    orderId: 'ORD-2024-011',
-    doctorName: 'Dr. Rachel Kim',
-    facility: 'Seattle Medical Center',
-    trackingNumber: '7712345678901237',
-    carrier: 'FedEx',
-    status: 'preparing',
-    shippedDate: '2024-12-21',
-    estimatedDelivery: '2024-12-23',
-    destination: 'Seattle, WA',
-    distributor: 'Pacific Northwest Supply',
-    region: 'Northwest',
-    packageCount: 5,
-    weight: '33.4 lbs',
-    priority: 'expedited',
-    lastUpdate: '2024-12-21T08:00:00Z',
-    currentLocation: 'Preparing for shipment'
-  },
-  {
-    id: 'SHP-2024-012',
-    orderId: 'ORD-2024-012',
-    doctorName: 'Dr. David Brown',
-    facility: 'Miami General Hospital',
-    trackingNumber: '1Z999AA1888999000',
-    carrier: 'UPS',
-    status: 'delivered',
-    shippedDate: '2024-12-15',
-    estimatedDelivery: '2024-12-16',
-    actualDelivery: '2024-12-16',
-    destination: 'Miami, FL',
-    distributor: 'Southeast Medical',
-    region: 'Southeast',
-    packageCount: 7,
-    weight: '52.1 lbs',
-    priority: 'standard',
-    lastUpdate: '2024-12-16T15:10:00Z',
-    currentLocation: 'Delivered'
+    currentLocation: 'Fort Worth, TX - In transit',
+    salesRepId: 'sales-rep-5',
+    distributorId: 'regional-dist-4',
+    regionalDistributorId: 'regional-dist-4',
+    createdBy: 'D-008'
   }
 ];
 
 const ShippingLogistics: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [filteredData, setFilteredData] = useState<Shipment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filterResult, setFilterResult] = useState<any>(null);
+
+  // Filter states
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [carrierFilter, setCarrierFilter] = useState<string>('All');
-  const [distributorFilter, setDistributorFilter] = useState<string>('All');
+  const [doctorFilter, setDoctorFilter] = useState<string>('All'); // SECURITY: Changed from distributorFilter
   const [priorityFilter, setPriorityFilter] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState<string>('All');
 
-  // Filter shipments based on selected criteria
-  const getFilteredShipments = () => {
-    let filtered = mockShipments;
+  useEffect(() => {
+    const loadFilteredData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-    // Search filter
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        console.log('🚢 [ShippingLogistics] Applying hierarchy filtering...');
+        console.log('👤 Current user:', user.email, 'Role:', user.role);
+        console.log('🚨 SECURITY: Filtering shipments to prevent data leakage between distributors');
+
+        // Convert Shipment[] to SharedOrder[] format for filtering (reusing order filtering logic)
+        const shipmentsForFiltering = mockShipments.map(shipment => ({
+          id: shipment.id,
+          orderNumber: shipment.orderId,
+          date: shipment.shippedDate,
+          time: '09:00 AM',
+          doctorId: shipment.doctorId,
+          doctorName: shipment.doctorName,
+          doctorEmail: `${shipment.doctorId}@healthcare.local`,
+          facility: shipment.facility,
+          patient: { initials: 'P.T.', patientId: 'PT-123' },
+          ivrReference: 'IVR-REF',
+          products: [],
+          shippingAddress: {
+            facility: shipment.facility,
+            address: '123 Medical Dr',
+            city: 'Austin',
+            state: 'TX',
+            zipCode: '78701'
+          },
+          priority: 'Standard' as const,
+          status: 'Pending Fulfillment' as const,
+          totalItems: shipment.packageCount,
+          salesRepId: shipment.salesRepId,
+          distributorId: shipment.distributorId,
+          regionalDistributorId: shipment.regionalDistributorId,
+          createdBy: shipment.createdBy
+        }));
+
+        // Apply hierarchy filtering - CRITICAL SECURITY STEP
+        const result = HierarchyFilteringService.filterOrderDataByHierarchy(shipmentsForFiltering, user);
+
+        console.log('📦 Shipment hierarchy filtering result:', {
+          totalCount: result.totalCount,
+          filteredCount: result.filteredCount,
+          filterReason: result.filterReason,
+          allowedDoctorIds: result.allowedDoctorIds,
+          downlineDoctors: result.userHierarchyInfo.downlineDoctors.length
+        });
+
+        // SECURITY: Filter original shipments based on allowed doctor IDs only
+        const allowedDoctorIds = result.allowedDoctorIds;
+        const hierarchyFilteredShipments = mockShipments.filter(shipment => {
+          const isAllowed = allowedDoctorIds.includes(shipment.doctorId) ||
+                           shipment.distributorId === result.userHierarchyInfo.userId ||
+                           shipment.regionalDistributorId === result.userHierarchyInfo.userId;
+
+          if (isAllowed) {
+            console.log(`✅ Including shipment ${shipment.id} from doctor ${shipment.doctorId} (${shipment.doctorName})`);
+          } else {
+            console.log(`❌ SECURITY: Excluding shipment ${shipment.id} from doctor ${shipment.doctorId} (${shipment.doctorName}) - not in downline`);
+          }
+
+          return isAllowed;
+        });
+
+        console.log(`🔒 SECURITY APPLIED: Showing ${hierarchyFilteredShipments.length} of ${mockShipments.length} shipments`);
+
+        setFilterResult(result);
+        setFilteredData(hierarchyFilteredShipments);
+
+      } catch (error) {
+        console.error('❌ Error loading shipment data:', error);
+        setError('Failed to load shipment data');
+        setFilteredData([]);
+        setFilterResult(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFilteredData();
+  }, [user]);
+
+  // Filter shipments based on selected criteria (applied to hierarchy-filtered data)
+  const getFilteredShipments = () => {
+    let filtered = filteredData;
+
+    // Search filter - only searches within allowed data
     if (searchTerm) {
       filtered = filtered.filter(shipment =>
         shipment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -304,9 +372,9 @@ const ShippingLogistics: React.FC = () => {
       filtered = filtered.filter(shipment => shipment.carrier === carrierFilter);
     }
 
-    // Distributor filter
-    if (distributorFilter !== 'All') {
-      filtered = filtered.filter(shipment => shipment.distributor === distributorFilter);
+    // SECURITY: Doctor filter (replaces distributor filter) - only shows authorized doctors
+    if (doctorFilter !== 'All') {
+      filtered = filtered.filter(shipment => shipment.doctorName === doctorFilter);
     }
 
     // Priority filter
@@ -339,13 +407,13 @@ const ShippingLogistics: React.FC = () => {
     return filtered;
   };
 
-  // Calculate analytics
+  // Calculate analytics based on FILTERED data only (security requirement)
   const analytics = {
-    totalShipments: 45, // Total active shipments
-    inTransit: 18, // Currently moving
-    outForDelivery: 8, // Out for delivery today
-    deliveredToday: 12, // Delivered today
-    exceptions: 3 // Issues requiring attention
+    totalShipments: filteredData.length,
+    inTransit: filteredData.filter(s => s.status === 'in_transit').length,
+    outForDelivery: filteredData.filter(s => s.status === 'out_for_delivery').length,
+    deliveredToday: filteredData.filter(s => s.status === 'delivered').length,
+    exceptions: filteredData.filter(s => s.status === 'exception').length
   };
 
   const getStatusBadge = (status: string) => {
@@ -432,12 +500,63 @@ const ShippingLogistics: React.FC = () => {
     });
   };
 
-  const uniqueCarriers = [...new Set(mockShipments.map(shipment => shipment.carrier))];
-  const uniqueDistributors = [...new Set(mockShipments.map(shipment => shipment.distributor))];
+  // SECURITY: Get unique values from FILTERED data only (not all distributors)
+  const uniqueCarriers = [...new Set(filteredData.map(shipment => shipment.carrier))];
+  const uniqueDoctors = [...new Set(filteredData.map(shipment => shipment.doctorName))];
+
+  // Clear filters function for better UX
+  const clearAllFilters = () => {
+    setStatusFilter('All');
+    setCarrierFilter('All');
+    setDoctorFilter('All');
+    setPriorityFilter('All');
+    setSearchTerm('');
+    setDateRange('All');
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = statusFilter !== 'All' || carrierFilter !== 'All' ||
+                          doctorFilter !== 'All' || priorityFilter !== 'All' ||
+                          searchTerm !== '' || dateRange !== 'All';
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading shipment data with security filtering...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Please log in to access this page.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 bg-slate-50 min-h-screen">
-      {/* Header */}
+      {/* Header with filtering summary */}
       <div className="pt-1 pb-3">
         <div className="flex justify-between items-center mb-3">
           <div>
@@ -449,6 +568,27 @@ const ShippingLogistics: React.FC = () => {
               </div>
             </div>
             <p className="text-slate-600 mt-1 text-lg leading-normal">Monitor shipments and delivery status across your distribution network</p>
+
+            {/* SECURITY: Blue filtering banner showing hierarchy scope */}
+            {filterResult && (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-blue-900">
+                    {HierarchyFilteringService.getOrderFilteringSummary(filterResult).replace('orders', 'shipments')}
+                  </span>
+                  <CheckCircleIcon className="h-4 w-4 text-blue-600 ml-2" />
+                </div>
+                {filterResult.userHierarchyInfo.downlineDoctors.length > 0 && (
+                  <div className="mt-2 text-xs text-blue-700">
+                    Authorized doctors: {filterResult.userHierarchyInfo.downlineDoctors.map((d: any) => d.name).join(', ')}
+                  </div>
+                )}
+                <div className="mt-1 text-xs text-blue-600">
+                  🔒 Data isolation active - only showing authorized shipments
+                </div>
+              </div>
+            )}
           </div>
           <div className="bg-white rounded-xl shadow-sm px-4 py-2 border border-slate-200">
             <span className="text-sm font-medium text-slate-600">Active Shipments: </span>
@@ -456,12 +596,12 @@ const ShippingLogistics: React.FC = () => {
           </div>
         </div>
 
-        {/* Summary Cards */}
+        {/* Summary Cards - based on filtered data only */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
           <div className="bg-white border border-slate-200 rounded-xl p-4 text-center shadow-sm">
             <div className="text-2xl font-bold text-slate-700 leading-tight">{analytics.totalShipments}</div>
             <div className="text-sm font-medium text-slate-600 mt-1">Total Shipments</div>
-            <div className="text-xs text-slate-500 mt-1">Active shipments</div>
+            <div className="text-xs text-slate-500 mt-1">Authorized shipments</div>
           </div>
           <div className="bg-white border border-indigo-200 rounded-xl p-4 text-center shadow-sm">
             <div className="text-2xl font-bold text-indigo-700 leading-tight">{analytics.inTransit}</div>
@@ -487,6 +627,18 @@ const ShippingLogistics: React.FC = () => {
 
         {/* Search and Filters */}
         <Card className="bg-white border border-slate-200 rounded-xl shadow-lg p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">Filter Shipments</h3>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="text-sm text-slate-600 hover:text-slate-800 underline"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Search */}
             <div className="lg:col-span-2">
@@ -509,7 +661,7 @@ const ShippingLogistics: React.FC = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
               >
                 <option value="All">All Statuses</option>
                 <option value="preparing">Preparing</option>
@@ -527,9 +679,9 @@ const ShippingLogistics: React.FC = () => {
               <select
                 value={carrierFilter}
                 onChange={(e) => setCarrierFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
               >
-                <option value="All">All Carriers</option>
+                <option value="All">All Carriers ({uniqueCarriers.length})</option>
                 {uniqueCarriers.map(carrier => (
                   <option key={carrier} value={carrier}>{carrier}</option>
                 ))}
@@ -544,7 +696,7 @@ const ShippingLogistics: React.FC = () => {
                 <select
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                  className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
                 >
                   <option value="All">All Time</option>
                   <option value="Today">Today</option>
@@ -557,25 +709,30 @@ const ShippingLogistics: React.FC = () => {
 
           {/* Second Row of Filters */}
           <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* SECURITY: Doctor Filter (replaces Distributor Filter) */}
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Distributor</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Doctor
+                <span className="text-xs text-green-600 ml-1">(Authorized Only)</span>
+              </label>
               <select
-                value={distributorFilter}
-                onChange={(e) => setDistributorFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                value={doctorFilter}
+                onChange={(e) => setDoctorFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
               >
-                <option value="All">All Distributors</option>
-                {uniqueDistributors.map(distributor => (
-                  <option key={distributor} value={distributor}>{distributor}</option>
+                <option value="All">All Doctors ({uniqueDoctors.length})</option>
+                {uniqueDoctors.map(doctor => (
+                  <option key={doctor} value={doctor}>{doctor}</option>
                 ))}
               </select>
             </div>
+
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Priority</label>
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 opacity-90"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
               >
                 <option value="All">All Priorities</option>
                 <option value="standard">Standard</option>
@@ -583,8 +740,9 @@ const ShippingLogistics: React.FC = () => {
                 <option value="overnight">Overnight</option>
               </select>
             </div>
+
             <div className="md:col-span-2 flex items-end">
-              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg px-3 py-2">
+              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 w-full">
                 <ExclamationTriangleIcon className="h-4 w-4 text-slate-500 mr-2" />
                 <span className="text-sm text-slate-600">Read-only monitoring access - no editing capabilities</span>
               </div>
@@ -593,8 +751,21 @@ const ShippingLogistics: React.FC = () => {
         </Card>
       </div>
 
-      {/* READ-ONLY Shipments Table */}
-      <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden opacity-95">
+      {/* SECURITY: READ-ONLY Shipments Table with filtered data */}
+      <Card className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-slate-800">
+              Shipment Results ({getFilteredShipments().length} of {filteredData.length} shipments)
+            </h3>
+            {hasActiveFilters && (
+              <span className="text-sm text-slate-600 bg-blue-50 px-2 py-1 rounded">
+                Filters active
+              </span>
+            )}
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-slate-100">
@@ -605,7 +776,7 @@ const ShippingLogistics: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Destination</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Delivery</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Distributor</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Region</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -680,17 +851,16 @@ const ShippingLogistics: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">
                       <div>
-                        <div className="font-medium">{shipment.distributor}</div>
+                        <div className="font-medium">{shipment.region}</div>
                         <div className="text-xs text-slate-500">{shipment.packageCount} pkg{shipment.packageCount !== 1 ? 's' : ''} • {shipment.weight}</div>
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
                       <button
                         onClick={() => {
-                          console.log('🚀 CRITICAL DEBUG: Navigating to shipping detail');
+                          console.log('🚀 Navigating to shipping detail');
                           console.log('Shipment ID:', shipment.id);
                           console.log('Target URL:', `/distributor/shipping/${shipment.id}`);
-                          console.log('Using React Router navigate');
                           navigate(`/distributor/shipping/${shipment.id}`);
                         }}
                         className="inline-flex items-center px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors"
@@ -712,7 +882,20 @@ const ShippingLogistics: React.FC = () => {
               <TruckIcon className="w-8 h-8 text-slate-400" />
             </div>
             <h3 className="text-xl font-bold text-slate-800 mb-2 leading-tight">No Shipments Found</h3>
-            <p className="text-slate-600 text-base">No shipments match your current filter criteria</p>
+            <p className="text-slate-600 text-base">
+              {hasActiveFilters
+                ? 'No shipments match your current filter criteria. Try adjusting your filters.'
+                : 'No shipments available for your current access level.'
+              }
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="mt-4 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+              >
+                Clear All Filters
+              </button>
+            )}
           </div>
         )}
       </Card>
