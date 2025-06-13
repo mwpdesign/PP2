@@ -38,6 +38,13 @@ coverage/
 .coverage
 htmlcov/
 
+# Prevent test files in public folder (security risk)
+frontend/public/test_*.html
+frontend/public/debug_*.html
+frontend/public/verify_*.html
+frontend/public/*_test.html
+frontend/public/*_debug.html
+
 # System
 .DS_Store
 Thumbs.db

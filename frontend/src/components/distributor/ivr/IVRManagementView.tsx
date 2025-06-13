@@ -296,7 +296,9 @@ const IVRRow = React.memo(({
               e.stopPropagation();
               setOpenMenuId(openMenuId === ivr.id ? null : ivr.id);
             }}
-            className="w-8 h-8 rounded hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all opacity-0 group-hover:opacity-100"
+            className="w-8 h-8 rounded hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all"
+            aria-label={`More actions for IVR ${ivr.id}`}
+            title="More actions"
           >
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />

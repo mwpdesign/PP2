@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { mockIVRRequests, SharedIVRRequest } from '../../../data/mockIVRData';
+import { HierarchyFilteringService, FilterResult } from '../../../services/hierarchyFilteringService';
 import MasterDetailLayout from '../../shared/layout/MasterDetailLayout';
 import IVRListComponent from '../../ivr/IVRListComponent';
 import IVRDetailPanel from '../../ivr/IVRDetailPanel';
@@ -12,52 +13,93 @@ const RegionalIVRManagement: React.FC = () => {
   const [selectedIVR, setSelectedIVR] = useState<SharedIVRRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterResult, setFilterResult] = useState<FilterResult | null>(null);
 
-  useEffect(() => {
-    const loadFilteredData = async () => {
-      if (!user) {
+  // Use ref to track if component is mounted to prevent state updates on unmounted component
+  const isMountedRef = useRef(true);
+
+  // Memoized function to load filtered data
+  const loadFilteredData = useCallback(async () => {
+    if (!user) {
+      if (isMountedRef.current) {
         setIsLoading(false);
-        return;
       }
+      return;
+    }
 
-      try {
+    try {
+      if (isMountedRef.current) {
         setIsLoading(true);
         setError(null);
+      }
 
-        // TEMPORARY: Bypass hierarchy filtering to demonstrate UI works
-        console.log('🚧 TEMPORARY: Bypassing hierarchy filtering to demonstrate UI');
-        console.log('📊 Showing all IVR data:', {
-          totalIVRs: mockIVRRequests.length,
-          userRole: user.role,
-          userId: user.id,
-          note: 'Hierarchy filtering temporarily disabled'
-        });
+      console.log('🔍 [RegionalIVRManagement] Applying hierarchy filtering...');
+      console.log('👤 Current user:', user.email, 'Role:', user.role);
 
-        // Show all data temporarily
-        setFilteredData(mockIVRRequests);
+      // Apply hierarchy filtering to mock data
+      const result = HierarchyFilteringService.filterIVRDataByHierarchy(mockIVRRequests, user);
 
-      } catch (error) {
-        console.error('Error loading IVR data:', error);
+      console.log('📊 Hierarchy filtering result:', {
+        totalCount: result.totalCount,
+        filteredCount: result.filteredCount,
+        filterReason: result.filterReason,
+        allowedDoctorIds: result.allowedDoctorIds?.length || 0,
+        downlineDoctors: result.userHierarchyInfo?.downlineDoctors?.length || 0
+      });
+
+      if (isMountedRef.current) {
+        setFilterResult(result);
+        setFilteredData(result.filteredData || []);
+
+        // Clear selected IVR if it's not in the filtered results
+        if (selectedIVR && result.filteredData && !result.filteredData.find(ivr => ivr.id === selectedIVR.id)) {
+          console.log('🚫 Clearing selected IVR - not in filtered results');
+          setSelectedIVR(null);
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Error loading IVR data:', error);
+      if (isMountedRef.current) {
         setError('Failed to load IVR data');
-        // Fallback to showing mock data if anything fails
-        setFilteredData(mockIVRRequests);
-      } finally {
+        // Fallback to empty data on error
+        setFilteredData([]);
+        setFilterResult(null);
+      }
+    } finally {
+      if (isMountedRef.current) {
         setIsLoading(false);
       }
-    };
+    }
+  }, [user, selectedIVR]); // Include selectedIVR in dependencies
 
+  useEffect(() => {
     loadFilteredData();
-  }, [user]);
+  }, [loadFilteredData]); // Use the memoized function
+
+  // Cleanup function to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Handle IVR selection from the list
-  const handleIVRSelect = (ivr: SharedIVRRequest) => {
-    setSelectedIVR(ivr);
-  };
+  const handleIVRSelect = useCallback((ivr: SharedIVRRequest) => {
+    console.log('🔍 [RegionalIVRManagement] IVR selected:', ivr.ivrNumber, ivr.id);
+    console.log('🔍 [RegionalIVRManagement] Previous selectedIVR:', selectedIVR?.ivrNumber);
+    if (isMountedRef.current) {
+      setSelectedIVR(ivr);
+      console.log('🔍 [RegionalIVRManagement] selectedIVR state updated');
+    }
+  }, [selectedIVR]);
 
   // Handle closing the detail panel (mobile)
-  const handleCloseDetail = () => {
-    setSelectedIVR(null);
-  };
+  const handleCloseDetail = useCallback(() => {
+    if (isMountedRef.current) {
+      setSelectedIVR(null);
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -73,7 +115,11 @@ const RegionalIVRManagement: React.FC = () => {
         <div className="text-center">
           <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              if (isMountedRef.current) {
+                loadFilteredData();
+              }
+            }}
             className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-700"
           >
             Retry
@@ -101,6 +147,21 @@ const RegionalIVRManagement: React.FC = () => {
           <p className="text-sm text-gray-600 mt-1">
             Monitor and track IVR requests from doctors in your regional network
           </p>
+          {filterResult && (
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-sm font-medium text-blue-900">
+                  {HierarchyFilteringService.getFilteringSummary(filterResult)}
+                </span>
+              </div>
+              {filterResult.userHierarchyInfo?.downlineDoctors?.length > 0 && (
+                <div className="mt-2 text-xs text-blue-700">
+                  Downline doctors: {filterResult.userHierarchyInfo.downlineDoctors.map(d => d.name).join(', ')}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Summary Stats */}
@@ -135,7 +196,7 @@ const RegionalIVRManagement: React.FC = () => {
       {/* IVR List */}
       <div className="flex-1 overflow-hidden">
         <IVRListComponent
-          ivrRequests={filteredData}
+          ivrRequests={filteredData || []}
           onSelectIVR={handleIVRSelect}
           selectedIVR={selectedIVR}
           className="h-full"
@@ -157,6 +218,10 @@ const RegionalIVRManagement: React.FC = () => {
 
   return (
     <div className="h-screen bg-gray-50">
+      {/* Debug logging */}
+      {console.log('🔍 [RegionalIVRManagement] Render - selectedIVR:', selectedIVR?.ivrNumber || 'null')}
+      {console.log('🔍 [RegionalIVRManagement] Render - showDetail:', !!selectedIVR)}
+
       <MasterDetailLayout
         masterPanel={masterPanel}
         detailPanel={detailPanel}

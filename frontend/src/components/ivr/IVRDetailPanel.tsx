@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   UserIcon,
   BuildingOfficeIcon,
@@ -13,6 +14,8 @@ import {
   PaperClipIcon
 } from '@heroicons/react/24/outline';
 import { SharedIVRRequest } from '../../data/mockIVRData';
+import MessageModal from './MessageModal';
+import DocumentsModal from './DocumentsModal';
 
 interface IVRDetailPanelProps {
   /** The selected IVR request to display */
@@ -34,12 +37,58 @@ interface IVRDetailPanelProps {
  * - Timeline and progress tracking
  * - Action buttons for common tasks
  * - Responsive design optimized for detail panel
+ * - Context-aware navigation for Regional vs Master Distributors
  */
 const IVRDetailPanel: React.FC<IVRDetailPanelProps> = ({
   ivr,
   onClose,
   className = ''
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [showDocumentsModal, setShowDocumentsModal] = useState(false);
+
+  // Detect current distributor context from URL
+  const getDistributorContext = () => {
+    if (location.pathname.includes('/distributor-regional/')) {
+      return 'regional';
+    }
+    if (location.pathname.includes('/distributor/')) {
+      return 'master';
+    }
+    return 'master'; // Default fallback
+  };
+
+  // Handle View Full Details button click with context-aware navigation
+  const handleViewFullDetails = () => {
+    const context = getDistributorContext();
+
+    console.log('🔍 IVRDetailPanel Navigation Context:', {
+      currentPath: location.pathname,
+      detectedContext: context,
+      ivrId: ivr.id
+    });
+
+    if (context === 'regional') {
+      console.log('🚀 Navigating to Regional Distributor IVR details');
+      navigate(`/distributor-regional/ivr-management/${ivr.id}/details`);
+    } else {
+      console.log('🚀 Navigating to Master Distributor IVR details');
+      navigate(`/distributor/ivr-management/${ivr.id}/details`);
+    }
+  };
+
+  // Handle Message button click
+  const handleMessageClick = () => {
+    setShowMessageModal(true);
+  };
+
+  // Handle Documents button click
+  const handleDocumentsClick = () => {
+    setShowDocumentsModal(true);
+  };
+
   // Format status text
   const formatStatusText = (status: string) => {
     const statusTextMap = {
@@ -111,6 +160,7 @@ const IVRDetailPanel: React.FC<IVRDetailPanelProps> = ({
   };
 
   const StatusIcon = getStatusIcon(ivr.status);
+  const distributorContext = getDistributorContext();
 
   return (
     <div className={`flex flex-col h-full bg-white ${className}`}>
@@ -120,6 +170,10 @@ const IVRDetailPanel: React.FC<IVRDetailPanelProps> = ({
           <div>
             <h2 className="text-lg font-semibold text-gray-900">{ivr.ivrNumber}</h2>
             <p className="text-sm text-gray-600">IVR Request Details</p>
+            {/* Debug context indicator */}
+            <div className="mt-1 text-xs text-blue-600">
+              Context: {distributorContext === 'regional' ? 'Regional Distributor' : 'Master Distributor'}
+            </div>
           </div>
           {onClose && (
             <button
@@ -276,23 +330,54 @@ const IVRDetailPanel: React.FC<IVRDetailPanelProps> = ({
       {/* Footer Actions */}
       <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50">
         <div className="flex flex-col space-y-2">
-          <button className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <button
+            onClick={handleViewFullDetails}
+            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
             <DocumentTextIcon className="w-4 h-4 mr-2" />
             View Full Details
+            <span className="ml-2 text-xs opacity-75">
+              ({distributorContext === 'regional' ? 'Regional' : 'Master'})
+            </span>
           </button>
 
           <div className="grid grid-cols-2 gap-2">
-            <button className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <button
+              onClick={handleMessageClick}
+              className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
               <ChatBubbleLeftRightIcon className="w-4 h-4 mr-1" />
               Message
+              {ivr.hasUnreadMessages && (
+                <span className="ml-1 w-2 h-2 bg-blue-500 rounded-full"></span>
+              )}
             </button>
-            <button className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <button
+              onClick={handleDocumentsClick}
+              className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
               <PaperClipIcon className="w-4 h-4 mr-1" />
               Documents
             </button>
           </div>
         </div>
       </div>
+
+      {/* Message Modal */}
+      {showMessageModal && (
+        <MessageModal
+          ivr={ivr}
+          onClose={() => setShowMessageModal(false)}
+        />
+      )}
+
+      {/* Documents Modal */}
+      {showDocumentsModal && (
+        <DocumentsModal
+          ivr={ivr}
+          onClose={() => setShowDocumentsModal(false)}
+        />
+      )}
     </div>
   );
 };

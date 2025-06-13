@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hierarchy Filtering Test - Healthcare IVR Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1e293b;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 10px;
+        }
+        .hierarchy-visual {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .test-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 10px 10px 0;
+            transition: background-color 0.2s;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .test-button.secondary {
+            background: #64748b;
+        }
+        .test-button.secondary:hover {
+            background: #475569;
+        }
+        .expected-results {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .expected-results h4 {
+            margin-top: 0;
+            color: #0c4a6e;
+        }
+        .ivr-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .ivr-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        .ivr-card.visible {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        .ivr-card.hidden {
+            border-color: #ef4444;
+            background: #fef2f2;
+            opacity: 0.7;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-indicator.visible {
+            background: #10b981;
+        }
+        .status-indicator.hidden {
+            background: #ef4444;
+        }
+        .verification-checklist {
+            background: #fffbeb;
+            border: 1px solid #f59e0b;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .verification-checklist h4 {
+            margin-top: 0;
+            color: #92400e;
+        }
+        .checklist-item {
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .debug-info {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Hierarchy Filtering Test</h1>
+            <h2>Healthcare IVR Platform - Regional Distributor Access Control</h2>
+            <p><strong>Task ID:</strong> mbuz5cin5pvej6txbkh</p>
+            <p>Testing hierarchical downline filtering for Regional Distributor IVR Management</p>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Test Overview</h3>
+            <p><strong>CRITICAL REQUIREMENT:</strong> Regional Distributors should ONLY see IVRs from doctors in their downline hierarchy, not ALL IVRs in the system.</p>
+
+            <div class="hierarchy-visual">
+<strong>🏢 Current Hierarchy Structure:</strong>
+
+Master Distributor (distributor@healthcare.local)
+├── Regional Distributor West (distributor2@healthcare.local) ← <strong>TEST USER</strong>
+│   ├── Sales Rep West (sales@healthcare.local)
+│   │   ├── Dr. John Smith (D-001) ✅ SHOULD BE VISIBLE
+│   │   ├── Dr. Michael Brown (D-002) ✅ SHOULD BE VISIBLE
+│   │   └── Dr. Carlos Martinez (D-006) ✅ SHOULD BE VISIBLE
+│   └── Sales Rep West 2 (sales3@healthcare.local)
+│       └── Dr. Jennifer Lee (D-003) ✅ SHOULD BE VISIBLE
+└── Regional Distributor East (regional2@healthcare.local)
+    └── Sales Rep East (sales2@healthcare.local)
+        ├── Dr. Robert Chen (D-004) ❌ SHOULD BE HIDDEN
+        └── Dr. Lisa Anderson (D-005) ❌ SHOULD BE HIDDEN
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Expected Filtering Results</h3>
+            <div class="expected-results">
+                <h4>For Regional Distributor West (distributor2@healthcare.local):</h4>
+                <div class="ivr-list">
+                    <div class="ivr-card visible">
+                        <div><span class="status-indicator visible"></span><strong>IVR-2024-001</strong> - John Smith</div>
+                        <div>Doctor: Dr. John Smith (D-001)</div>
+                        <div>Status: Approved</div>
+                        <div>Territory: territory-1 ✅</div>
+                    </div>
+                    <div class="ivr-card visible">
+                        <div><span class="status-indicator visible"></span><strong>IVR-2024-002</strong> - Emily Davis</div>
+                        <div>Doctor: Dr. Michael Brown (D-002)</div>
+                        <div>Status: In Review</div>
+                        <div>Territory: territory-1 ✅</div>
+                    </div>
+                    <div class="ivr-card visible">
+                        <div><span class="status-indicator visible"></span><strong>IVR-2024-003</strong> - David Wilson</div>
+                        <div>Doctor: Dr. Jennifer Lee (D-003)</div>
+                        <div>Status: Documents Requested</div>
+                        <div>Territory: territory-1 ✅</div>
+                    </div>
+                    <div class="ivr-card hidden">
+                        <div><span class="status-indicator hidden"></span><strong>IVR-2024-004</strong> - Sarah Johnson</div>
+                        <div>Doctor: Dr. Robert Chen (D-004)</div>
+                        <div>Status: Submitted</div>
+                        <div>Territory: territory-2 ❌</div>
+                    </div>
+                    <div class="ivr-card hidden">
+                        <div><span class="status-indicator hidden"></span><strong>IVR-2024-005</strong> - Michael Brown</div>
+                        <div>Doctor: Dr. Lisa Anderson (D-005)</div>
+                        <div>Status: Rejected</div>
+                        <div>Territory: territory-2 ❌</div>
+                    </div>
+                    <div class="ivr-card visible">
+                        <div><span class="status-indicator visible"></span><strong>IVR-2024-006</strong> - Amanda Rodriguez</div>
+                        <div>Doctor: Dr. Carlos Martinez (D-006)</div>
+                        <div>Status: Pending Approval</div>
+                        <div>Territory: territory-1 ✅</div>
+                    </div>
+                </div>
+                <p><strong>Expected Result:</strong> 4 IVRs visible (IVR-001, IVR-002, IVR-003, IVR-006) out of 6 total</p>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Test Procedures</h3>
+
+            <h4>Step 1: Login as Regional Distributor</h4>
+            <p>Use these credentials to test the hierarchy filtering:</p>
+            <div class="debug-info">
+Email: distributor2@healthcare.local
+Password: distributor123
+Role: Distributor (Regional Distributor)
+Expected Territory: territory-1
+            </div>
+            <a href="http://localhost:3000/login" class="test-button" target="_blank">🔐 Login Page</a>
+
+            <h4>Step 2: Navigate to Regional IVR Management</h4>
+            <p>After login, navigate to the Regional IVR Management page:</p>
+            <a href="http://localhost:3000/distributor-regional/ivr-management" class="test-button" target="_blank">📊 Regional IVR Management</a>
+
+            <h4>Step 3: Verify Filtering Summary</h4>
+            <p>Check that the blue filtering summary banner shows:</p>
+            <div class="debug-info">
+"Showing 4 of 6 IVRs - Regional Distributor - Showing IVRs from 4 doctors in downline"
+Downline doctors: Dr. John Smith, Dr. Michael Brown, Dr. Jennifer Lee, Dr. Carlos Martinez
+            </div>
+
+            <h4>Step 4: Verify IVR List Content</h4>
+            <p>The IVR list should show exactly 4 IVRs (not 6):</p>
+            <ul>
+                <li>✅ IVR-2024-001 (Dr. John Smith)</li>
+                <li>✅ IVR-2024-002 (Dr. Michael Brown)</li>
+                <li>✅ IVR-2024-003 (Dr. Jennifer Lee)</li>
+                <li>✅ IVR-2024-006 (Dr. Carlos Martinez)</li>
+            </ul>
+            <p><strong>Should NOT see:</strong></p>
+            <ul>
+                <li>❌ IVR-2024-004 (Dr. Robert Chen - territory-2)</li>
+                <li>❌ IVR-2024-005 (Dr. Lisa Anderson - territory-2)</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Console Debugging</h3>
+            <p>Open browser console (F12) to see detailed filtering logs:</p>
+            <div class="debug-info">
+Expected Console Output:
+🔍 [HierarchyFilteringService] Starting hierarchy filtering...
+📊 Input data count: 6
+👤 Current user: distributor2@healthcare.local Role: Distributor
+🏢 Hierarchy Summary:
+🌍 [Regional Distributor] Filtering for downline doctors...
+👥 Downline users: [Sales Rep West (Sales), Sales Rep West 2 (Sales), Dr. John Smith (Doctor), ...]
+👨‍⚕️ Downline doctors: [Dr. John Smith, Dr. Michael Brown, Dr. Jennifer Lee, Dr. Carlos Martinez]
+🆔 Allowed doctor IDs: [D-001, D-002, D-003, D-006]
+✅ Including IVR IVR-2024-001 from doctor D-001 (Dr. John Smith)
+✅ Including IVR IVR-2024-002 from doctor D-002 (Dr. Michael Brown)
+✅ Including IVR IVR-2024-003 from doctor D-003 (Dr. Jennifer Lee)
+❌ Excluding IVR IVR-2024-004 from doctor D-004 (Dr. Robert Chen) - not in downline
+❌ Excluding IVR IVR-2024-005 from doctor D-005 (Dr. Lisa Anderson) - not in downline
+✅ Including IVR IVR-2024-006 from doctor D-006 (Dr. Carlos Martinez)
+📊 Filtered 4 IVRs out of 6 total
+            </div>
+        </div>
+
+        <div class="verification-checklist">
+            <h4>✅ Verification Checklist</h4>
+            <div class="checklist-item">
+                <input type="checkbox" id="check1">
+                <label for="check1">Login successful as Regional Distributor (distributor2@healthcare.local)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check2">
+                <label for="check2">Regional IVR Management page loads without errors</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check3">
+                <label for="check3">Blue filtering summary shows "Showing 4 of 6 IVRs"</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check4">
+                <label for="check4">Downline doctors list shows 4 doctors (Smith, Brown, Lee, Martinez)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check5">
+                <label for="check5">IVR list shows exactly 4 IVRs (not 6)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check6">
+                <label for="check6">IVR-2024-001 (Dr. John Smith) is visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check7">
+                <label for="check7">IVR-2024-002 (Dr. Michael Brown) is visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check8">
+                <label for="check8">IVR-2024-003 (Dr. Jennifer Lee) is visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check9">
+                <label for="check9">IVR-2024-006 (Dr. Carlos Martinez) is visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check10">
+                <label for="check10">IVR-2024-004 (Dr. Robert Chen) is NOT visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check11">
+                <label for="check11">IVR-2024-005 (Dr. Lisa Anderson) is NOT visible</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check12">
+                <label for="check12">Console shows detailed filtering logs with correct doctor IDs</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check13">
+                <label for="check13">Statistics cards show correct counts (4 total, not 6)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check14">
+                <label for="check14">IVR detail panel works for visible IVRs</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check15">
+                <label for="check15">Master-detail layout functions properly with filtered data</label>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔄 Additional Test Scenarios</h3>
+
+            <h4>Test Different User Roles:</h4>
+            <a href="http://localhost:3000/login" class="test-button secondary" target="_blank">🔐 Test Master Distributor (sees all 6 IVRs)</a>
+            <a href="http://localhost:3000/login" class="test-button secondary" target="_blank">🔐 Test Sales Rep (sees only assigned doctors)</a>
+            <a href="http://localhost:3000/login" class="test-button secondary" target="_blank">🔐 Test Doctor (sees only own IVRs)</a>
+
+            <h4>Test Credentials:</h4>
+            <div class="debug-info">
+Master Distributor: distributor@healthcare.local / distributor123 (should see all 6 IVRs)
+Regional Distributor: distributor2@healthcare.local / distributor123 (should see 4 IVRs)
+Sales Rep: sales@healthcare.local / sales123 (should see 3 IVRs from assigned doctors)
+Doctor: doctor@healthcare.local / doctor123 (should see only own IVRs)
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Success Criteria</h3>
+            <p><strong>✅ PASS:</strong> Regional Distributor sees exactly 4 IVRs from their downline doctors</p>
+            <p><strong>❌ FAIL:</strong> Regional Distributor sees all 6 IVRs (no filtering applied)</p>
+            <p><strong>❌ FAIL:</strong> Regional Distributor sees 0 IVRs (over-filtering)</p>
+            <p><strong>❌ FAIL:</strong> Regional Distributor sees wrong IVRs (incorrect filtering logic)</p>
+
+            <div class="expected-results">
+                <h4>🎉 Expected Final Result:</h4>
+                <p>Regional Distributor West should see <strong>exactly 4 IVRs</strong> from doctors in their territory (territory-1), with proper filtering summary and downline doctor list displayed.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-check items as user progresses
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const checkedCount = document.querySelectorAll('input[type="checkbox"]:checked').length;
+                    const totalCount = checkboxes.length;
+
+                    if (checkedCount === totalCount) {
+                        alert('🎉 All verification items checked! Hierarchy filtering test complete.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

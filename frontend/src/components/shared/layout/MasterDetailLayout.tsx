@@ -52,14 +52,13 @@ const MasterDetailLayout: React.FC<MasterDetailLayoutProps> = ({
           transition-all
           duration-300
           ease-in-out
-          ${showDetail ? 'lg:w-3/5' : 'w-full'}
-          ${!showDetail ? 'md:w-full' : 'md:w-3/5'}
+          flex-shrink-0
         `}
       >
         {masterPanel}
       </div>
 
-      {/* Detail Panel (Detail View) - 40% width */}
+      {/* Detail Panel (Detail View) - 40% width - Desktop */}
       {showDetail && (
         <div
           className="
@@ -69,8 +68,7 @@ const MasterDetailLayout: React.FC<MasterDetailLayoutProps> = ({
             transition-all
             duration-300
             ease-in-out
-            lg:w-2/5
-            md:w-2/5
+            flex-shrink-0
             hidden
             md:block
           "
@@ -79,7 +77,7 @@ const MasterDetailLayout: React.FC<MasterDetailLayoutProps> = ({
         </div>
       )}
 
-      {/* Mobile Detail Panel (Full Width Overlay) */}
+      {/* Mobile Detail Panel (Full Width Overlay) - Only on mobile */}
       {showDetail && (
         <div
           className="
@@ -88,6 +86,7 @@ const MasterDetailLayout: React.FC<MasterDetailLayoutProps> = ({
             bg-white
             z-50
             overflow-y-auto
+            block
             md:hidden
             transition-transform
             duration-300

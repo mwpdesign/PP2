@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { HierarchyFilteringService } from '../../services/hierarchyFilteringService';
 import {
@@ -243,6 +243,7 @@ const mockShipments: Shipment[] = [
 
 const ShippingLogistics: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [filteredData, setFilteredData] = useState<Shipment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -252,103 +253,154 @@ const ShippingLogistics: React.FC = () => {
   // Filter states
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [carrierFilter, setCarrierFilter] = useState<string>('All');
-  const [doctorFilter, setDoctorFilter] = useState<string>('All'); // SECURITY: Changed from distributorFilter
+  const [doctorFilter, setDoctorFilter] = useState<string>('All');
   const [priorityFilter, setPriorityFilter] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState<string>('All');
 
-  useEffect(() => {
-    const loadFilteredData = async () => {
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
+  // Use ref to track if component is mounted to prevent state updates on unmounted component
+  const isMountedRef = useRef(true);
 
-      try {
+  // Detect current distributor context from URL
+  const getDistributorContext = () => {
+    if (location.pathname.includes('/distributor-regional/')) {
+      return 'regional';
+    }
+    if (location.pathname.includes('/distributor/')) {
+      return 'master';
+    }
+    return 'master'; // Default fallback
+  };
+
+  // Context-aware navigation function
+  const navigateToShippingDetail = (shipmentId: string) => {
+    const context = getDistributorContext();
+
+    console.log('🚀 ShippingLogistics Navigation Context:', {
+      currentPath: location.pathname,
+      detectedContext: context,
+      shipmentId: shipmentId
+    });
+
+    if (context === 'regional') {
+      console.log('🚀 Navigating to Regional Distributor shipping detail');
+      navigate(`/distributor-regional/shipping-logistics/${shipmentId}`);
+    } else {
+      console.log('🚀 Navigating to Master Distributor shipping detail');
+      navigate(`/distributor/shipping/${shipmentId}`);
+    }
+  };
+
+  // Memoized function to load filtered data
+  const loadFilteredData = useCallback(async () => {
+    if (!user) {
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    try {
+      if (isMountedRef.current) {
         setIsLoading(true);
         setError(null);
+      }
 
-        console.log('🚢 [ShippingLogistics] Applying hierarchy filtering...');
-        console.log('👤 Current user:', user.email, 'Role:', user.role);
-        console.log('🚨 SECURITY: Filtering shipments to prevent data leakage between distributors');
+      console.log('🚢 [ShippingLogistics] Applying hierarchy filtering...');
+      console.log('👤 Current user:', user.email, 'Role:', user.role);
+      console.log('🚨 SECURITY: Filtering shipments to prevent data leakage between distributors');
 
-        // Convert Shipment[] to SharedOrder[] format for filtering (reusing order filtering logic)
-        const shipmentsForFiltering = mockShipments.map(shipment => ({
-          id: shipment.id,
-          orderNumber: shipment.orderId,
-          date: shipment.shippedDate,
-          time: '09:00 AM',
-          doctorId: shipment.doctorId,
-          doctorName: shipment.doctorName,
-          doctorEmail: `${shipment.doctorId}@healthcare.local`,
+      // Convert Shipment[] to SharedOrder[] format for filtering
+      const shipmentsForFiltering = mockShipments.map(shipment => ({
+        id: shipment.id,
+        orderNumber: shipment.orderId,
+        date: shipment.shippedDate,
+        time: '09:00 AM',
+        doctorId: shipment.doctorId,
+        doctorName: shipment.doctorName,
+        doctorEmail: `${shipment.doctorId}@healthcare.local`,
+        facility: shipment.facility,
+        patient: { initials: 'P.T.', patientId: 'PT-123' },
+        ivrReference: 'IVR-REF',
+        products: [],
+        shippingAddress: {
           facility: shipment.facility,
-          patient: { initials: 'P.T.', patientId: 'PT-123' },
-          ivrReference: 'IVR-REF',
-          products: [],
-          shippingAddress: {
-            facility: shipment.facility,
-            address: '123 Medical Dr',
-            city: 'Austin',
-            state: 'TX',
-            zipCode: '78701'
-          },
-          priority: 'Standard' as const,
-          status: 'Pending Fulfillment' as const,
-          totalItems: shipment.packageCount,
-          salesRepId: shipment.salesRepId,
-          distributorId: shipment.distributorId,
-          regionalDistributorId: shipment.regionalDistributorId,
-          createdBy: shipment.createdBy
-        }));
+          address: '123 Medical Dr',
+          city: 'Austin',
+          state: 'TX',
+          zipCode: '78701'
+        },
+        priority: 'Standard' as const,
+        status: 'Pending Fulfillment' as const,
+        totalItems: shipment.packageCount,
+        salesRepId: shipment.salesRepId,
+        distributorId: shipment.distributorId,
+        regionalDistributorId: shipment.regionalDistributorId,
+        createdBy: shipment.createdBy
+      }));
 
-        // Apply hierarchy filtering - CRITICAL SECURITY STEP
-        const result = HierarchyFilteringService.filterOrderDataByHierarchy(shipmentsForFiltering, user);
+      // Apply hierarchy filtering - CRITICAL SECURITY STEP
+      const result = HierarchyFilteringService.filterOrderDataByHierarchy(shipmentsForFiltering, user);
 
-        console.log('📦 Shipment hierarchy filtering result:', {
-          totalCount: result.totalCount,
-          filteredCount: result.filteredCount,
-          filterReason: result.filterReason,
-          allowedDoctorIds: result.allowedDoctorIds,
-          downlineDoctors: result.userHierarchyInfo.downlineDoctors.length
-        });
+      console.log('📦 Shipment hierarchy filtering result:', {
+        totalCount: result.totalCount,
+        filteredCount: result.filteredCount,
+        filterReason: result.filterReason,
+        allowedDoctorIds: result.allowedDoctorIds?.length || 0,
+        downlineDoctors: result.userHierarchyInfo?.downlineDoctors?.length || 0
+      });
 
-        // SECURITY: Filter original shipments based on allowed doctor IDs only
-        const allowedDoctorIds = result.allowedDoctorIds;
-        const hierarchyFilteredShipments = mockShipments.filter(shipment => {
-          const isAllowed = allowedDoctorIds.includes(shipment.doctorId) ||
-                           shipment.distributorId === result.userHierarchyInfo.userId ||
-                           shipment.regionalDistributorId === result.userHierarchyInfo.userId;
+      // SECURITY: Filter original shipments based on allowed doctor IDs only
+      const allowedDoctorIds = result.allowedDoctorIds || [];
+      const hierarchyFilteredShipments = mockShipments.filter(shipment => {
+        const isAllowed = allowedDoctorIds.includes(shipment.doctorId) ||
+                         shipment.distributorId === result.userHierarchyInfo?.userId ||
+                         shipment.regionalDistributorId === result.userHierarchyInfo?.userId;
 
-          if (isAllowed) {
-            console.log(`✅ Including shipment ${shipment.id} from doctor ${shipment.doctorId} (${shipment.doctorName})`);
-          } else {
-            console.log(`❌ SECURITY: Excluding shipment ${shipment.id} from doctor ${shipment.doctorId} (${shipment.doctorName}) - not in downline`);
-          }
+        if (isAllowed) {
+          console.log(`✅ Including shipment ${shipment.id} from doctor ${shipment.doctorId} (${shipment.doctorName})`);
+        } else {
+          console.log(`❌ SECURITY: Excluding shipment ${shipment.id} from doctor ${shipment.doctorId} (${shipment.doctorName}) - not in downline`);
+        }
 
-          return isAllowed;
-        });
+        return isAllowed;
+      });
 
-        console.log(`🔒 SECURITY APPLIED: Showing ${hierarchyFilteredShipments.length} of ${mockShipments.length} shipments`);
+      console.log(`🔒 SECURITY APPLIED: Showing ${hierarchyFilteredShipments.length} of ${mockShipments.length} shipments`);
 
+      if (isMountedRef.current) {
         setFilterResult(result);
         setFilteredData(hierarchyFilteredShipments);
+      }
 
-      } catch (error) {
-        console.error('❌ Error loading shipment data:', error);
+    } catch (error) {
+      console.error('❌ Error loading shipment data:', error);
+      if (isMountedRef.current) {
         setError('Failed to load shipment data');
         setFilteredData([]);
         setFilterResult(null);
-      } finally {
+      }
+    } finally {
+      if (isMountedRef.current) {
         setIsLoading(false);
       }
-    };
-
-    loadFilteredData();
+    }
   }, [user]);
 
+  useEffect(() => {
+    loadFilteredData();
+  }, [loadFilteredData]);
+
+  // Cleanup function to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // Filter shipments based on selected criteria (applied to hierarchy-filtered data)
-  const getFilteredShipments = () => {
-    let filtered = filteredData;
+  const getFilteredShipments = useCallback(() => {
+    let filtered = filteredData || [];
 
     // Search filter - only searches within allowed data
     if (searchTerm) {
@@ -405,15 +457,15 @@ const ShippingLogistics: React.FC = () => {
     }
 
     return filtered;
-  };
+  }, [filteredData, searchTerm, statusFilter, carrierFilter, doctorFilter, priorityFilter, dateRange]);
 
   // Calculate analytics based on FILTERED data only (security requirement)
   const analytics = {
-    totalShipments: filteredData.length,
-    inTransit: filteredData.filter(s => s.status === 'in_transit').length,
-    outForDelivery: filteredData.filter(s => s.status === 'out_for_delivery').length,
-    deliveredToday: filteredData.filter(s => s.status === 'delivered').length,
-    exceptions: filteredData.filter(s => s.status === 'exception').length
+    totalShipments: filteredData?.length || 0,
+    inTransit: filteredData?.filter(s => s?.status === 'in_transit').length || 0,
+    outForDelivery: filteredData?.filter(s => s?.status === 'out_for_delivery').length || 0,
+    deliveredToday: filteredData?.filter(s => s?.status === 'delivered').length || 0,
+    exceptions: filteredData?.filter(s => s?.status === 'exception').length || 0
   };
 
   const getStatusBadge = (status: string) => {
@@ -501,18 +553,18 @@ const ShippingLogistics: React.FC = () => {
   };
 
   // SECURITY: Get unique values from FILTERED data only (not all distributors)
-  const uniqueCarriers = [...new Set(filteredData.map(shipment => shipment.carrier))];
-  const uniqueDoctors = [...new Set(filteredData.map(shipment => shipment.doctorName))];
+  const uniqueCarriers = [...new Set((filteredData || []).map(shipment => shipment.carrier))];
+  const uniqueDoctors = [...new Set((filteredData || []).map(shipment => shipment.doctorName))];
 
   // Clear filters function for better UX
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setStatusFilter('All');
     setCarrierFilter('All');
     setDoctorFilter('All');
     setPriorityFilter('All');
     setSearchTerm('');
     setDateRange('All');
-  };
+  }, []);
 
   // Check if any filters are active
   const hasActiveFilters = statusFilter !== 'All' || carrierFilter !== 'All' ||
@@ -536,7 +588,11 @@ const ShippingLogistics: React.FC = () => {
         <div className="text-center">
           <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              if (isMountedRef.current) {
+                loadFilteredData();
+              }
+            }}
             className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-700"
           >
             Retry
@@ -770,14 +826,14 @@ const ShippingLogistics: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-slate-100">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Shipment ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Order/Doctor</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tracking</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Destination</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Delivery</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Region</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-24">ID</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-40">Order/Doctor</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-32">Tracking</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-28">Status</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-36">Destination</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-28">Delivery</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-24">Region</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-24">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -789,84 +845,94 @@ const ShippingLogistics: React.FC = () => {
 
                 return (
                   <tr key={shipment.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-slate-900">{shipment.id}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">
-                      <div>
-                        <div className="font-medium">{shipment.orderId}</div>
-                        <div className="text-xs text-slate-500">{shipment.doctorName}</div>
-                        <div className="text-xs text-slate-400">{shipment.facility}</div>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs font-medium text-slate-900">{shipment.id}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600">
+                      <div className="max-w-40">
+                        <div className="font-medium truncate">{shipment.orderId}</div>
+                        <div className="text-xs text-slate-500 truncate">{shipment.doctorName}</div>
+                        <div className="text-xs text-slate-400 truncate">{shipment.facility}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">
-                      <div className="flex items-center space-x-2">
-                        <TruckIcon className={`h-4 w-4 ${carrierColor}`} />
-                        <div>
-                          <div className="font-medium">{shipment.carrier}</div>
+                    <td className="px-3 py-2 text-xs text-slate-600">
+                      <div className="flex items-center space-x-1">
+                        <TruckIcon className={`h-3 w-3 ${carrierColor} flex-shrink-0`} />
+                        <div className="min-w-0">
+                          <div className="font-medium text-xs">{shipment.carrier}</div>
                           <a
                             href={trackingUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:text-blue-800 underline"
+                            className="text-xs text-blue-600 hover:text-blue-800 underline truncate block"
+                            title={shipment.trackingNumber}
                           >
-                            {shipment.trackingNumber}
+                            {shipment.trackingNumber.length > 12 ?
+                              `${shipment.trackingNumber.substring(0, 12)}...` :
+                              shipment.trackingNumber
+                            }
                           </a>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-3 py-2">
                       <div className="space-y-1">
-                        <span className={statusBadge.className}>
+                        <span className={`${statusBadge.className} text-xs px-2 py-0.5`}>
                           {statusBadge.label}
                         </span>
                         <div>
-                          <span className={priorityBadge.className}>
+                          <span className={`${priorityBadge.className} text-xs px-1 py-0.5`}>
                             {priorityBadge.label}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">
+                    <td className="px-3 py-2 text-xs text-slate-600">
                       <div className="flex items-center space-x-1">
-                        <MapPinIcon className="h-4 w-4 text-slate-400" />
-                        <div>
-                          <div className="font-medium">{shipment.destination}</div>
+                        <MapPinIcon className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <div className="font-medium truncate" title={shipment.destination}>{shipment.destination}</div>
                           {shipment.currentLocation && (
-                            <div className="text-xs text-slate-500">{shipment.currentLocation}</div>
+                            <div className="text-xs text-slate-500 truncate" title={shipment.currentLocation}>
+                              {shipment.currentLocation.length > 20 ?
+                                `${shipment.currentLocation.substring(0, 20)}...` :
+                                shipment.currentLocation
+                              }
+                            </div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">
+                    <td className="px-3 py-2 text-xs text-slate-600">
                       <div className="flex items-center space-x-1">
-                        <ClockIcon className="h-4 w-4 text-slate-400" />
-                        <div>
-                          <div className="font-medium">
+                        <ClockIcon className="h-3 w-3 text-slate-400 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <div className="font-medium text-xs">
                             {shipment.actualDelivery ? formatDate(shipment.actualDelivery) : formatDate(shipment.estimatedDelivery)}
                           </div>
                           <div className="text-xs text-slate-500">
-                            {shipment.actualDelivery ? 'Delivered' : 'Estimated'}
+                            {shipment.actualDelivery ? 'Delivered' : 'Est.'}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">
+                    <td className="px-3 py-2 text-xs text-slate-600">
                       <div>
                         <div className="font-medium">{shipment.region}</div>
-                        <div className="text-xs text-slate-500">{shipment.packageCount} pkg{shipment.packageCount !== 1 ? 's' : ''} • {shipment.weight}</div>
+                        <div className="text-xs text-slate-500">{shipment.packageCount}pkg • {shipment.weight}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                    <td className="px-3 py-2 text-xs">
                       <button
                         onClick={() => {
                           console.log('🚀 Navigating to shipping detail');
                           console.log('Shipment ID:', shipment.id);
                           console.log('Target URL:', `/distributor/shipping/${shipment.id}`);
-                          navigate(`/distributor/shipping/${shipment.id}`);
+                          navigateToShippingDetail(shipment.id);
                         }}
-                        className="inline-flex items-center px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+                        className="inline-flex items-center px-2 py-1 border border-slate-300 rounded text-xs font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+                        title="View shipment details"
                       >
-                        <EyeIcon className="h-4 w-4 mr-1" />
-                        View Details
+                        <EyeIcon className="h-3 w-3 mr-1" />
+                        View
                       </button>
                     </td>
                   </tr>

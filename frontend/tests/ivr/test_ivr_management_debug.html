@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVR Management Debug - Regional Distributor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .status.error {
+            background-color: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+        .status.warning {
+            background-color: #fffbeb;
+            border-color: #f59e0b;
+            color: #d97706;
+        }
+        .status.info {
+            background-color: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background-color: white;
+        }
+        .test-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .test-button:hover {
+            background-color: #2563eb;
+        }
+        .test-button.error {
+            background-color: #ef4444;
+        }
+        .test-button.error:hover {
+            background-color: #dc2626;
+        }
+        .code-block {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .debug-steps {
+            list-style: none;
+            padding: 0;
+        }
+        .debug-steps li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .debug-steps li:before {
+            content: "🔍 ";
+            color: #3b82f6;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚨 IVR Management Debug</h1>
+            <p><strong>Task ID: mbvclkcw4ibbkhv1lf7 - CRITICAL</strong></p>
+            <p>Master-detail layout completely broken - side panel not opening</p>
+        </div>
+
+        <!-- Problem Description -->
+        <div class="status error">
+            <h3>🚨 CRITICAL ISSUE</h3>
+            <p><strong>Problem:</strong> IVR Management side panel not opening when clicking rows or View Details</p>
+            <p><strong>Impact:</strong> Users cannot view any IVR details - completely non-functional</p>
+            <p><strong>Previous State:</strong> This was working before and is now broken</p>
+        </div>
+
+        <!-- Debug Steps -->
+        <div class="test-section">
+            <h2>🔍 Debug Steps</h2>
+            <ol class="debug-steps">
+                <li>Navigate to Regional IVR Management page</li>
+                <li>Open browser developer tools (F12)</li>
+                <li>Check Console tab for JavaScript errors</li>
+                <li>Click on any IVR row in the list</li>
+                <li>Check if selectedIVR state is being set</li>
+                <li>Check if showDetail prop is true</li>
+                <li>Verify MasterDetailLayout is rendering detail panel</li>
+                <li>Check CSS classes and responsive breakpoints</li>
+            </ol>
+        </div>
+
+        <!-- Potential Issues -->
+        <div class="test-section">
+            <h2>🔧 Potential Issues to Check</h2>
+
+            <div class="test-item">
+                <h3>1. State Management Issue</h3>
+                <div class="status warning">
+                    <strong>Check:</strong> selectedIVR state in RegionalIVRManagement component
+                    <br><strong>Symptom:</strong> handleIVRSelect not being called or selectedIVR not updating
+                </div>
+                <div class="code-block">
+// Check in browser console:
+console.log('selectedIVR:', selectedIVR);
+console.log('showDetail:', !!selectedIVR);
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>2. MasterDetailLayout CSS Issue</h3>
+                <div class="status warning">
+                    <strong>Check:</strong> CSS classes in MasterDetailLayout causing detail panel to be hidden
+                    <br><strong>Symptom:</strong> Detail panel exists in DOM but not visible
+                </div>
+                <div class="code-block">
+// Problematic CSS classes:
+// - hidden md:block (might hide on certain screen sizes)
+// - w-2/5 responsive classes
+// - z-index issues with mobile overlay
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>3. Event Handler Issue</h3>
+                <div class="status warning">
+                    <strong>Check:</strong> onSelectIVR callback not being passed correctly
+                    <br><strong>Symptom:</strong> Clicking rows does nothing, no console logs
+                </div>
+                <div class="code-block">
+// Check in IVRListComponent:
+const handleRowClick = useCallback((request: SharedIVRRequest) => {
+  console.log('Row clicked:', request.ivrNumber);
+  onSelectIVR(request);
+}, [onSelectIVR]);
+                </div>
+            </div>
+
+            <div class="test-item">
+                <h3>4. Component Import/Export Issue</h3>
+                <div class="status warning">
+                    <strong>Check:</strong> Component imports and exports are correct
+                    <br><strong>Symptom:</strong> Components not rendering or throwing errors
+                </div>
+                <div class="code-block">
+// Check these imports:
+import MasterDetailLayout from '../../shared/layout/MasterDetailLayout';
+import IVRListComponent from '../../ivr/IVRListComponent';
+import IVRDetailPanel from '../../ivr/IVRDetailPanel';
+                </div>
+            </div>
+        </div>
+
+        <!-- Testing Instructions -->
+        <div class="test-section">
+            <h2>🧪 Testing Instructions</h2>
+
+            <div class="test-item">
+                <h3>Step 1: Navigate to IVR Management</h3>
+                <p>Go to the Regional IVR Management page and open developer tools</p>
+                <a href="http://localhost:3000/distributor-regional/ivr-management" class="test-button error">
+                    Regional IVR Management (BROKEN)
+                </a>
+            </div>
+
+            <div class="test-item">
+                <h3>Step 2: Test Row Selection</h3>
+                <ol>
+                    <li>Click on any IVR row in the list</li>
+                    <li>Check console for "Row clicked:" log</li>
+                    <li>Check if selectedIVR state updates</li>
+                    <li>Verify if detail panel appears</li>
+                </ol>
+            </div>
+
+            <div class="test-item">
+                <h3>Step 3: Test View Details Button</h3>
+                <ol>
+                    <li>Click the three-dot menu on any row</li>
+                    <li>Click "View Details" option</li>
+                    <li>Check if this triggers row selection</li>
+                    <li>Verify detail panel behavior</li>
+                </ol>
+            </div>
+
+            <div class="test-item">
+                <h3>Step 4: Inspect DOM Elements</h3>
+                <ol>
+                    <li>Right-click and inspect the master-detail layout</li>
+                    <li>Look for the detail panel div with class "w-2/5"</li>
+                    <li>Check if it has "hidden" or "md:hidden" classes</li>
+                    <li>Verify CSS computed styles</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Expected Behavior -->
+        <div class="test-section">
+            <h2>✅ Expected Behavior</h2>
+            <div class="test-item">
+                <h3>When Working Correctly:</h3>
+                <ul>
+                    <li>Clicking any IVR row should highlight it with blue background</li>
+                    <li>Detail panel should appear on the right (40% width)</li>
+                    <li>Detail panel should show IVR information (patient, doctor, status, etc.)</li>
+                    <li>Selected row should have blue left border</li>
+                    <li>Console should show "Row clicked: IVR-2024-XXX" logs</li>
+                    <li>Mobile view should show detail panel as overlay</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Console Commands -->
+        <div class="test-section">
+            <h2>🖥️ Console Debug Commands</h2>
+            <div class="test-item">
+                <h3>Run these in browser console:</h3>
+                <div class="code-block">
+// Check if React components are mounted
+console.log('React DevTools available:', !!window.__REACT_DEVTOOLS_GLOBAL_HOOK__);
+
+// Check for any JavaScript errors
+console.log('Console errors:', console.error.toString());
+
+// Check if master-detail layout exists
+const masterDetail = document.querySelector('[class*="flex"]');
+console.log('Master-detail layout found:', !!masterDetail);
+
+// Check for detail panel
+const detailPanel = document.querySelector('[class*="w-2/5"]');
+console.log('Detail panel found:', !!detailPanel);
+console.log('Detail panel visible:', detailPanel ? getComputedStyle(detailPanel).display !== 'none' : false);
+
+// Check for IVR list rows
+const ivrRows = document.querySelectorAll('[role="button"]');
+console.log('IVR rows found:', ivrRows.length);
+                </div>
+            </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="status info">
+            <h3>🔧 Next Steps</h3>
+            <p><strong>1.</strong> Identify the root cause using the debug steps above</p>
+            <p><strong>2.</strong> Fix the master-detail layout issue</p>
+            <p><strong>3.</strong> Test row selection and detail panel display</p>
+            <p><strong>4.</strong> Verify both desktop and mobile responsive behavior</p>
+            <p><strong>5.</strong> Ensure all IVR details are accessible</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔍 IVR Management Debug Page Loaded');
+        console.log('📋 Task ID: mbvclkcw4ibbkhv1lf7 - Master-detail layout broken');
+
+        // Auto-check for common issues
+        setTimeout(() => {
+            console.log('🔍 Auto-checking for common issues...');
+
+            // Check if we're on the right page
+            if (window.location.pathname.includes('/distributor-regional/ivr-management')) {
+                console.log('✅ On Regional IVR Management page');
+            } else {
+                console.log('❌ Not on Regional IVR Management page');
+            }
+
+            // Check for React
+            if (window.React) {
+                console.log('✅ React is loaded');
+            } else {
+                console.log('❌ React not found');
+            }
+
+            // Check for common elements
+            const masterDetail = document.querySelector('[class*="flex"]');
+            if (masterDetail) {
+                console.log('✅ Master-detail layout found');
+            } else {
+                console.log('❌ Master-detail layout not found');
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -16,38 +16,13 @@ import {
   TrophyIcon,
   XMarkIcon,
   UsersIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/solid';
 import { Card } from '../../components/shared/ui/Card';
+import { useAuth } from '../../contexts/AuthContext';
+import { HierarchyFilteringService, Salesperson, SalespeopleFilterResult } from '../../services/hierarchyFilteringService';
 import toast from 'react-hot-toast';
-
-interface Salesperson {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  distributorId: string;
-  distributorName: string;
-  territory: string;
-  activeDoctors: number;
-  totalIVRs: number;
-  status: 'active' | 'inactive';
-  employeeId: string;
-  startDate: string;
-  commissionRate: number;
-  salesGoals: {
-    monthly: number;
-    quarterly: number;
-  };
-  performance: {
-    doctorsAdded: number;
-    ivrsGenerated: number;
-    growthRate: number;
-    tier: 'top' | 'average' | 'low';
-  };
-  lastActivity: string;
-}
 
 // Mock distributors data for dropdown
 const mockDistributorsData = [
@@ -158,10 +133,16 @@ const mockSalespeople: Salesperson[] = [
 ];
 
 const SalespeopleManagement: React.FC = () => {
-  const [salespeople, setSalespeople] = useState<Salesperson[]>(mockSalespeople);
+  const { user } = useAuth();
+  const [salespeople, setSalespeople] = useState<Salesperson[]>([]);
+  const [filteredData, setFilteredData] = useState<Salesperson[]>([]);
+  const [filterResult, setFilterResult] = useState<SalespeopleFilterResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [distributorFilter, setDistributorFilter] = useState<string>('all');
+  const [territoryFilter, setTerritoryFilter] = useState<string>('all');
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -169,23 +150,71 @@ const SalespeopleManagement: React.FC = () => {
   const [selectedSalesperson, setSelectedSalesperson] = useState<Salesperson | null>(null);
   const [formData, setFormData] = useState<Partial<Salesperson>>({});
 
-  // Get unique distributors for filter dropdown
-  const distributors = Array.from(new Set(salespeople.map(s => s.distributorName)));
+  // Load and filter salespeople data based on user hierarchy
+  useEffect(() => {
+    const loadFilteredData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
-  // Filter salespeople based on search and filters
-  const filteredSalespeople = salespeople.filter(person => {
-    const matchesSearch =
-      `${person.firstName} ${person.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person.territory.toLowerCase().includes(searchTerm.toLowerCase());
+      try {
+        setIsLoading(true);
+        setError(null);
 
-    const matchesStatus = statusFilter === 'all' || person.status === statusFilter;
-    const matchesDistributor = distributorFilter === 'all' || person.distributorName === distributorFilter;
+        console.log('🔍 [SalespeopleManagement] Applying hierarchy filtering...');
+        console.log('👤 Current user:', user.email, 'Role:', user.role);
 
-    return matchesSearch && matchesStatus && matchesDistributor;
-  });
+        // Apply hierarchy filtering to mock data
+        const result = HierarchyFilteringService.filterSalespeopleDataByHierarchy(mockSalespeople, user);
 
-  // Calculate summary stats
+        console.log('📊 Hierarchy filtering result:', {
+          totalCount: result.totalCount,
+          filteredCount: result.filteredCount,
+          filterReason: result.filterReason,
+          allowedSalesRepIds: result.allowedSalesRepIds?.length || 0,
+          downlineSalesReps: result.userHierarchyInfo?.downlineSalesReps?.length || 0
+        });
+
+        setFilterResult(result);
+        setSalespeople(result.filteredData || []);
+        setFilteredData(result.filteredData || []);
+
+      } catch (error) {
+        console.error('❌ Error loading salespeople data:', error);
+        setError('Failed to load salespeople data');
+        setSalespeople([]);
+        setFilteredData([]);
+        setFilterResult(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFilteredData();
+  }, [user]);
+
+  // Get unique territories for filter dropdown (from filtered data only)
+  const territories = Array.from(new Set(salespeople.map(s => s.territory)));
+
+  // Apply local filters on top of hierarchy filtering
+  const getFilteredSalespeople = () => {
+    return filteredData.filter(person => {
+      const matchesSearch =
+        `${person.firstName} ${person.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        person.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        person.territory.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = statusFilter === 'all' || person.status === statusFilter;
+      const matchesTerritory = territoryFilter === 'all' || person.territory === territoryFilter;
+
+      return matchesSearch && matchesStatus && matchesTerritory;
+    });
+  };
+
+  const finalFilteredSalespeople = getFilteredSalespeople();
+
+  // Calculate summary stats from filtered data only
   const totalSalespeople = salespeople.length;
   const activeSalespeople = salespeople.filter(s => s.status === 'active').length;
   const totalDoctors = salespeople.reduce((sum, s) => sum + s.activeDoctors, 0);
@@ -193,7 +222,13 @@ const SalespeopleManagement: React.FC = () => {
   const topPerformer = salespeople.reduce((top, current) =>
     current.activeDoctors > top.activeDoctors ? current : top, salespeople[0]);
 
-
+  // Determine labels based on user role
+  const isRegionalDistributor = user?.role === 'Distributor';
+  const filterDropdownLabel = isRegionalDistributor ? 'All Territories' : 'All Distributors';
+  const tableColumnHeader = isRegionalDistributor ? 'Territory' : 'Distributor';
+  const pageSubtitle = isRegionalDistributor
+    ? 'Manage your sales team and territory assignments'
+    : 'Manage sales representatives across your entire network';
 
   const handleAddSalesperson = () => {
     setFormData({
@@ -269,13 +304,69 @@ const SalespeopleManagement: React.FC = () => {
     setFormData({});
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-slate-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading sales team data with security filtering...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-slate-600 text-white rounded hover:bg-slate-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Please log in to access this page.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Section */}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">Salespeople Management</h1>
-          <p className="text-slate-600 mt-1">Manage sales representatives across your entire network</p>
+          <p className="text-slate-600 mt-1">{pageSubtitle}</p>
+
+          {/* SECURITY: Hierarchy filtering banner */}
+          {filterResult && (
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-sm font-medium text-blue-900">
+                  {HierarchyFilteringService.getSalespeopleFilteringSummary(filterResult)}
+                </span>
+                <ShieldCheckIcon className="h-4 w-4 text-blue-600 ml-2" />
+              </div>
+              {filterResult.userHierarchyInfo?.downlineSalesReps?.length > 0 && (
+                <div className="mt-2 text-xs text-blue-700">
+                  Your sales team: {filterResult.userHierarchyInfo.downlineSalesReps.map(s => s.name).join(', ')}
+                </div>
+              )}
+              <div className="mt-1 text-xs text-blue-600">
+                🔒 Data isolation active - only showing authorized sales representatives
+              </div>
+            </div>
+          )}
         </div>
         <button
           onClick={handleAddSalesperson}
@@ -294,7 +385,9 @@ const SalespeopleManagement: React.FC = () => {
               <UsersIcon className="h-6 w-6 text-slate-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-slate-600">Total Salespeople</p>
+              <p className="text-sm font-medium text-slate-600">
+                {isRegionalDistributor ? 'Your Sales Team' : 'Total Salespeople'}
+              </p>
               <p className="text-2xl font-bold text-slate-900">{totalSalespeople}</p>
               <p className="text-xs text-green-600">{activeSalespeople} active</p>
             </div>
@@ -309,7 +402,9 @@ const SalespeopleManagement: React.FC = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-slate-600">Total Doctors</p>
               <p className="text-2xl font-bold text-slate-900">{totalDoctors}</p>
-              <p className="text-xs text-slate-500">Across all reps</p>
+              <p className="text-xs text-slate-500">
+                {isRegionalDistributor ? 'In your territory' : 'Across all reps'}
+              </p>
             </div>
           </div>
         </Card>
@@ -334,7 +429,9 @@ const SalespeopleManagement: React.FC = () => {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-slate-600">Top Performer</p>
-              <p className="text-lg font-bold text-slate-900">{topPerformer?.firstName} {topPerformer?.lastName}</p>
+              <p className="text-lg font-bold text-slate-900">
+                {topPerformer?.firstName} {topPerformer?.lastName}
+              </p>
               <p className="text-xs text-amber-600">{topPerformer?.activeDoctors} doctors</p>
             </div>
           </div>
@@ -370,22 +467,30 @@ const SalespeopleManagement: React.FC = () => {
               </select>
             </div>
             <select
-              value={distributorFilter}
-              onChange={(e) => setDistributorFilter(e.target.value)}
+              value={territoryFilter}
+              onChange={(e) => setTerritoryFilter(e.target.value)}
               className="border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
             >
-              <option value="all">All Distributors</option>
-              {distributors.map(distributor => (
-                <option key={distributor} value={distributor}>{distributor}</option>
+              <option value="all">{filterDropdownLabel}</option>
+              {territories.map(territory => (
+                <option key={territory} value={territory}>{territory}</option>
               ))}
             </select>
-
           </div>
         </div>
       </Card>
 
       {/* Salespeople Table */}
       <Card className="overflow-hidden bg-white border border-slate-200">
+        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-slate-800">
+              {isRegionalDistributor ? 'Your Sales Team' : 'Sales Representatives'}
+              ({finalFilteredSalespeople.length} of {salespeople.length})
+            </h3>
+          </div>
+        </div>
+
         <table className="w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
@@ -396,10 +501,7 @@ const SalespeopleManagement: React.FC = () => {
                 Contact
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Distributor
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                Territory
+                {tableColumnHeader}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                 Doctors
@@ -413,7 +515,7 @@ const SalespeopleManagement: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-slate-200">
-            {filteredSalespeople.map((person) => (
+            {finalFilteredSalespeople.map((person) => (
               <tr key={person.id} className="hover:bg-slate-50">
                 <td className="px-4 py-3">
                   <div>
@@ -430,10 +532,9 @@ const SalespeopleManagement: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="text-sm text-slate-900">{person.distributorName}</div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="text-sm text-slate-900">{person.territory}</div>
+                  <div className="text-sm text-slate-900">
+                    {isRegionalDistributor ? person.territory : person.distributorName}
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <div className="text-sm font-medium text-slate-900">{person.activeDoctors}</div>
@@ -474,6 +575,25 @@ const SalespeopleManagement: React.FC = () => {
             ))}
           </tbody>
         </table>
+
+        {finalFilteredSalespeople.length === 0 && (
+          <div className="p-12 text-center">
+            <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+              <UsersIcon className="w-8 h-8 text-slate-400" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2 leading-tight">
+              {isRegionalDistributor ? 'No Sales Team Members Found' : 'No Salespeople Found'}
+            </h3>
+            <p className="text-slate-600 text-base">
+              {searchTerm || statusFilter !== 'all' || territoryFilter !== 'all'
+                ? 'No salespeople match your current filter criteria. Try adjusting your filters.'
+                : isRegionalDistributor
+                  ? 'No sales team members available for your territory.'
+                  : 'No salespeople available for your current access level.'
+              }
+            </p>
+          </div>
+        )}
       </Card>
 
       {/* Add/Edit Salesperson Modal */}

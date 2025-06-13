@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Upload Test - Healthcare IVR Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1e293b;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 10px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .feature-card h4 {
+            margin-top: 0;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+        }
+        .feature-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            background: #3b82f6;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .test-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 10px 10px 0;
+            transition: background-color 0.2s;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .test-button.secondary {
+            background: #64748b;
+        }
+        .test-button.secondary:hover {
+            background: #475569;
+        }
+        .test-button.success {
+            background: #10b981;
+        }
+        .test-button.success:hover {
+            background: #059669;
+        }
+        .expected-results {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .expected-results h4 {
+            margin-top: 0;
+            color: #0c4a6e;
+        }
+        .verification-checklist {
+            background: #fffbeb;
+            border: 1px solid #f59e0b;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .verification-checklist h4 {
+            margin-top: 0;
+            color: #92400e;
+        }
+        .checklist-item {
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+        }
+        .debug-info {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .workflow-step {
+            text-align: center;
+            flex: 1;
+            padding: 0 10px;
+        }
+        .workflow-step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            margin-left: 20px;
+            color: #64748b;
+            font-size: 20px;
+        }
+        .workflow-step .step-number {
+            width: 30px;
+            height: 30px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+        }
+        .file-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .file-type {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+        }
+        .file-type.supported {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        .file-type.unsupported {
+            border-color: #ef4444;
+            background: #fef2f2;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📁 Document Upload Test</h1>
+            <h2>Healthcare IVR Platform - Regional Distributor Document Management</h2>
+            <p><strong>Task ID:</strong> mbv7886bmgcbyyjjjpl</p>
+            <p>Testing document upload capability for Regional Distributors to add supporting documents to IVR requests</p>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Feature Overview</h3>
+            <p><strong>NEW CAPABILITY:</strong> Regional Distributors can now upload supporting documents to IVR requests including insurance cards, prior authorizations, and medical records.</p>
+
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <div class="step-number">1</div>
+                    <h4>Access IVR</h4>
+                    <p>Navigate to IVR detail panel</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">2</div>
+                    <h4>Open Documents</h4>
+                    <p>Click "Documents" button</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">3</div>
+                    <h4>Upload Files</h4>
+                    <p>Click "Upload Document" button</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">4</div>
+                    <h4>Select Type</h4>
+                    <p>Choose document category</p>
+                </div>
+                <div class="workflow-step">
+                    <div class="step-number">5</div>
+                    <h4>Complete</h4>
+                    <p>Upload with progress tracking</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Key Features Implemented</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4><span class="feature-icon"></span>Upload Button</h4>
+                    <p>Blue "Upload Document" button added next to "Download All" in Documents modal header</p>
+                    <ul>
+                        <li>Primary blue styling</li>
+                        <li>Cloud upload icon</li>
+                        <li>Prominent placement</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4><span class="feature-icon"></span>Drag & Drop</h4>
+                    <p>Intuitive drag and drop interface with visual feedback</p>
+                    <ul>
+                        <li>Drag over highlighting</li>
+                        <li>Drop zone indication</li>
+                        <li>File browser fallback</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4><span class="feature-icon"></span>Document Types</h4>
+                    <p>6 predefined document categories for proper organization</p>
+                    <ul>
+                        <li>Insurance Cards</li>
+                        <li>Medical Records</li>
+                        <li>Authorization Forms</li>
+                        <li>Lab Results</li>
+                        <li>Wound Photos</li>
+                        <li>Other Documents</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4><span class="feature-icon"></span>File Validation</h4>
+                    <p>Comprehensive validation with clear error messages</p>
+                    <ul>
+                        <li>File type checking</li>
+                        <li>Size limits (10MB max)</li>
+                        <li>Maximum file count (10)</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4><span class="feature-icon"></span>Progress Tracking</h4>
+                    <p>Real-time upload progress with visual indicators</p>
+                    <ul>
+                        <li>Progress bars</li>
+                        <li>Status indicators</li>
+                        <li>Success/error states</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4><span class="feature-icon"></span>Image Previews</h4>
+                    <p>Thumbnail previews for image files during upload</p>
+                    <ul>
+                        <li>Automatic generation</li>
+                        <li>Fallback icons</li>
+                        <li>File type detection</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📄 Supported File Types</h3>
+            <div class="file-types">
+                <div class="file-type supported">
+                    <h4>✅ Images</h4>
+                    <p>JPEG, PNG, GIF</p>
+                    <small>For insurance cards, wound photos</small>
+                </div>
+                <div class="file-type supported">
+                    <h4>✅ PDF Documents</h4>
+                    <p>PDF files</p>
+                    <small>For forms, lab results, records</small>
+                </div>
+                <div class="file-type supported">
+                    <h4>✅ Word Documents</h4>
+                    <p>DOC, DOCX</p>
+                    <small>For reports and documentation</small>
+                </div>
+                <div class="file-type unsupported">
+                    <h4>❌ Other Formats</h4>
+                    <p>Excel, PowerPoint, etc.</p>
+                    <small>Not supported for security</small>
+                </div>
+            </div>
+
+            <div class="expected-results">
+                <h4>📏 File Limits:</h4>
+                <ul>
+                    <li><strong>Maximum file size:</strong> 10MB per file</li>
+                    <li><strong>Maximum files:</strong> 10 files per upload session</li>
+                    <li><strong>Total storage:</strong> Unlimited (for demo)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Test Procedures</h3>
+
+            <h4>Step 1: Login as Regional Distributor</h4>
+            <p>Use these credentials to test the upload functionality:</p>
+            <div class="debug-info">
+Email: distributor2@healthcare.local
+Password: distributor123
+Role: Distributor (Regional Distributor)
+            </div>
+            <a href="http://localhost:3000/login" class="test-button" target="_blank">🔐 Login Page</a>
+
+            <h4>Step 2: Navigate to Regional IVR Management</h4>
+            <p>Access the IVR management page with hierarchy filtering:</p>
+            <a href="http://localhost:3000/distributor-regional/ivr-management" class="test-button" target="_blank">📊 Regional IVR Management</a>
+
+            <h4>Step 3: Select an IVR and Open Documents</h4>
+            <p>Click on any IVR in the list to open the detail panel, then click the "Documents" button</p>
+            <div class="expected-results">
+                <h4>Expected: Documents Modal Opens</h4>
+                <ul>
+                    <li>Modal shows existing documents (7 sample documents)</li>
+                    <li>Blue "Upload Document" button visible in header</li>
+                    <li>Button positioned before "Download All"</li>
+                </ul>
+            </div>
+
+            <h4>Step 4: Test Upload Functionality</h4>
+            <p>Click the "Upload Document" button to open the upload modal</p>
+            <div class="expected-results">
+                <h4>Expected: Upload Modal Opens</h4>
+                <ul>
+                    <li>Large drag & drop area with cloud icon</li>
+                    <li>File type and size limit information</li>
+                    <li>"Select Files" button for file browser</li>
+                    <li>Support for multiple file selection</li>
+                </ul>
+            </div>
+
+            <h4>Step 5: Test File Upload Process</h4>
+            <p>Try uploading different file types and test all features:</p>
+            <ul>
+                <li><strong>Drag & Drop:</strong> Drag files from desktop to upload area</li>
+                <li><strong>File Browser:</strong> Click "Select Files" to browse</li>
+                <li><strong>Multiple Files:</strong> Select multiple files at once</li>
+                <li><strong>Document Types:</strong> Change document type for each file</li>
+                <li><strong>Progress:</strong> Watch upload progress bars</li>
+                <li><strong>Validation:</strong> Try uploading invalid files (too large, wrong type)</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Testing Scenarios</h3>
+
+            <h4>Scenario 1: Insurance Card Upload</h4>
+            <div class="debug-info">
+1. Upload 2 image files (front and back of insurance card)
+2. Set document type to "Insurance Card"
+3. Verify thumbnails appear
+4. Complete upload and verify files appear in documents list
+            </div>
+
+            <h4>Scenario 2: Medical Records Upload</h4>
+            <div class="debug-info">
+1. Upload a PDF file
+2. Set document type to "Medical Records"
+3. Verify PDF icon appears (no thumbnail)
+4. Complete upload and verify file appears in Medical Records category
+            </div>
+
+            <h4>Scenario 3: Multiple File Types</h4>
+            <div class="debug-info">
+1. Upload mix of images, PDFs, and Word documents
+2. Set different document types for each
+3. Verify all files process correctly
+4. Check that all files appear in appropriate categories
+            </div>
+
+            <h4>Scenario 4: Error Handling</h4>
+            <div class="debug-info">
+1. Try uploading a file larger than 10MB
+2. Try uploading an unsupported file type (.txt, .xlsx)
+3. Try uploading more than 10 files
+4. Verify appropriate error messages appear
+            </div>
+
+            <h4>Scenario 5: Upload Progress</h4>
+            <div class="debug-info">
+1. Upload several large files
+2. Watch progress bars animate
+3. Verify status changes: pending → uploading → completed
+4. Test occasional simulated failures (5% chance)
+            </div>
+        </div>
+
+        <div class="verification-checklist">
+            <h4>✅ Verification Checklist</h4>
+            <div class="checklist-item">
+                <input type="checkbox" id="check1">
+                <label for="check1">Login successful as Regional Distributor</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check2">
+                <label for="check2">Regional IVR Management page loads with hierarchy filtering</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check3">
+                <label for="check3">IVR detail panel opens when clicking on IVR</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check4">
+                <label for="check4">"Documents" button opens Documents modal</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check5">
+                <label for="check5">Blue "Upload Document" button visible in modal header</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check6">
+                <label for="check6">Upload modal opens with drag & drop area</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check7">
+                <label for="check7">Drag & drop functionality works (visual feedback)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check8">
+                <label for="check8">"Select Files" button opens file browser</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check9">
+                <label for="check9">Multiple file selection works</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check10">
+                <label for="check10">Document type dropdown works for each file</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check11">
+                <label for="check11">Image files show thumbnail previews</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check12">
+                <label for="check12">PDF/Word files show appropriate icons</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check13">
+                <label for="check13">File validation works (size, type limits)</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check14">
+                <label for="check14">Upload progress bars animate correctly</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check15">
+                <label for="check15">Upload completion shows success indicators</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check16">
+                <label for="check16">Uploaded files appear in documents list</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check17">
+                <label for="check17">Files appear in correct document categories</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check18">
+                <label for="check18">Remove file button works during upload preparation</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check19">
+                <label for="check19">Error handling displays appropriate messages</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="check20">
+                <label for="check20">Upload modal closes after successful completion</label>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔄 Additional Test Scenarios</h3>
+
+            <h4>Test Different User Roles:</h4>
+            <a href="http://localhost:3000/login" class="test-button secondary" target="_blank">🔐 Test Doctor (view-only access)</a>
+            <a href="http://localhost:3000/login" class="test-button secondary" target="_blank">🔐 Test IVR Company (different permissions)</a>
+            <a href="http://localhost:3000/login" class="test-button secondary" target="_blank">🔐 Test Master Distributor (full access)</a>
+
+            <h4>Test Different IVRs:</h4>
+            <p>Try uploading documents to different IVR requests to verify functionality across all records</p>
+
+            <h4>Test File Management:</h4>
+            <a href="http://localhost:3000/distributor-regional/ivr-management" class="test-button success" target="_blank">📁 Test Document Categories</a>
+            <a href="http://localhost:3000/distributor-regional/ivr-management" class="test-button success" target="_blank">🔍 Test Document Search</a>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Success Criteria</h3>
+            <p><strong>✅ PASS:</strong> Regional Distributor can upload documents with proper categorization and progress tracking</p>
+            <p><strong>❌ FAIL:</strong> Upload button missing or non-functional</p>
+            <p><strong>❌ FAIL:</strong> Upload modal doesn't open or has errors</p>
+            <p><strong>❌ FAIL:</strong> File validation doesn't work properly</p>
+            <p><strong>❌ FAIL:</strong> Progress tracking doesn't function</p>
+            <p><strong>❌ FAIL:</strong> Uploaded files don't appear in documents list</p>
+
+            <div class="expected-results">
+                <h4>🎉 Expected Final Result:</h4>
+                <p>Regional Distributors can successfully upload supporting documents to IVR requests with a professional, intuitive interface that includes drag & drop, progress tracking, document categorization, and proper validation.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-check items as user progresses
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const checkedCount = document.querySelectorAll('input[type="checkbox"]:checked').length;
+                    const totalCount = checkboxes.length;
+
+                    if (checkedCount === totalCount) {
+                        alert('🎉 All verification items checked! Document upload test complete.');
+                    }
+                });
+            });
+
+            // Add visual feedback for workflow steps
+            const workflowSteps = document.querySelectorAll('.workflow-step');
+            workflowSteps.forEach((step, index) => {
+                step.addEventListener('click', function() {
+                    // Remove active class from all steps
+                    workflowSteps.forEach(s => s.classList.remove('active'));
+                    // Add active class to clicked step and all previous steps
+                    for (let i = 0; i <= index; i++) {
+                        workflowSteps[i].classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+
+    <style>
+        .workflow-step.active .step-number {
+            background: #10b981;
+        }
+        .workflow-step {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .workflow-step:hover {
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+    </style>
+</body>
+</html>

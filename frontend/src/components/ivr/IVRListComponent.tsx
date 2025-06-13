@@ -144,6 +144,8 @@ const IVRListComponent: React.FC<IVRListComponentProps> = ({
 
   // Handle row click
   const handleRowClick = useCallback((request: SharedIVRRequest) => {
+    console.log('🔍 [IVRListComponent] Row clicked:', request.ivrNumber, request.id);
+    console.log('🔍 [IVRListComponent] onSelectIVR callback:', typeof onSelectIVR);
     onSelectIVR(request);
     setOpenMenuId(null);
   }, [onSelectIVR]);
@@ -347,8 +349,9 @@ const IVRListComponent: React.FC<IVRListComponentProps> = ({
                           e.stopPropagation();
                           setOpenMenuId(openMenuId === request.id ? null : request.id);
                         }}
-                        className="w-6 h-6 rounded hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all opacity-0 group-hover:opacity-100"
+                        className="w-6 h-6 rounded hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all"
                         aria-label="More actions"
+                        title="More actions"
                       >
                         <EllipsisVerticalIcon className="w-4 h-4" />
                       </button>

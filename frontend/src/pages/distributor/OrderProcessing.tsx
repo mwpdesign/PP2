@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { HierarchyFilteringService } from '../../services/hierarchyFilteringService';
 import { Card } from '../../components/shared/ui/Card';
@@ -185,6 +185,7 @@ const mockOrders: Order[] = [
 
 const OrderProcessing: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [filteredData, setFilteredData] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -198,6 +199,36 @@ const OrderProcessing: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState<string>('All');
   const [valueRange, setValueRange] = useState<string>('All');
+
+  // Detect current distributor context from URL
+  const getDistributorContext = () => {
+    if (location.pathname.includes('/distributor-regional/')) {
+      return 'regional';
+    }
+    if (location.pathname.includes('/distributor/')) {
+      return 'master';
+    }
+    return 'master'; // Default fallback
+  };
+
+  // Context-aware navigation function
+  const navigateToOrderDetail = (orderId: string) => {
+    const context = getDistributorContext();
+
+    console.log('🚀 OrderProcessing Navigation Context:', {
+      currentPath: location.pathname,
+      detectedContext: context,
+      orderId: orderId
+    });
+
+    if (context === 'regional') {
+      console.log('🚀 Navigating to Regional Distributor order detail');
+      navigate(`/distributor-regional/order-management/${orderId}`);
+    } else {
+      console.log('🚀 Navigating to Master Distributor order detail');
+      navigate(`/distributor/orders/${orderId}`);
+    }
+  };
 
   useEffect(() => {
     const loadFilteredData = async () => {
@@ -694,7 +725,7 @@ const OrderProcessing: React.FC = () => {
                         console.log('🚀 Navigating to order detail');
                         console.log('Order ID:', order.id);
                         console.log('Target URL:', `/distributor/orders/${order.id}`);
-                        navigate(`/distributor/orders/${order.id}`);
+                        navigateToOrderDetail(order.id);
                       }}
                       className="inline-flex items-center px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors"
                     >

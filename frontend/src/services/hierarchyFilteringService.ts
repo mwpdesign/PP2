@@ -1,649 +1,875 @@
-import { User } from '../types/auth';
+import { SharedIVRRequest } from '../data/mockIVRData';
+import { SharedOrder } from '../data/mockOrderData';
+import { UserProfile } from '../types/auth';
+import {
+  getUserByEmail,
+  getDoctorsInDownline,
+  getAllDescendants,
+  getHierarchySummary,
+  HierarchyUser
+} from '../data/mockHierarchyData';
 
-// Hierarchy role definitions
-export enum HierarchyRole {
-  SYSTEM_ADMIN = 'system_admin',
-  CHP_ADMIN = 'chp_admin',
-  MASTER_DISTRIBUTOR = 'master_distributor',
-  REGIONAL_DISTRIBUTOR = 'regional_distributor',
-  SALES_REPRESENTATIVE = 'sales_representative',
-  DOCTOR = 'doctor',
-  OFFICE_ADMIN = 'office_admin',
-  MEDICAL_STAFF = 'medical_staff',
-  IVR_COMPANY = 'ivr_company',
-  SHIPPING_LOGISTICS = 'shipping_logistics'
-}
-
-// Data access scope definitions
-export enum DataAccessScope {
-  SYSTEM_WIDE = 'system_wide',
-  ORGANIZATION_WIDE = 'organization_wide',
-  NETWORK_WIDE = 'network_wide',
-  TERRITORY_WIDE = 'territory_wide',
-  PERSONAL_ONLY = 'personal_only',
-  PRACTICE_ONLY = 'practice_only'
-}
-
-// Hierarchy relationship interface
-export interface HierarchyRelationship {
-  userId: string;
-  role: HierarchyRole;
-  parentId?: string;
-  organizationId: string;
-  territoryId?: string;
-  networkIds: string[];
-  accessScope: DataAccessScope;
-  permissions: string[];
-}
-
-// Data filtering context
-export interface FilteringContext {
-  user: User;
-  hierarchy: HierarchyRelationship;
-  requestedDataType: 'ivr' | 'orders' | 'shipping' | 'patients' | 'doctors';
-  additionalFilters?: Record<string, any>;
-}
-
-// Filtered data result
-export interface FilteredDataResult<T> {
-  data: T[];
-  totalCount: number;
-  accessibleCount: number;
-  scope: DataAccessScope;
-  appliedFilters: string[];
-  restrictions: string[];
-}
-
-// Base data entity interface
-export interface BaseDataEntity {
+// Add Salesperson interface for filtering
+export interface Salesperson {
   id: string;
-  organizationId: string;
-  createdBy: string;
-  assignedTo?: string;
-  territoryId?: string;
-  networkId?: string;
-  doctorId?: string;
-  distributorId?: string;
-  salesRepId?: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  distributorId: string;
+  distributorName: string;
+  territory: string;
+  activeDoctors: number;
+  totalIVRs: number;
+  status: 'active' | 'inactive';
+  employeeId: string;
+  startDate: string;
+  commissionRate: number;
+  salesGoals: {
+    monthly: number;
+    quarterly: number;
+  };
+  performance: {
+    doctorsAdded: number;
+    ivrsGenerated: number;
+    growthRate: number;
+    tier: 'top' | 'average' | 'low';
+  };
+  lastActivity: string;
 }
 
-// IVR data entity
-export interface IVRDataEntity extends BaseDataEntity {
-  patientId: string;
-  requestingDoctorId: string;
-  assignedSalesRepId?: string;
-  distributorNetworkId: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  insuranceProvider: string;
+export interface FilterResult {
+  filteredData: SharedIVRRequest[];
+  totalCount: number;
+  filteredCount: number;
+  filterReason: string;
+  allowedDoctorIds: string[];
+  userHierarchyInfo: {
+    userId: string;
+    role: string;
+    downlineUsers: HierarchyUser[];
+    downlineDoctors: HierarchyUser[];
+  };
 }
 
-// Order data entity
-export interface OrderDataEntity extends BaseDataEntity {
-  customerId: string;
-  orderNumber: string;
-  totalAmount: number;
-  shippingAddress: any;
-  orderItems: any[];
-  fulfillmentStatus: string;
+export interface OrderFilterResult {
+  filteredData: SharedOrder[];
+  totalCount: number;
+  filteredCount: number;
+  filterReason: string;
+  allowedDoctorIds: string[];
+  userHierarchyInfo: {
+    userId: string;
+    role: string;
+    downlineUsers: HierarchyUser[];
+    downlineDoctors: HierarchyUser[];
+  };
 }
 
-// Shipping data entity
-export interface ShippingDataEntity extends BaseDataEntity {
-  orderId: string;
-  trackingNumber: string;
-  carrier: string;
-  shipmentStatus: string;
-  estimatedDelivery: string;
-  actualDelivery?: string;
+export interface SalespeopleFilterResult {
+  filteredData: Salesperson[];
+  totalCount: number;
+  filteredCount: number;
+  filterReason: string;
+  allowedSalesRepIds: string[];
+  userHierarchyInfo: {
+    userId: string;
+    role: string;
+    downlineUsers: HierarchyUser[];
+    downlineSalesReps: HierarchyUser[];
+  };
 }
 
 export class HierarchyFilteringService {
-  private static instance: HierarchyFilteringService;
-  private hierarchyCache: Map<string, HierarchyRelationship> = new Map();
-  private networkCache: Map<string, string[]> = new Map();
-
-  private constructor() {}
-
-  public static getInstance(): HierarchyFilteringService {
-    if (!HierarchyFilteringService.instance) {
-      HierarchyFilteringService.instance = new HierarchyFilteringService();
-    }
-    return HierarchyFilteringService.instance;
-  }
-
   /**
-   * Get user's hierarchy relationship and access scope
+   * Main filtering method - filters IVR data based on user hierarchy
    */
-  public async getUserHierarchy(userId: string): Promise<HierarchyRelationship> {
-    // Check cache first
-    if (this.hierarchyCache.has(userId)) {
-      return this.hierarchyCache.get(userId)!;
+  static filterIVRDataByHierarchy(
+    ivrData: SharedIVRRequest[],
+    currentUser: UserProfile | null
+  ): FilterResult {
+    console.log('🔍 [HierarchyFilteringService] Starting hierarchy filtering...');
+    console.log('📊 Input data count:', ivrData.length);
+    console.log('👤 Current user:', currentUser?.email, 'Role:', currentUser?.role);
+
+    // Print hierarchy summary for debugging
+    getHierarchySummary();
+
+    if (!currentUser) {
+      console.log('❌ No current user - returning empty results');
+      return {
+        filteredData: [],
+        totalCount: ivrData.length,
+        filteredCount: 0,
+        filterReason: 'No authenticated user',
+        allowedDoctorIds: [],
+        userHierarchyInfo: {
+          userId: '',
+          role: '',
+          downlineUsers: [],
+          downlineDoctors: []
+        }
+      };
     }
 
-    // Mock hierarchy data - in production, this would come from API
-    const mockHierarchy = this.getMockHierarchyData(userId);
+    // Get hierarchy user data
+    const hierarchyUser = getUserByEmail(currentUser.email);
+    if (!hierarchyUser) {
+      console.log('❌ User not found in hierarchy data:', currentUser.email);
+      return {
+        filteredData: [],
+        totalCount: ivrData.length,
+        filteredCount: 0,
+        filterReason: `User ${currentUser.email} not found in hierarchy`,
+        allowedDoctorIds: [],
+        userHierarchyInfo: {
+          userId: '',
+          role: currentUser.role || '',
+          downlineUsers: [],
+          downlineDoctors: []
+        }
+      };
+    }
 
-    // Cache the result
-    this.hierarchyCache.set(userId, mockHierarchy);
+    console.log('✅ Found hierarchy user:', hierarchyUser.name, 'ID:', hierarchyUser.id);
 
-    return mockHierarchy;
-  }
+    // Apply role-based filtering
+    switch (currentUser.role) {
+      case 'Master Distributor':
+        return this.filterForMasterDistributor(ivrData, hierarchyUser);
 
-  /**
-   * Determine data access scope based on user role and hierarchy
-   */
-  public getDataAccessScope(role: HierarchyRole): DataAccessScope {
-    switch (role) {
-      case HierarchyRole.SYSTEM_ADMIN:
-        return DataAccessScope.SYSTEM_WIDE;
+      case 'Distributor': // Regional Distributor
+        return this.filterForRegionalDistributor(ivrData, hierarchyUser);
 
-      case HierarchyRole.CHP_ADMIN:
-        return DataAccessScope.ORGANIZATION_WIDE;
+      case 'Sales':
+        return this.filterForSalesRep(ivrData, hierarchyUser);
 
-      case HierarchyRole.MASTER_DISTRIBUTOR:
-        return DataAccessScope.NETWORK_WIDE;
+      case 'Doctor':
+        return this.filterForDoctor(ivrData, hierarchyUser);
 
-      case HierarchyRole.REGIONAL_DISTRIBUTOR:
-        return DataAccessScope.TERRITORY_WIDE;
-
-      case HierarchyRole.SALES_REPRESENTATIVE:
-        return DataAccessScope.PERSONAL_ONLY;
-
-      case HierarchyRole.DOCTOR:
-      case HierarchyRole.OFFICE_ADMIN:
-      case HierarchyRole.MEDICAL_STAFF:
-        return DataAccessScope.PRACTICE_ONLY;
-
-      case HierarchyRole.IVR_COMPANY:
-      case HierarchyRole.SHIPPING_LOGISTICS:
-        return DataAccessScope.ORGANIZATION_WIDE;
+      case 'Admin':
+      case 'CHP Admin':
+        return this.filterForAdmin(ivrData, hierarchyUser);
 
       default:
-        return DataAccessScope.PERSONAL_ONLY;
+        console.log('❌ Unknown role:', currentUser.role);
+        return {
+          filteredData: [],
+          totalCount: ivrData.length,
+          filteredCount: 0,
+          filterReason: `Unknown role: ${currentUser.role}`,
+          allowedDoctorIds: [],
+          userHierarchyInfo: {
+            userId: hierarchyUser.id,
+            role: currentUser.role || '',
+            downlineUsers: [],
+            downlineDoctors: []
+          }
+        };
     }
   }
 
   /**
-   * Filter IVR data based on user hierarchy
+   * Main filtering method - filters Order data based on user hierarchy
    */
-  public async filterIVRData(
-    data: IVRDataEntity[],
-    context: FilteringContext
-  ): Promise<FilteredDataResult<IVRDataEntity>> {
-    const { user, hierarchy } = context;
-    const appliedFilters: string[] = [];
-    const restrictions: string[] = [];
+  static filterOrderDataByHierarchy(
+    orderData: SharedOrder[],
+    currentUser: UserProfile | null
+  ): OrderFilterResult {
+    console.log('🔍 [HierarchyFilteringService] Starting order hierarchy filtering...');
+    console.log('📦 Input order count:', orderData.length);
+    console.log('👤 Current user:', currentUser?.email, 'Role:', currentUser?.role);
 
-    let filteredData = [...data];
+    // Print hierarchy summary for debugging
+    getHierarchySummary();
 
-    switch (hierarchy.accessScope) {
-      case DataAccessScope.SYSTEM_WIDE:
-        // System admin sees everything
-        appliedFilters.push('system_wide_access');
-        break;
-
-      case DataAccessScope.ORGANIZATION_WIDE:
-        // CHP Admin sees all within organization
-        filteredData = filteredData.filter(item =>
-          item.organizationId === hierarchy.organizationId
-        );
-        appliedFilters.push('organization_filter');
-        break;
-
-      case DataAccessScope.NETWORK_WIDE:
-        // Master Distributor sees their entire network
-        const networkIds = await this.getNetworkIds(hierarchy.userId);
-        filteredData = filteredData.filter(item =>
-          networkIds.includes(item.distributorNetworkId) ||
-          item.distributorId === hierarchy.userId
-        );
-        appliedFilters.push('network_filter');
-        break;
-
-      case DataAccessScope.TERRITORY_WIDE:
-        // Regional Distributor sees their territory
-        filteredData = filteredData.filter(item =>
-          item.territoryId === hierarchy.territoryId ||
-          item.distributorId === hierarchy.userId ||
-          item.assignedSalesRepId && this.isInTerritory(item.assignedSalesRepId, hierarchy.territoryId!)
-        );
-        appliedFilters.push('territory_filter');
-        break;
-
-      case DataAccessScope.PERSONAL_ONLY:
-        // Sales Rep sees only their assigned IVRs
-        filteredData = filteredData.filter(item =>
-          item.assignedSalesRepId === hierarchy.userId ||
-          item.createdBy === hierarchy.userId
-        );
-        appliedFilters.push('personal_filter');
-        restrictions.push('limited_to_assigned_ivrs');
-        break;
-
-      case DataAccessScope.PRACTICE_ONLY:
-        // Doctors see only their practice IVRs
-        filteredData = filteredData.filter(item =>
-          item.requestingDoctorId === hierarchy.userId ||
-          (hierarchy.role === HierarchyRole.OFFICE_ADMIN &&
-           this.isInSamePractice(item.requestingDoctorId, hierarchy.userId))
-        );
-        appliedFilters.push('practice_filter');
-        break;
+    if (!currentUser) {
+      console.log('❌ No current user - returning empty results');
+      return {
+        filteredData: [],
+        totalCount: orderData.length,
+        filteredCount: 0,
+        filterReason: 'No authenticated user',
+        allowedDoctorIds: [],
+        userHierarchyInfo: {
+          userId: '',
+          role: '',
+          downlineUsers: [],
+          downlineDoctors: []
+        }
+      };
     }
 
-    // Apply additional role-specific filters
-    if (hierarchy.role === HierarchyRole.IVR_COMPANY) {
-      // IVR Company sees only IVRs assigned to them or in review
-      filteredData = filteredData.filter(item =>
-        ['submitted', 'in_review', 'documents_requested'].includes(item.status)
-      );
-      appliedFilters.push('ivr_company_status_filter');
+    // Get hierarchy user data
+    const hierarchyUser = getUserByEmail(currentUser.email);
+    if (!hierarchyUser) {
+      console.log('❌ User not found in hierarchy data:', currentUser.email);
+      return {
+        filteredData: [],
+        totalCount: orderData.length,
+        filteredCount: 0,
+        filterReason: `User ${currentUser.email} not found in hierarchy`,
+        allowedDoctorIds: [],
+        userHierarchyInfo: {
+          userId: '',
+          role: currentUser.role || '',
+          downlineUsers: [],
+          downlineDoctors: []
+        }
+      };
     }
 
-    // Apply priority-based filtering for certain roles
-    if ([HierarchyRole.SALES_REPRESENTATIVE, HierarchyRole.REGIONAL_DISTRIBUTOR].includes(hierarchy.role)) {
-      // Show high priority items first, but don't filter out others
-      filteredData.sort((a, b) => {
-        const priorityOrder = { urgent: 4, high: 3, medium: 2, low: 1 };
-        return priorityOrder[b.priority] - priorityOrder[a.priority];
-      });
-      appliedFilters.push('priority_sort');
-    }
+    console.log('✅ Found hierarchy user:', hierarchyUser.name, 'ID:', hierarchyUser.id);
 
-    return {
-      data: filteredData,
-      totalCount: data.length,
-      accessibleCount: filteredData.length,
-      scope: hierarchy.accessScope,
-      appliedFilters,
-      restrictions
-    };
-  }
+    // Apply role-based filtering
+    switch (currentUser.role) {
+      case 'Master Distributor':
+        return this.filterOrdersForMasterDistributor(orderData, hierarchyUser);
 
-  /**
-   * Filter Order data based on user hierarchy
-   */
-  public async filterOrderData(
-    data: OrderDataEntity[],
-    context: FilteringContext
-  ): Promise<FilteredDataResult<OrderDataEntity>> {
-    const { user, hierarchy } = context;
-    const appliedFilters: string[] = [];
-    const restrictions: string[] = [];
+      case 'Distributor': // Regional Distributor
+        return this.filterOrdersForRegionalDistributor(orderData, hierarchyUser);
 
-    let filteredData = [...data];
+      case 'Sales':
+        return this.filterOrdersForSalesRep(orderData, hierarchyUser);
 
-    switch (hierarchy.accessScope) {
-      case DataAccessScope.SYSTEM_WIDE:
-        appliedFilters.push('system_wide_access');
-        break;
+      case 'Doctor':
+        return this.filterOrdersForDoctor(orderData, hierarchyUser);
 
-      case DataAccessScope.ORGANIZATION_WIDE:
-        filteredData = filteredData.filter(item =>
-          item.organizationId === hierarchy.organizationId
-        );
-        appliedFilters.push('organization_filter');
-        break;
-
-      case DataAccessScope.NETWORK_WIDE:
-        const networkIds = await this.getNetworkIds(hierarchy.userId);
-        filteredData = filteredData.filter(item =>
-          networkIds.includes(item.networkId!) ||
-          item.distributorId === hierarchy.userId
-        );
-        appliedFilters.push('network_filter');
-        break;
-
-      case DataAccessScope.TERRITORY_WIDE:
-        filteredData = filteredData.filter(item =>
-          item.territoryId === hierarchy.territoryId ||
-          item.salesRepId === hierarchy.userId ||
-          (item.salesRepId && this.isInTerritory(item.salesRepId, hierarchy.territoryId!))
-        );
-        appliedFilters.push('territory_filter');
-        break;
-
-      case DataAccessScope.PERSONAL_ONLY:
-        filteredData = filteredData.filter(item =>
-          item.salesRepId === hierarchy.userId ||
-          item.createdBy === hierarchy.userId
-        );
-        appliedFilters.push('personal_filter');
-        restrictions.push('limited_to_assigned_orders');
-        break;
-
-      case DataAccessScope.PRACTICE_ONLY:
-        filteredData = filteredData.filter(item =>
-          item.customerId === hierarchy.userId ||
-          (hierarchy.role === HierarchyRole.OFFICE_ADMIN &&
-           this.isInSamePractice(item.customerId, hierarchy.userId))
-        );
-        appliedFilters.push('practice_filter');
-        break;
-    }
-
-    // Apply shipping logistics specific filtering
-    if (hierarchy.role === HierarchyRole.SHIPPING_LOGISTICS) {
-      filteredData = filteredData.filter(item =>
-        ['processing', 'shipped', 'in_transit'].includes(item.fulfillmentStatus)
-      );
-      appliedFilters.push('shipping_status_filter');
-    }
-
-    return {
-      data: filteredData,
-      totalCount: data.length,
-      accessibleCount: filteredData.length,
-      scope: hierarchy.accessScope,
-      appliedFilters,
-      restrictions
-    };
-  }
-
-  /**
-   * Filter Shipping data based on user hierarchy
-   */
-  public async filterShippingData(
-    data: ShippingDataEntity[],
-    context: FilteringContext
-  ): Promise<FilteredDataResult<ShippingDataEntity>> {
-    const { user, hierarchy } = context;
-    const appliedFilters: string[] = [];
-    const restrictions: string[] = [];
-
-    let filteredData = [...data];
-
-    switch (hierarchy.accessScope) {
-      case DataAccessScope.SYSTEM_WIDE:
-        appliedFilters.push('system_wide_access');
-        break;
-
-      case DataAccessScope.ORGANIZATION_WIDE:
-        filteredData = filteredData.filter(item =>
-          item.organizationId === hierarchy.organizationId
-        );
-        appliedFilters.push('organization_filter');
-        break;
-
-      case DataAccessScope.NETWORK_WIDE:
-        const networkIds = await this.getNetworkIds(hierarchy.userId);
-        filteredData = filteredData.filter(item =>
-          networkIds.includes(item.networkId!) ||
-          item.distributorId === hierarchy.userId
-        );
-        appliedFilters.push('network_filter');
-        break;
-
-      case DataAccessScope.TERRITORY_WIDE:
-        filteredData = filteredData.filter(item =>
-          item.territoryId === hierarchy.territoryId ||
-          (item.salesRepId && this.isInTerritory(item.salesRepId, hierarchy.territoryId!))
-        );
-        appliedFilters.push('territory_filter');
-        break;
-
-      case DataAccessScope.PERSONAL_ONLY:
-        filteredData = filteredData.filter(item =>
-          item.salesRepId === hierarchy.userId ||
-          item.createdBy === hierarchy.userId
-        );
-        appliedFilters.push('personal_filter');
-        restrictions.push('limited_to_assigned_shipments');
-        break;
-
-      case DataAccessScope.PRACTICE_ONLY:
-        // Doctors can see shipments for their orders
-        filteredData = filteredData.filter(item =>
-          this.isOrderFromPractice(item.orderId, hierarchy.userId)
-        );
-        appliedFilters.push('practice_filter');
-        break;
-    }
-
-    return {
-      data: filteredData,
-      totalCount: data.length,
-      accessibleCount: filteredData.length,
-      scope: hierarchy.accessScope,
-      appliedFilters,
-      restrictions
-    };
-  }
-
-  /**
-   * Check if user can access specific data item
-   */
-  public async canAccessData(
-    dataItem: BaseDataEntity,
-    userId: string,
-    dataType: string
-  ): Promise<boolean> {
-    const hierarchy = await this.getUserHierarchy(userId);
-
-    switch (hierarchy.accessScope) {
-      case DataAccessScope.SYSTEM_WIDE:
-        return true;
-
-      case DataAccessScope.ORGANIZATION_WIDE:
-        return dataItem.organizationId === hierarchy.organizationId;
-
-      case DataAccessScope.NETWORK_WIDE:
-        const networkIds = await this.getNetworkIds(hierarchy.userId);
-        return networkIds.includes(dataItem.networkId!) ||
-               dataItem.distributorId === hierarchy.userId;
-
-      case DataAccessScope.TERRITORY_WIDE:
-        return dataItem.territoryId === hierarchy.territoryId ||
-               dataItem.salesRepId === hierarchy.userId;
-
-      case DataAccessScope.PERSONAL_ONLY:
-        return dataItem.createdBy === hierarchy.userId ||
-               dataItem.assignedTo === hierarchy.userId;
-
-      case DataAccessScope.PRACTICE_ONLY:
-        return dataItem.doctorId === hierarchy.userId ||
-               (hierarchy.role === HierarchyRole.OFFICE_ADMIN &&
-                this.isInSamePractice(dataItem.doctorId!, hierarchy.userId));
+      case 'Admin':
+      case 'CHP Admin':
+        return this.filterOrdersForAdmin(orderData, hierarchyUser);
 
       default:
-        return false;
+        console.log('❌ Unknown role:', currentUser.role);
+        return {
+          filteredData: [],
+          totalCount: orderData.length,
+          filteredCount: 0,
+          filterReason: `Unknown role: ${currentUser.role}`,
+          allowedDoctorIds: [],
+          userHierarchyInfo: {
+            userId: hierarchyUser.id,
+            role: currentUser.role || '',
+            downlineUsers: [],
+            downlineDoctors: []
+          }
+        };
     }
   }
 
   /**
-   * Get accessible user IDs based on hierarchy
+   * Filter for Master Distributor - sees all IVRs
    */
-  public async getAccessibleUserIds(userId: string): Promise<string[]> {
-    const hierarchy = await this.getUserHierarchy(userId);
-    const accessibleIds: string[] = [userId];
+  private static filterForMasterDistributor(
+    ivrData: SharedIVRRequest[],
+    hierarchyUser: HierarchyUser
+  ): FilterResult {
+    console.log('🏢 [Master Distributor] Showing all IVRs');
 
-    switch (hierarchy.accessScope) {
-      case DataAccessScope.SYSTEM_WIDE:
-        // System admin can access all users
-        return this.getAllUserIds();
+    const downlineUsers = getAllDescendants(hierarchyUser.id);
+    const downlineDoctors = downlineUsers.filter(user => user.role === 'Doctor');
+    const allowedDoctorIds = downlineDoctors.map(doctor => doctor.id);
 
-      case DataAccessScope.ORGANIZATION_WIDE:
-        return this.getOrganizationUserIds(hierarchy.organizationId);
-
-      case DataAccessScope.NETWORK_WIDE:
-        const networkIds = await this.getNetworkIds(hierarchy.userId);
-        return this.getNetworkUserIds(networkIds);
-
-      case DataAccessScope.TERRITORY_WIDE:
-        return this.getTerritoryUserIds(hierarchy.territoryId!);
-
-      case DataAccessScope.PERSONAL_ONLY:
-        return [userId];
-
-      case DataAccessScope.PRACTICE_ONLY:
-        return this.getPracticeUserIds(userId);
-
-      default:
-        return [userId];
-    }
-  }
-
-  /**
-   * Validate hierarchy relationship
-   */
-  public async validateHierarchy(
-    parentId: string,
-    childId: string
-  ): Promise<boolean> {
-    const parentHierarchy = await this.getUserHierarchy(parentId);
-    const childHierarchy = await this.getUserHierarchy(childId);
-
-    // Check if parent has higher or equal access scope
-    const scopeHierarchy = [
-      DataAccessScope.PERSONAL_ONLY,
-      DataAccessScope.PRACTICE_ONLY,
-      DataAccessScope.TERRITORY_WIDE,
-      DataAccessScope.NETWORK_WIDE,
-      DataAccessScope.ORGANIZATION_WIDE,
-      DataAccessScope.SYSTEM_WIDE
-    ];
-
-    const parentScopeLevel = scopeHierarchy.indexOf(parentHierarchy.accessScope);
-    const childScopeLevel = scopeHierarchy.indexOf(childHierarchy.accessScope);
-
-    return parentScopeLevel >= childScopeLevel;
-  }
-
-  // Private helper methods
-
-  private getMockHierarchyData(userId: string): HierarchyRelationship {
-    // Mock data - in production, this would come from database
-    const mockHierarchies: Record<string, HierarchyRelationship> = {
-      'system-admin-1': {
-        userId: 'system-admin-1',
-        role: HierarchyRole.SYSTEM_ADMIN,
-        organizationId: 'org-1',
-        networkIds: [],
-        accessScope: DataAccessScope.SYSTEM_WIDE,
-        permissions: ['*']
-      },
-      'chp-admin-1': {
-        userId: 'chp-admin-1',
-        role: HierarchyRole.CHP_ADMIN,
-        organizationId: 'org-1',
-        networkIds: ['network-1', 'network-2'],
-        accessScope: DataAccessScope.ORGANIZATION_WIDE,
-        permissions: ['view_all', 'manage_distributors', 'view_reports']
-      },
-      'master-dist-1': {
-        userId: 'master-dist-1',
-        role: HierarchyRole.MASTER_DISTRIBUTOR,
-        organizationId: 'org-1',
-        networkIds: ['network-1'],
-        accessScope: DataAccessScope.NETWORK_WIDE,
-        permissions: ['view_network', 'manage_regional', 'view_reports']
-      },
-      'regional-dist-1': {
-        userId: 'regional-dist-1',
-        role: HierarchyRole.REGIONAL_DISTRIBUTOR,
-        parentId: 'master-dist-1',
-        organizationId: 'org-1',
-        territoryId: 'territory-1',
-        networkIds: ['network-1'],
-        accessScope: DataAccessScope.TERRITORY_WIDE,
-        permissions: ['view_territory', 'manage_sales', 'view_reports']
-      },
-      'sales-rep-1': {
-        userId: 'sales-rep-1',
-        role: HierarchyRole.SALES_REPRESENTATIVE,
-        parentId: 'regional-dist-1',
-        organizationId: 'org-1',
-        territoryId: 'territory-1',
-        networkIds: ['network-1'],
-        accessScope: DataAccessScope.PERSONAL_ONLY,
-        permissions: ['view_assigned', 'manage_doctors']
+    return {
+      filteredData: ivrData,
+      totalCount: ivrData.length,
+      filteredCount: ivrData.length,
+      filterReason: 'Master Distributor - Full access to all IVRs',
+      allowedDoctorIds,
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Master Distributor',
+        downlineUsers,
+        downlineDoctors
       }
     };
-
-    return mockHierarchies[userId] || {
-      userId,
-      role: HierarchyRole.SALES_REPRESENTATIVE,
-      organizationId: 'org-1',
-      networkIds: [],
-      accessScope: DataAccessScope.PERSONAL_ONLY,
-      permissions: ['view_assigned']
-    };
-  }
-
-  private async getNetworkIds(userId: string): Promise<string[]> {
-    if (this.networkCache.has(userId)) {
-      return this.networkCache.get(userId)!;
-    }
-
-    // Mock network data
-    const networkIds = ['network-1', 'network-2'];
-    this.networkCache.set(userId, networkIds);
-    return networkIds;
-  }
-
-  private isInTerritory(userId: string, territoryId: string): boolean {
-    // Mock territory check
-    return true;
-  }
-
-  private isInSamePractice(doctorId: string, userId: string): boolean {
-    // Mock practice check
-    return true;
-  }
-
-  private isOrderFromPractice(orderId: string, userId: string): boolean {
-    // Mock order practice check
-    return true;
-  }
-
-  private getAllUserIds(): string[] {
-    return ['system-admin-1', 'chp-admin-1', 'master-dist-1', 'regional-dist-1', 'sales-rep-1'];
-  }
-
-  private getOrganizationUserIds(organizationId: string): string[] {
-    return ['chp-admin-1', 'master-dist-1', 'regional-dist-1', 'sales-rep-1'];
-  }
-
-  private getNetworkUserIds(networkIds: string[]): string[] {
-    return ['master-dist-1', 'regional-dist-1', 'sales-rep-1'];
-  }
-
-  private getTerritoryUserIds(territoryId: string): string[] {
-    return ['regional-dist-1', 'sales-rep-1'];
-  }
-
-  private getPracticeUserIds(userId: string): string[] {
-    return [userId];
   }
 
   /**
-   * Clear caches (useful for testing or when hierarchy changes)
+   * Filter for Regional Distributor - sees only IVRs from doctors in their downline
    */
-  public clearCaches(): void {
-    this.hierarchyCache.clear();
-    this.networkCache.clear();
-  }
+  private static filterForRegionalDistributor(
+    ivrData: SharedIVRRequest[],
+    hierarchyUser: HierarchyUser
+  ): FilterResult {
+    console.log('🌍 [Regional Distributor] Filtering for downline doctors...');
 
-  /**
-   * Get filtering summary for debugging
-   */
-  public async getFilteringSummary(userId: string): Promise<{
-    hierarchy: HierarchyRelationship;
-    accessibleUserIds: string[];
-    scope: DataAccessScope;
-    permissions: string[];
-  }> {
-    const hierarchy = await this.getUserHierarchy(userId);
-    const accessibleUserIds = await this.getAccessibleUserIds(userId);
+    // Get all doctors in this regional distributor's downline
+    const downlineUsers = getAllDescendants(hierarchyUser.id);
+    const downlineDoctors = downlineUsers.filter(user => user.role === 'Doctor');
+    const allowedDoctorIds = downlineDoctors.map(doctor => doctor.id);
+
+    console.log('👥 Downline users:', downlineUsers.map(u => `${u.name} (${u.role})`));
+    console.log('👨‍⚕️ Downline doctors:', downlineDoctors.map(d => d.name));
+    console.log('🆔 Allowed doctor IDs:', allowedDoctorIds);
+
+    // Filter IVRs to only include those from doctors in the downline
+    const filteredData = ivrData.filter(ivr => {
+      const isAllowed = allowedDoctorIds.includes(ivr.doctorId) ||
+                       allowedDoctorIds.includes(ivr.requestingDoctorId) ||
+                       ivr.distributorId === hierarchyUser.id ||
+                       ivr.regionalDistributorId === hierarchyUser.id;
+
+      if (isAllowed) {
+        console.log(`✅ Including IVR ${ivr.ivrNumber} from doctor ${ivr.doctorId} (${ivr.doctorName})`);
+      } else {
+        console.log(`❌ Excluding IVR ${ivr.ivrNumber} from doctor ${ivr.doctorId} (${ivr.doctorName}) - not in downline`);
+      }
+
+      return isAllowed;
+    });
+
+    console.log(`📊 Filtered ${filteredData.length} IVRs out of ${ivrData.length} total`);
 
     return {
-      hierarchy,
-      accessibleUserIds,
-      scope: hierarchy.accessScope,
-      permissions: hierarchy.permissions
+      filteredData,
+      totalCount: ivrData.length,
+      filteredCount: filteredData.length,
+      filterReason: `Regional Distributor - Showing IVRs from ${downlineDoctors.length} doctors in downline`,
+      allowedDoctorIds,
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Regional Distributor',
+        downlineUsers,
+        downlineDoctors
+      }
     };
+  }
+
+  /**
+   * Filter for Sales Rep - sees only IVRs from doctors they manage
+   */
+  private static filterForSalesRep(
+    ivrData: SharedIVRRequest[],
+    hierarchyUser: HierarchyUser
+  ): FilterResult {
+    console.log('💼 [Sales Rep] Filtering for managed doctors...');
+
+    const downlineUsers = getAllDescendants(hierarchyUser.id);
+    const downlineDoctors = downlineUsers.filter(user => user.role === 'Doctor');
+    const allowedDoctorIds = downlineDoctors.map(doctor => doctor.id);
+
+    const filteredData = ivrData.filter(ivr =>
+      allowedDoctorIds.includes(ivr.doctorId) ||
+      allowedDoctorIds.includes(ivr.requestingDoctorId) ||
+      ivr.salesRepId === hierarchyUser.id ||
+      ivr.assignedSalesRepId === hierarchyUser.id
+    );
+
+    return {
+      filteredData,
+      totalCount: ivrData.length,
+      filteredCount: filteredData.length,
+      filterReason: `Sales Rep - Showing IVRs from ${downlineDoctors.length} managed doctors`,
+      allowedDoctorIds,
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Sales Rep',
+        downlineUsers,
+        downlineDoctors
+      }
+    };
+  }
+
+  /**
+   * Filter for Doctor - sees only their own IVRs
+   */
+  private static filterForDoctor(
+    ivrData: SharedIVRRequest[],
+    hierarchyUser: HierarchyUser
+  ): FilterResult {
+    console.log('👨‍⚕️ [Doctor] Filtering for own IVRs...');
+
+    const filteredData = ivrData.filter(ivr =>
+      ivr.doctorId === hierarchyUser.id ||
+      ivr.requestingDoctorId === hierarchyUser.id ||
+      ivr.createdBy === hierarchyUser.id
+    );
+
+    return {
+      filteredData,
+      totalCount: ivrData.length,
+      filteredCount: filteredData.length,
+      filterReason: 'Doctor - Showing only own IVRs',
+      allowedDoctorIds: [hierarchyUser.id],
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Doctor',
+        downlineUsers: [],
+        downlineDoctors: []
+      }
+    };
+  }
+
+  /**
+   * Filter for Admin - sees all IVRs
+   */
+  private static filterForAdmin(
+    ivrData: SharedIVRRequest[],
+    hierarchyUser: HierarchyUser
+  ): FilterResult {
+    console.log('🔧 [Admin] Showing all IVRs');
+
+    return {
+      filteredData: ivrData,
+      totalCount: ivrData.length,
+      filteredCount: ivrData.length,
+      filterReason: 'Admin - Full access to all IVRs',
+      allowedDoctorIds: [],
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Admin',
+        downlineUsers: [],
+        downlineDoctors: []
+      }
+    };
+  }
+
+  // ORDER FILTERING METHODS
+
+  /**
+   * Filter for Master Distributor - sees all orders
+   */
+  private static filterOrdersForMasterDistributor(
+    orderData: SharedOrder[],
+    hierarchyUser: HierarchyUser
+  ): OrderFilterResult {
+    console.log('🏢 [Master Distributor] Showing all orders');
+
+    const downlineUsers = getAllDescendants(hierarchyUser.id);
+    const downlineDoctors = downlineUsers.filter(user => user.role === 'Doctor');
+    const allowedDoctorIds = downlineDoctors.map(doctor => doctor.id);
+
+    return {
+      filteredData: orderData,
+      totalCount: orderData.length,
+      filteredCount: orderData.length,
+      filterReason: 'Master Distributor - Full access to all orders',
+      allowedDoctorIds,
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Master Distributor',
+        downlineUsers,
+        downlineDoctors
+      }
+    };
+  }
+
+  /**
+   * Filter for Regional Distributor - sees only orders from doctors in their downline
+   */
+  private static filterOrdersForRegionalDistributor(
+    orderData: SharedOrder[],
+    hierarchyUser: HierarchyUser
+  ): OrderFilterResult {
+    console.log('🌍 [Regional Distributor] Filtering orders for downline doctors...');
+
+    // Get all doctors in this regional distributor's downline
+    const downlineUsers = getAllDescendants(hierarchyUser.id);
+    const downlineDoctors = downlineUsers.filter(user => user.role === 'Doctor');
+    const allowedDoctorIds = downlineDoctors.map(doctor => doctor.id);
+
+    console.log('👥 Downline users:', downlineUsers.map(u => `${u.name} (${u.role})`));
+    console.log('👨‍⚕️ Downline doctors:', downlineDoctors.map(d => d.name));
+    console.log('🆔 Allowed doctor IDs:', allowedDoctorIds);
+
+    // Filter orders to only include those from doctors in the downline
+    const filteredData = orderData.filter(order => {
+      const isAllowed = allowedDoctorIds.includes(order.doctorId) ||
+                       order.distributorId === hierarchyUser.id ||
+                       order.regionalDistributorId === hierarchyUser.id;
+
+      if (isAllowed) {
+        console.log(`✅ Including order ${order.orderNumber} from doctor ${order.doctorId} (${order.doctorName})`);
+      } else {
+        console.log(`❌ Excluding order ${order.orderNumber} from doctor ${order.doctorId} (${order.doctorName}) - not in downline`);
+      }
+
+      return isAllowed;
+    });
+
+    console.log(`📦 Filtered ${filteredData.length} orders out of ${orderData.length} total`);
+
+    return {
+      filteredData,
+      totalCount: orderData.length,
+      filteredCount: filteredData.length,
+      filterReason: `Regional Distributor - Showing orders from ${downlineDoctors.length} doctors in downline`,
+      allowedDoctorIds,
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Regional Distributor',
+        downlineUsers,
+        downlineDoctors
+      }
+    };
+  }
+
+  /**
+   * Filter for Sales Rep - sees only orders from doctors they manage
+   */
+  private static filterOrdersForSalesRep(
+    orderData: SharedOrder[],
+    hierarchyUser: HierarchyUser
+  ): OrderFilterResult {
+    console.log('💼 [Sales Rep] Filtering orders for managed doctors...');
+
+    const downlineUsers = getAllDescendants(hierarchyUser.id);
+    const downlineDoctors = downlineUsers.filter(user => user.role === 'Doctor');
+    const allowedDoctorIds = downlineDoctors.map(doctor => doctor.id);
+
+    const filteredData = orderData.filter(order =>
+      allowedDoctorIds.includes(order.doctorId) ||
+      order.salesRepId === hierarchyUser.id ||
+      order.assignedSalesRepId === hierarchyUser.id
+    );
+
+    return {
+      filteredData,
+      totalCount: orderData.length,
+      filteredCount: filteredData.length,
+      filterReason: `Sales Rep - Showing orders from ${downlineDoctors.length} managed doctors`,
+      allowedDoctorIds,
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Sales Rep',
+        downlineUsers,
+        downlineDoctors
+      }
+    };
+  }
+
+  /**
+   * Filter for Doctor - sees only their own orders
+   */
+  private static filterOrdersForDoctor(
+    orderData: SharedOrder[],
+    hierarchyUser: HierarchyUser
+  ): OrderFilterResult {
+    console.log('👨‍⚕️ [Doctor] Filtering for own orders...');
+
+    const filteredData = orderData.filter(order =>
+      order.doctorId === hierarchyUser.id ||
+      order.createdBy === hierarchyUser.id
+    );
+
+    return {
+      filteredData,
+      totalCount: orderData.length,
+      filteredCount: filteredData.length,
+      filterReason: 'Doctor - Showing only own orders',
+      allowedDoctorIds: [hierarchyUser.id],
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Doctor',
+        downlineUsers: [],
+        downlineDoctors: []
+      }
+    };
+  }
+
+  /**
+   * Filter for Admin - sees all orders
+   */
+  private static filterOrdersForAdmin(
+    orderData: SharedOrder[],
+    hierarchyUser: HierarchyUser
+  ): OrderFilterResult {
+    console.log('🔧 [Admin] Showing all orders');
+
+    return {
+      filteredData: orderData,
+      totalCount: orderData.length,
+      filteredCount: orderData.length,
+      filterReason: 'Admin - Full access to all orders',
+      allowedDoctorIds: [],
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Admin',
+        downlineUsers: [],
+        downlineDoctors: []
+      }
+    };
+  }
+
+  /**
+   * Get hierarchy information for a user (for debugging/display)
+   */
+  static getUserHierarchyInfo(userEmail: string): HierarchyUser | null {
+    return getUserByEmail(userEmail);
+  }
+
+  /**
+   * Check if a user can access a specific IVR
+   */
+  static canUserAccessIVR(
+    ivr: SharedIVRRequest,
+    currentUser: UserProfile | null
+  ): boolean {
+    if (!currentUser) return false;
+
+    const filterResult = this.filterIVRDataByHierarchy([ivr], currentUser);
+    return filterResult.filteredData.length > 0;
+  }
+
+  /**
+   * Check if a user can access a specific order
+   */
+  static canUserAccessOrder(
+    order: SharedOrder,
+    currentUser: UserProfile | null
+  ): boolean {
+    if (!currentUser) return false;
+
+    const filterResult = this.filterOrderDataByHierarchy([order], currentUser);
+    return filterResult.filteredData.length > 0;
+  }
+
+  /**
+   * Get summary of filtering results for display
+   */
+  static getFilteringSummary(filterResult: FilterResult): string {
+    const { totalCount, filteredCount, filterReason, userHierarchyInfo } = filterResult;
+
+    if (filteredCount === totalCount) {
+      return `Showing all ${totalCount} IVRs - ${filterReason}`;
+    } else {
+      return `Showing ${filteredCount} of ${totalCount} IVRs - ${filterReason}`;
+    }
+  }
+
+  /**
+   * Get summary of order filtering results for display
+   */
+  static getOrderFilteringSummary(filterResult: OrderFilterResult): string {
+    const { filteredCount, totalCount, filterReason } = filterResult;
+    if (filteredCount === totalCount) {
+      return `Showing all ${totalCount} orders`;
+    }
+    return `Showing ${filteredCount} of ${totalCount} orders - ${filterReason}`;
+  }
+
+  /**
+   * Main filtering method - filters Salespeople data based on user hierarchy
+   */
+  static filterSalespeopleDataByHierarchy(
+    salespeopleData: Salesperson[],
+    currentUser: UserProfile | null
+  ): SalespeopleFilterResult {
+    console.log('🔍 [HierarchyFilteringService] Starting salespeople hierarchy filtering...');
+    console.log('👥 Input salespeople count:', salespeopleData.length);
+    console.log('👤 Current user:', currentUser?.email, 'Role:', currentUser?.role);
+
+    // Print hierarchy summary for debugging
+    getHierarchySummary();
+
+    if (!currentUser) {
+      console.log('❌ No current user - returning empty results');
+      return {
+        filteredData: [],
+        totalCount: salespeopleData.length,
+        filteredCount: 0,
+        filterReason: 'No authenticated user',
+        allowedSalesRepIds: [],
+        userHierarchyInfo: {
+          userId: '',
+          role: '',
+          downlineUsers: [],
+          downlineSalesReps: []
+        }
+      };
+    }
+
+    // Get hierarchy user data
+    const hierarchyUser = getUserByEmail(currentUser.email);
+    if (!hierarchyUser) {
+      console.log('❌ User not found in hierarchy data:', currentUser.email);
+      return {
+        filteredData: [],
+        totalCount: salespeopleData.length,
+        filteredCount: 0,
+        filterReason: `User ${currentUser.email} not found in hierarchy`,
+        allowedSalesRepIds: [],
+        userHierarchyInfo: {
+          userId: '',
+          role: currentUser.role || '',
+          downlineUsers: [],
+          downlineSalesReps: []
+        }
+      };
+    }
+
+    console.log('✅ Found hierarchy user:', hierarchyUser.name, 'ID:', hierarchyUser.id);
+
+    // Apply role-based filtering
+    switch (currentUser.role) {
+      case 'Master Distributor':
+        return this.filterSalespeopleForMasterDistributor(salespeopleData, hierarchyUser);
+
+      case 'Distributor': // Regional Distributor
+        return this.filterSalespeopleForRegionalDistributor(salespeopleData, hierarchyUser);
+
+      case 'Sales':
+        return this.filterSalespeopleForSalesRep(salespeopleData, hierarchyUser);
+
+      case 'Admin':
+      case 'CHP Admin':
+        return this.filterSalespeopleForAdmin(salespeopleData, hierarchyUser);
+
+      default:
+        console.log('❌ Unknown role for salespeople filtering:', currentUser.role);
+        return {
+          filteredData: [],
+          totalCount: salespeopleData.length,
+          filteredCount: 0,
+          filterReason: `Role ${currentUser.role} cannot access salespeople data`,
+          allowedSalesRepIds: [],
+          userHierarchyInfo: {
+            userId: hierarchyUser.id,
+            role: currentUser.role || '',
+            downlineUsers: [],
+            downlineSalesReps: []
+          }
+        };
+    }
+  }
+
+  // SALESPEOPLE FILTERING METHODS
+
+  /**
+   * Filter for Master Distributor - sees all salespeople
+   */
+  private static filterSalespeopleForMasterDistributor(
+    salespeopleData: Salesperson[],
+    hierarchyUser: HierarchyUser
+  ): SalespeopleFilterResult {
+    console.log('🏢 [Master Distributor] Showing all salespeople');
+
+    const downlineUsers = getAllDescendants(hierarchyUser.id);
+    const downlineSalesReps = downlineUsers.filter(user => user.role === 'Sales');
+    const allowedSalesRepIds = downlineSalesReps.map(rep => rep.id);
+
+    return {
+      filteredData: salespeopleData,
+      totalCount: salespeopleData.length,
+      filteredCount: salespeopleData.length,
+      filterReason: 'Master Distributor - Full access to all salespeople',
+      allowedSalesRepIds,
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Master Distributor',
+        downlineUsers,
+        downlineSalesReps
+      }
+    };
+  }
+
+  /**
+   * Filter for Regional Distributor - sees only salespeople in their downline
+   */
+  private static filterSalespeopleForRegionalDistributor(
+    salespeopleData: Salesperson[],
+    hierarchyUser: HierarchyUser
+  ): SalespeopleFilterResult {
+    console.log('🌍 [Regional Distributor] Filtering for downline salespeople...');
+
+    // Get all sales reps in this regional distributor's downline
+    const downlineUsers = getAllDescendants(hierarchyUser.id);
+    const downlineSalesReps = downlineUsers.filter(user => user.role === 'Sales');
+    const allowedSalesRepIds = downlineSalesReps.map(rep => rep.id);
+
+    console.log('👥 Downline users:', downlineUsers.map(u => `${u.name} (${u.role})`));
+    console.log('💼 Downline sales reps:', downlineSalesReps.map(s => s.name));
+    console.log('🆔 Allowed sales rep IDs:', allowedSalesRepIds);
+
+    // Filter salespeople to only include those in the downline
+    const filteredData = salespeopleData.filter(salesperson => {
+      const isAllowed = allowedSalesRepIds.includes(salesperson.id) ||
+                       salesperson.distributorId === hierarchyUser.id;
+
+      if (isAllowed) {
+        console.log(`✅ Including salesperson ${salesperson.firstName} ${salesperson.lastName} (${salesperson.id})`);
+      } else {
+        console.log(`❌ Excluding salesperson ${salesperson.firstName} ${salesperson.lastName} (${salesperson.id}) - not in downline`);
+      }
+
+      return isAllowed;
+    });
+
+    console.log(`👥 Filtered ${filteredData.length} salespeople out of ${salespeopleData.length} total`);
+
+    return {
+      filteredData,
+      totalCount: salespeopleData.length,
+      filteredCount: filteredData.length,
+      filterReason: `Regional Distributor - Showing ${downlineSalesReps.length} sales reps in your team`,
+      allowedSalesRepIds,
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Regional Distributor',
+        downlineUsers,
+        downlineSalesReps
+      }
+    };
+  }
+
+  /**
+   * Filter for Sales Rep - sees only themselves (no subordinate sales reps)
+   */
+  private static filterSalespeopleForSalesRep(
+    salespeopleData: Salesperson[],
+    hierarchyUser: HierarchyUser
+  ): SalespeopleFilterResult {
+    console.log('💼 [Sales Rep] Filtering for self only...');
+
+    const filteredData = salespeopleData.filter(salesperson =>
+      salesperson.id === hierarchyUser.id
+    );
+
+    return {
+      filteredData,
+      totalCount: salespeopleData.length,
+      filteredCount: filteredData.length,
+      filterReason: 'Sales Rep - Showing only your own profile',
+      allowedSalesRepIds: [hierarchyUser.id],
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Sales Rep',
+        downlineUsers: [],
+        downlineSalesReps: []
+      }
+    };
+  }
+
+  /**
+   * Filter for Admin - sees all salespeople
+   */
+  private static filterSalespeopleForAdmin(
+    salespeopleData: Salesperson[],
+    hierarchyUser: HierarchyUser
+  ): SalespeopleFilterResult {
+    console.log('🔧 [Admin] Showing all salespeople');
+
+    return {
+      filteredData: salespeopleData,
+      totalCount: salespeopleData.length,
+      filteredCount: salespeopleData.length,
+      filterReason: 'Admin - Full access to all salespeople',
+      allowedSalesRepIds: [],
+      userHierarchyInfo: {
+        userId: hierarchyUser.id,
+        role: 'Admin',
+        downlineUsers: [],
+        downlineSalesReps: []
+      }
+    };
+  }
+
+  static getSalespeopleFilteringSummary(filterResult: SalespeopleFilterResult): string {
+    const { filteredCount, totalCount, filterReason } = filterResult;
+    if (filteredCount === totalCount) {
+      return `Showing all ${totalCount} sales representatives`;
+    }
+    return `Showing ${filteredCount} of ${totalCount} sales representatives - ${filterReason}`;
   }
 }

@@ -400,15 +400,6 @@ const ShippingDetailPage: React.FC<ShippingDetailPageProps> = ({
     // In real implementation, open carrier contact form
   };
 
-  const handleViewOrder = () => {
-    if (shipment?.orderId) {
-      const orderPath = userRole === 'master_distributor'
-        ? `/distributor/orders/${shipment.orderId}`
-        : `/orders/${shipment.orderId}`;
-      navigate(orderPath);
-    }
-  };
-
   const handleDownloadDocument = (doc: any) => {
     console.log('Downloading document:', doc.name);
     // In real implementation, download document
@@ -499,13 +490,6 @@ const ShippingDetailPage: React.FC<ShippingDetailPageProps> = ({
                   </button>
                 </>
               )}
-              <button
-                onClick={handleViewOrder}
-                className="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
-              >
-                <EyeIcon className="h-4 w-4 mr-2" />
-                View Order
-              </button>
             </div>
           </div>
         </div>

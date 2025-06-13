@@ -31,8 +31,6 @@ const PatientRow = React.memo(({
   onRowClick: (patient: Patient) => void;
   onSubmitIVR: (patientId: string) => void;
 }) => {
-  const [showActions, setShowActions] = useState(false);
-
   const formatRelativeTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -63,8 +61,6 @@ const PatientRow = React.memo(({
         index % 2 === 1 ? 'bg-slate-50' : 'bg-white'
       }`}
       onClick={() => onRowClick(patient)}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter') onRowClick(patient);
@@ -99,9 +95,7 @@ const PatientRow = React.memo(({
         {patient.condition}
       </td>
       <td className="px-4 py-3">
-        <div className={`flex items-center space-x-2 transition-opacity ${
-          showActions ? 'opacity-100' : 'opacity-0'
-        }`}>
+        <div className="flex items-center space-x-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -109,6 +103,7 @@ const PatientRow = React.memo(({
             }}
             className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
             title="View Details"
+            aria-label={`View details for ${patient.name}`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -122,6 +117,7 @@ const PatientRow = React.memo(({
             }}
             className="p-1 text-gray-400 hover:text-green-600 transition-colors"
             title="Submit IVR"
+            aria-label={`Submit IVR for ${patient.name}`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
