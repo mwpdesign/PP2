@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Component Render Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .error { background-color: #fee; border-left: 4px solid #f00; }
+        .success { background-color: #efe; border-left: 4px solid #0f0; }
+        .warning { background-color: #fef0e6; border-left: 4px solid #ff9800; }
+        .info { background-color: #e3f2fd; border-left: 4px solid #2196f3; }
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007cba;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .test-link:hover {
+            background-color: #005a87;
+        }
+        .code {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Component Render Test</h1>
+        <p><strong>Task ID:</strong> mbuvyvhs3cn9a5cs5c2</p>
+        <p><strong>Testing:</strong> RegionalIVRManagement component rendering</p>
+
+        <div class="status info">
+            <h3>📋 Test Instructions</h3>
+            <ol>
+                <li>Open browser developer tools (F12)</li>
+                <li>Go to Console tab</li>
+                <li>Click the test link below</li>
+                <li>Check for any JavaScript errors in console</li>
+                <li>Note if page shows "Something went wrong" or loads properly</li>
+            </ol>
+        </div>
+
+        <h2>🧪 Test Links</h2>
+        <div>
+            <a href="http://localhost:3000/login" class="test-link" target="_blank">
+                🔐 Login First (regional@healthcare.local / regional123)
+            </a>
+            <a href="http://localhost:3000/distributor-regional/ivr-management" class="test-link" target="_blank">
+                🎯 Regional IVR Management Page
+            </a>
+        </div>
+
+        <h2>🔍 What to Look For</h2>
+        <div class="status warning">
+            <h3>⚠️ Error Indicators:</h3>
+            <ul>
+                <li><strong>Console Errors:</strong> JavaScript compilation or runtime errors</li>
+                <li><strong>"Something went wrong":</strong> React error boundary triggered</li>
+                <li><strong>Blank Page:</strong> Component failed to render</li>
+                <li><strong>Loading Forever:</strong> Infinite loading state</li>
+            </ul>
+        </div>
+
+        <div class="status success">
+            <h3>✅ Success Indicators:</h3>
+            <ul>
+                <li><strong>Page Loads:</strong> Regional IVR Management page displays</li>
+                <li><strong>Summary Cards:</strong> Statistics cards show at top</li>
+                <li><strong>Table Visible:</strong> IVR data table displays</li>
+                <li><strong>No Console Errors:</strong> Clean browser console</li>
+            </ul>
+        </div>
+
+        <h2>📊 Common Issues & Solutions</h2>
+        <div class="status info">
+            <h3>Potential Problems:</h3>
+            <ul>
+                <li><strong>Import Errors:</strong> Missing or incorrect component imports</li>
+                <li><strong>TypeScript Errors:</strong> Type mismatches preventing compilation</li>
+                <li><strong>Hook Dependencies:</strong> useEffect infinite loops</li>
+                <li><strong>Data Issues:</strong> Mock data format problems</li>
+                <li><strong>Authentication:</strong> User not logged in or wrong role</li>
+            </ul>
+        </div>
+
+        <div class="code">
+            <strong>Expected URL:</strong> http://localhost:3000/distributor-regional/ivr-management<br>
+            <strong>Expected User:</strong> regional@healthcare.local (Distributor role)<br>
+            <strong>Expected Result:</strong> Regional IVR Management page with data table
+        </div>
+
+        <h2>📝 Test Results</h2>
+        <div class="status warning">
+            <h3>Record Your Findings:</h3>
+            <ul>
+                <li>[ ] Login successful</li>
+                <li>[ ] Page loads without "Something went wrong"</li>
+                <li>[ ] No JavaScript errors in console</li>
+                <li>[ ] Summary cards display</li>
+                <li>[ ] IVR data table shows</li>
+                <li>[ ] Search and filters work</li>
+                <li>[ ] View buttons functional</li>
+            </ul>
+        </div>
+
+        <div class="status error">
+            <h3>🚨 If Page Still Broken:</h3>
+            <p>The issue is likely in one of these areas:</p>
+            <ol>
+                <li><strong>Component Import:</strong> Check App.tsx lazy loading</li>
+                <li><strong>TypeScript Compilation:</strong> Fix type errors</li>
+                <li><strong>React Hooks:</strong> Fix useEffect dependencies</li>
+                <li><strong>Data Format:</strong> Fix mock data structure</li>
+                <li><strong>Authentication:</strong> Check user role permissions</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        console.log('🧪 Component Render Test Page Loaded');
+        console.log('📊 Ready to test RegionalIVRManagement component');
+
+        // Monitor for page navigation
+        window.addEventListener('beforeunload', () => {
+            console.log('🔄 Navigating to test page...');
+        });
+    </script>
+</body>
+</html>
