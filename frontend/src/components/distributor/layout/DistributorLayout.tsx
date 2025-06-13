@@ -39,6 +39,18 @@ const DistributorLayout: React.FC = () => {
     }
   ];
 
+  // Find the most specific (longest) matching navigation item
+  const getActiveHref = (pathname: string, nav: any[]) => {
+    let activeHref = '';
+    nav.forEach(item => {
+      if (item.href !== '#' && (pathname === item.href || (pathname.startsWith(item.href) && item.href.length > activeHref.length))) {
+        activeHref = item.href;
+      }
+    });
+    return activeHref;
+  };
+  const activeHref = getActiveHref(location.pathname, navigation);
+
   const userInfo = {
     name: `${user?.first_name || ''} ${user?.last_name || 'MD'}`,
     role: 'Master Distributor',
@@ -67,7 +79,7 @@ const DistributorLayout: React.FC = () => {
           </div>
           <nav className="flex-1 px-6 pt-4 space-y-1">
             {navigation.map((item) => {
-              const isActive = item.href !== '#' && location.pathname.startsWith(item.href);
+              const isActive = item.href !== '#' && item.href === activeHref;
               return (
                 <Link
                   key={item.name}
