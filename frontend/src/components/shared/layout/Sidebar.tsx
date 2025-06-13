@@ -67,6 +67,18 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInf
     const navigation = customNavigation || defaultNavigation;
   const userInfo = customUserInfo || defaultUserInfo;
 
+  // Find the most specific (longest) matching navigation item
+  const getActiveHref = (pathname: string, nav: NavigationItem[]) => {
+    let activeHref = '';
+    nav.forEach(item => {
+      if (pathname === item.href || (pathname.startsWith(item.href) && item.href.length > activeHref.length)) {
+        activeHref = item.href;
+      }
+    });
+    return activeHref;
+  };
+  const activeHref = getActiveHref(location.pathname, navigation);
+
   const handleSignOut = async () => {
     try {
       await logout();
@@ -96,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInf
         </div>
         <nav className="flex-1 px-7 pt-4 space-y-2">
                     {navigation.map((item) => {
-            const isActive = location.pathname.startsWith(item.href);
+            const isActive = item.href === activeHref;
 
             if (item.onClick) {
               return (
