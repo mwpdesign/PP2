@@ -61,18 +61,25 @@
                 <div class="border-l-4 border-purple-500 pl-4">
                     <h3 class="font-medium text-gray-900">3. Table Width Verification</h3>
                     <p class="text-sm text-gray-600 mt-1">
-                        Verify table has only essential columns and no horizontal scrolling
+                        Verify table has only 5 essential columns and NO horizontal scrolling
                     </p>
                     <div class="mt-2 text-sm">
-                        <strong>Expected Columns:</strong>
+                        <strong>Expected Columns (5 total):</strong>
                         <ul class="list-disc list-inside mt-1 text-gray-600">
-                            <li>IVR ID</li>
-                            <li>Patient</li>
-                            <li>Doctor</li>
-                            <li>Status</li>
-                            <li>Submitted</li>
-                            <li>Actions</li>
+                            <li>IVR# (shortened format)</li>
+                            <li>Patient (First Name + Initial)</li>
+                            <li>Doctor (Dr. LastName)</li>
+                            <li>Status (compact badges)</li>
+                            <li>Actions (icon only)</li>
                         </ul>
+                        <div class="mt-2 p-2 bg-purple-50 rounded">
+                            <strong>Text Truncation Examples:</strong>
+                            <ul class="text-xs text-purple-700 mt-1">
+                                <li>• "John Smith" → "John S."</li>
+                                <li>• "Dr. Michael Brown" → "Dr. Brown"</li>
+                                <li>• "Approved" → "OK" (with tooltip)</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -110,17 +117,37 @@
 
                 <label class="flex items-center">
                     <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                    <span class="ml-2 text-sm text-gray-700"><strong>Table has only 6 essential columns</strong></span>
+                    <span class="ml-2 text-sm text-gray-700"><strong>Table has only 5 essential columns (not 6)</strong></span>
                 </label>
 
                 <label class="flex items-center">
                     <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                    <span class="ml-2 text-sm text-gray-700"><strong>No horizontal scrolling required</strong></span>
+                    <span class="ml-2 text-sm text-gray-700"><strong>Submitted date column removed</strong></span>
                 </label>
 
                 <label class="flex items-center">
                     <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                    <span class="ml-2 text-sm text-gray-700"><strong>Table fits comfortably on screen</strong></span>
+                    <span class="ml-2 text-sm text-gray-700"><strong>Patient names truncated (First Name + Initial)</strong></span>
+                </label>
+
+                <label class="flex items-center">
+                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-700"><strong>Doctor names truncated (Dr. LastName)</strong></span>
+                </label>
+
+                <label class="flex items-center">
+                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-700"><strong>Status badges compact with tooltips</strong></span>
+                </label>
+
+                <label class="flex items-center">
+                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-700"><strong>Action button is icon-only</strong></span>
+                </label>
+
+                <label class="flex items-center">
+                    <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-700"><strong>ZERO horizontal scrolling on standard screens</strong></span>
                 </label>
 
                 <label class="flex items-center">
@@ -151,8 +178,10 @@
             <div class="space-y-2 text-sm text-green-700">
                 <p><strong>✅ Data Visibility:</strong> All 6 IVR records display in table</p>
                 <p><strong>✅ Layout Improvement:</strong> Summary cards at top, no blue banner</p>
-                <p><strong>✅ Table Width Fix:</strong> Only 6 essential columns, no horizontal scroll</p>
-                <p><strong>✅ Professional UI:</strong> Clean, mobile-friendly layout</p>
+                <p><strong>✅ Table Width Fix:</strong> Only 5 columns, aggressive text truncation</p>
+                <p><strong>✅ Zero Scrolling:</strong> NO horizontal scrolling on any standard screen</p>
+                <p><strong>✅ Text Truncation:</strong> Names shortened with tooltips for full info</p>
+                <p><strong>✅ Compact Design:</strong> Professional mobile-friendly layout</p>
                 <p><strong>✅ Functionality:</strong> All features (search, filter, export, chat) working</p>
             </div>
         </div>
