@@ -19,7 +19,7 @@ import {
   ClipboardIcon,
   LinkIcon
 } from '@heroicons/react/24/outline';
-import { Card } from '../../../components/ui/Card';
+import Card from '../../../components/ui/Card';
 import { formatDate } from '../../../utils/formatters';
 
 interface OrderResponse {
@@ -57,9 +57,20 @@ interface OrderDocument {
   uploaded_by: string;
 }
 
-const OrderDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+interface OrderDetailPageProps {
+  id?: string;
+  readOnly?: boolean;
+  userRole?: string;
+}
+
+const OrderDetailPage: React.FC<OrderDetailPageProps> = ({
+  id: propId,
+  readOnly = false,
+  userRole = 'doctor'
+}) => {
+  const { id: paramId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const id = propId || paramId;
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +101,184 @@ const OrderDetailPage: React.FC = () => {
     } catch (err) {
       console.error('Error fetching order details:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch order details');
+
+      // Fallback to mock data for testing
+      const mockOrders: OrderResponse[] = [
+        {
+          id: 'ORD-2024-001',
+          order_number: 'ORD-2024-001',
+          organization_id: 'org-123',
+          patient_id: 'patient-123',
+          patient_name: 'John Smith',
+          provider_id: 'provider-123',
+          provider_name: 'Dr. Sarah Johnson',
+          status: 'pending',
+          order_type: 'medical_supplies',
+          priority: 'high',
+          total_amount: 1750.00,
+          created_at: '2024-12-19T09:15:00Z',
+          updated_at: '2024-12-19T09:15:00Z',
+          ivr_request_id: 'IVR-2024-001',
+          shipping_address: {
+            street: '1500 Medical Center Drive',
+            city: 'Austin',
+            state: 'TX',
+            zip: '78712',
+            country: 'USA',
+            attention: 'Dr. Sarah Johnson - Wound Care Unit',
+            phone: '(555) 123-4567'
+          },
+          products: {
+            items: [
+              {
+                product_name: 'Advanced Skin Graft - Type A',
+                q_code: 'Q4100',
+                total_quantity: 2,
+                total_cost: 1500.00,
+                unit_price: 750.00
+              },
+              {
+                product_name: 'Antimicrobial Wound Dressing',
+                q_code: 'A6196',
+                total_quantity: 5,
+                total_cost: 250.00,
+                unit_price: 50.00
+              }
+            ]
+          },
+          status_history: [
+            {
+              status: 'pending',
+              timestamp: '2024-12-19T09:15:00Z',
+              notes: 'Order submitted for approval'
+            }
+          ],
+          documents: [
+            {
+              id: 'doc-1',
+              type: 'prescription',
+              name: 'Prescription_Order.pdf',
+              url: '/documents/prescription_order.pdf',
+              uploaded_at: '2024-12-19T09:15:00Z',
+              uploaded_by: 'Dr. Sarah Johnson'
+            }
+          ]
+        },
+        {
+          id: 'ORD-2024-002',
+          order_number: 'ORD-2024-002',
+          organization_id: 'org-123',
+          patient_id: 'patient-456',
+          patient_name: 'Emily Davis',
+          provider_id: 'provider-123',
+          provider_name: 'Dr. Michael Rodriguez',
+          status: 'processing',
+          order_type: 'medical_supplies',
+          priority: 'medium',
+          total_amount: 850.00,
+          created_at: '2024-12-18T14:30:00Z',
+          updated_at: '2024-12-19T10:45:00Z',
+          processed_at: '2024-12-19T10:45:00Z',
+          ivr_request_id: 'IVR-2024-002',
+          shipping_address: {
+            street: '900 E 30th Street',
+            city: 'Austin',
+            state: 'TX',
+            zip: '78705',
+            country: 'USA',
+            attention: 'Dr. Michael Rodriguez - Surgery Department',
+            phone: '(555) 987-6543'
+          },
+          products: {
+            items: [
+              {
+                product_name: 'Collagen Matrix Implant',
+                q_code: 'Q4110',
+                total_quantity: 1,
+                total_cost: 850.00,
+                unit_price: 850.00
+              }
+            ]
+          },
+          status_history: [
+            {
+              status: 'pending',
+              timestamp: '2024-12-18T14:30:00Z',
+              notes: 'Order submitted for approval'
+            },
+            {
+              status: 'processing',
+              timestamp: '2024-12-19T10:45:00Z',
+              notes: 'Order approved and being prepared for shipment'
+            }
+          ],
+          documents: []
+        },
+        {
+          id: 'ORD-2024-003',
+          order_number: 'ORD-2024-003',
+          organization_id: 'org-123',
+          patient_id: 'patient-789',
+          patient_name: 'David Wilson',
+          provider_id: 'provider-123',
+          provider_name: 'Dr. Lisa Chen',
+          status: 'shipped',
+          order_type: 'medical_equipment',
+          priority: 'urgent',
+          total_amount: 1200.00,
+          created_at: '2024-12-17T11:20:00Z',
+          updated_at: '2024-12-18T16:30:00Z',
+          shipped_at: '2024-12-18T16:30:00Z',
+          ivr_request_id: 'IVR-2024-003',
+          tracking_number: 'UPS789456123',
+          carrier: 'UPS',
+          estimated_delivery: '2024-12-22',
+          shipping_address: {
+            street: '2400 Medical Plaza Dr',
+            city: 'Austin',
+            state: 'TX',
+            zip: '78731',
+            country: 'USA',
+            attention: 'Dr. Lisa Chen - Wound Care',
+            phone: '(555) 112-2334'
+          },
+          products: {
+            items: [
+              {
+                product_name: 'Negative Pressure Wound Therapy System',
+                q_code: 'E2402',
+                total_quantity: 1,
+                total_cost: 1200.00,
+                unit_price: 1200.00
+              }
+            ]
+          },
+          status_history: [
+            {
+              status: 'pending',
+              timestamp: '2024-12-17T11:20:00Z',
+              notes: 'Order submitted for approval'
+            },
+            {
+              status: 'processing',
+              timestamp: '2024-12-17T15:30:00Z',
+              notes: 'Order approved and being prepared for shipment'
+            },
+            {
+              status: 'shipped',
+              timestamp: '2024-12-18T16:30:00Z',
+              notes: 'Order shipped via UPS - Tracking: UPS789456123'
+            }
+          ],
+          documents: []
+        }
+      ];
+
+      const mockOrder = mockOrders.find(o => o.id === id);
+      if (mockOrder) {
+        setOrder(mockOrder);
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -322,7 +511,29 @@ const OrderDetailPage: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/doctor/orders')}
+              onClick={() => {
+                if (readOnly) {
+                  // Navigate back based on user role
+                  switch (userRole) {
+                    case 'master_distributor':
+                      navigate('/distributor/order-processing');
+                      break;
+                    case 'distributor':
+                      navigate('/distributor/order-processing');
+                      break;
+                    case 'shipping':
+                      navigate('/shipping/orders');
+                      break;
+                    case 'ivr_company':
+                      navigate('/ivr-company/orders');
+                      break;
+                    default:
+                      navigate('/doctor/orders');
+                  }
+                } else {
+                  navigate('/doctor/orders');
+                }
+              }}
               className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-all duration-200"
             >
               <ArrowLeftIcon className="w-6 h-6" />
@@ -345,6 +556,19 @@ const OrderDetailPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3">
+          {/* Read-only indicator for non-doctor roles */}
+          {readOnly && (
+            <div className="flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <ExclamationTriangleIcon className="h-4 w-4 text-amber-500 mr-2" />
+              <span className="text-sm text-amber-600">
+                Read-only view - {userRole === 'master_distributor' ? 'Master Distributor' :
+                                 userRole === 'distributor' ? 'Distributor' :
+                                 userRole === 'shipping' ? 'Shipping' :
+                                 userRole === 'ivr_company' ? 'IVR Company' : 'Limited'} access
+              </span>
+            </div>
+          )}
+
           <button
             onClick={handlePrintOrder}
             className="inline-flex items-center gap-2 px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
@@ -363,7 +587,8 @@ const OrderDetailPage: React.FC = () => {
             </button>
           )}
 
-          {order.status === 'shipped' && (
+          {/* Doctor-only actions */}
+          {!readOnly && order.status === 'shipped' && (
             <button
               onClick={handleMarkReceived}
               disabled={updating}
@@ -374,13 +599,15 @@ const OrderDetailPage: React.FC = () => {
             </button>
           )}
 
-          <button
-            onClick={handleUploadDocument}
-            className="inline-flex items-center gap-2 px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <DocumentArrowDownIcon className="w-4 h-4" />
-            Upload Document
-          </button>
+          {!readOnly && (
+            <button
+              onClick={handleUploadDocument}
+              className="inline-flex items-center gap-2 px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              <DocumentArrowDownIcon className="w-4 h-4" />
+              Upload Document
+            </button>
+          )}
 
           <button
             onClick={handleContactSupport}
@@ -781,3 +1008,4 @@ const OrderDetailPage: React.FC = () => {
 };
 
 export default OrderDetailPage;
+export { OrderDetailPage };

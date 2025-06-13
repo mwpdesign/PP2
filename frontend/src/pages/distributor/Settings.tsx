@@ -52,12 +52,6 @@ interface Preferences {
 }
 
 interface BillingSettings {
-  bankAccount: {
-    accountName: string;
-    accountNumber: string;
-    routingNumber: string;
-    bankName: string;
-  };
   paymentTerms: {
     defaultTerms: string;
     lateFeeRate: number;
@@ -122,12 +116,6 @@ const Settings: React.FC = () => {
   });
 
   const [billingSettings, setBillingSettings] = useState<BillingSettings>({
-    bankAccount: {
-      accountName: 'MedSupply Distribution Network',
-      accountNumber: '****1234',
-      routingNumber: '021000021',
-      bankName: 'First National Bank'
-    },
     paymentTerms: {
       defaultTerms: 'Net 30',
       lateFeeRate: 1.5,
@@ -160,7 +148,7 @@ const Settings: React.FC = () => {
   const tabs = [
     { id: 'profile', name: 'Company Profile', icon: BuildingOfficeIcon },
     { id: 'preferences', name: 'Preferences', icon: BellIcon },
-    { id: 'billing', name: 'Billing & Banking', icon: CreditCardIcon }
+    { id: 'billing', name: 'Invoice Settings', icon: CreditCardIcon }
   ];
 
   return (
@@ -616,69 +604,22 @@ const Settings: React.FC = () => {
               </div>
             )}
 
-            {/* Billing & Banking Tab */}
+            {/* Invoice Settings Tab */}
             {activeTab === 'billing' && (
               <div className="space-y-8">
-                {/* Bank Account Information */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Bank Account Information</h3>
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-                    <div className="flex">
-                      <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400 mr-2" />
-                      <p className="text-sm text-yellow-700">
-                        Bank account information is encrypted and securely stored. This is used for receiving payments from distributors.
+                {/* QuickBooks Integration Notice */}
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                  <div className="flex">
+                    <svg className="h-5 w-5 text-blue-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="text-sm text-blue-700 font-medium">
+                        Payment Processing via QuickBooks
                       </p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Account Name</label>
-                      <input
-                        type="text"
-                        value={billingSettings.bankAccount.accountName}
-                        onChange={(e) => setBillingSettings({
-                          ...billingSettings,
-                          bankAccount: {...billingSettings.bankAccount, accountName: e.target.value}
-                        })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Bank Name</label>
-                      <input
-                        type="text"
-                        value={billingSettings.bankAccount.bankName}
-                        onChange={(e) => setBillingSettings({
-                          ...billingSettings,
-                          bankAccount: {...billingSettings.bankAccount, bankName: e.target.value}
-                        })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Account Number</label>
-                      <input
-                        type="text"
-                        value={billingSettings.bankAccount.accountNumber}
-                        onChange={(e) => setBillingSettings({
-                          ...billingSettings,
-                          bankAccount: {...billingSettings.bankAccount, accountNumber: e.target.value}
-                        })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                        placeholder="Last 4 digits shown for security"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Routing Number</label>
-                      <input
-                        type="text"
-                        value={billingSettings.bankAccount.routingNumber}
-                        onChange={(e) => setBillingSettings({
-                          ...billingSettings,
-                          bankAccount: {...billingSettings.bankAccount, routingNumber: e.target.value}
-                        })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                      />
+                      <p className="text-sm text-blue-600 mt-1">
+                        All payments are processed securely through QuickBooks. This system focuses on invoice generation and tracking only.
+                      </p>
                     </div>
                   </div>
                 </div>

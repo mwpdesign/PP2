@@ -49,6 +49,15 @@ interface Salesperson {
   lastActivity: string;
 }
 
+// Mock distributors data for dropdown
+const mockDistributorsData = [
+  { id: '1', name: 'MedSupply West Coast', sales_reps: ['1'] },
+  { id: '2', name: 'Regional Health Partners', sales_reps: ['2', '3'] },
+  { id: '3', name: 'Northeast Medical Solutions', sales_reps: ['4'] },
+  { id: '4', name: 'Midwest Healthcare Distribution', sales_reps: ['5'] },
+  { id: '5', name: 'Southeast Medical Group', sales_reps: [] }
+];
+
 // Mock data for salespeople
 const mockSalespeople: Salesperson[] = [
   {
@@ -153,7 +162,7 @@ const SalespeopleManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [distributorFilter, setDistributorFilter] = useState<string>('all');
-  const [performanceFilter, setPerformanceFilter] = useState<'all' | 'top' | 'average' | 'low'>('all');
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -172,9 +181,8 @@ const SalespeopleManagement: React.FC = () => {
 
     const matchesStatus = statusFilter === 'all' || person.status === statusFilter;
     const matchesDistributor = distributorFilter === 'all' || person.distributorName === distributorFilter;
-    const matchesPerformance = performanceFilter === 'all' || person.performance.tier === performanceFilter;
 
-    return matchesSearch && matchesStatus && matchesDistributor && matchesPerformance;
+    return matchesSearch && matchesStatus && matchesDistributor;
   });
 
   // Calculate summary stats
@@ -185,14 +193,7 @@ const SalespeopleManagement: React.FC = () => {
   const topPerformer = salespeople.reduce((top, current) =>
     current.activeDoctors > top.activeDoctors ? current : top, salespeople[0]);
 
-  const getPerformanceBadgeColor = (tier: string) => {
-    switch (tier) {
-      case 'top': return 'bg-green-100 text-green-800';
-      case 'average': return 'bg-amber-100 text-amber-800';
-      case 'low': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+
 
   const handleAddSalesperson = () => {
     setFormData({
@@ -378,132 +379,101 @@ const SalespeopleManagement: React.FC = () => {
                 <option key={distributor} value={distributor}>{distributor}</option>
               ))}
             </select>
-            <select
-              value={performanceFilter}
-              onChange={(e) => setPerformanceFilter(e.target.value as 'all' | 'top' | 'average' | 'low')}
-              className="border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-            >
-              <option value="all">All Performance</option>
-              <option value="top">Top Performers</option>
-              <option value="average">Average</option>
-              <option value="low">Needs Improvement</option>
-            </select>
+
           </div>
         </div>
       </Card>
 
       {/* Salespeople Table */}
       <Card className="overflow-hidden bg-white border border-slate-200">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Distributor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Territory
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Doctors
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  IVRs
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Performance
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Actions
-                </th>
+        <table className="w-full divide-y divide-slate-200">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Contact
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Distributor
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Territory
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Doctors
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                IVRs
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-slate-200">
+            {filteredSalespeople.map((person) => (
+              <tr key={person.id} className="hover:bg-slate-50">
+                <td className="px-4 py-3">
+                  <div>
+                    <div className="text-sm font-medium text-slate-900">
+                      {person.firstName} {person.lastName}
+                    </div>
+                    <div className="text-xs text-slate-500">ID: {person.employeeId}</div>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <div>
+                    <div className="text-sm text-slate-900">{person.email}</div>
+                    <div className="text-sm text-slate-500">{person.phone}</div>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="text-sm text-slate-900">{person.distributorName}</div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="text-sm text-slate-900">{person.territory}</div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="text-sm font-medium text-slate-900">{person.activeDoctors}</div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="text-sm font-medium text-slate-900">{person.totalIVRs}</div>
+                </td>
+                <td className="px-4 py-3 text-sm font-medium">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleViewDetails(person)}
+                      className="text-slate-600 hover:text-slate-900"
+                      title="View Details"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleEditSalesperson(person)}
+                      className="text-blue-600 hover:text-blue-900"
+                      title="Edit"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleToggleStatus(person.id)}
+                      className={person.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}
+                      title={person.status === 'active' ? 'Deactivate' : 'Activate'}
+                    >
+                      {person.status === 'active' ? (
+                        <XCircleIcon className="h-4 w-4" />
+                      ) : (
+                        <CheckCircleIcon className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {filteredSalespeople.map((person) => (
-                <tr key={person.id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-slate-900">
-                        {person.firstName} {person.lastName}
-                      </div>
-                      <div className="text-sm text-slate-500">ID: {person.employeeId}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm text-slate-900">{person.email}</div>
-                      <div className="text-sm text-slate-500">{person.phone}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">{person.distributorName}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-900">{person.territory}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-slate-900">{person.activeDoctors}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-slate-900">{person.totalIVRs}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPerformanceBadgeColor(person.performance.tier)}`}>
-                      {person.performance.tier.charAt(0).toUpperCase() + person.performance.tier.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      person.status === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {person.status === 'active' ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleViewDetails(person)}
-                        className="text-slate-600 hover:text-slate-900"
-                        title="View Details"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEditSalesperson(person)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="Edit"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleToggleStatus(person.id)}
-                        className={person.status === 'active' ? 'text-red-600 hover:text-red-900' : 'text-green-600 hover:text-green-900'}
-                        title={person.status === 'active' ? 'Deactivate' : 'Activate'}
-                      >
-                        {person.status === 'active' ? (
-                          <XCircleIcon className="h-4 w-4" />
-                        ) : (
-                          <CheckCircleIcon className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </Card>
 
       {/* Add/Edit Salesperson Modal */}
@@ -568,15 +538,23 @@ const SalespeopleManagement: React.FC = () => {
                 <h4 className="text-md font-medium text-slate-900 mb-4">Assignment</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Distributor</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Distributor *</label>
                     <select
-                      value={formData.distributorName || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, distributorName: e.target.value }))}
+                      value={formData.distributorId || ''}
+                      onChange={(e) => {
+                        const selectedDistributor = mockDistributorsData.find(d => d.id === e.target.value);
+                        setFormData(prev => ({
+                          ...prev,
+                          distributorId: e.target.value,
+                          distributorName: selectedDistributor?.name || ''
+                        }));
+                      }}
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                      required
                     >
                       <option value="">Select Distributor</option>
-                      {distributors.map(distributor => (
-                        <option key={distributor} value={distributor}>{distributor}</option>
+                      {mockDistributorsData.map(distributor => (
+                        <option key={distributor.id} value={distributor.id}>{distributor.name}</option>
                       ))}
                     </select>
                   </div>
@@ -759,10 +737,8 @@ const SalespeopleManagement: React.FC = () => {
                     </div>
                     <div className="bg-slate-50 p-4 rounded-lg">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Performance Tier</span>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPerformanceBadgeColor(selectedSalesperson.performance.tier)}`}>
-                          {selectedSalesperson.performance.tier.charAt(0).toUpperCase() + selectedSalesperson.performance.tier.slice(1)}
-                        </span>
+                        <span className="text-sm text-slate-600">Commission Rate</span>
+                        <span className="text-lg font-semibold text-slate-900">{selectedSalesperson.commissionRate}%</span>
                       </div>
                     </div>
                   </div>
@@ -775,7 +751,6 @@ const SalespeopleManagement: React.FC = () => {
                   <h4 className="text-md font-medium text-slate-900 mb-4">Professional Details</h4>
                   <div className="bg-slate-50 p-4 rounded-lg space-y-2">
                     <p className="text-sm text-slate-900">Start Date: {new Date(selectedSalesperson.startDate).toLocaleDateString()}</p>
-                    <p className="text-sm text-slate-900">Commission Rate: {selectedSalesperson.commissionRate}%</p>
                     <p className="text-sm text-slate-900">Monthly Goal: {selectedSalesperson.salesGoals.monthly} doctors</p>
                     <p className="text-sm text-slate-900">Quarterly Goal: {selectedSalesperson.salesGoals.quarterly} doctors</p>
                   </div>

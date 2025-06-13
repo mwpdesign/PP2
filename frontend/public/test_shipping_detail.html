@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping Detail Implementation Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .success { background: #dcfce7; border: 1px solid #16a34a; color: #15803d; }
+        .error { background: #fef2f2; border: 1px solid #dc2626; color: #dc2626; }
+        .warning { background: #fef3c7; border: 1px solid #d97706; color: #d97706; }
+        .info { background: #dbeafe; border: 1px solid #3b82f6; color: #1d4ed8; }
+        .test-section {
+            margin: 20px 0;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .debug-button {
+            background: #f59e0b;
+            color: white;
+        }
+        .debug-button:hover {
+            background: #d97706;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #10b981; }
+        .status-error { background: #ef4444; }
+        .status-pending { background: #f59e0b; }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        .code-block {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .route-test {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin: 12px 0;
+        }
+        .route-card {
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .route-card.active {
+            background: #dcfce7;
+            border-color: #16a34a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚢 Shipping Detail Implementation Test</h1>
+        <p><strong>Task ID:</strong> mbu463gme33j7kzn0mi</p>
+
+        <h2>🧪 Navigation Testing</h2>
+        <a href="http://localhost:3000/distributor/shipping" class="test-button" target="_blank">
+            Open Shipping & Logistics
+        </a>
+
+        <h2>🔗 Direct URL Testing</h2>
+        <a href="http://localhost:3000/distributor/shipping/SHP-2024-001" class="test-button" target="_blank">
+            Test SHP-2024-001 (Delivered)
+        </a>
+        <a href="http://localhost:3000/distributor/shipping/SHP-2024-002" class="test-button" target="_blank">
+            Test SHP-2024-002 (Out for Delivery)
+        </a>
+
+        <div class="success">
+            <h3>✅ Success Criteria:</h3>
+            <ul>
+                <li>View Details buttons navigate to detail pages</li>
+                <li>Shipping detail pages load without errors</li>
+                <li>Read-only badge appears for Master Distributors</li>
+                <li>All shipment information displays correctly</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

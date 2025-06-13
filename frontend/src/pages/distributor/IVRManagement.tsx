@@ -11,6 +11,7 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import { Card } from '../../components/shared/ui/Card';
+import { useNavigate } from 'react-router-dom';
 
 // IVR Status Types
 const IVR_STATUS_OPTIONS = [
@@ -134,6 +135,7 @@ const IVRManagement: React.FC = () => {
   const [distributorFilter, setDistributorFilter] = useState<string>('All');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState<string>('');
+  const navigate = useNavigate();
 
   // Unique distributors for dropdown
   const uniqueDistributors = Array.from(new Set(mockIVRs.map(ivr => ivr.distributor)));
@@ -258,6 +260,7 @@ const IVRManagement: React.FC = () => {
                     <button
                       className="text-slate-600 hover:text-slate-900 flex items-center"
                       title="View Details"
+                      onClick={() => navigate(`/distributor/ivr-management/${ivr.id}`)}
                     >
                       <EyeIcon className="h-4 w-4 mr-1" />
                       View Details

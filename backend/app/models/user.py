@@ -291,6 +291,11 @@ class User(Base):
         foreign_keys="DelegationPermission.delegate_id",
         back_populates="delegate",
     )
+    recorded_treatments = relationship(
+        "TreatmentRecord",
+        foreign_keys="TreatmentRecord.recorded_by",
+        back_populates="recorded_by_user",
+    )
 
     def __repr__(self) -> str:
         """String representation of the user."""

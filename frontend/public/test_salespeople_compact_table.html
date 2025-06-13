@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Compact Salespeople Management Table</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .success { border-left: 4px solid #10b981; background-color: #f0fdf4; }
+        .info { border-left: 4px solid #3b82f6; background-color: #eff6ff; }
+        .warning { border-left: 4px solid #f59e0b; background-color: #fffbeb; }
+        .test-link {
+            display: inline-block;
+            background-color: #475569;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 5px;
+        }
+        .test-link:hover {
+            background-color: #334155;
+        }
+        .checklist {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            margin-right: 8px;
+            color: #64748b;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background-color: #10b981; }
+        .status-warning { background-color: #f59e0b; }
+        .status-error { background-color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Compact Salespeople Management Table Test</h1>
+        <p><strong>Task ID:</strong> mbu61h48zeeu7s8ws3e</p>
+        <p><strong>Objective:</strong> Verify the redesigned Salespeople Management table eliminates horizontal scrolling</p>
+
+        <!-- Test Navigation -->
+        <div class="test-section info">
+            <h2>🔗 Test Navigation</h2>
+            <p>Click the link below to test the redesigned Salespeople Management table:</p>
+            <a href="http://localhost:3000/distributor/salespeople" class="test-link" target="_blank">
+                📊 Salespeople Management (Master Distributor)
+            </a>
+            <p><em>Note: You may need to log in as a Master Distributor user first</em></p>
+        </div>
+
+        <!-- Key Changes Implemented -->
+        <div class="test-section success">
+            <h2>✅ Key Changes Implemented</h2>
+            <ul class="checklist">
+                <li><span class="status-indicator status-success"></span><strong>Removed Performance Column:</strong> Eliminated performance tier badges to save space</li>
+                <li><span class="status-indicator status-success"></span><strong>Removed Status Column:</strong> Eliminated active/inactive status badges to save space</li>
+                <li><span class="status-indicator status-success"></span><strong>Stacked Contact Info:</strong> Email above, phone below in single Contact column</li>
+                <li><span class="status-indicator status-success"></span><strong>Compact Spacing:</strong> Reduced padding from px-6 py-4 to px-4 py-3</li>
+                <li><span class="status-indicator status-success"></span><strong>Removed Horizontal Scroll:</strong> Eliminated overflow-x-auto wrapper</li>
+                <li><span class="status-indicator status-success"></span><strong>Fixed Width Table:</strong> Changed from min-w-full to w-full</li>
+                <li><span class="status-indicator status-success"></span><strong>Removed Performance Filter:</strong> Eliminated performance filter dropdown</li>
+            </ul>
+        </div>
+
+        <!-- Table Structure Verification -->
+        <div class="test-section info">
+            <h2>📋 Table Structure Verification</h2>
+            <p><strong>New Column Layout (7 columns total):</strong></p>
+            <ol>
+                <li><strong>Name:</strong> First/Last name + Employee ID</li>
+                <li><strong>Contact:</strong> Email (top) + Phone (bottom)</li>
+                <li><strong>Distributor:</strong> Company name</li>
+                <li><strong>Territory:</strong> Geographic area</li>
+                <li><strong>Doctors:</strong> Number of active doctors</li>
+                <li><strong>IVRs:</strong> Total IVR count</li>
+                <li><strong>Actions:</strong> View/Edit/Toggle status buttons</li>
+            </ol>
+        </div>
+
+        <!-- Testing Checklist -->
+        <div class="test-section warning">
+            <h2>🧪 Testing Checklist</h2>
+            <p><strong>Verify the following on the Salespeople Management page:</strong></p>
+            <ul class="checklist">
+                <li>Table displays all 7 columns without horizontal scrolling</li>
+                <li>Contact column shows email above phone number</li>
+                <li>No Performance column visible</li>
+                <li>No Status column visible</li>
+                <li>Actions column is fully visible on the right</li>
+                <li>Table uses compact spacing (less padding)</li>
+                <li>Performance filter dropdown is removed from filters</li>
+                <li>Only Status and Distributor filters remain</li>
+                <li>All data displays properly in compact format</li>
+                <li>Table is responsive and fits standard screen widths</li>
+                <li>Hover effects still work on table rows</li>
+                <li>Action buttons (View/Edit/Toggle) are functional</li>
+            </ul>
+        </div>
+
+        <!-- Expected Results -->
+        <div class="test-section success">
+            <h2>🎯 Expected Results</h2>
+            <ul>
+                <li><strong>No Horizontal Scrolling:</strong> Table should fit entirely within standard screen width</li>
+                <li><strong>Compact Layout:</strong> More information visible without scrolling</li>
+                <li><strong>Stacked Contact:</strong> Email and phone in single column saves significant space</li>
+                <li><strong>Essential Information:</strong> All critical data still visible and accessible</li>
+                <li><strong>Functional Actions:</strong> All buttons and interactions work normally</li>
+                <li><strong>Professional Appearance:</strong> Clean, organized layout despite reduced columns</li>
+            </ul>
+        </div>
+
+        <!-- Browser Testing -->
+        <div class="test-section info">
+            <h2>🌐 Browser Testing</h2>
+            <p>Test the table in different browser widths:</p>
+            <ul>
+                <li><strong>Desktop (1920px):</strong> Should have plenty of space</li>
+                <li><strong>Laptop (1366px):</strong> Should fit comfortably</li>
+                <li><strong>Tablet (1024px):</strong> Should fit without scrolling</li>
+                <li><strong>Small Laptop (1280px):</strong> Should be the minimum comfortable width</li>
+            </ul>
+        </div>
+
+        <!-- Success Criteria -->
+        <div class="test-section success">
+            <h2>🏆 Success Criteria</h2>
+            <p><strong>The redesign is successful if:</strong></p>
+            <ol>
+                <li>✅ No horizontal scrolling on standard screens (1280px+)</li>
+                <li>✅ All essential information remains visible</li>
+                <li>✅ Contact information is clearly readable in stacked format</li>
+                <li>✅ Actions column is fully accessible</li>
+                <li>✅ Table maintains professional appearance</li>
+                <li>✅ Performance and Status data removed without loss of functionality</li>
+            </ol>
+        </div>
+
+        <!-- Notes -->
+        <div class="test-section info">
+            <h2>📝 Implementation Notes</h2>
+            <ul>
+                <li><strong>Performance Data:</strong> Removed from table but still available in detail modals</li>
+                <li><strong>Status Information:</strong> Can be accessed via action buttons (toggle status)</li>
+                <li><strong>Contact Stacking:</strong> Maintains readability while saving horizontal space</li>
+                <li><strong>Compact Spacing:</strong> Reduces row height while maintaining usability</li>
+                <li><strong>Filter Simplification:</strong> Focuses on most commonly used filters</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Auto-check items as they're verified
+        document.addEventListener('DOMContentLoaded', function() {
+            const checklistItems = document.querySelectorAll('.checklist li');
+            checklistItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    if (this.style.textDecoration === 'line-through') {
+                        this.style.textDecoration = 'none';
+                        this.style.opacity = '1';
+                        this.querySelector('::before') ? this.innerHTML = this.innerHTML.replace('☑', '☐') : null;
+                    } else {
+                        this.style.textDecoration = 'line-through';
+                        this.style.opacity = '0.6';
+                        this.innerHTML = this.innerHTML.replace('☐', '☑');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Order Navigation Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .critical { border-color: #dc2626; background-color: #fef2f2; }
+        .test-link {
+            display: inline-block;
+            margin: 5px 10px 5px 0;
+            padding: 8px 16px;
+            background-color: #dc2626;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .test-link:hover {
+            background-color: #b91c1c;
+        }
+        .debug-info {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐛 Order Navigation Debug Test</h1>
+        <p><strong>Issue:</strong> Order Processing "View Details" redirects to dashboard instead of order detail</p>
+        <p><strong>Status:</strong> <span style="color: #dc2626; font-weight: bold;">DEBUGGING IN PROGRESS</span></p>
+
+        <!-- Debug Information -->
+        <div class="test-section">
+            <h2>🔍 Debug Information</h2>
+            <div class="debug-info">
+Current URL: <span id="current-url"></span>
+User Agent: <span id="user-agent"></span>
+Local Storage Auth Token: <span id="auth-token"></span>
+Local Storage User Role: <span id="user-role"></span>
+            </div>
+        </div>
+
+        <!-- Test Navigation -->
+        <div class="test-section critical">
+            <h2>🧪 Test Order Detail Navigation</h2>
+
+            <h3>Step 1: Test Order Processing Page</h3>
+            <a href="http://localhost:3000/distributor/orders" class="test-link" target="_blank">
+                Go to Order Processing
+            </a>
+            <p><small>Click "View Details" on any order - check console for debug logs</small></p>
+
+            <h3>Step 2: Test Direct Order Detail URLs</h3>
+            <a href="http://localhost:3000/distributor/orders/ORD-2024-001" class="test-link" target="_blank">
+                Direct: ORD-2024-001
+            </a>
+            <a href="http://localhost:3000/distributor/orders/ORD-2024-002" class="test-link" target="_blank">
+                Direct: ORD-2024-002
+            </a>
+            <a href="http://localhost:3000/distributor/orders/ORD-2024-003" class="test-link" target="_blank">
+                Direct: ORD-2024-003
+            </a>
+
+            <h3>Step 3: Check Console Logs</h3>
+            <p>Open browser console (F12) and look for these debug messages:</p>
+            <div class="debug-info">
+🔍 DistributorOrderDetail Component Loaded
+📍 Current URL: [should show order detail URL]
+📍 Location pathname: [should show /distributor/orders/ORDER-ID]
+🆔 Order ID from params: [should show ORDER-ID]
+🔐 Auth token present: [should be true]
+👤 User role: [should show user role]
+            </div>
+        </div>
+
+        <!-- Expected vs Actual -->
+        <div class="test-section">
+            <h2>📊 Expected vs Actual Behavior</h2>
+
+            <h3>✅ Expected Behavior:</h3>
+            <ul>
+                <li>Click "View Details" → Navigate to /distributor/orders/ORDER-ID</li>
+                <li>Order detail page loads with green debug banner</li>
+                <li>Shows order information in read-only mode</li>
+                <li>Console shows successful component loading</li>
+            </ul>
+
+            <h3>❌ Current Problem:</h3>
+            <ul>
+                <li>Click "View Details" → Redirects to dashboard</li>
+                <li>URL changes but doesn't stay on order detail</li>
+                <li>No debug messages in console</li>
+                <li>Component never loads</li>
+            </ul>
+        </div>
+
+        <!-- Debugging Steps -->
+        <div class="test-section">
+            <h2>🔧 Debugging Steps</h2>
+            <ol>
+                <li><strong>Check Console:</strong> Look for any error messages or debug logs</li>
+                <li><strong>Check Network Tab:</strong> See if there are any failed requests</li>
+                <li><strong>Check URL Changes:</strong> Watch the address bar when clicking "View Details"</li>
+                <li><strong>Check Authentication:</strong> Verify auth token and user role are present</li>
+                <li><strong>Check Route Matching:</strong> Verify the route is being matched correctly</li>
+            </ol>
+        </div>
+
+        <!-- Potential Causes -->
+        <div class="test-section">
+            <h2>🤔 Potential Causes</h2>
+            <ul>
+                <li><strong>Route Conflict:</strong> Another route is catching the request first</li>
+                <li><strong>Authentication Issue:</strong> User not authenticated or wrong role</li>
+                <li><strong>Component Error:</strong> OrderDetail component has an error and fails to load</li>
+                <li><strong>Navigation Issue:</strong> window.location.href not working as expected</li>
+                <li><strong>Lazy Loading Issue:</strong> React.lazy component failing to load</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Update debug information
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        document.getElementById('auth-token').textContent = localStorage.getItem('authToken') ? 'Present' : 'Missing';
+        document.getElementById('user-role').textContent = localStorage.getItem('userRole') || 'Not Set';
+
+        // Log test page load
+        console.log('🧪 Order Navigation Debug Test Page Loaded');
+        console.log('📍 Current URL:', window.location.href);
+        console.log('🔐 Auth Token:', localStorage.getItem('authToken') ? 'Present' : 'Missing');
+        console.log('👤 User Role:', localStorage.getItem('userRole') || 'Not Set');
+    </script>
+</body>
+</html>

@@ -25,6 +25,15 @@ import { Card } from '../../components/shared/ui/Card';
 import UniversalFileUpload from '../../components/shared/UniversalFileUpload';
 import toast from 'react-hot-toast';
 
+// Mock sales rep data for hierarchy display
+const mockSalesReps = [
+  { id: '1', firstName: 'John', lastName: 'Smith', territory: 'Northern California', phone: '(555) 123-4567', activeDoctors: 12 },
+  { id: '2', firstName: 'Sarah', lastName: 'Johnson', territory: 'Dallas Metro', phone: '(555) 234-5678', activeDoctors: 18 },
+  { id: '3', firstName: 'Michael', lastName: 'Chen', territory: 'Houston Area', phone: '(555) 345-6789', activeDoctors: 8 },
+  { id: '4', firstName: 'Emily', lastName: 'Rodriguez', territory: 'Manhattan', phone: '(555) 456-7890', activeDoctors: 15 },
+  { id: '5', firstName: 'David', lastName: 'Thompson', territory: 'Chicago', phone: '(555) 567-8901', activeDoctors: 3 }
+];
+
 interface DistributorDocument {
   id: string;
   name: string;
@@ -56,6 +65,7 @@ interface Distributor {
   joinedDate: string;
   lastActivity: string;
   monthlyRevenue: number;
+  sales_reps?: string[]; // Array of sales rep IDs
 }
 
 // Mock data for distributors
@@ -98,7 +108,8 @@ const mockDistributors: Distributor[] = [
     ],
     joinedDate: '2023-01-15',
     lastActivity: '2 hours ago',
-    monthlyRevenue: 125000
+    monthlyRevenue: 125000,
+    sales_reps: ['1']
   },
   {
     id: '2',
@@ -138,7 +149,8 @@ const mockDistributors: Distributor[] = [
     ],
     joinedDate: '2022-08-20',
     lastActivity: '1 day ago',
-    monthlyRevenue: 198000
+    monthlyRevenue: 198000,
+    sales_reps: ['2', '3']
   },
   {
     id: '3',
@@ -178,7 +190,8 @@ const mockDistributors: Distributor[] = [
     ],
     joinedDate: '2023-03-10',
     lastActivity: '3 hours ago',
-    monthlyRevenue: 87000
+    monthlyRevenue: 87000,
+    sales_reps: ['4']
   },
   {
     id: '4',
@@ -218,7 +231,8 @@ const mockDistributors: Distributor[] = [
     ],
     joinedDate: '2022-11-05',
     lastActivity: '2 weeks ago',
-    monthlyRevenue: 0
+    monthlyRevenue: 0,
+    sales_reps: ['5']
   },
   {
     id: '5',
@@ -258,7 +272,8 @@ const mockDistributors: Distributor[] = [
     ],
     joinedDate: '2023-02-28',
     lastActivity: '5 hours ago',
-    monthlyRevenue: 156000
+    monthlyRevenue: 156000,
+    sales_reps: []
   }
 ];
 
@@ -808,7 +823,7 @@ const DistributorsManagement: React.FC = () => {
                     onChange={handleDocumentUpload}
                     acceptedFileTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
                     maxSizeMB={10}
-                    showCamera={false}
+                    showCamera={true}
                     className="border border-slate-200"
                   />
                 </div>
@@ -998,6 +1013,66 @@ const DistributorsManagement: React.FC = () => {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Assigned Sales Representatives */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-md font-medium text-slate-900">Assigned Sales Representatives ({selectedDistributor.sales_reps?.length || 0})</h4>
+                  <div className="flex space-x-2">
+                    <button className="px-3 py-1 text-sm bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors">
+                      Add Sales Rep
+                    </button>
+                  </div>
+                </div>
+
+                {selectedDistributor.sales_reps && selectedDistributor.sales_reps.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedDistributor.sales_reps.map((repId) => {
+                      const salesRep = mockSalesReps.find(rep => rep.id === repId);
+                      if (!salesRep) return null;
+
+                      return (
+                        <div key={repId} className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 rounded-lg bg-slate-100">
+                                <UserIcon className="h-5 w-5 text-slate-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-slate-900">
+                                  {salesRep.firstName} {salesRep.lastName}
+                                </p>
+                                <p className="text-xs text-slate-500">{salesRep.territory}</p>
+                                <p className="text-xs text-slate-500">{salesRep.phone}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium text-slate-900">{salesRep.activeDoctors}</p>
+                              <p className="text-xs text-slate-500">Doctors</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex justify-end space-x-2">
+                            <button className="px-2 py-1 text-xs text-slate-600 hover:text-slate-900">
+                              View Details
+                            </button>
+                            <button className="px-2 py-1 text-xs text-red-600 hover:text-red-900">
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 p-6 rounded-lg text-center border border-slate-200">
+                    <UsersIcon className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">No sales representatives assigned</p>
+                    <button className="mt-2 px-3 py-1 text-sm bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors">
+                      Add First Sales Rep
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Activity Information */}

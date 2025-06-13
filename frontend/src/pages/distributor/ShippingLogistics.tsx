@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   EyeIcon,
   MagnifyingGlassIcon,
@@ -269,6 +270,7 @@ const mockShipments: Shipment[] = [
 ];
 
 const ShippingLogistics: React.FC = () => {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [carrierFilter, setCarrierFilter] = useState<string>('All');
   const [distributorFilter, setDistributorFilter] = useState<string>('All');
@@ -683,7 +685,16 @@ const ShippingLogistics: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <button className="inline-flex items-center px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 opacity-70 cursor-default">
+                      <button
+                        onClick={() => {
+                          console.log('🚀 CRITICAL DEBUG: Navigating to shipping detail');
+                          console.log('Shipment ID:', shipment.id);
+                          console.log('Target URL:', `/distributor/shipping/${shipment.id}`);
+                          console.log('Using React Router navigate');
+                          navigate(`/distributor/shipping/${shipment.id}`);
+                        }}
+                        className="inline-flex items-center px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+                      >
                         <EyeIcon className="h-4 w-4 mr-1" />
                         View Details
                       </button>

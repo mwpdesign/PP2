@@ -122,6 +122,17 @@ try:
 except ImportError:
     pass
 
+try:
+    from .treatments import (
+        TreatmentCreateRequest,
+        TreatmentResponse,
+        TreatmentListResponse,
+        InventorySummaryResponse,
+        TreatmentErrorResponse,
+    )
+except ImportError:
+    pass
+
 __all__ = [
     # Auth schemas
     "LoginRequest",
@@ -193,4 +204,11 @@ __all__ = [
     "AuditLogResponse",
     "ComplianceReportCreate",
     "ComplianceReportResponse",
+
+    # Treatment schemas
+    "TreatmentCreateRequest",
+    "TreatmentResponse",
+    "TreatmentListResponse",
+    "InventorySummaryResponse",
+    "TreatmentErrorResponse",
 ]

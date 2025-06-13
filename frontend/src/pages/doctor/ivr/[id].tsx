@@ -19,7 +19,7 @@ import IVRResultsDisplay from '../../../components/ivr/IVRResultsDisplay';
 import { formatMessageTimestamp, formatDateOnly } from '../../../utils/formatters';
 import { useIVRWebSocket, IVRStatusUpdate } from '../../../hooks/useIVRWebSocket';
 import { mockIVRRequests } from '../../../data/mockIVRData';
-import UniversalFileUpload from '../../components/shared/UniversalFileUpload';
+import UniversalFileUpload from '../../../components/shared/UniversalFileUpload';
 import { toast } from 'react-hot-toast';
 
 interface DoctorIVRDetail {

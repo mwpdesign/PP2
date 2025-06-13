@@ -38,7 +38,9 @@ const MainLayout = React.lazy(() => import('./components/shared/layout/Layout'))
 const AdminLayout = React.lazy(() => import('./components/admin/layout/AdminLayout'));
 const SystemSettings = React.lazy(() => import('./components/admin/SystemSettings'));
 const MasterDistributorDashboard = React.lazy(() => import('./pages/distributor/MasterDistributorDashboard'));
+const RegionalDistributorDashboard = React.lazy(() => import('./pages/distributor/RegionalDistributorDashboard'));
 const DistributorLayout = React.lazy(() => import('./components/distributor/layout/DistributorLayout'));
+const RegionalDistributorLayout = React.lazy(() => import('./components/distributor/layout/RegionalDistributorLayout'));
 const SegmentedIVRManagement = React.lazy(() => import('./components/distributor/ivr/SegmentedIVRManagement'));
 const NetworkManagement = React.lazy(() => import('./components/distributor/network/NetworkManagement'));
 const DistributorAnalytics = React.lazy(() => import('./components/distributor/analytics/DistributorAnalytics'));
@@ -68,6 +70,8 @@ const Invoicing = React.lazy(() => import('./pages/distributor/Invoicing'));
 const DistributorSettings = React.lazy(() => import('./pages/distributor/Settings'));
 const IVRManagement = React.lazy(() => import('./pages/distributor/IVRManagement'));
 const DistributorIVRDetail = React.lazy(() => import('./pages/distributor/IVRDetail'));
+const DistributorOrderDetail = React.lazy(() => import('./pages/distributor/OrderDetail'));
+const DistributorShippingDetail = React.lazy(() => import('./pages/distributor/ShippingDetail'));
 
 const App = () => {
   console.log('App component rendering');
@@ -198,8 +202,11 @@ const App = () => {
                     <Route index element={<Navigate to="/distributor/dashboard" replace />} />
                     <Route path="dashboard" element={<MasterDistributorDashboard />} />
                     <Route path="ivr-management" element={<IVRManagement />} />
+                    <Route path="ivr-management/:id" element={<DistributorIVRDetail />} />
                     <Route path="orders" element={<OrderProcessing />} />
+                    <Route path="orders/:id" element={<DistributorOrderDetail />} />
                     <Route path="shipping" element={<ShippingLogistics />} />
+                    <Route path="shipping/:id" element={<DistributorShippingDetail />} />
                     <Route path="distributors" element={<DistributorsManagement />} />
                     <Route path="salespeople" element={<SalespeopleManagement />} />
                     <Route path="invoicing" element={<Invoicing />} />
@@ -210,11 +217,27 @@ const App = () => {
                     <Route path="network" element={<NetworkManagement />} />
                     <Route path="orders/management" element={<OrderFulfillmentDashboard />} />
                     <Route path="orders/shipping" element={<ShippingLogistics />} />
-                    <Route path="orders/*" element={<OrderManagementPage />} />
                     <Route path="shipping/*" element={<ShippingPage />} />
                     <Route path="logistics/*" element={<ShippingLogistics />} />
                     <Route path="analytics" element={<DistributorAnalytics />} />
+                  </Route>
+                </Route>
+
+                {/* Regional Distributor Routes */}
+                <Route element={<PrivateRoute />}>
+                  <Route path="/distributor-regional" element={<RegionalDistributorLayout />}>
+                    <Route index element={<Navigate to="/distributor-regional/dashboard" replace />} />
+                    <Route path="dashboard" element={<RegionalDistributorDashboard />} />
+                    <Route path="sales-team" element={<SalespeopleManagement />} />
+                    <Route path="doctor-network" element={<DistributorsManagement />} />
+                    <Route path="ivr-management" element={<IVRManagement />} />
                     <Route path="ivr-management/:id" element={<DistributorIVRDetail />} />
+                    <Route path="order-management" element={<OrderProcessing />} />
+                    <Route path="order-management/:id" element={<DistributorOrderDetail />} />
+                    <Route path="shipping-logistics" element={<ShippingLogistics />} />
+                    <Route path="shipping-logistics/:id" element={<DistributorShippingDetail />} />
+                    <Route path="analytics" element={<DistributorAnalytics />} />
+                    <Route path="settings" element={<DistributorSettings />} />
                   </Route>
                 </Route>
 
@@ -242,11 +265,6 @@ const App = () => {
                 {/* CHP Admin Routes */}
                 <Route element={<PrivateRoute />}>
                   <Route path="/chp/dashboard" element={<SimpleCHPAdminDashboard />} />
-                </Route>
-
-                {/* Regional Distributor Routes */}
-                <Route element={<PrivateRoute />}>
-                  <Route path="/distributor-regional/dashboard" element={<SimpleDistributorDashboard />} />
                 </Route>
 
                 {/* Sales Routes */}

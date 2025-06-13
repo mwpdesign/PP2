@@ -28,6 +28,7 @@ interface Invoice {
   paidDate?: string;
   items: InvoiceItem[];
   notes?: string;
+  paymentLink?: string;
   distributorAddress: {
     street: string;
     city: string;
@@ -76,8 +77,8 @@ const Invoicing: React.FC = () => {
       {
         id: '1',
         invoiceNumber: 'INV-2025-001',
-        distributorName: 'Regional Medical Supply Co.',
-        distributorId: 'DIST-001',
+        distributorName: 'Dr. Emily Carter',
+        distributorId: 'DOC-001',
         invoiceDate: '2025-01-15',
         dueDate: '2025-02-14',
         amount: 45000.00,
@@ -86,10 +87,10 @@ const Invoicing: React.FC = () => {
         paidDate: '2025-02-10',
         items: [
           { id: '1', description: 'Wound Care Products - Q4 2024', quantity: 1, rate: 35000, amount: 35000 },
-          { id: '2', description: 'Distribution Fee', quantity: 1, rate: 10000, amount: 10000 }
+          { id: '2', description: 'Professional Services Fee', quantity: 1, rate: 10000, amount: 10000 }
         ],
         distributorAddress: {
-          street: '123 Medical Plaza Dr',
+          street: '101 Main St',
           city: 'Chicago',
           state: 'IL',
           zip: '60601'
@@ -98,38 +99,39 @@ const Invoicing: React.FC = () => {
       {
         id: '2',
         invoiceNumber: 'INV-2025-002',
-        distributorName: 'Southwest Healthcare Distribution',
-        distributorId: 'DIST-002',
+        distributorName: 'Dr. Michael Nguyen',
+        distributorId: 'DOC-002',
         invoiceDate: '2025-01-20',
         dueDate: '2025-02-19',
         amount: 32500.00,
         status: 'pending',
         items: [
           { id: '1', description: 'Medical Supplies - January 2025', quantity: 1, rate: 28000, amount: 28000 },
-          { id: '2', description: 'Shipping & Handling', quantity: 1, rate: 4500, amount: 4500 }
+          { id: '2', description: 'Consultation Fee', quantity: 1, rate: 4500, amount: 4500 }
         ],
         distributorAddress: {
-          street: '456 Healthcare Blvd',
+          street: '202 Oak Ave',
           city: 'Phoenix',
           state: 'AZ',
           zip: '85001'
-        }
+        },
+        paymentLink: 'https://quickbooks.intuit.com/payments/pay?invoiceId=INV-2025-002&amount=32500&company=MedSupplyDistribution'
       },
       {
         id: '3',
         invoiceNumber: 'INV-2025-003',
-        distributorName: 'East Coast Medical Partners',
-        distributorId: 'DIST-003',
+        distributorName: 'Dr. Sophia Patel',
+        distributorId: 'DOC-003',
         invoiceDate: '2024-12-15',
         dueDate: '2025-01-14',
         amount: 28750.00,
         status: 'overdue',
         items: [
           { id: '1', description: 'Skin Graft Products - December 2024', quantity: 1, rate: 25000, amount: 25000 },
-          { id: '2', description: 'Training & Support', quantity: 1, rate: 3750, amount: 3750 }
+          { id: '2', description: 'Follow-up Visit', quantity: 1, rate: 3750, amount: 3750 }
         ],
         distributorAddress: {
-          street: '789 Medical Center Way',
+          street: '303 Elm St',
           city: 'Boston',
           state: 'MA',
           zip: '02101'
@@ -138,28 +140,29 @@ const Invoicing: React.FC = () => {
       {
         id: '4',
         invoiceNumber: 'INV-2025-004',
-        distributorName: 'Pacific Northwest Supply',
-        distributorId: 'DIST-004',
+        distributorName: 'Dr. Olivia Kim',
+        distributorId: 'DOC-004',
         invoiceDate: '2025-01-25',
         dueDate: '2025-02-24',
         amount: 18900.00,
         status: 'pending',
         items: [
           { id: '1', description: 'Wound Care Starter Kit', quantity: 3, rate: 5500, amount: 16500 },
-          { id: '2', description: 'Documentation Package', quantity: 1, rate: 2400, amount: 2400 }
+          { id: '2', description: 'Documentation Review', quantity: 1, rate: 2400, amount: 2400 }
         ],
         distributorAddress: {
-          street: '321 Healthcare Ave',
+          street: '404 Maple Dr',
           city: 'Seattle',
           state: 'WA',
           zip: '98101'
-        }
+        },
+        paymentLink: 'https://quickbooks.intuit.com/payments/pay?invoiceId=INV-2025-004&amount=18900&company=MedSupplyDistribution'
       },
       {
         id: '5',
         invoiceNumber: 'INV-2025-005',
-        distributorName: 'Mountain States Medical',
-        distributorId: 'DIST-005',
+        distributorName: 'Dr. Daniel Lee',
+        distributorId: 'DOC-005',
         invoiceDate: '2025-01-10',
         dueDate: '2025-02-09',
         amount: 41200.00,
@@ -168,10 +171,10 @@ const Invoicing: React.FC = () => {
         paidDate: '2025-02-05',
         items: [
           { id: '1', description: 'Advanced Wound Care Products', quantity: 1, rate: 38000, amount: 38000 },
-          { id: '2', description: 'Territory Expansion Fee', quantity: 1, rate: 3200, amount: 3200 }
+          { id: '2', description: 'Telemedicine Session', quantity: 1, rate: 3200, amount: 3200 }
         ],
         distributorAddress: {
-          street: '654 Mountain View Dr',
+          street: '505 Pine Ln',
           city: 'Denver',
           state: 'CO',
           zip: '80201'
@@ -180,18 +183,18 @@ const Invoicing: React.FC = () => {
       {
         id: '6',
         invoiceNumber: 'INV-2025-006',
-        distributorName: 'Gulf Coast Healthcare',
-        distributorId: 'DIST-006',
+        distributorName: 'Dr. Grace Chen',
+        distributorId: 'DOC-006',
         invoiceDate: '2024-12-20',
         dueDate: '2025-01-19',
         amount: 15600.00,
         status: 'overdue',
         items: [
           { id: '1', description: 'Basic Wound Care Supplies', quantity: 2, rate: 7000, amount: 14000 },
-          { id: '2', description: 'Setup & Training', quantity: 1, rate: 1600, amount: 1600 }
+          { id: '2', description: 'Initial Consultation', quantity: 1, rate: 1600, amount: 1600 }
         ],
         distributorAddress: {
-          street: '987 Gulf Shore Blvd',
+          street: '606 Cedar Rd',
           city: 'Houston',
           state: 'TX',
           zip: '77001'
@@ -200,18 +203,18 @@ const Invoicing: React.FC = () => {
       {
         id: '7',
         invoiceNumber: 'INV-2025-007',
-        distributorName: 'Midwest Medical Solutions',
-        distributorId: 'DIST-007',
+        distributorName: 'Dr. Benjamin Rivera',
+        distributorId: 'DOC-007',
         invoiceDate: '2025-01-30',
         dueDate: '2025-03-01',
         amount: 36800.00,
         status: 'pending',
         items: [
           { id: '1', description: 'Comprehensive Product Line', quantity: 1, rate: 32000, amount: 32000 },
-          { id: '2', description: 'Marketing Support', quantity: 1, rate: 4800, amount: 4800 }
+          { id: '2', description: 'Patient Education Session', quantity: 1, rate: 4800, amount: 4800 }
         ],
         distributorAddress: {
-          street: '147 Commerce St',
+          street: '707 Birch Blvd',
           city: 'Kansas City',
           state: 'MO',
           zip: '64101'
@@ -220,8 +223,8 @@ const Invoicing: React.FC = () => {
       {
         id: '8',
         invoiceNumber: 'INV-2025-008',
-        distributorName: 'Atlantic Medical Group',
-        distributorId: 'DIST-008',
+        distributorName: 'Dr. Isabella Martinez',
+        distributorId: 'DOC-008',
         invoiceDate: '2025-01-05',
         dueDate: '2025-02-04',
         amount: 22400.00,
@@ -233,7 +236,7 @@ const Invoicing: React.FC = () => {
           { id: '2', description: 'Expedited Shipping', quantity: 1, rate: 2400, amount: 2400 }
         ],
         distributorAddress: {
-          street: '258 Atlantic Ave',
+          street: '808 Spruce St',
           city: 'Miami',
           state: 'FL',
           zip: '33101'
@@ -343,6 +346,12 @@ const Invoicing: React.FC = () => {
         ? { ...inv, status: 'paid' as const, paymentMethod: 'Manual Entry', paidDate: new Date().toISOString().split('T')[0] }
         : inv
     ));
+  };
+
+  const handlePayInvoice = (invoice: Invoice) => {
+    // Generate QuickBooks payment URL (this would be a real QuickBooks integration in production)
+    const quickbooksUrl = `https://quickbooks.intuit.com/payments/pay?invoiceId=${invoice.invoiceNumber}&amount=${invoice.amount}&company=MedSupplyDistribution`;
+    window.open(quickbooksUrl, '_blank');
   };
 
   const uniqueDistributors = Array.from(new Set(invoices.map(inv => inv.distributorName)));
@@ -512,7 +521,7 @@ const Invoicing: React.FC = () => {
                     Invoice #
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Distributor/Customer
+                    Doctor
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Invoice Date
@@ -579,13 +588,22 @@ const Invoicing: React.FC = () => {
                           <DocumentArrowDownIcon className="h-4 w-4" />
                         </button>
                         {invoice.status !== 'paid' && (
-                          <button
-                            onClick={() => handleMarkAsPaid(invoice.id)}
-                            className="text-green-600 hover:text-green-900"
-                            title="Mark as Paid"
-                          >
-                            <CheckCircleIcon className="h-4 w-4" />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handlePayInvoice(invoice)}
+                              className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                              title="Pay with QuickBooks"
+                            >
+                              Pay Invoice
+                            </button>
+                            <button
+                              onClick={() => handleMarkAsPaid(invoice.id)}
+                              className="text-green-600 hover:text-green-900"
+                              title="Mark as Paid"
+                            >
+                              <CheckCircleIcon className="h-4 w-4" />
+                            </button>
+                          </>
                         )}
                         <button
                           className="text-blue-600 hover:text-blue-900"
@@ -656,6 +674,22 @@ const Invoicing: React.FC = () => {
                       <p className="font-medium">{selectedInvoice.paymentMethod}</p>
                     </div>
                   )}
+                  {selectedInvoice.paymentLink && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600">Payment Link:</p>
+                      <a
+                        href={selectedInvoice.paymentLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium break-all"
+                      >
+                        {selectedInvoice.paymentLink.length > 50
+                          ? `${selectedInvoice.paymentLink.substring(0, 50)}...`
+                          : selectedInvoice.paymentLink
+                        }
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -701,6 +735,20 @@ const Invoicing: React.FC = () => {
                 </div>
               </div>
 
+              {/* QuickBooks Payment Notice */}
+              {selectedInvoice.status !== 'paid' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 text-blue-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm text-blue-700">
+                      <strong>Payments are processed securely through QuickBooks.</strong> Click "Pay Invoice" to be redirected to the secure QuickBooks payment portal.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex justify-end space-x-3">
                 <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -710,15 +758,23 @@ const Invoicing: React.FC = () => {
                   Email Invoice
                 </button>
                 {selectedInvoice.status !== 'paid' && (
-                  <button
-                    onClick={() => {
-                      handleMarkAsPaid(selectedInvoice.id);
-                      setShowViewModal(false);
-                    }}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
-                  >
-                    Mark as Paid
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handlePayInvoice(selectedInvoice)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                    >
+                      Pay Invoice
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleMarkAsPaid(selectedInvoice.id);
+                        setShowViewModal(false);
+                      }}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+                    >
+                      Mark as Paid
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -786,11 +842,34 @@ const Invoicing: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Bill To</label>
                   <select className="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500">
-                    <option>Select Distributor...</option>
+                    <option>Select Doctor...</option>
                     {uniqueDistributors.map(distributor => (
                       <option key={distributor} value={distributor}>{distributor}</option>
                     ))}
                   </select>
+                </div>
+
+                {/* Payment Link */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Link
+                    <span className="text-xs text-gray-500 ml-1">(Optional - QuickBooks payment URL)</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      placeholder="https://quickbooks.intuit.com/payments/pay?..."
+                      className="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500 pr-10"
+                    />
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      </svg>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Paste the QuickBooks payment link here to provide customers with a direct payment option.
+                  </p>
                 </div>
 
                 {/* Line Items */}

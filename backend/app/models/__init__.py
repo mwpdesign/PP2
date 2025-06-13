@@ -125,6 +125,11 @@ try:
 except ImportError:
     pass
 
+try:
+    from ..api.treatments.models import TreatmentRecord
+except ImportError:
+    pass
+
 __all__ = [
     "User",
     "Organization",
@@ -181,4 +186,5 @@ __all__ = [
     "VoiceTranscription",
     "VoiceTranscriptionSettings",
     "VoiceTranscriptionAnalytics",
+    "TreatmentRecord",
 ]

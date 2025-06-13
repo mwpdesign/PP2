@@ -154,6 +154,11 @@ class Order(Base, AuditMixin):
     documents = relationship(
         "OrderDocument", back_populates="order", cascade="all, delete-orphan"
     )
+    treatment_records = relationship(
+        "TreatmentRecord",
+        back_populates="order",
+        cascade="all, delete-orphan"
+    )
 
     @property
     def total_amount(self) -> float:

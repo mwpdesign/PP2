@@ -14,12 +14,22 @@ import {
   PrinterIcon,
   PlusIcon,
   EyeIcon,
-  ArrowDownTrayIcon
+  ArrowDownTrayIcon,
+  ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
 import { Patient, Document } from '../../types/ivr';
 import patientService from '../../services/patientService';
 import DocumentPreviewModal from './DocumentPreviewModal';
 import { NewPatientForm } from './NewPatientForm';
+import RecordTreatmentModal from '../treatments/RecordTreatmentModal';
+import TreatmentHistory from '../treatments/TreatmentHistory';
+import InventorySummary from '../treatments/InventorySummary';
+import { Treatment, InventoryItem, TreatmentFormData } from '../../types/treatments';
+import {
+  getMockTreatmentsByPatient,
+  getMockInventoryByPatient,
+  DEMO_MODE
+} from '../../data/mockTreatmentData';
 
 const PatientDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -27,10 +37,15 @@ const PatientDetail: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
-  const [activeTab, setActiveTab] = useState<'ivr' | 'orders' | 'documents' | 'notes'>('ivr');
+  const [activeTab, setActiveTab] = useState<'ivr' | 'orders' | 'documents' | 'notes' | 'treatments'>('ivr');
   const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [isRecordTreatmentOpen, setIsRecordTreatmentOpen] = useState(false);
+  const [isSavingTreatment, setIsSavingTreatment] = useState(false);
+  const [treatments, setTreatments] = useState<Treatment[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [treatmentsLoading, setTreatmentsLoading] = useState(false);
 
   useEffect(() => {
     const fetchPatient = async () => {
@@ -90,6 +105,50 @@ const PatientDetail: React.FC = () => {
     }
   }, [id]);
 
+  // Load treatments and inventory when patient is loaded or tab changes to treatments
+  useEffect(() => {
+    if (patient?.id && activeTab === 'treatments') {
+      loadTreatmentsAndInventory();
+    }
+  }, [patient?.id, activeTab]);
+
+  const loadTreatmentsAndInventory = async () => {
+    if (!patient?.id) return;
+
+    setTreatmentsLoading(true);
+    try {
+      if (DEMO_MODE) {
+        console.log('🎭 Demo mode: Loading mock treatment data');
+        // Simulate loading delay for realistic demo
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const mockTreatments = getMockTreatmentsByPatient(patient.id);
+        const mockInventory = getMockInventoryByPatient(patient.id);
+
+        setTreatments(mockTreatments);
+        setInventory(mockInventory);
+      } else {
+        // Real API calls (commented out for demo)
+        /*
+        const [treatmentsResult, inventoryResult] = await Promise.all([
+          treatmentService.getTreatmentsByPatient(patient.id),
+          treatmentService.getPatientInventory(patient.id)
+        ]);
+
+        setTreatments(treatmentsResult.treatments);
+        setInventory(inventoryResult);
+        */
+        setTreatments([]);
+        setInventory([]);
+      }
+    } catch (error) {
+      console.error('Failed to load treatments and inventory:', error);
+      setError('Failed to load treatment data. Please try again.');
+    } finally {
+      setTreatmentsLoading(false);
+    }
+  };
+
   const handleDocumentDownload = async (documentId: string) => {
     if (!patient?.id) return;
 
@@ -120,6 +179,62 @@ const PatientDetail: React.FC = () => {
     console.log('Updated patient data:', updatedPatientData);
     setIsEditFormOpen(false);
     // Optionally refresh patient data
+  };
+
+  const handleRecordTreatment = () => {
+    setIsRecordTreatmentOpen(true);
+  };
+
+  const handleRecordTreatmentClose = () => {
+    setIsRecordTreatmentOpen(false);
+  };
+
+  const handleRecordTreatmentSave = async (treatmentData: TreatmentFormData) => {
+    // The modal handles the API call, so we just need to refresh the data
+    try {
+      // Refresh treatments and inventory after successful save
+      await loadTreatmentsAndInventory();
+    } catch (error) {
+      console.error('Failed to refresh treatment data:', error);
+      // Don't show error here as the treatment was already saved successfully
+    }
+  };
+
+  const refreshTreatments = async () => {
+    if (!patient?.id) return;
+
+    setTreatmentsLoading(true);
+    try {
+      if (DEMO_MODE) {
+        console.log('🎭 Demo mode: Refreshing mock treatment data');
+        // Simulate loading delay
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        const mockTreatments = getMockTreatmentsByPatient(patient.id);
+        const mockInventory = getMockInventoryByPatient(patient.id);
+
+        setTreatments(mockTreatments);
+        setInventory(mockInventory);
+      } else {
+        // Real API calls (commented out for demo)
+        /*
+        const [treatmentsResult, inventoryResult] = await Promise.all([
+          treatmentService.getTreatmentsByPatient(patient.id),
+          treatmentService.getPatientInventory(patient.id)
+        ]);
+
+        setTreatments(treatmentsResult.treatments);
+        setInventory(inventoryResult);
+        */
+        setTreatments([]);
+        setInventory([]);
+      }
+    } catch (error) {
+      console.error('Failed to refresh treatments:', error);
+      setError('Failed to refresh treatment data. Please try again.');
+    } finally {
+      setTreatmentsLoading(false);
+    }
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -382,6 +497,7 @@ const PatientDetail: React.FC = () => {
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               {[
                 { id: 'ivr', name: 'IVR History', icon: ClipboardDocumentListIcon },
+                { id: 'treatments', name: 'Treatment Tracking', icon: ClipboardDocumentCheckIcon },
                 { id: 'orders', name: 'Medical Orders', icon: ClipboardDocumentListIcon },
                 { id: 'documents', name: 'Documents', icon: DocumentTextIcon },
                 { id: 'notes', name: 'Notes', icon: ChatBubbleLeftRightIcon },
@@ -496,6 +612,48 @@ const PatientDetail: React.FC = () => {
               </div>
             )}
 
+            {activeTab === 'treatments' && (
+              <div className="space-y-6">
+                {/* Header with Record Treatment Button */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-medium text-slate-900">Treatment Tracking</h3>
+                    <p className="text-sm text-slate-500">Track product usage for clinical documentation and inventory management</p>
+                    {DEMO_MODE && (
+                      <div className="mt-1">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          🎭 Demo Mode
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleRecordTreatment}
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors"
+                  >
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Record Treatment
+                  </button>
+                </div>
+
+                {/* Inventory Summary */}
+                <InventorySummary
+                  patientId={patient?.id || ''}
+                  inventory={inventory}
+                  loading={treatmentsLoading}
+                  onRefresh={refreshTreatments}
+                />
+
+                {/* Treatment History */}
+                <TreatmentHistory
+                  patientId={patient?.id || ''}
+                  treatments={treatments}
+                  loading={treatmentsLoading}
+                  onRefresh={refreshTreatments}
+                />
+              </div>
+            )}
+
             {activeTab === 'notes' && (
               <div className="space-y-4">
                 <div className="text-center py-12">
@@ -528,6 +686,15 @@ const PatientDetail: React.FC = () => {
           initialData={patient}
         />
       )}
+
+      {/* Record Treatment Modal */}
+      <RecordTreatmentModal
+        isOpen={isRecordTreatmentOpen}
+        onClose={handleRecordTreatmentClose}
+        onSave={handleRecordTreatmentSave}
+        patientId={patient?.id || ''}
+        isLoading={isSavingTreatment}
+      />
     </div>
   );
 };

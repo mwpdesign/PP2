@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treatment History & Inventory Display - Test Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .test-section {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f8fafc;
+        }
+        .success { border-color: #10b981; background: #ecfdf5; }
+        .warning { border-color: #f59e0b; background: #fffbeb; }
+        .error { border-color: #ef4444; background: #fef2f2; }
+    </style>
+</head>
+<body class="bg-slate-50 p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-slate-900 mb-8">Treatment History & Inventory Display - Step 7 Testing</h1>
+
+        <!-- Test Overview -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold text-slate-900 mb-4">🧪 Test Overview</h2>
+            <p class="text-slate-700 mb-4">
+                This page tests the new TreatmentHistory and InventorySummary components for Step 7 of the Treatment Tracking system.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-lg border">
+                    <h3 class="font-medium text-slate-900 mb-2">TreatmentHistory Component</h3>
+                    <ul class="text-sm text-slate-600 space-y-1">
+                        <li>✅ Table display with expandable rows</li>
+                        <li>✅ Mobile responsive design</li>
+                        <li>✅ Date formatting and sorting</li>
+                        <li>✅ Clinical details expansion</li>
+                        <li>✅ Empty state handling</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg border">
+                    <h3 class="font-medium text-slate-900 mb-2">InventorySummary Component</h3>
+                    <ul class="text-sm text-slate-600 space-y-1">
+                        <li>✅ Inventory cards with progress bars</li>
+                        <li>✅ Color-coded status indicators</li>
+                        <li>✅ Usage calculations (ordered/used/on-hand)</li>
+                        <li>✅ Low stock and out-of-stock alerts</li>
+                        <li>✅ Responsive grid layout</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mock Data Preview -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold text-slate-900 mb-4">📊 Mock Data Structure</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded-lg border">
+                    <h3 class="font-medium text-slate-900 mb-3">Treatment Records (4 entries)</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Apligraf Skin Graft 4x4"</span>
+                            <span class="text-slate-500">3 units used</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Dermagraft Wound Dressing 2x2"</span>
+                            <span class="text-slate-500">3 units used</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Integra Bilayer Matrix 6x6"</span>
+                            <span class="text-slate-500">1 unit used</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg border">
+                    <h3 class="font-medium text-slate-900 mb-3">Inventory Calculations</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span>Apligraf: 10 ordered - 3 used</span>
+                            <span class="text-emerald-600 font-medium">7 on hand</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Dermagraft: 15 ordered - 3 used</span>
+                            <span class="text-emerald-600 font-medium">12 on hand</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Integra: 5 ordered - 1 used</span>
+                            <span class="text-emerald-600 font-medium">4 on hand</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component Features -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold text-slate-900 mb-4">🎯 Key Features Implemented</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-4 rounded-lg border">
+                    <h3 class="font-medium text-slate-900 mb-3">📋 Treatment History</h3>
+                    <ul class="text-sm text-slate-600 space-y-2">
+                        <li>• Sortable table (most recent first)</li>
+                        <li>• Expandable rows for clinical details</li>
+                        <li>• Mobile-responsive card layout</li>
+                        <li>• Date formatting (Dec 12, 2024)</li>
+                        <li>• Applied by user tracking</li>
+                        <li>• Clinical notes display</li>
+                        <li>• Diagnosis, procedure, location</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg border">
+                    <h3 class="font-medium text-slate-900 mb-3">📦 Inventory Summary</h3>
+                    <ul class="text-sm text-slate-600 space-y-2">
+                        <li>• Product-wise inventory cards</li>
+                        <li>• Total Ordered | Used | On Hand</li>
+                        <li>• Usage percentage progress bars</li>
+                        <li>• Color-coded status indicators</li>
+                        <li>• Low stock warnings (75%+ used)</li>
+                        <li>• Out of stock alerts</li>
+                        <li>• Responsive grid layout</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-4 rounded-lg border">
+                    <h3 class="font-medium text-slate-900 mb-3">🔄 Integration</h3>
+                    <ul class="text-sm text-slate-600 space-y-2">
+                        <li>• Real-time inventory calculations</li>
+                        <li>• Automatic refresh on new treatments</li>
+                        <li>• Loading states and error handling</li>
+                        <li>• Empty state management</li>
+                        <li>• TypeScript interfaces</li>
+                        <li>• Mock data for testing</li>
+                        <li>• Ready for API integration</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Indicators -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold text-slate-900 mb-4">🚦 Inventory Status System</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
+                    <div class="flex items-center mb-2">
+                        <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
+                        <span class="font-medium text-emerald-800">Well Stocked</span>
+                    </div>
+                    <p class="text-sm text-emerald-700">Less than 75% usage</p>
+                    <p class="text-xs text-emerald-600 mt-1">Adequate supply available</p>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                    <div class="flex items-center mb-2">
+                        <div class="w-3 h-3 bg-amber-500 rounded-full mr-2"></div>
+                        <span class="font-medium text-amber-800">Low Stock</span>
+                    </div>
+                    <p class="text-sm text-amber-700">75% or more usage</p>
+                    <p class="text-xs text-amber-600 mt-1">Consider reordering soon</p>
+                </div>
+
+                <div class="bg-red-50 border border-red-200 p-4 rounded-lg">
+                    <div class="flex items-center mb-2">
+                        <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                        <span class="font-medium text-red-800">Out of Stock</span>
+                    </div>
+                    <p class="text-sm text-red-700">100% usage or more</p>
+                    <p class="text-xs text-red-600 mt-1">Reorder needed immediately</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testing Instructions -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold text-slate-900 mb-4">🧪 Testing Instructions</h2>
+
+            <div class="bg-white p-6 rounded-lg border">
+                <h3 class="font-medium text-slate-900 mb-4">Step-by-Step Testing Process</h3>
+
+                <ol class="space-y-3 text-slate-700">
+                    <li class="flex items-start">
+                        <span class="bg-slate-600 text-white text-xs font-bold px-2 py-1 rounded mr-3 mt-0.5">1</span>
+                        <div>
+                            <strong>Start Frontend Server:</strong>
+                            <code class="bg-slate-100 px-2 py-1 rounded text-sm ml-2">cd frontend && npm run dev</code>
+                        </div>
+                    </li>
+
+                    <li class="flex items-start">
+                        <span class="bg-slate-600 text-white text-xs font-bold px-2 py-1 rounded mr-3 mt-0.5">2</span>
+                        <div>
+                            <strong>Navigate to Patient Detail:</strong>
+                            <span class="text-slate-600 ml-2">Go to any patient detail page and click "Treatment Tracking" tab</span>
+                        </div>
+                    </li>
+
+                    <li class="flex items-start">
+                        <span class="bg-slate-600 text-white text-xs font-bold px-2 py-1 rounded mr-3 mt-0.5">3</span>
+                        <div>
+                            <strong>Test Inventory Summary:</strong>
+                            <span class="text-slate-600 ml-2">Verify inventory cards show correct calculations and status colors</span>
+                        </div>
+                    </li>
+
+                    <li class="flex items-start">
+                        <span class="bg-slate-600 text-white text-xs font-bold px-2 py-1 rounded mr-3 mt-0.5">4</span>
+                        <div>
+                            <strong>Test Treatment History:</strong>
+                            <span class="text-slate-600 ml-2">Click "Details" to expand rows and view clinical information</span>
+                        </div>
+                    </li>
+
+                    <li class="flex items-start">
+                        <span class="bg-slate-600 text-white text-xs font-bold px-2 py-1 rounded mr-3 mt-0.5">5</span>
+                        <div>
+                            <strong>Test Mobile Responsiveness:</strong>
+                            <span class="text-slate-600 ml-2">Resize browser to test mobile card layouts</span>
+                        </div>
+                    </li>
+
+                    <li class="flex items-start">
+                        <span class="bg-slate-600 text-white text-xs font-bold px-2 py-1 rounded mr-3 mt-0.5">6</span>
+                        <div>
+                            <strong>Test Record Treatment:</strong>
+                            <span class="text-slate-600 ml-2">Add new treatment and verify inventory updates automatically</span>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Expected Results -->
+        <div class="test-section success">
+            <h2 class="text-xl font-semibold text-emerald-900 mb-4">✅ Expected Results</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium text-emerald-900 mb-3">Inventory Summary Should Show:</h3>
+                    <ul class="text-emerald-800 space-y-1 text-sm">
+                        <li>• 3 product cards in responsive grid</li>
+                        <li>• Correct ordered/used/on-hand calculations</li>
+                        <li>• Progress bars showing usage percentages</li>
+                        <li>• Green status for well-stocked items</li>
+                        <li>• Summary footer with stock alerts</li>
+                        <li>• Refresh button functionality</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="font-medium text-emerald-900 mb-3">Treatment History Should Show:</h3>
+                    <ul class="text-emerald-800 space-y-1 text-sm">
+                        <li>• 4 treatment records in table format</li>
+                        <li>• Most recent treatments first</li>
+                        <li>• Expandable rows with clinical details</li>
+                        <li>• Proper date formatting</li>
+                        <li>• Applied by user information</li>
+                        <li>• Mobile card layout on small screens</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Structure -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold text-slate-900 mb-4">📁 Files Created/Modified</h2>
+
+            <div class="bg-white p-4 rounded-lg border">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-medium text-slate-900 mb-3">New Files Created:</h3>
+                        <ul class="text-sm text-slate-600 space-y-1 font-mono">
+                            <li>• frontend/src/types/treatments.ts</li>
+                            <li>• frontend/src/components/treatments/TreatmentHistory.tsx</li>
+                            <li>• frontend/src/components/treatments/InventorySummary.tsx</li>
+                            <li>• frontend/src/data/mockTreatmentData.ts</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="font-medium text-slate-900 mb-3">Modified Files:</h3>
+                        <ul class="text-sm text-slate-600 space-y-1 font-mono">
+                            <li>• frontend/src/components/patients/PatientDetail.tsx</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="test-section warning">
+            <h2 class="text-xl font-semibold text-amber-900 mb-4">🚀 Next Steps</h2>
+            <div class="text-amber-800">
+                <p class="mb-3">After successful testing of Step 7, the following steps remain:</p>
+                <ul class="space-y-2">
+                    <li><strong>Step 8:</strong> API Integration - Connect components to backend treatment tracking endpoints</li>
+                    <li><strong>Step 9:</strong> Real-time Updates - Implement WebSocket updates for inventory changes</li>
+                    <li><strong>Step 10:</strong> Advanced Features - Add filtering, sorting, and export capabilities</li>
+                    <li><strong>Step 11:</strong> Testing & Documentation - Comprehensive testing and user documentation</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="test-section">
+            <h2 class="text-xl font-semibold text-slate-900 mb-4">🔗 Quick Links</h2>
+            <div class="flex flex-wrap gap-3">
+                <a href="http://localhost:3000/doctor/patients/select"
+                   class="bg-slate-600 text-white px-4 py-2 rounded-lg hover:bg-slate-700 transition-colors">
+                    Patient Selection
+                </a>
+                <a href="http://localhost:3000/doctor/dashboard"
+                   class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
+                    Doctor Dashboard
+                </a>
+                <button onclick="window.location.reload()"
+                        class="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-colors">
+                    Refresh Test Page
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactive testing functionality
+        console.log('Treatment History & Inventory Display Test Page Loaded');
+        console.log('Components created:');
+        console.log('- TreatmentHistory.tsx');
+        console.log('- InventorySummary.tsx');
+        console.log('- TypeScript interfaces');
+        console.log('- Mock data with calculations');
+
+        // Test data validation
+        const testData = {
+            treatments: 4,
+            products: 3,
+            totalUsed: 7,
+            inventoryCalculations: 'Working'
+        };
+
+        console.log('Test Data Summary:', testData);
+    </script>
+</body>
+</html>

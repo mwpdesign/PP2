@@ -140,6 +140,11 @@ class Patient(Base):
     ivr_sessions = relationship(
         "IVRSession", back_populates="patient", cascade="all, delete-orphan"
     )
+    treatment_records = relationship(
+        "TreatmentRecord",
+        back_populates="patient",
+        cascade="all, delete-orphan"
+    )
 
 
 class PatientDocument(Base):

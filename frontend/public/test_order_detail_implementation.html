@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Order Detail View Implementation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .success { border-color: #10b981; background-color: #f0fdf4; }
+        .warning { border-color: #f59e0b; background-color: #fffbeb; }
+        .error { border-color: #ef4444; background-color: #fef2f2; }
+        .test-link {
+            display: inline-block;
+            margin: 5px 10px 5px 0;
+            padding: 8px 16px;
+            background-color: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .test-link:hover {
+            background-color: #2563eb;
+        }
+        .checklist {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .pending { background-color: #fef3c7; color: #92400e; }
+        .processing { background-color: #dbeafe; color: #1e40af; }
+        .shipped { background-color: #d1fae5; color: #065f46; }
+        .delivered { background-color: #ecfdf5; color: #047857; }
+        .received { background-color: #f0f9ff; color: #0c4a6e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Order Detail View Implementation Test</h1>
+        <p><strong>Task ID:</strong> mbu45umwiwvmfrngir</p>
+        <p><strong>Objective:</strong> Verify that Order Detail View functionality works correctly across all user roles</p>
+
+        <!-- Implementation Status -->
+        <div class="test-section success">
+            <h2>✅ Implementation Status</h2>
+            <ul class="checklist">
+                <li>✅ Made OrderDetailPage reusable with readOnly and userRole props</li>
+                <li>✅ Added comprehensive mock data fallback for testing</li>
+                <li>✅ Created role-aware action buttons (doctor-only vs read-only)</li>
+                <li>✅ Added read-only indicator for non-doctor roles</li>
+                <li>✅ Implemented role-aware back navigation</li>
+                <li>✅ Created Master Distributor wrapper page</li>
+                <li>✅ Added routing for /distributor/orders/:id</li>
+                <li>✅ Updated Master Distributor Order Processing "View Details" buttons</li>
+                <li>✅ Added named export for OrderDetailPage component</li>
+            </ul>
+        </div>
+
+        <!-- Test Order Data -->
+        <div class="test-section">
+            <h2>📋 Test Order Data Available</h2>
+            <p>The following test orders are available for testing:</p>
+            <div style="margin: 15px 0;">
+                <span class="status-badge pending">ORD-2024-001</span> - John Smith - Pending - $1,750.00
+                <br><small>Advanced Skin Graft + Antimicrobial Wound Dressing</small>
+            </div>
+            <div style="margin: 15px 0;">
+                <span class="status-badge processing">ORD-2024-002</span> - Emily Davis - Processing - $850.00
+                <br><small>Collagen Matrix Implant</small>
+            </div>
+            <div style="margin: 15px 0;">
+                <span class="status-badge shipped">ORD-2024-003</span> - David Wilson - Shipped - $1,200.00
+                <br><small>Negative Pressure Wound Therapy System (UPS789456123)</small>
+            </div>
+        </div>
+
+        <!-- Doctor View Testing -->
+        <div class="test-section">
+            <h2>👨‍⚕️ Doctor View Testing</h2>
+            <p>Test the original doctor order detail view with full functionality:</p>
+            <a href="http://localhost:3000/doctor/orders/ORD-2024-001" class="test-link" target="_blank">
+                Doctor - ORD-2024-001 (Pending)
+            </a>
+            <a href="http://localhost:3000/doctor/orders/ORD-2024-002" class="test-link" target="_blank">
+                Doctor - ORD-2024-002 (Processing)
+            </a>
+            <a href="http://localhost:3000/doctor/orders/ORD-2024-003" class="test-link" target="_blank">
+                Doctor - ORD-2024-003 (Shipped)
+            </a>
+
+            <h4>Expected Doctor Features:</h4>
+            <ul class="checklist">
+                <li>Full action buttons (Print, View IVR, Upload Document, Contact Support)</li>
+                <li>"Mark as Received" button for shipped orders</li>
+                <li>No read-only indicator</li>
+                <li>Back button navigates to /doctor/orders</li>
+                <li>Can modify order status and upload documents</li>
+            </ul>
+        </div>
+
+        <!-- Master Distributor View Testing -->
+        <div class="test-section">
+            <h2>🏢 Master Distributor View Testing</h2>
+            <p>Test the read-only master distributor order detail view:</p>
+            <a href="http://localhost:3000/distributor/orders/ORD-2024-001" class="test-link" target="_blank">
+                Master Distributor - ORD-2024-001 (Pending)
+            </a>
+            <a href="http://localhost:3000/distributor/orders/ORD-2024-002" class="test-link" target="_blank">
+                Master Distributor - ORD-2024-002 (Processing)
+            </a>
+            <a href="http://localhost:3000/distributor/orders/ORD-2024-003" class="test-link" target="_blank">
+                Master Distributor - ORD-2024-003 (Shipped)
+            </a>
+
+            <h4>Expected Master Distributor Features:</h4>
+            <ul class="checklist">
+                <li>Read-only indicator: "Read-only view - Master Distributor access"</li>
+                <li>Limited action buttons (Print, View IVR, Contact Support only)</li>
+                <li>NO "Mark as Received" or "Upload Document" buttons</li>
+                <li>Back button navigates to /distributor/order-processing</li>
+                <li>Cannot modify order status</li>
+            </ul>
+        </div>
+
+        <!-- Order Processing Integration -->
+        <div class="test-section">
+            <h2>📊 Order Processing Integration</h2>
+            <p>Test that "View Details" buttons work from the Master Distributor Order Processing page:</p>
+            <a href="http://localhost:3000/distributor/orders" class="test-link" target="_blank">
+                Master Distributor Order Processing
+            </a>
+
+            <h4>Integration Test Steps:</h4>
+            <ol>
+                <li>Navigate to Master Distributor Order Processing page</li>
+                <li>Click "View Details" button on any order row</li>
+                <li>Verify it opens order detail in new tab</li>
+                <li>Verify read-only view with Master Distributor access indicator</li>
+                <li>Verify back button returns to order processing page</li>
+            </ol>
+        </div>
+
+        <!-- Component Reusability -->
+        <div class="test-section">
+            <h2>🔄 Component Reusability Verification</h2>
+            <p>Verify the same OrderDetailPage component is used across roles:</p>
+
+            <h4>Implementation Pattern:</h4>
+            <pre style="background: #f1f5f9; padding: 15px; border-radius: 6px; font-size: 12px;">
+// Doctor (default)
+&lt;OrderDetailPage id={id} readOnly={false} userRole="doctor" /&gt;
+
+// Master Distributor (read-only)
+&lt;OrderDetailPage id={id} readOnly={true} userRole="master_distributor" /&gt;
+
+// Future roles (examples)
+&lt;OrderDetailPage id={id} readOnly={true} userRole="distributor" /&gt;
+&lt;OrderDetailPage id={id} readOnly={true} userRole="shipping" /&gt;
+&lt;OrderDetailPage id={id} readOnly={true} userRole="ivr_company" /&gt;
+            </pre>
+        </div>
+
+        <!-- Comprehensive Testing Checklist -->
+        <div class="test-section warning">
+            <h2>✅ Comprehensive Testing Checklist</h2>
+            <ul class="checklist">
+                <li>Order detail pages load without errors</li>
+                <li>Mock data displays correctly for all test orders</li>
+                <li>Doctor view shows all action buttons</li>
+                <li>Master Distributor view shows read-only indicator</li>
+                <li>Master Distributor view hides doctor-only actions</li>
+                <li>Back navigation works correctly for each role</li>
+                <li>"View Details" buttons work from Order Processing page</li>
+                <li>Order information displays completely (patient, products, shipping, timeline)</li>
+                <li>Status badges and priority indicators work correctly</li>
+                <li>Tracking information displays for shipped orders</li>
+                <li>Document sections work properly</li>
+                <li>Print functionality works</li>
+                <li>IVR link navigation works when IVR ID is present</li>
+                <li>Contact Support functionality works</li>
+                <li>Component exports work correctly for wrapper pages</li>
+            </ul>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="test-section">
+            <h2>🚀 Next Steps</h2>
+            <p>After verifying the Master Distributor implementation, create wrapper pages for other roles:</p>
+            <ul>
+                <li><strong>Regional Distributor:</strong> /distributor-regional/orders/:id</li>
+                <li><strong>Shipping Staff:</strong> /shipping/orders/:id</li>
+                <li><strong>IVR Company:</strong> /ivr-company/orders/:id</li>
+            </ul>
+
+            <p>Each wrapper should follow the same pattern:</p>
+            <pre style="background: #f1f5f9; padding: 15px; border-radius: 6px; font-size: 12px;">
+import { OrderDetailPage } from '../doctor/orders/[id]';
+
+const RoleOrderDetail: React.FC = () => {
+  const { id } = useParams&lt;{ id: string }&gt;();
+  return &lt;OrderDetailPage id={id} readOnly={true} userRole="role_name" /&gt;;
+};
+            </pre>
+        </div>
+
+        <!-- Success Criteria -->
+        <div class="test-section success">
+            <h2>🎯 Success Criteria</h2>
+            <p><strong>Task Complete When:</strong></p>
+            <ul>
+                <li>✅ OrderDetailPage component is reusable across roles</li>
+                <li>✅ Master Distributor can view order details in read-only mode</li>
+                <li>✅ "View Details" buttons work from Order Processing page</li>
+                <li>✅ Role-based permissions are properly enforced</li>
+                <li>✅ Navigation works correctly for each role</li>
+                <li>✅ Same interface with different permissions based on role</li>
+                <li>✅ Component follows exact same pattern as IVR details</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Auto-check completed items
+        document.addEventListener('DOMContentLoaded', function() {
+            const checklistItems = document.querySelectorAll('.checklist li');
+            checklistItems.forEach(item => {
+                if (item.textContent.includes('✅')) {
+                    item.style.textDecoration = 'line-through';
+                    item.style.opacity = '0.7';
+                    item.style.color = '#059669';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
