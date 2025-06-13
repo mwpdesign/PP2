@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regional IVR Management Integration Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 0 5px;
+        }
+        .success { background: #dcfce7; color: #166534; }
+        .warning { background: #fef3c7; color: #92400e; }
+        .info { background: #dbeafe; color: #1e40af; }
+        .error { background: #fee2e2; color: #dc2626; }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 25px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #1e293b;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 10px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .check-box {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cbd5e1;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .check-box.checked {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 10px 10px 0;
+            transition: background 0.2s;
+        }
+        .test-link:hover {
+            background: #2563eb;
+        }
+        .test-link.secondary {
+            background: #6b7280;
+        }
+        .test-link.secondary:hover {
+            background: #4b5563;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+        }
+        .feature-card h4 {
+            margin-top: 0;
+            color: #1e293b;
+        }
+        .integration-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+        }
+        .flow-step {
+            text-align: center;
+            flex: 1;
+        }
+        .flow-arrow {
+            font-size: 24px;
+            margin: 0 10px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            color: white;
+        }
+        .stat-card.blue { background: #3b82f6; }
+        .stat-card.green { background: #10b981; }
+        .stat-card.yellow { background: #f59e0b; }
+        .stat-card.purple { background: #8b5cf6; }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Regional IVR Management Integration Test</h1>
+            <p><strong>Task ID:</strong> mbuy5gki0g62ddrvikdn</p>
+            <div>
+                <span class="status-badge success">✅ MasterDetailLayout</span>
+                <span class="status-badge success">✅ IVRListComponent</span>
+                <span class="status-badge success">✅ IVRDetailPanel</span>
+                <span class="status-badge success">✅ IVREmptyState</span>
+                <span class="status-badge info">🔄 Integration Complete</span>
+            </div>
+        </div>
+
+        <!-- Integration Overview -->
+        <div class="test-section">
+            <h3>🎯 Integration Overview</h3>
+            <p>The Regional IVR Management page has been completely rewritten to use our new Master-Detail layout system:</p>
+
+            <div class="integration-flow">
+                <div class="flow-step">
+                    <div><strong>Master Panel (60%)</strong></div>
+                    <div>IVRListComponent</div>
+                    <div>Summary Stats + Search/Filter</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div><strong>Detail Panel (40%)</strong></div>
+                    <div>IVRDetailPanel</div>
+                    <div>Selected IVR Details</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div><strong>Mobile</strong></div>
+                    <div>Overlay Mode</div>
+                    <div>Responsive Behavior</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Component Architecture -->
+        <div class="test-section">
+            <h3>🏗️ Component Architecture</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>📋 MasterDetailLayout</h4>
+                    <ul>
+                        <li>60/40 split layout</li>
+                        <li>Responsive mobile overlay</li>
+                        <li>Smooth transitions</li>
+                        <li>Flexible content areas</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 IVRListComponent</h4>
+                    <ul>
+                        <li>Compact table design</li>
+                        <li>Real-time search</li>
+                        <li>Status/priority filtering</li>
+                        <li>Row selection with highlights</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>📄 IVRDetailPanel</h4>
+                    <ul>
+                        <li>Comprehensive IVR details</li>
+                        <li>Patient & doctor info</li>
+                        <li>Timeline & status tracking</li>
+                        <li>Action buttons</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🎯 IVREmptyState</h4>
+                    <ul>
+                        <li>Professional empty state</li>
+                        <li>Clear user instructions</li>
+                        <li>Getting started guide</li>
+                        <li>Consistent styling</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Files Modified -->
+        <div class="test-section">
+            <h3>📁 Files Modified</h3>
+            <div class="code-block">
+<strong>✅ Created:</strong>
+frontend/src/components/ivr/IVRDetailPanel.tsx
+frontend/src/components/ivr/IVREmptyState.tsx
+
+<strong>🔄 Modified:</strong>
+frontend/src/components/distributor/ivr/RegionalIVRManagement.tsx
+
+<strong>📋 Previously Created:</strong>
+frontend/src/components/shared/layout/MasterDetailLayout.tsx
+frontend/src/components/ivr/IVRListComponent.tsx
+            </div>
+        </div>
+
+        <!-- Key Features -->
+        <div class="test-section">
+            <h3>🚀 Key Features Implemented</h3>
+            <ul class="checklist">
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)">✓</div>
+                        <span><strong>Master-Detail Layout:</strong> 60% list view, 40% detail view with responsive behavior</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)">✓</div>
+                        <span><strong>Summary Statistics:</strong> Total IVRs, Approved, In Progress, Orders Generated</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)">✓</div>
+                        <span><strong>Interactive List:</strong> Click any IVR to view details in the right panel</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)">✓</div>
+                        <span><strong>Search & Filter:</strong> Real-time search across all IVR fields</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)">✓</div>
+                        <span><strong>Status Tracking:</strong> Visual status badges and priority indicators</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)">✓</div>
+                        <span><strong>Detail View:</strong> Comprehensive IVR information with action buttons</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)">✓</div>
+                        <span><strong>Empty State:</strong> Professional guidance when no IVR is selected</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)">✓</div>
+                        <span><strong>Mobile Responsive:</strong> Detail panel overlays on mobile devices</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Testing Instructions -->
+        <div class="test-section">
+            <h3>🧪 Testing Instructions</h3>
+            <div class="stats-grid">
+                <div class="stat-card blue">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">Navigate to Page</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">Test List View</div>
+                </div>
+                <div class="stat-card yellow">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Test Detail View</div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-number">4</div>
+                    <div class="stat-label">Test Responsive</div>
+                </div>
+            </div>
+
+            <ol>
+                <li><strong>Navigate to Regional IVR Management:</strong>
+                    <br>Go to <code>/distributor-regional/ivr-management</code> (or the appropriate route)
+                </li>
+                <li><strong>Verify Master Panel (60% width):</strong>
+                    <ul>
+                        <li>Summary statistics cards at the top</li>
+                        <li>IVR list table with search and filters</li>
+                        <li>Priority dots and status badges</li>
+                        <li>Row selection highlighting</li>
+                    </ul>
+                </li>
+                <li><strong>Test Detail Panel (40% width):</strong>
+                    <ul>
+                        <li>Click any IVR row to select it</li>
+                        <li>Detail panel should show comprehensive IVR information</li>
+                        <li>Verify patient, doctor, service, and timeline sections</li>
+                        <li>Test action buttons (View Full Details, Message, Documents)</li>
+                    </ul>
+                </li>
+                <li><strong>Test Search and Filtering:</strong>
+                    <ul>
+                        <li>Use search box to filter IVRs</li>
+                        <li>Test status and priority dropdown filters</li>
+                        <li>Verify real-time filtering works</li>
+                    </ul>
+                </li>
+                <li><strong>Test Responsive Behavior:</strong>
+                    <ul>
+                        <li>Resize browser window to mobile size</li>
+                        <li>Detail panel should overlay the list</li>
+                        <li>Close button should appear on mobile</li>
+                    </ul>
+                </li>
+                <li><strong>Test Empty State:</strong>
+                    <ul>
+                        <li>Refresh page (no IVR selected initially)</li>
+                        <li>Verify empty state shows in detail panel</li>
+                        <li>Check instructions and getting started guide</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <!-- Expected Results -->
+        <div class="test-section">
+            <h3>✅ Expected Results</h3>
+            <ul class="checklist">
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>Page loads with 60/40 split layout</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>Summary statistics display correctly</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>IVR list shows all mock data with proper formatting</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>Clicking IVR rows updates detail panel</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>Search and filters work in real-time</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>Detail panel shows comprehensive IVR information</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>Mobile responsive behavior works correctly</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>Empty state displays when no IVR selected</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>No console errors or warnings</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="check-item">
+                        <div class="check-box" onclick="toggleCheck(this)"></div>
+                        <span>Professional appearance and smooth interactions</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="test-section">
+            <h3>🔗 Quick Links</h3>
+            <a href="http://localhost:3000" class="test-link">Frontend Server</a>
+            <a href="http://localhost:3000/distributor-regional/ivr-management" class="test-link">Regional IVR Management</a>
+            <a href="/test_master_detail_layout.html" class="test-link secondary">MasterDetailLayout Test</a>
+            <a href="/test_ivr_list_component.html" class="test-link secondary">IVRListComponent Test</a>
+        </div>
+
+        <!-- Success Criteria -->
+        <div class="test-section">
+            <h3>🎯 Success Criteria</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🎨 Visual Design</h4>
+                    <ul>
+                        <li>Clean 60/40 split layout</li>
+                        <li>Professional appearance</li>
+                        <li>Consistent styling</li>
+                        <li>Smooth transitions</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>⚡ Functionality</h4>
+                    <ul>
+                        <li>List selection works</li>
+                        <li>Detail view updates</li>
+                        <li>Search/filter functional</li>
+                        <li>Mobile responsive</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>📱 User Experience</h4>
+                    <ul>
+                        <li>Intuitive navigation</li>
+                        <li>Clear information hierarchy</li>
+                        <li>Helpful empty states</li>
+                        <li>Accessible interactions</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h4>🔧 Technical</h4>
+                    <ul>
+                        <li>No console errors</li>
+                        <li>TypeScript compliance</li>
+                        <li>Component reusability</li>
+                        <li>Performance optimized</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Integration Status -->
+        <div class="test-section">
+            <h3>📊 Integration Status</h3>
+            <div class="code-block">
+<strong>INTEGRATION COMPLETE ✅</strong>
+
+Components Created:
+✅ MasterDetailLayout (60/40 split with responsive behavior)
+✅ IVRListComponent (optimized for master panel)
+✅ IVRDetailPanel (comprehensive detail view)
+✅ IVREmptyState (professional empty state)
+
+Integration Applied:
+✅ RegionalIVRManagement.tsx completely rewritten
+✅ Uses new master-detail architecture
+✅ Maintains all existing functionality
+✅ Adds enhanced user experience
+
+Ready for Testing:
+🔄 Navigate to Regional IVR Management page
+🔄 Test all master-detail interactions
+🔄 Verify responsive behavior
+🔄 Confirm professional appearance
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleCheck(element) {
+            element.classList.toggle('checked');
+            if (element.classList.contains('checked')) {
+                element.innerHTML = '✓';
+            } else {
+                element.innerHTML = '';
+            }
+        }
+
+        // Auto-check completed items
+        document.addEventListener('DOMContentLoaded', function() {
+            const completedItems = document.querySelectorAll('.test-section:first-of-type .check-box');
+            completedItems.forEach(item => {
+                item.classList.add('checked');
+                item.innerHTML = '✓';
+            });
+        });
+
+        console.log('🏥 Regional IVR Management Integration Test Page Loaded');
+        console.log('📋 Task ID: mbuy5gki0g62ddrvikdn');
+        console.log('✅ Integration Status: COMPLETE');
+        console.log('🔄 Ready for testing at: /distributor-regional/ivr-management');
+    </script>
+</body>
+</html>
