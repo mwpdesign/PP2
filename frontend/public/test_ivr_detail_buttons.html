@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVR Detail Button Navigation Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .critical-fix {
+            background: #fef2f2;
+            border: 2px solid #fecaca;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .success {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            color: #166534;
+        }
+        .test-button {
+            background: #dc2626;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 8px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .test-button:hover {
+            background: #b91c1c;
+        }
+        .navigation-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .navigation-table th,
+        .navigation-table td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        .navigation-table th {
+            background-color: #f8fafc;
+            font-weight: bold;
+        }
+        .correct-nav {
+            background-color: #f0fdf4;
+            color: #166534;
+        }
+        .incorrect-nav {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .checklist li:before {
+            content: "✓ ";
+            color: #16a34a;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚨 CRITICAL IVR NAVIGATION FIX</h1>
+        <h2>Regional Distributor Context Maintained</h2>
+        <p><strong>FIXED:</strong> Regional Distributors stay in their own dashboard context</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔒 Critical Navigation Issue Resolved</h2>
+        <div class="critical-fix success">
+            <h3>✅ Navigation Context Maintained</h3>
+            <p><strong>Problem:</strong> Regional Distributors were being taken to IVR Company dashboard when clicking "View IVR Details" from orders.</p>
+            <p><strong>Solution:</strong> Implemented role-based navigation that keeps Regional Distributors in their own dashboard context.</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📍 Fixed Navigation Matrix</h2>
+        <table class="navigation-table">
+            <thead>
+                <tr>
+                    <th>User Role</th>
+                    <th>Navigation Target</th>
+                    <th>URL Pattern</th>
+                    <th>Context Maintained</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="correct-nav">
+                    <td><strong>Regional Distributor</strong></td>
+                    <td>Distributor IVR Detail</td>
+                    <td>/distributor/ivr/IVR-2024-001</td>
+                    <td>✅ Regional Distributor Context</td>
+                </tr>
+                <tr class="correct-nav">
+                    <td><strong>Master Distributor</strong></td>
+                    <td>Distributor IVR Detail</td>
+                    <td>/distributor/ivr/IVR-2024-001</td>
+                    <td>✅ Master Distributor Context</td>
+                </tr>
+                <tr class="correct-nav">
+                    <td><strong>IVR Company</strong></td>
+                    <td>IVR Company Review</td>
+                    <td>/ivr-company/review/IVR-2024-001</td>
+                    <td>✅ IVR Company Context</td>
+                </tr>
+                <tr class="correct-nav">
+                    <td><strong>Doctor</strong></td>
+                    <td>Doctor IVR View</td>
+                    <td>/doctor/ivr/IVR-2024-001</td>
+                    <td>✅ Doctor Context</td>
+                </tr>
+                <tr class="incorrect-nav">
+                    <td><strong>❌ OLD BEHAVIOR</strong></td>
+                    <td>IVR Company Review</td>
+                    <td>/ivr-company/review/IVR-2024-001</td>
+                    <td>❌ Wrong Context for Distributors</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Testing Instructions</h2>
+
+        <h3>Test Scenario 1: Regional Distributor (CRITICAL)</h3>
+        <ol>
+            <li>Login as: <code>regional-dist-west@healthcare.local</code> / <code>regional123</code></li>
+            <li>Navigate to Order Processing page</li>
+            <li>Click "View Details" on any order (e.g., ORD-2024-001)</li>
+            <li>Click the blue "View IVR Details" button</li>
+            <li><strong>Expected:</strong> Navigate to <code>/distributor/ivr/IVR-2024-001</code></li>
+            <li><strong>Verify:</strong> User remains "Regional Distributor" (check bottom left)</li>
+            <li><strong>Verify:</strong> URL shows distributor IVR page, NOT IVR Company page</li>
+            <li><strong>Verify:</strong> Blue debug banner shows "Regional Distributor" context</li>
+        </ol>
+
+        <h3>Test Scenario 2: Master Distributor</h3>
+        <ol>
+            <li>Login as Master Distributor</li>
+            <li>Navigate to Order Processing → Order Details</li>
+            <li>Click "View IVR Details"</li>
+            <li><strong>Expected:</strong> Navigate to <code>/distributor/ivr/IVR-2024-001</code></li>
+            <li><strong>Verify:</strong> User context maintained as Master Distributor</li>
+            <li><strong>Verify:</strong> Blue debug banner shows "Master Distributor" context</li>
+        </ol>
+
+        <h3>Test Scenario 3: Doctor (Control Test)</h3>
+        <ol>
+            <li>Login as Doctor</li>
+            <li>Navigate to Order Management → Order Details</li>
+            <li>Click "View IVR Details"</li>
+            <li><strong>Expected:</strong> Navigate to <code>/doctor/ivr/IVR-2024-001</code></li>
+            <li><strong>Verify:</strong> Doctor maintains their own context</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ Critical Verification Points</h2>
+        <ul class="checklist">
+            <li>Regional Distributors navigate to /distributor/ivr/ (NOT /ivr-company/review/)</li>
+            <li>User context is maintained (check bottom left user indicator)</li>
+            <li>URL changes correctly based on user role</li>
+            <li>Blue debug banner shows correct context (Regional vs Master Distributor)</li>
+            <li>No more confusion between distributor and IVR company views</li>
+            <li>Navigation is consistent across all distributor roles</li>
+            <li>Doctors still navigate to their own IVR view correctly</li>
+            <li>No JavaScript errors in console during navigation</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 Test Links</h2>
+        <a href="http://localhost:3000/distributor/orders/ORD-2024-001" class="test-button">
+            Test Order ORD-2024-001 (Distributor)
+        </a>
+        <a href="http://localhost:3000/distributor/order-processing" class="test-button">
+            Order Processing Page
+        </a>
+        <a href="http://localhost:3000/login" class="test-button">
+            Login Page
+        </a>
+    </div>
+
+    <div class="test-section">
+        <h2>🚨 What Was Fixed</h2>
+        <div class="critical-fix">
+            <h3>The Problem:</h3>
+            <p>Regional Distributors clicking "View IVR Details" were taken to:</p>
+            <p><strong>URL:</strong> <code>/ivr-company/review/IVR-2024-001</code></p>
+            <p><strong>Context:</strong> IVR Company dashboard (WRONG!)</p>
+            <p><strong>Result:</strong> Confusing context switch - distributors in IVR company interface</p>
+        </div>
+
+        <div class="success">
+            <h3>The Fix:</h3>
+            <p>Regional Distributors are now taken to:</p>
+            <p><strong>URL:</strong> <code>/distributor/ivr/IVR-2024-001</code></p>
+            <p><strong>Context:</strong> Regional Distributor dashboard (CORRECT!)</p>
+            <p><strong>Result:</strong> Consistent context - distributors stay in their own interface</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Technical Changes Made</h2>
+        <div class="success">
+            <h3>✅ Navigation Logic Updated</h3>
+            <ul>
+                <li>Fixed handleViewIVR function to route distributors to /distributor/ivr/{id}</li>
+                <li>Added missing routes: /distributor/ivr/:id and /distributor-regional/ivr/:id</li>
+                <li>Updated IVRDetail component to detect Regional vs Master Distributor context</li>
+                <li>Added debug logging to verify correct role detection</li>
+                <li>Maintained proper read-only access for distributor roles</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Success Criteria</h2>
+        <div class="success">
+            <h3>✅ CRITICAL NAVIGATION FIX COMPLETE</h3>
+            <p><strong>Regional Distributors now maintain proper context when viewing IVR details.</strong></p>
+            <p>No more incorrect navigation to IVR Company dashboard. Each user role navigates to the appropriate IVR interface while maintaining their login context and dashboard environment.</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔍 IVR Detail Button Navigation Test Page Loaded');
+        console.log('🎯 Objective: Verify Regional Distributors stay in their own dashboard context');
+        console.log('🚨 Critical: Regional Distributors should go to /distributor/ivr/ NOT /ivr-company/review/');
+
+        // Auto-refresh every 30 seconds to check for updates
+        setTimeout(() => {
+            console.log('🔄 Auto-refreshing test page...');
+            window.location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

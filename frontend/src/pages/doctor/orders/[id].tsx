@@ -408,7 +408,30 @@ const OrderDetailPage: React.FC<OrderDetailPageProps> = ({
 
   const handleViewIVR = () => {
     if (order?.ivr_request_id) {
-      navigate(`/doctor/ivr/${order.ivr_request_id}`);
+      // Navigate based on user role to maintain proper context
+      if (readOnly) {
+        switch (userRole) {
+          case 'master_distributor':
+          case 'distributor':
+            // Regional/Master Distributors should stay in their own dashboard context
+            navigate(`/distributor/ivr/${order.ivr_request_id}`);
+            break;
+          case 'shipping':
+            // Shipping users should view IVR in read-only mode from IVR Company perspective
+            navigate(`/ivr-company/review/${order.ivr_request_id}`);
+            break;
+          case 'ivr_company':
+            // IVR Company users should view their own IVR review page
+            navigate(`/ivr-company/review/${order.ivr_request_id}`);
+            break;
+          default:
+            // Default to doctor view for unknown roles
+            navigate(`/doctor/ivr/${order.ivr_request_id}`);
+        }
+      } else {
+        // Doctors should always go to their own IVR view
+        navigate(`/doctor/ivr/${order.ivr_request_id}`);
+      }
     }
   };
 
@@ -719,33 +742,46 @@ const OrderDetailPage: React.FC<OrderDetailPageProps> = ({
               </h3>
             </div>
             <div className="p-6">
-              {order.products ? (
-                <div className="space-y-3">
-                  {Array.isArray(order.products) ? (
-                    order.products.map((product: any, index: number) => (
-                      <div key={index} className="bg-slate-50 rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-semibold text-slate-800">{product.name || 'Medical Product'}</h4>
-                            <p className="text-sm text-slate-600">{product.description || 'Product description'}</p>
-                            {product.size && (
-                              <p className="text-xs text-slate-500 mt-1">Size: {product.size}</p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-slate-800">Qty: {product.quantity || 1}</p>
-                            {product.price && (
-                              <p className="text-sm text-slate-600">${product.price}</p>
-                            )}
+              {order.products && order.products.items && order.products.items.length > 0 ? (
+                <div className="space-y-4">
+                  {order.products.items.map((product: any, index: number) => (
+                    <div key={index} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-bold text-slate-900 text-lg">{product.product_name}</h4>
+                          {product.q_code && (
+                            <p className="text-sm text-slate-600 mt-1">
+                              <span className="font-semibold">Q-Code:</span> {product.q_code}
+                            </p>
+                          )}
+                          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Quantity</label>
+                              <p className="text-base font-bold text-slate-800 mt-1">{product.total_quantity}</p>
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Unit Price</label>
+                              <p className="text-base font-bold text-slate-800 mt-1">${product.unit_price?.toFixed(2)}</p>
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Cost</label>
+                              <p className="text-base font-bold text-emerald-700 mt-1">${product.total_cost?.toFixed(2)}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <div className="bg-slate-50 rounded-lg p-4">
-                      <p className="text-slate-600">Product details available in order system</p>
                     </div>
-                  )}
+                  ))}
+
+                  {/* Order Total */}
+                  <div className="border-t border-slate-200 pt-4 mt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-bold text-slate-800">Order Total:</span>
+                      <span className="text-2xl font-bold text-emerald-700">
+                        ${order.total_amount?.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8">
@@ -1008,4 +1044,3 @@ const OrderDetailPage: React.FC<OrderDetailPageProps> = ({
 };
 
 export default OrderDetailPage;
-export { OrderDetailPage };

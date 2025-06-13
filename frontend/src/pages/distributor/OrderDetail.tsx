@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
-import { OrderDetailPage } from '../doctor/orders/[id]';
+import OrderDetailPage from '../doctor/orders/[id]';
 
 const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();

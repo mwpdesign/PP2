@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Products Display Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .header {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .test-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success {
+            background: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            color: #166534;
+        }
+        .test-button {
+            background: #059669;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 8px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .test-button:hover {
+            background: #047857;
+        }
+        .code-block {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            margin: 12px 0;
+            overflow-x: auto;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .checklist li:before {
+            content: "✓ ";
+            color: #16a34a;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .product-example {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 12px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✅ ORDER PRODUCTS DISPLAY FIX</h1>
+        <h2>Showing Actual Products Instead of Generic Message</h2>
+        <p><strong>FIXED:</strong> Products Ordered section now displays detailed product information</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Problem Resolved</h2>
+        <div class="success">
+            <h3>✅ Products Now Display Correctly</h3>
+            <p><strong>Before:</strong> "Product details available in order system" (generic message)</p>
+            <p><strong>After:</strong> Detailed product information with names, Q-codes, quantities, and pricing</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📦 Expected Product Display</h2>
+
+        <h3>For Order ORD-2024-001:</h3>
+        <div class="product-example">
+            <h4><strong>Advanced Skin Graft - Type A</strong></h4>
+            <p><strong>Q-Code:</strong> Q4100</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 12px;">
+                <div>
+                    <small style="color: #64748b; font-weight: bold;">QUANTITY</small>
+                    <p style="margin: 4px 0; font-weight: bold;">2</p>
+                </div>
+                <div>
+                    <small style="color: #64748b; font-weight: bold;">UNIT PRICE</small>
+                    <p style="margin: 4px 0; font-weight: bold;">$750.00</p>
+                </div>
+                <div>
+                    <small style="color: #64748b; font-weight: bold;">TOTAL COST</small>
+                    <p style="margin: 4px 0; font-weight: bold; color: #059669;">$1500.00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="product-example">
+            <h4><strong>Antimicrobial Wound Dressing</strong></h4>
+            <p><strong>Q-Code:</strong> A6196</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 12px;">
+                <div>
+                    <small style="color: #64748b; font-weight: bold;">QUANTITY</small>
+                    <p style="margin: 4px 0; font-weight: bold;">5</p>
+                </div>
+                <div>
+                    <small style="color: #64748b; font-weight: bold;">UNIT PRICE</small>
+                    <p style="margin: 4px 0; font-weight: bold;">$50.00</p>
+                </div>
+                <div>
+                    <small style="color: #64748b; font-weight: bold;">TOTAL COST</small>
+                    <p style="margin: 4px 0; font-weight: bold; color: #059669;">$250.00</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="border-top: 2px solid #e2e8f0; padding-top: 16px; margin-top: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 18px; font-weight: bold;">Order Total:</span>
+                <span style="font-size: 24px; font-weight: bold; color: #059669;">$1750.00</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Technical Implementation</h2>
+
+        <h3>Fixed Product Data Structure:</h3>
+        <div class="code-block">
+// BEFORE (Not Working):
+{order.products ? (
+  &lt;div&gt;Product details available in order system&lt;/div&gt;
+) : (
+  &lt;div&gt;No product details available&lt;/div&gt;
+)}
+
+// AFTER (Working):
+{order.products && order.products.items && order.products.items.length > 0 ? (
+  &lt;div className="space-y-4"&gt;
+    {order.products.items.map((product, index) =&gt; (
+      &lt;div key={index} className="bg-slate-50 rounded-lg p-4 border border-slate-200"&gt;
+        &lt;h4 className="font-bold text-slate-900 text-lg"&gt;{product.product_name}&lt;/h4&gt;
+        &lt;p&gt;&lt;span className="font-semibold"&gt;Q-Code:&lt;/span&gt; {product.q_code}&lt;/p&gt;
+        &lt;div className="grid grid-cols-1 md:grid-cols-3 gap-4"&gt;
+          &lt;div&gt;Quantity: {product.total_quantity}&lt;/div&gt;
+          &lt;div&gt;Unit Price: ${product.unit_price?.toFixed(2)}&lt;/div&gt;
+          &lt;div&gt;Total Cost: ${product.total_cost?.toFixed(2)}&lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    ))}
+    &lt;div className="border-t pt-4"&gt;
+      Order Total: ${order.total_amount?.toFixed(2)}
+    &lt;/div&gt;
+  &lt;/div&gt;
+) : (
+  &lt;div&gt;No product details available&lt;/div&gt;
+)}
+        </div>
+
+        <h3>Mock Data Structure:</h3>
+        <div class="code-block">
+products: {
+  items: [
+    {
+      product_name: 'Advanced Skin Graft - Type A',
+      q_code: 'Q4100',
+      total_quantity: 2,
+      total_cost: 1500.00,
+      unit_price: 750.00
+    },
+    {
+      product_name: 'Antimicrobial Wound Dressing',
+      q_code: 'A6196',
+      total_quantity: 5,
+      total_cost: 250.00,
+      unit_price: 50.00
+    }
+  ]
+}
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Testing Instructions</h2>
+
+        <ol>
+            <li>Navigate to Order Processing page</li>
+            <li>Click "View Details" on any order (ORD-2024-001, ORD-2024-002, or ORD-2024-003)</li>
+            <li>Scroll down to "Products Ordered" section</li>
+            <li>Verify you see detailed product information instead of generic message</li>
+            <li>Check that each product shows:
+                <ul>
+                    <li>Product name (e.g., "Advanced Skin Graft - Type A")</li>
+                    <li>Q-Code (e.g., "Q4100")</li>
+                    <li>Quantity, Unit Price, and Total Cost</li>
+                </ul>
+            </li>
+            <li>Verify Order Total is displayed at the bottom</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ Verification Checklist</h2>
+        <ul class="checklist">
+            <li>Products Ordered section shows actual product names</li>
+            <li>Q-Codes are displayed for each product</li>
+            <li>Quantity, Unit Price, and Total Cost are shown</li>
+            <li>Products are displayed in individual cards with proper styling</li>
+            <li>Order Total is calculated and displayed</li>
+            <li>No more "Product details available in order system" message</li>
+            <li>All three test orders (ORD-2024-001, 002, 003) show products</li>
+            <li>Responsive design works on different screen sizes</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 Test Links</h2>
+        <a href="http://localhost:3000/distributor/orders/ORD-2024-001" class="test-button">
+            Test Order ORD-2024-001
+        </a>
+        <a href="http://localhost:3000/distributor/orders/ORD-2024-002" class="test-button">
+            Test Order ORD-2024-002
+        </a>
+        <a href="http://localhost:3000/distributor/orders/ORD-2024-003" class="test-button">
+            Test Order ORD-2024-003
+        </a>
+        <a href="http://localhost:3000/distributor/order-processing" class="test-button">
+            Order Processing Page
+        </a>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Success Criteria</h2>
+        <div class="success">
+            <h3>✅ PRODUCTS DISPLAY FIX COMPLETE</h3>
+            <p><strong>Order details now show specific products ordered instead of generic messages.</strong></p>
+            <p>Users can see exactly what medical products were ordered, including quantities, pricing, and Q-codes for billing and inventory purposes.</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('📦 Order Products Display Test Page Loaded');
+        console.log('🎯 Objective: Verify products show detailed information');
+        console.log('✅ Expected: Product names, Q-codes, quantities, and pricing');
+
+        // Auto-refresh every 30 seconds to check for updates
+        setTimeout(() => {
+            console.log('🔄 Auto-refreshing test page...');
+            window.location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>

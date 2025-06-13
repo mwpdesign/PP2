@@ -74,6 +74,7 @@ const IVRManagement = React.lazy(() => import('./pages/distributor/IVRManagement
 const DistributorIVRDetail = React.lazy(() => import('./pages/distributor/IVRDetail'));
 const DistributorOrderDetail = React.lazy(() => import('./pages/distributor/OrderDetail'));
 const DistributorShippingDetail = React.lazy(() => import('./pages/distributor/ShippingDetail'));
+const IVRFullDetails = React.lazy(() => import('./pages/distributor/IVRFullDetails'));
 
 const App = () => {
   console.log('App component rendering');
@@ -205,6 +206,7 @@ const App = () => {
                     <Route path="dashboard" element={<MasterDistributorDashboard />} />
                     <Route path="ivr-management" element={<IVRManagement />} />
                     <Route path="ivr-management/:id" element={<DistributorIVRDetail />} />
+                    <Route path="ivr/:id" element={<DistributorIVRDetail />} />
                     <Route path="orders" element={<OrderProcessing />} />
                     <Route path="orders/:id" element={<DistributorOrderDetail />} />
                     <Route path="shipping" element={<ShippingLogistics />} />
@@ -234,6 +236,8 @@ const App = () => {
                     <Route path="sales-team" element={<SalespeopleManagement />} />
                     <Route path="ivr-management" element={<RegionalIVRManagement />} />
                     <Route path="ivr-management/:id" element={<DistributorIVRDetail />} />
+                    <Route path="ivr/:id" element={<DistributorIVRDetail />} />
+                    <Route path="ivr-management/:id/details" element={<IVRFullDetails />} />
                     <Route path="order-management" element={<OrderProcessing />} />
                     <Route path="order-management/:id" element={<DistributorOrderDetail />} />
                     <Route path="shipping-logistics" element={<ShippingLogistics />} />
