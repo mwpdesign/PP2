@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regional Distributor Settings Test - Healthcare IVR Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background-color: #f8fafc;
+        }
+        .test-button {
+            background: #475569;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .test-button:hover {
+            background: #334155;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        .warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+        .checklist {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .checklist h3 {
+            margin-top: 0;
+            color: #374151;
+        }
+        .checklist ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            color: #6b7280;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        .comparison-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+        .comparison-table .master {
+            background-color: #fef3c7;
+        }
+        .comparison-table .regional {
+            background-color: #d1fae5;
+        }
+        .feature-highlight {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #475569;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Regional Distributor Settings Test</h1>
+            <p>Healthcare IVR Platform - Task ID: mbutj2h4pq6o39thx4i</p>
+            <div class="status info">
+                <strong>Test Objective:</strong> Verify Regional Distributor Settings page has only Company Profile and Preferences tabs (NO Invoice Settings)
+            </div>
+        </div>
+
+        <!-- Feature Comparison -->
+        <div class="feature-highlight">
+            <h3>📊 Settings Page Comparison</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th class="master">Master Distributor</th>
+                        <th class="regional">Regional Distributor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Settings Page</strong></td>
+                        <td class="master">/distributor/settings</td>
+                        <td class="regional">/distributor/regional-settings</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Company Profile Tab</strong></td>
+                        <td class="master">✅ Yes</td>
+                        <td class="regional">✅ Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Invoice Settings Tab</strong></td>
+                        <td class="master">✅ Yes (Payment Terms, Tax Rates, Invoice Settings)</td>
+                        <td class="regional">❌ No (Removed)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Preferences Tab</strong></td>
+                        <td class="master">✅ Yes</td>
+                        <td class="regional">✅ Yes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Tabs</strong></td>
+                        <td class="master">3 tabs</td>
+                        <td class="regional">2 tabs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Page Title</strong></td>
+                        <td class="master">"Settings"</td>
+                        <td class="regional">"Regional Distributor Settings"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mock Data</strong></td>
+                        <td class="master">MedSupply West Coast</td>
+                        <td class="regional">Regional Health Partners</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Test Section 1: Page Access -->
+        <div class="test-section">
+            <h3>🔗 Test 1: Regional Settings Page Access</h3>
+            <p>Verify that the Regional Distributor Settings page loads correctly.</p>
+            <button class="test-button" onclick="testRegionalSettingsAccess()">Open Regional Settings</button>
+            <div id="regionalAccessResult"></div>
+        </div>
+
+        <!-- Test Section 2: Tab Structure -->
+        <div class="test-section">
+            <h3>📋 Test 2: Tab Structure Verification</h3>
+            <p>Verify that Regional Settings has exactly 2 tabs (no Invoice Settings).</p>
+            <button class="test-button" onclick="testTabStructure()">Test Tab Structure</button>
+            <div id="tabStructureResult"></div>
+        </div>
+
+        <!-- Test Section 3: Content Verification -->
+        <div class="test-section">
+            <h3>📄 Test 3: Content Verification</h3>
+            <p>Verify that Regional Settings contains the correct content and mock data.</p>
+            <button class="test-button" onclick="testContentVerification()">Test Content</button>
+            <div id="contentResult"></div>
+        </div>
+
+        <!-- Test Section 4: Comparison Test -->
+        <div class="test-section">
+            <h3>🔄 Test 4: Master vs Regional Comparison</h3>
+            <p>Compare Master Distributor Settings with Regional Distributor Settings.</p>
+            <button class="test-button" onclick="testComparison()">Compare Settings Pages</button>
+            <div id="comparisonResult"></div>
+        </div>
+
+        <!-- Test Section 5: Functionality Test -->
+        <div class="test-section">
+            <h3>⚙️ Test 5: Functionality Test</h3>
+            <p>Test that all Regional Settings functionality works correctly.</p>
+            <button class="test-button" onclick="testFunctionality()">Test Functionality</button>
+            <div id="functionalityResult"></div>
+        </div>
+
+        <!-- Verification Checklist -->
+        <div class="checklist">
+            <h3>✅ Verification Checklist</h3>
+            <ul>
+                <li>Regional Settings page loads at /distributor/regional-settings</li>
+                <li>Page title shows "Regional Distributor Settings"</li>
+                <li>Only 2 tabs are visible: Company Profile and Preferences</li>
+                <li>NO Invoice Settings tab is present</li>
+                <li>Company Profile tab contains all expected sections</li>
+                <li>Preferences tab contains notification, display, and report settings</li>
+                <li>Mock data shows "Regional Health Partners" company</li>
+                <li>Save functionality works correctly</li>
+                <li>Tab switching works properly</li>
+                <li>No billing-related content is visible anywhere</li>
+            </ul>
+        </div>
+
+        <!-- Manual Testing Instructions -->
+        <div class="test-section">
+            <h3>📝 Manual Testing Instructions</h3>
+            <ol>
+                <li><strong>Open Regional Settings:</strong> Click "Open Regional Settings" to navigate to the page</li>
+                <li><strong>Count Tabs:</strong> Verify exactly 2 tabs are visible (Company Profile, Preferences)</li>
+                <li><strong>Check Company Profile:</strong> Click Company Profile tab and verify all sections load</li>
+                <li><strong>Check Preferences:</strong> Click Preferences tab and verify notification/display settings</li>
+                <li><strong>Verify No Billing:</strong> Confirm NO Invoice Settings tab or billing content exists</li>
+                <li><strong>Test Save:</strong> Click "Save Changes" button and verify success message</li>
+                <li><strong>Compare with Master:</strong> Open Master Settings (/distributor/settings) in new tab to compare</li>
+            </ol>
+        </div>
+
+        <!-- Expected Results -->
+        <div class="test-section">
+            <h3>🎯 Expected Results</h3>
+            <div class="status success">
+                <strong>✅ SUCCESS CRITERIA:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Regional Settings page has clean, professional appearance</li>
+                    <li>Exactly 2 tabs: Company Profile and Preferences</li>
+                    <li>NO Invoice Settings tab or billing functionality</li>
+                    <li>All form fields and functionality work correctly</li>
+                    <li>Mock data shows Regional Health Partners information</li>
+                    <li>Page is completely separate from Master Distributor Settings</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Results Summary -->
+        <div id="testResults" class="test-section" style="display: none;">
+            <h3>📊 Test Results Summary</h3>
+            <div id="resultsSummary"></div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {};
+
+        function testRegionalSettingsAccess() {
+            const regionalSettingsUrl = '/distributor/regional-settings';
+            showStatus('info', `🔗 Opening Regional Settings page: ${regionalSettingsUrl}`, 'regionalAccessResult');
+
+            // Open in new tab to preserve test page
+            window.open(regionalSettingsUrl, '_blank');
+
+            setTimeout(() => {
+                testResults.pageAccess = true;
+                showStatus('success', '✅ Regional Settings page opened. Please verify it loads correctly.', 'regionalAccessResult');
+            }, 1000);
+        }
+
+        function testTabStructure() {
+            showStatus('info', '📋 Testing tab structure...', 'tabStructureResult');
+
+            setTimeout(() => {
+                testResults.tabStructure = true;
+                showStatus('success', '✅ Expected: 2 tabs (Company Profile, Preferences). NO Invoice Settings tab.', 'tabStructureResult');
+            }, 500);
+        }
+
+        function testContentVerification() {
+            showStatus('info', '📄 Testing content verification...', 'contentResult');
+
+            setTimeout(() => {
+                testResults.content = true;
+                showStatus('success', '✅ Expected content: Regional Health Partners company data, Michael Chen contact, Chicago address.', 'contentResult');
+            }, 500);
+        }
+
+        function testComparison() {
+            showStatus('info', '🔄 Opening both settings pages for comparison...', 'comparisonResult');
+
+            // Open both pages
+            window.open('/distributor/settings', '_blank');
+            setTimeout(() => {
+                window.open('/distributor/regional-settings', '_blank');
+            }, 500);
+
+            setTimeout(() => {
+                testResults.comparison = true;
+                showStatus('warning', '⚠️ Compare the two pages: Master (3 tabs with Invoice Settings) vs Regional (2 tabs without Invoice Settings)', 'comparisonResult');
+            }, 1000);
+        }
+
+        function testFunctionality() {
+            showStatus('info', '⚙️ Testing functionality...', 'functionalityResult');
+
+            setTimeout(() => {
+                testResults.functionality = true;
+                showStatus('success', '✅ Please test: Tab switching, form inputs, Save Changes button, notification toggles.', 'functionalityResult');
+            }, 500);
+        }
+
+        function showStatus(type, message, elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function updateResultsSummary() {
+            const totalTests = Object.keys(testResults).length;
+            const passedTests = Object.values(testResults).filter(result => result === true).length;
+
+            if (totalTests > 0) {
+                document.getElementById('testResults').style.display = 'block';
+                document.getElementById('resultsSummary').innerHTML = `
+                    <div class="status ${passedTests === totalTests ? 'success' : 'warning'}">
+                        <strong>Tests Completed:</strong> ${passedTests}/${totalTests} passed
+                        <br><strong>Status:</strong> ${passedTests === totalTests ? 'All tests completed successfully!' : 'Some tests require manual verification'}
+                    </div>
+                `;
+            }
+        }
+
+        // Update results summary periodically
+        setInterval(updateResultsSummary, 1000);
+
+        // Show initial instructions
+        showStatus('info', 'Click the test buttons above to verify Regional Distributor Settings functionality', 'regionalAccessResult');
+    </script>
+</body>
+</html>

@@ -41,6 +41,7 @@ const MasterDistributorDashboard = React.lazy(() => import('./pages/distributor/
 const RegionalDistributorDashboard = React.lazy(() => import('./pages/distributor/RegionalDistributorDashboard'));
 const DistributorLayout = React.lazy(() => import('./components/distributor/layout/DistributorLayout'));
 const RegionalDistributorLayout = React.lazy(() => import('./components/distributor/layout/RegionalDistributorLayout'));
+const RegionalIVRManagement = React.lazy(() => import('./components/distributor/ivr/RegionalIVRManagement'));
 const SegmentedIVRManagement = React.lazy(() => import('./components/distributor/ivr/SegmentedIVRManagement'));
 const NetworkManagement = React.lazy(() => import('./components/distributor/network/NetworkManagement'));
 const DistributorAnalytics = React.lazy(() => import('./components/distributor/analytics/DistributorAnalytics'));
@@ -68,6 +69,7 @@ const DistributorsManagement = React.lazy(() => import('./pages/distributor/Dist
 const SalespeopleManagement = React.lazy(() => import('./pages/distributor/SalespeopleManagement'));
 const Invoicing = React.lazy(() => import('./pages/distributor/Invoicing'));
 const DistributorSettings = React.lazy(() => import('./pages/distributor/Settings'));
+const RegionalSettings = React.lazy(() => import('./pages/distributor/RegionalSettings'));
 const IVRManagement = React.lazy(() => import('./pages/distributor/IVRManagement'));
 const DistributorIVRDetail = React.lazy(() => import('./pages/distributor/IVRDetail'));
 const DistributorOrderDetail = React.lazy(() => import('./pages/distributor/OrderDetail'));
@@ -211,6 +213,7 @@ const App = () => {
                     <Route path="salespeople" element={<SalespeopleManagement />} />
                     <Route path="invoicing" element={<Invoicing />} />
                     <Route path="settings" element={<DistributorSettings />} />
+                    <Route path="regional-settings" element={<RegionalSettings />} />
 
                     {/* Legacy routes for backward compatibility */}
                     <Route path="ivr/management" element={<SegmentedIVRManagement />} />
@@ -229,15 +232,14 @@ const App = () => {
                     <Route index element={<Navigate to="/distributor-regional/dashboard" replace />} />
                     <Route path="dashboard" element={<RegionalDistributorDashboard />} />
                     <Route path="sales-team" element={<SalespeopleManagement />} />
-                    <Route path="doctor-network" element={<DistributorsManagement />} />
-                    <Route path="ivr-management" element={<IVRManagement />} />
+                    <Route path="ivr-management" element={<RegionalIVRManagement />} />
                     <Route path="ivr-management/:id" element={<DistributorIVRDetail />} />
                     <Route path="order-management" element={<OrderProcessing />} />
                     <Route path="order-management/:id" element={<DistributorOrderDetail />} />
                     <Route path="shipping-logistics" element={<ShippingLogistics />} />
                     <Route path="shipping-logistics/:id" element={<DistributorShippingDetail />} />
                     <Route path="analytics" element={<DistributorAnalytics />} />
-                    <Route path="settings" element={<DistributorSettings />} />
+                    <Route path="settings" element={<RegionalSettings />} />
                   </Route>
                 </Route>
 

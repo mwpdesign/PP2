@@ -36,7 +36,6 @@ export const createMasterDistributorNavigation = (): NavigationItem[] => [
 export const createRegionalDistributorNavigation = (): NavigationItem[] => [
   { icon: HomeIcon, label: 'Dashboard', path: '/distributor-regional/dashboard' },
   { icon: UsersIcon, label: 'Sales Team', path: '/distributor-regional/sales-team' },
-  { icon: UserGroupIcon, label: 'Doctor Network', path: '/distributor-regional/doctor-network' },
   { icon: DocumentTextIcon, label: 'IVR Management', path: '/distributor-regional/ivr-management' },
   { icon: ArchiveBoxIcon, label: 'Order Management', path: '/distributor-regional/order-management' },
   { icon: TruckIcon, label: 'Shipping & Logistics', path: '/distributor-regional/shipping-logistics' },

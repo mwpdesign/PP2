@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regional IVR Management with SharedMedicalView - Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .header h1 {
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .status.success { background-color: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+        .status.error { background-color: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+        .status.warning { background-color: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b; }
+        .status.info { background-color: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #f9fafb;
+        }
+        .test-section h2 {
+            color: #374151;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .feature-card h3 {
+            color: #1f2937;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .comparison-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+        .comparison-table .old {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .comparison-table .new {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 5px 10px 5px 0;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background-color: #2563eb;
+        }
+
+        .checklist {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            margin-right: 12px;
+            accent-color: #3b82f6;
+        }
+
+        .feature-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .feature-highlight h3 {
+            margin-top: 0;
+            color: white;
+        }
+
+        .code-block {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Regional IVR Management with SharedMedicalView - Test</h1>
+            <p>Healthcare IVR Platform - Task ID: mbus695jsbs93orvlhs</p>
+            <div class="status info">
+                <strong>Implementation:</strong> Updated Regional Distributor IVR Management to use SharedMedicalView component with proper hierarchy filtering
+            </div>
+        </div>
+
+        <!-- Implementation Overview -->
+        <div class="feature-highlight">
+            <h3>🎯 Implementation Overview</h3>
+            <p><strong>Objective:</strong> Replace the basic IVR Management page with SharedMedicalView component that includes document upload, chat capabilities, and hierarchy-based data filtering.</p>
+            <p><strong>Key Features:</strong> Regional network filtering, document upload, chat communication, professional medical interface, and comprehensive IVR tracking.</p>
+        </div>
+
+        <!-- Component Comparison -->
+        <div class="test-section">
+            <h2>🔄 Component Replacement</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th class="old">Old IVRManagement</th>
+                        <th class="new">New RegionalIVRManagement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Component</strong></td>
+                        <td class="old">Basic IVRManagement.tsx</td>
+                        <td class="new">RegionalIVRManagement.tsx with SharedMedicalView</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data Filtering</strong></td>
+                        <td class="old">No hierarchy filtering</td>
+                        <td class="new">HierarchyFilteringService integration</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Document Upload</strong></td>
+                        <td class="old">Not available</td>
+                        <td class="new">✅ Drag & drop document upload</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Chat Communication</strong></td>
+                        <td class="old">Not available</td>
+                        <td class="new">✅ Real-time chat with doctors/IVR specialists</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Network Scope</strong></td>
+                        <td class="old">Shows all IVRs</td>
+                        <td class="new">Only shows regional network IVRs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>UI Framework</strong></td>
+                        <td class="old">Custom table implementation</td>
+                        <td class="new">SharedMedicalView with advanced features</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Export Options</strong></td>
+                        <td class="old">Not available</td>
+                        <td class="new">✅ PDF and Excel export</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Access Control</strong></td>
+                        <td class="old">Basic role checking</td>
+                        <td class="new">Comprehensive hierarchy-based filtering</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Key Features -->
+        <div class="test-section">
+            <h2>🚀 Key Features Implemented</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🔒 Hierarchy Filtering</h3>
+                    <p><strong>Service:</strong> HierarchyFilteringService</p>
+                    <p><strong>Scope:</strong> Territory-wide access for Regional Distributors</p>
+                    <p><strong>Filtering:</strong> Shows only IVRs from doctors in their regional network</p>
+                    <p><strong>Security:</strong> Prevents access to other regional networks</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>📄 Document Management</h3>
+                    <p><strong>Upload:</strong> Drag & drop file upload</p>
+                    <p><strong>Types:</strong> PDF, Excel, images</p>
+                    <p><strong>Preview:</strong> Document thumbnails and metadata</p>
+                    <p><strong>Management:</strong> Delete uploaded documents</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>💬 Chat Communication</h3>
+                    <p><strong>Participants:</strong> Regional Distributors, Doctors, IVR Specialists</p>
+                    <p><strong>Real-time:</strong> Live message updates</p>
+                    <p><strong>Context:</strong> IVR-specific communication threads</p>
+                    <p><strong>History:</strong> Complete conversation history</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>📊 Advanced Table Features</h3>
+                    <p><strong>Sorting:</strong> Multi-column sorting</p>
+                    <p><strong>Filtering:</strong> Status, date range, search</p>
+                    <p><strong>Export:</strong> PDF and Excel export options</p>
+                    <p><strong>Actions:</strong> View details, status updates</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>🎯 Regional Network Summary</h3>
+                    <p><strong>Total IVRs:</strong> Count of all regional IVRs</p>
+                    <p><strong>Approved:</strong> Successfully approved requests</p>
+                    <p><strong>In Progress:</strong> Active processing status</p>
+                    <p><strong>Orders Generated:</strong> Converted to orders</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>🔍 Access Transparency</h3>
+                    <p><strong>Banner:</strong> Shows filtering information</p>
+                    <p><strong>Scope:</strong> Displays access scope level</p>
+                    <p><strong>Count:</strong> Shows accessible vs total IVRs</p>
+                    <p><strong>Filters:</strong> Lists applied hierarchy filters</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mock Data Structure -->
+        <div class="test-section">
+            <h2>📋 Mock Data Structure</h2>
+            <div class="status info">
+                <strong>Regional Network:</strong> 5 IVRs from doctors in the Midwest territory network
+            </div>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>IVR ID</th>
+                        <th>Doctor</th>
+                        <th>Facility</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Insurance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>IVR-2024-001</td>
+                        <td>Dr. Sarah Chen</td>
+                        <td>Metro General Hospital</td>
+                        <td><span style="background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 12px;">Approved</span></td>
+                        <td><span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px;">High</span></td>
+                        <td>Blue Cross Blue Shield</td>
+                    </tr>
+                    <tr>
+                        <td>IVR-2024-002</td>
+                        <td>Dr. Michael Rodriguez</td>
+                        <td>St. Mary's Medical Center</td>
+                        <td><span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 12px;">In Review</span></td>
+                        <td><span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px;">Medium</span></td>
+                        <td>Aetna</td>
+                    </tr>
+                    <tr>
+                        <td>IVR-2024-003</td>
+                        <td>Dr. Lisa Park</td>
+                        <td>Austin Regional Medical</td>
+                        <td><span style="background: #fed7aa; color: #9a3412; padding: 2px 8px; border-radius: 12px;">Docs Requested</span></td>
+                        <td><span style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px;">High</span></td>
+                        <td>UnitedHealthcare</td>
+                    </tr>
+                    <tr>
+                        <td>IVR-2024-004</td>
+                        <td>Dr. James Wilson</td>
+                        <td>Central Texas Medical</td>
+                        <td><span style="background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 12px;">Approved</span></td>
+                        <td><span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px;">Medium</span></td>
+                        <td>Cigna</td>
+                    </tr>
+                    <tr>
+                        <td>IVR-2024-005</td>
+                        <td>Dr. Amanda Foster</td>
+                        <td>Houston General</td>
+                        <td><span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px;">Submitted</span></td>
+                        <td><span style="background: #f3f4f6; color: #374151; padding: 2px 8px; border-radius: 4px;">Low</span></td>
+                        <td>Humana</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Files Modified -->
+        <div class="test-section">
+            <h2>📁 Files Modified</h2>
+            <div class="checklist">
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox" checked disabled>
+                    <span><strong>frontend/src/components/distributor/ivr/RegionalIVRManagement.tsx:</strong> New component using SharedMedicalView</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox" checked disabled>
+                    <span><strong>frontend/src/App.tsx:</strong> Updated Regional Distributor route to use RegionalIVRManagement</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox" checked disabled>
+                    <span><strong>frontend/src/components/shared/SharedMedicalView.tsx:</strong> Existing component with document upload and chat</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox" checked disabled>
+                    <span><strong>frontend/src/services/hierarchyFilteringService.ts:</strong> Existing hierarchy filtering service</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testing Links -->
+        <div class="test-section">
+            <h2>🔗 Testing Links</h2>
+            <div class="status info">
+                <strong>Test the Regional Distributor IVR Management with SharedMedicalView:</strong>
+            </div>
+
+            <a href="http://localhost:3000/distributor-regional/dashboard" class="test-link" target="_blank">
+                Regional Distributor Dashboard
+            </a>
+            <a href="http://localhost:3000/distributor-regional/ivr-management" class="test-link" target="_blank">
+                Regional IVR Management (NEW)
+            </a>
+
+            <div class="status warning" style="margin-top: 15px;">
+                <strong>Comparison:</strong> Compare with Master Distributor IVR Management to see the differences
+                <br>
+                <a href="http://localhost:3000/distributor/ivr-management" class="test-link" target="_blank" style="background-color: #f59e0b;">
+                    Master Distributor IVR (Old)
+                </a>
+            </div>
+        </div>
+
+        <!-- Technical Implementation -->
+        <div class="test-section">
+            <h2>⚙️ Technical Implementation</h2>
+
+            <h3>Hierarchy Filtering Integration:</h3>
+            <div class="code-block">
+// Get user's hierarchy information
+const hierarchy = await hierarchyService.getUserHierarchy(user.id);
+
+// Create filtering context
+const context: FilteringContext = {
+  user,
+  hierarchy,
+  requestedDataType: 'ivr'
+};
+
+// Filter IVR data based on hierarchy
+const result = await hierarchyService.filterIVRData(mockRegionalIVRData, context);
+            </div>
+
+            <h3>SharedMedicalView Configuration:</h3>
+            <div class="code-block">
+&lt;SharedMedicalView
+  pageType="ivr"
+  userRole="regional_distributor"
+  title="Regional IVR Management"
+  subtitle="Monitor and track IVR requests from doctors in your regional network"
+  canUploadDocs={true}
+  canParticipateInChat={true}
+  data={filteredData}
+  columns={columns}
+/&gt;
+            </div>
+        </div>
+
+        <!-- Verification Checklist -->
+        <div class="test-section">
+            <h2>✅ Verification Checklist</h2>
+            <div class="checklist">
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Regional Distributor IVR Management loads with SharedMedicalView</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Hierarchy filtering banner shows "Regional Network Access"</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Document upload section is visible and functional</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Chat communication panel is available</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Table shows only regional network IVRs (5 items)</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Status badges display correctly (Approved, In Review, etc.)</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Priority badges show High, Medium, Low with proper colors</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Order status shows Generated/Pending for each IVR</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>View buttons open IVR details in new tab</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Regional Network Summary shows correct statistics</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Search and filtering functionality works</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Export buttons (PDF/Excel) are visible</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>"View Only" badge is displayed in header</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Page loads without console errors</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expected Results -->
+        <div class="test-section">
+            <h2>🎯 Expected Results</h2>
+            <div class="status success">
+                <h3>✅ Success Criteria</h3>
+                <ul>
+                    <li><strong>Component Integration:</strong> SharedMedicalView component loads successfully with all features</li>
+                    <li><strong>Hierarchy Filtering:</strong> Only shows IVRs from the regional network (5 IVRs)</li>
+                    <li><strong>Document Upload:</strong> Drag & drop functionality available in right sidebar</li>
+                    <li><strong>Chat Communication:</strong> Chat panel available for IVR-related communication</li>
+                    <li><strong>Professional UI:</strong> Medical-grade interface with proper status badges and actions</li>
+                    <li><strong>Access Control:</strong> Clear indication of regional network scope and filtering</li>
+                    <li><strong>Export Options:</strong> PDF and Excel export buttons functional</li>
+                    <li><strong>Regional Summary:</strong> Statistics cards show correct counts for the filtered data</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="test-section">
+            <h2>🔧 Troubleshooting</h2>
+            <div class="status warning">
+                <h3>Common Issues</h3>
+                <ul>
+                    <li><strong>Component not loading:</strong> Check that RegionalIVRManagement is properly imported in App.tsx</li>
+                    <li><strong>Hierarchy filtering errors:</strong> Verify HierarchyFilteringService is working correctly</li>
+                    <li><strong>SharedMedicalView not found:</strong> Ensure SharedMedicalView component exists and is properly exported</li>
+                    <li><strong>Chat not working:</strong> Check that canParticipateInChat is set to true</li>
+                    <li><strong>Document upload issues:</strong> Verify canUploadDocs is set to true</li>
+                    <li><strong>No data showing:</strong> Check mock data structure and filtering logic</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

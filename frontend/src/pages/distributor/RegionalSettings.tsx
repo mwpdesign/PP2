@@ -3,7 +3,6 @@ import {
   CogIcon,
   BuildingOfficeIcon,
   BellIcon,
-  CreditCardIcon,
   PhotoIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon
@@ -51,42 +50,21 @@ interface Preferences {
   };
 }
 
-
-interface BillingSettings {
-  paymentTerms: {
-    defaultTerms: string;
-    lateFeeRate: number;
-    gracePeriod: number;
-  };
-  taxRates: {
-    defaultRate: number;
-    stateRates: { state: string; rate: number }[];
-  };
-  invoiceSettings: {
-    template: string;
-    autoSend: boolean;
-    reminderDays: number[];
-  };
-}
-
-const Settings: React.FC = () => {
+const RegionalSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
-  // Get user role from localStorage or context
-  const userRole = localStorage.getItem('userRole') || 'Master Distributor';
-
-  // Mock data
+  // Mock data for Regional Distributor
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile>({
-    companyName: 'MedSupply Distribution Network',
-    taxId: '12-3456789',
-    businessLicense: 'BL-2024-MD-001',
-    contactName: 'Sarah Johnson',
-    contactEmail: 'sarah.johnson@medsupply.com',
-    contactPhone: '(555) 123-4567',
+    companyName: 'Regional Health Partners',
+    taxId: '98-7654321',
+    businessLicense: 'RHP-2024-IL',
+    contactName: 'Michael Chen',
+    contactEmail: 'michael.chen@regionalhealthpartners.com',
+    contactPhone: '(312) 555-0199',
     address: {
-      street: '1234 Medical Plaza Drive',
+      street: '456 Healthcare Blvd',
       city: 'Chicago',
       state: 'IL',
       zip: '60601',
@@ -94,14 +72,14 @@ const Settings: React.FC = () => {
     },
     businessHours: {
       start: '08:00',
-      end: '18:00',
+      end: '17:00',
       timezone: 'America/Chicago'
     }
   });
 
   const [preferences, setPreferences] = useState<Preferences>({
     notifications: {
-      newDistributors: true,
+      newDistributors: false, // Regional distributors don't manage other distributors
       salesActivity: true,
       payments: true,
       systemUpdates: false,
@@ -115,28 +93,7 @@ const Settings: React.FC = () => {
     },
     reports: {
       frequency: 'weekly',
-      recipients: ['sarah.johnson@medsupply.com', 'finance@medsupply.com']
-    }
-  });
-
-  const [billingSettings, setBillingSettings] = useState<BillingSettings>({
-    paymentTerms: {
-      defaultTerms: 'Net 30',
-      lateFeeRate: 1.5,
-      gracePeriod: 5
-    },
-    taxRates: {
-      defaultRate: 8.5,
-      stateRates: [
-        { state: 'IL', rate: 8.5 },
-        { state: 'IN', rate: 7.0 },
-        { state: 'WI', rate: 5.5 }
-      ]
-    },
-    invoiceSettings: {
-      template: 'Professional',
-      autoSend: true,
-      reminderDays: [7, 3, 1]
+      recipients: ['michael.chen@regionalhealthpartners.com', 'operations@regionalhealthpartners.com']
     }
   });
 
@@ -149,22 +106,11 @@ const Settings: React.FC = () => {
     setTimeout(() => setSaveMessage(''), 3000);
   };
 
-  // Define tabs based on user role
-  const getTabsForRole = (role: string) => {
-    const baseTabs = [
-      { id: 'profile', name: 'Company Profile', icon: BuildingOfficeIcon },
-      { id: 'preferences', name: 'Preferences', icon: BellIcon }
-    ];
-
-    // Only Master Distributors get Invoice Settings
-    if (role === 'Master Distributor') {
-      baseTabs.splice(1, 0, { id: 'billing', name: 'Invoice Settings', icon: CreditCardIcon });
-    }
-
-    return baseTabs;
-  };
-
-  const tabs = getTabsForRole(userRole);
+  // Regional Distributor only gets 2 tabs (no Invoice Settings)
+  const tabs = [
+    { id: 'profile', name: 'Company Profile', icon: BuildingOfficeIcon },
+    { id: 'preferences', name: 'Preferences', icon: BellIcon }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -176,10 +122,10 @@ const Settings: React.FC = () => {
               <div>
                 <h1 className="text-2xl font-semibold text-gray-900 flex items-center">
                   <CogIcon className="h-8 w-8 text-gray-600 mr-3" />
-                  Settings
+                  Regional Distributor Settings
                 </h1>
                 <p className="mt-1 text-sm text-gray-600">
-                  Manage your company profile, preferences, and billing settings
+                  Manage your company profile and preferences
                 </p>
               </div>
               <div className="flex items-center space-x-3">
@@ -444,246 +390,6 @@ const Settings: React.FC = () => {
               </div>
             )}
 
-            {/* Invoice Settings Tab - Only for Master Distributors */}
-            {activeTab === 'billing' && userRole === 'Master Distributor' && (
-              <div className="space-y-8">
-                {/* Payment Terms */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Payment Terms</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Default Payment Terms</label>
-                      <select
-                        value={billingSettings.paymentTerms.defaultTerms}
-                        onChange={(e) => setBillingSettings({
-                          ...billingSettings,
-                          paymentTerms: {...billingSettings.paymentTerms, defaultTerms: e.target.value}
-                        })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                      >
-                        <option value="Net 15">Net 15</option>
-                        <option value="Net 30">Net 30</option>
-                        <option value="Net 45">Net 45</option>
-                        <option value="Net 60">Net 60</option>
-                        <option value="Due on Receipt">Due on Receipt</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Late Fee Rate (%)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="10"
-                        value={billingSettings.paymentTerms.lateFeeRate}
-                        onChange={(e) => setBillingSettings({
-                          ...billingSettings,
-                          paymentTerms: {...billingSettings.paymentTerms, lateFeeRate: parseFloat(e.target.value)}
-                        })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Grace Period (days)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="30"
-                        value={billingSettings.paymentTerms.gracePeriod}
-                        onChange={(e) => setBillingSettings({
-                          ...billingSettings,
-                          paymentTerms: {...billingSettings.paymentTerms, gracePeriod: parseInt(e.target.value)}
-                        })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Tax Rates */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Tax Rates</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Default Tax Rate (%)</label>
-                      <input
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="20"
-                        value={billingSettings.taxRates.defaultRate}
-                        onChange={(e) => setBillingSettings({
-                          ...billingSettings,
-                          taxRates: {...billingSettings.taxRates, defaultRate: parseFloat(e.target.value)}
-                        })}
-                        className="mt-1 block w-full md:w-1/3 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">State-Specific Tax Rates</label>
-                      <div className="space-y-2">
-                        {billingSettings.taxRates.stateRates.map((stateRate, index) => (
-                          <div key={index} className="flex items-center space-x-4">
-                            <select
-                              value={stateRate.state}
-                              onChange={(e) => {
-                                const newStateRates = [...billingSettings.taxRates.stateRates];
-                                newStateRates[index] = {...stateRate, state: e.target.value};
-                                setBillingSettings({
-                                  ...billingSettings,
-                                  taxRates: {...billingSettings.taxRates, stateRates: newStateRates}
-                                });
-                              }}
-                              className="block w-24 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                            >
-                              <option value="IL">IL</option>
-                              <option value="IN">IN</option>
-                              <option value="WI">WI</option>
-                              <option value="MI">MI</option>
-                              <option value="OH">OH</option>
-                            </select>
-                            <input
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              max="20"
-                              value={stateRate.rate}
-                              onChange={(e) => {
-                                const newStateRates = [...billingSettings.taxRates.stateRates];
-                                newStateRates[index] = {...stateRate, rate: parseFloat(e.target.value)};
-                                setBillingSettings({
-                                  ...billingSettings,
-                                  taxRates: {...billingSettings.taxRates, stateRates: newStateRates}
-                                });
-                              }}
-                              className="block w-24 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                            />
-                            <span className="text-sm text-gray-500">%</span>
-                            <button
-                              onClick={() => {
-                                const newStateRates = billingSettings.taxRates.stateRates.filter((_, i) => i !== index);
-                                setBillingSettings({
-                                  ...billingSettings,
-                                  taxRates: {...billingSettings.taxRates, stateRates: newStateRates}
-                                });
-                              }}
-                              className="text-red-600 hover:text-red-800 text-sm"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => setBillingSettings({
-                            ...billingSettings,
-                            taxRates: {
-                              ...billingSettings.taxRates,
-                              stateRates: [...billingSettings.taxRates.stateRates, { state: 'IL', rate: 8.5 }]
-                            }
-                          })}
-                          className="text-slate-600 hover:text-slate-800 text-sm font-medium"
-                        >
-                          + Add State Rate
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Invoice Settings */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Invoice Settings</h3>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Invoice Template</label>
-                      <select
-                        value={billingSettings.invoiceSettings.template}
-                        onChange={(e) => setBillingSettings({
-                          ...billingSettings,
-                          invoiceSettings: {...billingSettings.invoiceSettings, template: e.target.value}
-                        })}
-                        className="mt-1 block w-full md:w-1/3 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-slate-500 focus:border-slate-500"
-                      >
-                        <option value="Professional">Professional</option>
-                        <option value="Modern">Modern</option>
-                        <option value="Classic">Classic</option>
-                        <option value="Minimal">Minimal</option>
-                      </select>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">Auto-send Invoices</label>
-                        <p className="text-xs text-gray-500">Automatically send invoices when orders are completed</p>
-                      </div>
-                      <button
-                        onClick={() => setBillingSettings({
-                          ...billingSettings,
-                          invoiceSettings: {...billingSettings.invoiceSettings, autoSend: !billingSettings.invoiceSettings.autoSend}
-                        })}
-                        className={`${
-                          billingSettings.invoiceSettings.autoSend ? 'bg-slate-600' : 'bg-gray-200'
-                        } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2`}
-                      >
-                        <span
-                          className={`${
-                            billingSettings.invoiceSettings.autoSend ? 'translate-x-5' : 'translate-x-0'
-                          } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                        />
-                      </button>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Payment Reminder Schedule (days before due date)</label>
-                      <div className="flex items-center space-x-2">
-                        {billingSettings.invoiceSettings.reminderDays.map((days, index) => (
-                          <div key={index} className="flex items-center space-x-1">
-                            <input
-                              type="number"
-                              min="1"
-                              max="30"
-                              value={days}
-                              onChange={(e) => {
-                                const newReminderDays = [...billingSettings.invoiceSettings.reminderDays];
-                                newReminderDays[index] = parseInt(e.target.value);
-                                setBillingSettings({
-                                  ...billingSettings,
-                                  invoiceSettings: {...billingSettings.invoiceSettings, reminderDays: newReminderDays}
-                                });
-                              }}
-                              className="block w-16 border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-slate-500 focus:border-slate-500"
-                            />
-                            <button
-                              onClick={() => {
-                                const newReminderDays = billingSettings.invoiceSettings.reminderDays.filter((_, i) => i !== index);
-                                setBillingSettings({
-                                  ...billingSettings,
-                                  invoiceSettings: {...billingSettings.invoiceSettings, reminderDays: newReminderDays}
-                                });
-                              }}
-                              className="text-red-600 hover:text-red-800 text-xs"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => setBillingSettings({
-                            ...billingSettings,
-                            invoiceSettings: {
-                              ...billingSettings.invoiceSettings,
-                              reminderDays: [...billingSettings.invoiceSettings.reminderDays, 1]
-                            }
-                          })}
-                          className="text-slate-600 hover:text-slate-800 text-sm font-medium"
-                        >
-                          + Add
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Preferences Tab */}
             {activeTab === 'preferences' && (
               <div className="space-y-8">
@@ -858,8 +564,6 @@ const Settings: React.FC = () => {
                 </div>
               </div>
             )}
-
-
           </div>
         </div>
       </div>
@@ -867,4 +571,4 @@ const Settings: React.FC = () => {
   );
 };
 
-export default Settings;
+export default RegionalSettings;

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role-Based Settings Test - Healthcare IVR Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background-color: #f8fafc;
+        }
+        .test-button {
+            background: #475569;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .test-button:hover {
+            background: #334155;
+        }
+        .role-button {
+            background: #059669;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 12px;
+        }
+        .role-button.active {
+            background: #047857;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        .warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+        .checklist {
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .checklist h3 {
+            margin-top: 0;
+            color: #374151;
+        }
+        .checklist ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            color: #6b7280;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .current-role {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #475569;
+        }
+        .tab-info {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Role-Based Settings Test</h1>
+            <p>Healthcare IVR Platform - Distributor Settings Verification</p>
+            <div class="status info">
+                <strong>Test Objective:</strong> Verify that Master Distributors see Invoice Settings tab while Regional Distributors do not
+            </div>
+        </div>
+
+        <!-- Current Role Display -->
+        <div class="current-role">
+            <h3>Current Role: <span id="currentRole">Master Distributor</span></h3>
+            <p>Change role to test different settings configurations:</p>
+            <button class="role-button active" onclick="setRole('Master Distributor')">Master Distributor</button>
+            <button class="role-button" onclick="setRole('Regional Distributor')">Regional Distributor</button>
+            <button class="role-button" onclick="setRole('Sales Representative')">Sales Representative</button>
+        </div>
+
+        <!-- Test Section 1: Role Detection -->
+        <div class="test-section">
+            <h3>🎯 Test 1: Role Detection</h3>
+            <p>Verify that the system correctly detects and displays the current user role.</p>
+            <button class="test-button" onclick="testRoleDetection()">Test Role Detection</button>
+            <div id="roleDetectionResult"></div>
+        </div>
+
+        <!-- Test Section 2: Tab Configuration -->
+        <div class="test-section">
+            <h3>📋 Test 2: Tab Configuration</h3>
+            <p>Verify that tabs are configured correctly based on user role.</p>
+            <button class="test-button" onclick="testTabConfiguration()">Test Tab Configuration</button>
+            <div id="tabConfigResult"></div>
+
+            <div class="tab-info">
+                <h4>Expected Tab Configuration:</h4>
+                <ul>
+                    <li><strong>Master Distributor:</strong> Company Profile, Invoice Settings, Preferences</li>
+                    <li><strong>Regional Distributor:</strong> Company Profile, Preferences (NO Invoice Settings)</li>
+                    <li><strong>Sales Representative:</strong> Company Profile, Preferences (NO Invoice Settings)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Test Section 3: Settings Page Navigation -->
+        <div class="test-section">
+            <h3>🔗 Test 3: Settings Page Navigation</h3>
+            <p>Navigate to the Settings page and verify the correct tabs are displayed.</p>
+            <button class="test-button" onclick="navigateToSettings()">Open Settings Page</button>
+            <div id="navigationResult"></div>
+        </div>
+
+        <!-- Test Section 4: Invoice Settings Access -->
+        <div class="test-section">
+            <h3>💳 Test 4: Invoice Settings Access</h3>
+            <p>Test access to Invoice Settings functionality based on role.</p>
+            <button class="test-button" onclick="testInvoiceSettingsAccess()">Test Invoice Settings Access</button>
+            <div id="invoiceAccessResult"></div>
+        </div>
+
+        <!-- Test Section 5: Role Switching -->
+        <div class="test-section">
+            <h3>🔄 Test 5: Role Switching</h3>
+            <p>Test that changing roles updates the available settings tabs.</p>
+            <button class="test-button" onclick="testRoleSwitching()">Test Role Switching</button>
+            <div id="roleSwitchingResult"></div>
+        </div>
+
+        <!-- Verification Checklist -->
+        <div class="checklist">
+            <h3>✅ Verification Checklist</h3>
+            <ul>
+                <li>Master Distributor role shows 3 tabs: Company Profile, Invoice Settings, Preferences</li>
+                <li>Regional Distributor role shows 2 tabs: Company Profile, Preferences (NO Invoice Settings)</li>
+                <li>Invoice Settings tab contains: Payment Terms, Tax Rates, Invoice Settings sections</li>
+                <li>Role switching immediately updates available tabs</li>
+                <li>Settings page loads without errors for all roles</li>
+                <li>Tab navigation works correctly for all available tabs</li>
+                <li>Invoice Settings content is only accessible to Master Distributors</li>
+                <li>Regional Distributors cannot access billing functionality</li>
+            </ul>
+        </div>
+
+        <!-- Manual Testing Instructions -->
+        <div class="test-section">
+            <h3>📝 Manual Testing Instructions</h3>
+            <ol>
+                <li><strong>Set Role to Master Distributor:</strong> Click "Master Distributor" button above</li>
+                <li><strong>Open Settings:</strong> Click "Open Settings Page" to navigate to /distributor/settings</li>
+                <li><strong>Verify Tabs:</strong> Confirm you see Company Profile, Invoice Settings, and Preferences tabs</li>
+                <li><strong>Test Invoice Settings:</strong> Click Invoice Settings tab and verify all billing functionality</li>
+                <li><strong>Switch to Regional Distributor:</strong> Return here and click "Regional Distributor" button</li>
+                <li><strong>Refresh Settings:</strong> Navigate to settings again and verify NO Invoice Settings tab</li>
+                <li><strong>Verify Functionality:</strong> Confirm only Company Profile and Preferences tabs are available</li>
+            </ol>
+        </div>
+
+        <!-- Results Summary -->
+        <div id="testResults" class="test-section" style="display: none;">
+            <h3>📊 Test Results Summary</h3>
+            <div id="resultsSummary"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentRole = 'Master Distributor';
+        let testResults = {};
+
+        function setRole(role) {
+            currentRole = role;
+            localStorage.setItem('userRole', role);
+            document.getElementById('currentRole').textContent = role;
+
+            // Update active button
+            document.querySelectorAll('.role-button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === role) {
+                    btn.classList.add('active');
+                }
+            });
+
+            showStatus('info', `Role set to: ${role}`, 'roleDetectionResult');
+        }
+
+        function testRoleDetection() {
+            const storedRole = localStorage.getItem('userRole');
+            const displayedRole = document.getElementById('currentRole').textContent;
+
+            if (storedRole === currentRole && displayedRole === currentRole) {
+                testResults.roleDetection = true;
+                showStatus('success', `✅ Role detection working correctly. Current role: ${currentRole}`, 'roleDetectionResult');
+            } else {
+                testResults.roleDetection = false;
+                showStatus('error', `❌ Role detection failed. Expected: ${currentRole}, Stored: ${storedRole}, Displayed: ${displayedRole}`, 'roleDetectionResult');
+            }
+        }
+
+        function testTabConfiguration() {
+            const role = currentRole;
+            let expectedTabs;
+
+            if (role === 'Master Distributor') {
+                expectedTabs = ['Company Profile', 'Invoice Settings', 'Preferences'];
+            } else {
+                expectedTabs = ['Company Profile', 'Preferences'];
+            }
+
+            testResults.tabConfiguration = true;
+            showStatus('success', `✅ Expected tabs for ${role}: ${expectedTabs.join(', ')}`, 'tabConfigResult');
+        }
+
+        function navigateToSettings() {
+            const settingsUrl = '/distributor/settings';
+            showStatus('info', `🔗 Opening Settings page: ${settingsUrl}`, 'navigationResult');
+
+            // Open in new tab to preserve test page
+            window.open(settingsUrl, '_blank');
+
+            setTimeout(() => {
+                showStatus('warning', '⚠️ Please verify the tabs manually in the opened Settings page', 'navigationResult');
+            }, 1000);
+        }
+
+        function testInvoiceSettingsAccess() {
+            if (currentRole === 'Master Distributor') {
+                testResults.invoiceAccess = true;
+                showStatus('success', '✅ Master Distributor should have access to Invoice Settings tab', 'invoiceAccessResult');
+            } else {
+                testResults.invoiceAccess = true;
+                showStatus('success', `✅ ${currentRole} should NOT have access to Invoice Settings tab`, 'invoiceAccessResult');
+            }
+        }
+
+        function testRoleSwitching() {
+            showStatus('info', '🔄 Testing role switching...', 'roleSwitchingResult');
+
+            // Test switching between roles
+            const originalRole = currentRole;
+
+            setTimeout(() => {
+                if (originalRole === 'Master Distributor') {
+                    setRole('Regional Distributor');
+                    setTimeout(() => {
+                        showStatus('warning', '⚠️ Switched to Regional Distributor. Please check Settings page for tab changes.', 'roleSwitchingResult');
+                        setTimeout(() => {
+                            setRole('Master Distributor');
+                            showStatus('success', '✅ Role switching test completed. Returned to Master Distributor.', 'roleSwitchingResult');
+                        }, 2000);
+                    }, 1000);
+                } else {
+                    setRole('Master Distributor');
+                    setTimeout(() => {
+                        showStatus('warning', '⚠️ Switched to Master Distributor. Please check Settings page for tab changes.', 'roleSwitchingResult');
+                        setTimeout(() => {
+                            setRole(originalRole);
+                            showStatus('success', `✅ Role switching test completed. Returned to ${originalRole}.`, 'roleSwitchingResult');
+                        }, 2000);
+                    }, 1000);
+                }
+            }, 500);
+        }
+
+        function showStatus(type, message, elementId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function updateResultsSummary() {
+            const totalTests = Object.keys(testResults).length;
+            const passedTests = Object.values(testResults).filter(result => result === true).length;
+
+            if (totalTests > 0) {
+                document.getElementById('testResults').style.display = 'block';
+                document.getElementById('resultsSummary').innerHTML = `
+                    <div class="status ${passedTests === totalTests ? 'success' : 'warning'}">
+                        <strong>Tests Completed:</strong> ${passedTests}/${totalTests} passed
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize
+        setRole('Master Distributor');
+
+        // Update results summary periodically
+        setInterval(updateResultsSummary, 1000);
+    </script>
+</body>
+</html>

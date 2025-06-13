@@ -364,16 +364,11 @@ const RegionalDistributorDashboard: React.FC = () => {
           <p className="text-sm text-slate-500 mt-1">Regional operations management</p>
         </div>
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <button className="flex flex-col items-center p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors text-center">
               <UsersIcon className="h-8 w-8 text-blue-600 mb-2" />
               <span className="text-sm font-medium text-slate-900">Manage Sales Team</span>
-              <span className="text-xs text-slate-500 mt-1">8 active reps</span>
-            </button>
-            <button className="flex flex-col items-center p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors text-center">
-              <UserGroupIcon className="h-8 w-8 text-purple-600 mb-2" />
-              <span className="text-sm font-medium text-slate-900">Doctor Network</span>
-              <span className="text-xs text-slate-500 mt-1">34 doctors</span>
+              <span className="text-xs text-slate-500 mt-1">8 reps + 34 doctors</span>
             </button>
             <button className="flex flex-col items-center p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors text-center">
               <DocumentTextIcon className="h-8 w-8 text-amber-600 mb-2" />

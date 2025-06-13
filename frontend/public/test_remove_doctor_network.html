@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Doctor Network Menu - Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .header h1 {
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .status.success { background-color: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+        .status.error { background-color: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+        .status.warning { background-color: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b; }
+        .status.info { background-color: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #f9fafb;
+        }
+        .test-section h2 {
+            color: #374151;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .comparison-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+        .comparison-table .before {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .comparison-table .after {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .navigation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin: 5px 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+        .navigation-item.removed {
+            background-color: #fee2e2;
+            border-color: #fca5a5;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        .navigation-item.updated {
+            background-color: #dbeafe;
+            border-color: #93c5fd;
+        }
+
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 5px 10px 5px 0;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background-color: #2563eb;
+        }
+
+        .checklist {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            margin-right: 12px;
+            accent-color: #3b82f6;
+        }
+
+        .feature-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .feature-highlight h3 {
+            margin-top: 0;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚫 Remove Doctor Network Menu Item - Test</h1>
+            <p>Healthcare IVR Platform - Regional Distributor Navigation Fix</p>
+            <div class="status info">
+                <strong>Fix Applied:</strong> Removed separate "Doctor Network" menu item. Doctors are now accessed through "Sales Team" menu.
+            </div>
+        </div>
+
+        <!-- Problem Description -->
+        <div class="feature-highlight">
+            <h3>🎯 Problem & Solution</h3>
+            <p><strong>Issue:</strong> User removed "Sales Team" from sidebar, but doctors are listed under sales functionality, creating broken navigation.</p>
+            <p><strong>Solution:</strong> Remove the separate "Doctor Network" menu item and keep "Sales Team" which includes both sales reps AND their doctors.</p>
+        </div>
+
+        <!-- Navigation Changes -->
+        <div class="test-section">
+            <h2>🧭 Navigation Changes</h2>
+            <div class="status warning">
+                <strong>Before:</strong> Regional Distributor had 8 menu items including separate "Doctor Network"
+            </div>
+            <div class="status success">
+                <strong>After:</strong> Regional Distributor has 7 menu items with doctors accessed through "Sales Team"
+            </div>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Menu Item</th>
+                        <th class="before">Before (8 items)</th>
+                        <th class="after">After (7 items)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Dashboard</td>
+                        <td class="before">✅ Present</td>
+                        <td class="after">✅ Present</td>
+                    </tr>
+                    <tr>
+                        <td>Sales Team</td>
+                        <td class="before">✅ Present (sales reps only)</td>
+                        <td class="after">✅ Present (sales reps + doctors)</td>
+                    </tr>
+                    <tr>
+                        <td>Doctor Network</td>
+                        <td class="before">✅ Present (separate menu)</td>
+                        <td class="after">❌ Removed (merged into Sales Team)</td>
+                    </tr>
+                    <tr>
+                        <td>IVR Management</td>
+                        <td class="before">✅ Present</td>
+                        <td class="after">✅ Present</td>
+                    </tr>
+                    <tr>
+                        <td>Order Management</td>
+                        <td class="before">✅ Present</td>
+                        <td class="after">✅ Present</td>
+                    </tr>
+                    <tr>
+                        <td>Shipping & Logistics</td>
+                        <td class="before">✅ Present</td>
+                        <td class="after">✅ Present</td>
+                    </tr>
+                    <tr>
+                        <td>Analytics</td>
+                        <td class="before">✅ Present</td>
+                        <td class="after">✅ Present</td>
+                    </tr>
+                    <tr>
+                        <td>Settings</td>
+                        <td class="before">✅ Present</td>
+                        <td class="after">✅ Present</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Current Navigation Structure -->
+        <div class="test-section">
+            <h2>📋 Current Regional Distributor Navigation (7 items)</h2>
+            <div class="navigation-item">
+                <span>🏠 Dashboard</span>
+                <span>/distributor-regional/dashboard</span>
+            </div>
+            <div class="navigation-item updated">
+                <span>👥 Sales Team</span>
+                <span>/distributor-regional/sales-team (includes doctors)</span>
+            </div>
+            <div class="navigation-item">
+                <span>📋 IVR Management</span>
+                <span>/distributor-regional/ivr-management</span>
+            </div>
+            <div class="navigation-item">
+                <span>📦 Order Management</span>
+                <span>/distributor-regional/order-management</span>
+            </div>
+            <div class="navigation-item">
+                <span>🚚 Shipping & Logistics</span>
+                <span>/distributor-regional/shipping-logistics</span>
+            </div>
+            <div class="navigation-item">
+                <span>📊 Analytics</span>
+                <span>/distributor-regional/analytics</span>
+            </div>
+            <div class="navigation-item">
+                <span>⚙️ Settings</span>
+                <span>/distributor-regional/settings</span>
+            </div>
+
+            <div class="status error" style="margin-top: 15px;">
+                <strong>Removed:</strong>
+                <div class="navigation-item removed">
+                    <span>👨‍⚕️ Doctor Network</span>
+                    <span>/distributor-regional/doctor-network (REMOVED)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Changes -->
+        <div class="test-section">
+            <h2>📊 Dashboard Quick Actions Updated</h2>
+            <div class="status info">
+                Updated the "Manage Sales Team" quick action to show "8 reps + 34 doctors" instead of separate buttons.
+            </div>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Quick Action</th>
+                        <th class="before">Before</th>
+                        <th class="after">After</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Manage Sales Team</td>
+                        <td class="before">Separate button: "8 active reps"</td>
+                        <td class="after">Combined button: "8 reps + 34 doctors"</td>
+                    </tr>
+                    <tr>
+                        <td>Doctor Network</td>
+                        <td class="before">Separate button: "34 doctors"</td>
+                        <td class="after">❌ Removed (merged above)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Testing Links -->
+        <div class="test-section">
+            <h2>🔗 Testing Links</h2>
+            <div class="status info">
+                <strong>Test the Regional Distributor navigation to verify the changes:</strong>
+            </div>
+
+            <a href="http://localhost:3000/distributor-regional/dashboard" class="test-link" target="_blank">
+                Regional Distributor Dashboard
+            </a>
+            <a href="http://localhost:3000/distributor-regional/sales-team" class="test-link" target="_blank">
+                Sales Team (includes doctors)
+            </a>
+
+            <div class="status error" style="margin-top: 15px;">
+                <strong>This should return 404:</strong><br>
+                <a href="http://localhost:3000/distributor-regional/doctor-network" class="test-link" target="_blank" style="background-color: #ef4444;">
+                    Doctor Network (SHOULD 404)
+                </a>
+            </div>
+        </div>
+
+        <!-- Files Modified -->
+        <div class="test-section">
+            <h2>📁 Files Modified</h2>
+            <div class="checklist">
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox" checked disabled>
+                    <span><strong>frontend/src/utils/navigation.ts:</strong> Removed "Doctor Network" from createRegionalDistributorNavigation()</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox" checked disabled>
+                    <span><strong>frontend/src/App.tsx:</strong> Removed doctor-network route from Regional Distributor routes</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox" checked disabled>
+                    <span><strong>frontend/src/pages/distributor/RegionalDistributorDashboard.tsx:</strong> Updated quick actions to combine sales team and doctors</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Checklist -->
+        <div class="test-section">
+            <h2>✅ Verification Checklist</h2>
+            <div class="checklist">
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Regional Distributor sidebar shows 7 menu items (not 8)</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>"Sales Team" menu item is present and functional</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>"Doctor Network" menu item is NOT present in sidebar</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>/distributor-regional/doctor-network returns 404 error</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>/distributor-regional/sales-team loads correctly</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Dashboard quick action shows "8 reps + 34 doctors"</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>No separate "Doctor Network" quick action button</span>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checkbox">
+                    <span>Sales Team page includes both sales reps and doctors</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expected Results -->
+        <div class="test-section">
+            <h2>🎯 Expected Results</h2>
+            <div class="status success">
+                <h3>✅ Success Criteria</h3>
+                <ul>
+                    <li><strong>Navigation:</strong> Regional Distributor sidebar has 7 menu items (Dashboard, Sales Team, IVR Management, Order Management, Shipping & Logistics, Analytics, Settings)</li>
+                    <li><strong>Doctor Access:</strong> Doctors are accessed through "Sales Team" menu, not separate "Doctor Network" menu</li>
+                    <li><strong>Route Removal:</strong> /distributor-regional/doctor-network returns 404</li>
+                    <li><strong>Dashboard:</strong> Quick actions show combined "8 reps + 34 doctors" instead of separate buttons</li>
+                    <li><strong>Functionality:</strong> Sales Team page includes both sales representatives and their associated doctors</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="test-section">
+            <h2>🔧 Troubleshooting</h2>
+            <div class="status warning">
+                <h3>Common Issues</h3>
+                <ul>
+                    <li><strong>Still seeing Doctor Network:</strong> Clear browser cache and restart frontend server</li>
+                    <li><strong>404 Error on Sales Team:</strong> Ensure frontend server is running on localhost:3000</li>
+                    <li><strong>Navigation not updated:</strong> Verify RegionalDistributorLayout is using updated navigation</li>
+                    <li><strong>Quick actions not updated:</strong> Check RegionalDistributorDashboard component changes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
