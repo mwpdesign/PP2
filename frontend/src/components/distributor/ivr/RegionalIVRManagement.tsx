@@ -228,7 +228,7 @@ const RegionalIVRManagement: React.FC = () => {
     );
   };
 
-  // Define table columns
+  // Define table columns - Reduced to essential columns only
   const columns: TableColumn[] = [
     {
       key: 'id',
@@ -249,47 +249,15 @@ const RegionalIVRManagement: React.FC = () => {
       sortable: true
     },
     {
-      key: 'facility',
-      label: 'Facility',
-      sortable: true
-    },
-    {
-      key: 'type',
-      label: 'Type',
-      sortable: true
-    },
-    {
-      key: 'priority',
-      label: 'Priority',
-      sortable: true,
-      render: (value) => renderPriorityBadge(value)
-    },
-    {
       key: 'status',
       label: 'Status',
       sortable: true,
       render: (value) => renderStatusBadge(value)
     },
     {
-      key: 'insuranceProvider',
-      label: 'Insurance',
-      sortable: true
-    },
-    {
       key: 'submittedDate',
       label: 'Submitted',
       sortable: true
-    },
-    {
-      key: 'processingTime',
-      label: 'Processing Time',
-      sortable: false
-    },
-    {
-      key: 'orderGenerated',
-      label: 'Order Status',
-      sortable: true,
-      render: (value) => renderOrderStatus(value)
     },
     {
       key: 'actions',
