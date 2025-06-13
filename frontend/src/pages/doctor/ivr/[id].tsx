@@ -89,8 +89,15 @@ interface DoctorIVRDetail {
   }>;
 }
 
-const DoctorIVRDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+interface DoctorIVRDetailPageProps {
+  readOnly?: boolean;
+  userRole?: string;
+  id?: string;
+}
+
+const DoctorIVRDetailPage: React.FC<DoctorIVRDetailPageProps> = ({ readOnly = false, userRole = 'doctor', id: propId }) => {
+  const params = useParams<{ id: string }>();
+  const id = propId || params.id;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'communication' | 'documents'>('overview');
@@ -925,3 +932,4 @@ const DoctorIVRDetailPage: React.FC = () => {
 };
 
 export default DoctorIVRDetailPage;
+export { DoctorIVRDetailPage };
