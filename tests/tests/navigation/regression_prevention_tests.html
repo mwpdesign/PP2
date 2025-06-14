@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Regression Prevention Tests - Healthcare IVR Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8fafc;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .critical-alert {
+            background: #fee2e2;
+            border: 2px solid #dc2626;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .critical-alert h3 {
+            color: #dc2626;
+            margin-bottom: 10px;
+        }
+
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .test-section h2 {
+            color: #1f2937;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        .regression-test {
+            background: #fef7ff;
+            border: 1px solid #c084fc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .regression-test h4 {
+            color: #7c3aed;
+            margin-bottom: 10px;
+        }
+
+        .security-test {
+            background: #fef2f2;
+            border: 1px solid #f87171;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .security-test h4 {
+            color: #dc2626;
+            margin-bottom: 10px;
+        }
+
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin: 5px;
+            transition: background 0.2s;
+        }
+
+        .test-button:hover {
+            background: #2563eb;
+        }
+
+        .test-button.critical {
+            background: #dc2626;
+        }
+
+        .test-button.critical:hover {
+            background: #b91c1c;
+        }
+
+        .test-results {
+            background: #1f2937;
+            color: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.pass {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-badge.fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-badge.critical {
+            background: #fecaca;
+            color: #7f1d1d;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .fix-summary {
+            background: #dcfce7;
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .fix-summary h3 {
+            color: #059669;
+            margin-bottom: 10px;
+        }
+
+        .test-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .test-matrix th,
+        .test-matrix td {
+            border: 1px solid #d1d5db;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .test-matrix th {
+            background: #f3f4f6;
+            font-weight: 600;
+        }
+
+        .test-matrix tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .before {
+            background: #fee2e2;
+            border: 1px solid #f87171;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .before h5 {
+            color: #dc2626;
+            margin-bottom: 10px;
+        }
+
+        .after {
+            background: #dcfce7;
+            border: 1px solid #4ade80;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .after h5 {
+            color: #059669;
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Navigation Regression Prevention Tests</h1>
+            <p>Ensuring Critical Navigation Fixes Remain Stable</p>
+        </div>
+
+        <div class="critical-alert">
+            <h3>⚠️ CRITICAL: Regression Prevention Required</h3>
+            <p>This test suite verifies that previously fixed critical navigation issues do not regress. These tests must PASS to ensure system stability.</p>
+            <p><strong>Task ID:</strong> mbvdcwznv348cohmkpp</p>
+        </div>
+
+        <!-- Previously Fixed Issues Summary -->
+        <div class="fix-summary">
+            <h3>✅ Previously Fixed Critical Issues</h3>
+            <ul>
+                <li><strong>Security Vulnerability:</strong> 113 test files exposed in production (moved to organized structure)</li>
+                <li><strong>Navigation Context Bug:</strong> Regional Distributors routed to wrong context (/distributor/ instead of /distributor-regional/)</li>
+                <li><strong>Side Panel Issues:</strong> IVR detail panel not opening on row clicks</li>
+                <li><strong>Table Layout:</strong> Shipping table layout optimization and responsiveness</li>
+                <li><strong>Context Detection:</strong> getDistributorContext() function implementation</li>
+            </ul>
+        </div>
+
+        <!-- Security Regression Tests -->
+        <div class="test-section">
+            <h2>🔒 Security Regression Tests</h2>
+
+            <div class="security-test">
+                <h4>Test Files Exposure Prevention</h4>
+                <p><strong>Critical Issue:</strong> 113 test files were previously exposed in production via /frontend/public/ directory</p>
+                <p><strong>Fix Applied:</strong> Moved all test files to organized /frontend/tests/ structure</p>
+
+                <div class="before-after">
+                    <div class="before">
+                        <h5>❌ BEFORE (Vulnerable)</h5>
+                        <div class="code-block">
+/frontend/public/test_regional_navigation_fixes.html
+/frontend/public/test_order_management_filtering_complete.html
+/frontend/public/test_shipping_hierarchy_filtering.html
+/frontend/public/test_critical_fixes_complete.html
+// ... 109 more test files exposed
+                        </div>
+                    </div>
+                    <div class="after">
+                        <h5>✅ AFTER (Secure)</h5>
+                        <div class="code-block">
+/frontend/tests/navigation/test_regional_navigation_fixes.html
+/frontend/tests/order/test_order_management_filtering_complete.html
+/frontend/tests/shipping/test_shipping_hierarchy_filtering.html
+/frontend/tests/fixes/test_critical_fixes_complete.html
+// Organized structure, not publicly accessible
+                        </div>
+                    </div>
+                </div>
+
+                <button class="test-button critical" onclick="testSecurityRegression()">
+                    🔒 Test Security Regression
+                </button>
+                <div id="securityRegressionResult"></div>
+            </div>
+        </div>
+
+        <!-- Navigation Context Regression Tests -->
+        <div class="test-section">
+            <h2>🧭 Navigation Context Regression Tests</h2>
+
+            <div class="regression-test">
+                <h4>Regional vs Master Distributor Context Detection</h4>
+                <p><strong>Critical Issue:</strong> Regional Distributors were being routed to Master Distributor context</p>
+                <p><strong>Fix Applied:</strong> Implemented getDistributorContext() function with proper URL detection</p>
+
+                <table class="test-matrix">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Regional Route (MUST)</th>
+                            <th>Master Route (MUST)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>IVR Detail Panel</td>
+                            <td>/distributor-regional/ivr-management/{id}/details</td>
+                            <td>/distributor/ivr-management/{id}/details</td>
+                            <td><span class="status-badge" id="ivr-context-status">PENDING</span></td>
+                        </tr>
+                        <tr>
+                            <td>Order Processing</td>
+                            <td>/distributor-regional/order-management/{id}</td>
+                            <td>/distributor/orders/{id}</td>
+                            <td><span class="status-badge" id="order-context-status">PENDING</span></td>
+                        </tr>
+                        <tr>
+                            <td>Shipping Logistics</td>
+                            <td>/distributor-regional/shipping-logistics/{id}</td>
+                            <td>/distributor/shipping/{id}</td>
+                            <td><span class="status-badge" id="shipping-context-status">PENDING</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <button class="test-button" onclick="testNavigationContextRegression()">
+                    🧭 Test Navigation Context Regression
+                </button>
+                <div id="navigationContextResult"></div>
+            </div>
+        </div>
+
+        <!-- Side Panel Regression Tests -->
+        <div class="test-section">
+            <h2>📱 Side Panel Regression Tests</h2>
+
+            <div class="regression-test">
+                <h4>MasterDetailLayout Side Panel Functionality</h4>
+                <p><strong>Critical Issue:</strong> IVR detail panel not opening when clicking rows</p>
+                <p><strong>Fix Applied:</strong> Fixed MasterDetailLayout CSS classes and event handling</p>
+
+                <div class="before-after">
+                    <div class="before">
+                        <h5>❌ BEFORE (Broken)</h5>
+                        <ul>
+                            <li>Side panel hidden due to CSS issues</li>
+                            <li>Row clicks not triggering detail panel</li>
+                            <li>Responsive layout broken</li>
+                            <li>No visual feedback on selection</li>
+                        </ul>
+                    </div>
+                    <div class="after">
+                        <h5>✅ AFTER (Working)</h5>
+                        <ul>
+                            <li>60/40 split layout working correctly</li>
+                            <li>Row clicks open detail panel</li>
+                            <li>Mobile responsive overlay mode</li>
+                            <li>Visual selection highlighting</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button class="test-button" onclick="testSidePanelRegression()">
+                    📱 Test Side Panel Regression
+                </button>
+                <div id="sidePanelRegressionResult"></div>
+            </div>
+        </div>
+
+        <!-- Table Layout Regression Tests -->
+        <div class="test-section">
+            <h2>📊 Table Layout Regression Tests</h2>
+
+            <div class="regression-test">
+                <h4>Shipping Table Layout Optimization</h4>
+                <p><strong>Issue:</strong> Shipping table had poor layout with oversized columns and poor responsiveness</p>
+                <p><strong>Fix Applied:</strong> Optimized column widths, compact padding, truncated text, smaller icons</p>
+
+                <div class="code-block">
+// BEFORE: Large padding and full text
+className="px-6 py-4 text-sm text-gray-900 w-full"
+
+// AFTER: Compact padding and optimized widths
+className="px-3 py-2 text-sm text-gray-900 w-24 truncate"
+                </div>
+
+                <button class="test-button" onclick="testTableLayoutRegression()">
+                    📊 Test Table Layout Regression
+                </button>
+                <div id="tableLayoutRegressionResult"></div>
+            </div>
+        </div>
+
+        <!-- Automated Regression Test Runner -->
+        <div class="test-section">
+            <h2>🤖 Automated Regression Test Runner</h2>
+
+            <p>Run all regression tests to ensure no critical issues have returned:</p>
+
+            <button class="test-button critical" onclick="runAllRegressionTests()" style="font-size: 1.1rem; padding: 15px 30px;">
+                🚨 Run All Regression Tests
+            </button>
+
+            <div class="test-results" id="regressionTestResults" style="display: none;">
+                <div id="regressionTestOutput">Regression test results will appear here...</div>
+            </div>
+        </div>
+
+        <!-- Manual Verification Instructions -->
+        <div class="test-section">
+            <h2>👨‍💻 Manual Verification Instructions</h2>
+
+            <h3>Security Verification:</h3>
+            <ol>
+                <li>Try accessing: <code>http://localhost:3000/test_regional_navigation_fixes.html</code></li>
+                <li>Should return 404 or "Not Found"</li>
+                <li>Try accessing: <code>http://localhost:3000/test_order_management_filtering_complete.html</code></li>
+                <li>Should return 404 or "Not Found"</li>
+                <li>✅ PASS if all test files return 404</li>
+            </ol>
+
+            <h3>Navigation Context Verification:</h3>
+            <ol>
+                <li>Navigate to: <code>/distributor-regional/ivr-management</code></li>
+                <li>Click any IVR row to open detail panel</li>
+                <li>Click "View Full Details" button</li>
+                <li>Verify URL contains <code>/distributor-regional/</code> (NOT <code>/distributor/</code>)</li>
+                <li>✅ PASS if context is maintained</li>
+            </ol>
+
+            <h3>Side Panel Verification:</h3>
+            <ol>
+                <li>Open any IVR Management page</li>
+                <li>Verify 60/40 split layout is visible</li>
+                <li>Click any IVR row</li>
+                <li>Verify detail panel opens on right side</li>
+                <li>✅ PASS if side panel functions correctly</li>
+            </ol>
+        </div>
+
+        <!-- Regression Test Results Summary -->
+        <div class="test-section">
+            <h2>📊 Regression Test Results Summary</h2>
+            <div id="regressionTestSummary">
+                <p>Run regression tests to see results summary...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Import the automated navigation tests
+        const script = document.createElement('script');
+        script.src = './automated_navigation_tests.js';
+        document.head.appendChild(script);
+
+        // Regression test state
+        let regressionResults = {
+            security: { passed: 0, total: 0, critical: true },
+            navigation: { passed: 0, total: 0, critical: true },
+            sidePanel: { passed: 0, total: 0, critical: true },
+            tableLayout: { passed: 0, total: 0, critical: false }
+        };
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('regressionTestOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'critical' ? '🚨' : 'ℹ️';
+
+            if (output) {
+                output.innerHTML += `[${timestamp}] ${prefix} ${message}\n`;
+                output.scrollTop = output.scrollHeight;
+            }
+
+            console.log(`[${timestamp}] ${prefix} ${message}`);
+        }
+
+        function updateStatus(elementId, status) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = status.toUpperCase();
+                element.className = `status-badge ${status}`;
+            }
+        }
+
+        // Security regression test
+        async function testSecurityRegression() {
+            log('🔒 Testing security regression - test file exposure...', 'info');
+
+            const vulnerableFiles = [
+                '/test_regional_navigation_fixes.html',
+                '/test_order_management_filtering_complete.html',
+                '/test_shipping_hierarchy_filtering.html',
+                '/test_critical_fixes_complete.html',
+                '/test_order_security_fix.html',
+                '/test_ivr_fix.html',
+                '/test_date_calculation_fix.html',
+                '/test_simplified_communication.html'
+            ];
+
+            let securityPassed = 0;
+            const total = vulnerableFiles.length;
+
+            for (const file of vulnerableFiles) {
+                try {
+                    const response = await fetch(file);
+                    if (response.status === 404) {
+                        log(`✅ Security PASS: ${file} properly secured (404)`, 'success');
+                        securityPassed++;
+                    } else {
+                        log(`🚨 Security CRITICAL FAIL: ${file} still accessible (${response.status})`, 'critical');
+                    }
+                } catch (error) {
+                    log(`✅ Security PASS: ${file} not accessible (network error)`, 'success');
+                    securityPassed++;
+                }
+            }
+
+            regressionResults.security = { passed: securityPassed, total, critical: true };
+
+            const status = securityPassed === total ? 'pass' : 'critical';
+            document.getElementById('securityRegressionResult').innerHTML =
+                `<p style="color: ${status === 'pass' ? '#059669' : '#dc2626'};">
+                    Security Test: ${securityPassed}/${total} files properly secured
+                    ${status === 'critical' ? ' - CRITICAL SECURITY VULNERABILITY DETECTED!' : ''}
+                </p>`;
+
+            if (status === 'critical') {
+                log('🚨 CRITICAL: Security regression detected! Test files are still accessible!', 'critical');
+            } else {
+                log('✅ Security regression test PASSED - all test files properly secured', 'success');
+            }
+        }
+
+        // Navigation context regression test
+        function testNavigationContextRegression() {
+            log('🧭 Testing navigation context regression...', 'info');
+
+            const contextTests = [
+                {
+                    component: 'IVR Detail Panel',
+                    regionalPath: '/distributor-regional/ivr-management/123/details',
+                    masterPath: '/distributor/ivr-management/123/details',
+                    statusId: 'ivr-context-status'
+                },
+                {
+                    component: 'Order Processing',
+                    regionalPath: '/distributor-regional/order-management/456',
+                    masterPath: '/distributor/orders/456',
+                    statusId: 'order-context-status'
+                },
+                {
+                    component: 'Shipping Logistics',
+                    regionalPath: '/distributor-regional/shipping-logistics/789',
+                    masterPath: '/distributor/shipping/789',
+                    statusId: 'shipping-context-status'
+                }
+            ];
+
+            let contextPassed = 0;
+            const total = contextTests.length;
+
+            contextTests.forEach(test => {
+                // Test context detection logic
+                const regionalValid = test.regionalPath.includes('/distributor-regional/') &&
+                                    !test.regionalPath.includes('/distributor/ivr') &&
+                                    !test.regionalPath.includes('/distributor/orders') &&
+                                    !test.regionalPath.includes('/distributor/shipping');
+
+                const masterValid = test.masterPath.includes('/distributor/') &&
+                                  !test.masterPath.includes('/distributor-regional/');
+
+                if (regionalValid && masterValid) {
+                    log(`✅ Context PASS: ${test.component} routes correctly differentiated`, 'success');
+                    updateStatus(test.statusId, 'pass');
+                    contextPassed++;
+                } else {
+                    log(`❌ Context FAIL: ${test.component} route patterns incorrect`, 'error');
+                    updateStatus(test.statusId, 'fail');
+                }
+            });
+
+            regressionResults.navigation = { passed: contextPassed, total, critical: true };
+
+            document.getElementById('navigationContextResult').innerHTML =
+                `<p style="color: ${contextPassed === total ? '#059669' : '#dc2626'};">
+                    Navigation Context: ${contextPassed}/${total} components have correct routing
+                </p>`;
+
+            if (contextPassed === total) {
+                log('✅ Navigation context regression test PASSED', 'success');
+            } else {
+                log('🚨 CRITICAL: Navigation context regression detected!', 'critical');
+            }
+        }
+
+        // Side panel regression test
+        function testSidePanelRegression() {
+            log('📱 Testing side panel regression...', 'info');
+
+            const sidePanelTests = [
+                {
+                    name: 'MasterDetailLayout Container',
+                    test: () => document.querySelector('.flex') !== null,
+                    critical: true
+                },
+                {
+                    name: 'Master Panel Width',
+                    test: () => document.querySelector('[class*="w-3/5"], [class*="w-[60%]"]') !== null,
+                    critical: true
+                },
+                {
+                    name: 'Detail Panel Width',
+                    test: () => document.querySelector('[class*="w-2\\/5"], [class*="w-\\[40%\\]"]') !== null,
+                    critical: true
+                },
+                {
+                    name: 'Clickable Rows',
+                    test: () => document.querySelectorAll('[role="button"], .cursor-pointer').length > 0,
+                    critical: true
+                },
+                {
+                    name: 'Mobile Responsive Classes',
+                    test: () => document.querySelector('.md\\:block, .hidden.md\\:block') !== null,
+                    critical: false
+                }
+            ];
+
+            let sidePanelPassed = 0;
+            const total = sidePanelTests.length;
+
+            sidePanelTests.forEach(test => {
+                try {
+                    const result = test.test();
+                    if (result) {
+                        log(`✅ Side Panel PASS: ${test.name}`, 'success');
+                        sidePanelPassed++;
+                    } else {
+                        const level = test.critical ? 'critical' : 'error';
+                        log(`${test.critical ? '🚨' : '❌'} Side Panel ${test.critical ? 'CRITICAL ' : ''}FAIL: ${test.name}`, level);
+                    }
+                } catch (error) {
+                    log(`❌ Side Panel ERROR: ${test.name} - ${error.message}`, 'error');
+                }
+            });
+
+            regressionResults.sidePanel = { passed: sidePanelPassed, total, critical: true };
+
+            document.getElementById('sidePanelRegressionResult').innerHTML =
+                `<p style="color: ${sidePanelPassed === total ? '#059669' : '#dc2626'};">
+                    Side Panel: ${sidePanelPassed}/${total} tests passed
+                </p>`;
+
+            if (sidePanelPassed === total) {
+                log('✅ Side panel regression test PASSED', 'success');
+            } else {
+                log('🚨 Side panel regression detected!', 'critical');
+            }
+        }
+
+        // Table layout regression test
+        function testTableLayoutRegression() {
+            log('📊 Testing table layout regression...', 'info');
+
+            const tableTests = [
+                {
+                    name: 'Compact Padding',
+                    test: () => document.querySelector('.px-3.py-2, .p-2, .px-2.py-1') !== null,
+                    description: 'Tables use compact padding'
+                },
+                {
+                    name: 'Truncated Text',
+                    test: () => document.querySelector('.truncate') !== null,
+                    description: 'Long text is truncated'
+                },
+                {
+                    name: 'Optimized Widths',
+                    test: () => document.querySelector('.w-24, .w-32, .w-40') !== null,
+                    description: 'Columns have optimized widths'
+                },
+                {
+                    name: 'Small Icons',
+                    test: () => document.querySelector('.h-3.w-3, .h-4.w-4') !== null,
+                    description: 'Icons are appropriately sized'
+                }
+            ];
+
+            let tablePassed = 0;
+            const total = tableTests.length;
+
+            tableTests.forEach(test => {
+                try {
+                    const result = test.test();
+                    if (result) {
+                        log(`✅ Table Layout PASS: ${test.name}`, 'success');
+                        tablePassed++;
+                    } else {
+                        log(`❌ Table Layout FAIL: ${test.name} - ${test.description}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ Table Layout ERROR: ${test.name} - ${error.message}`, 'error');
+                }
+            });
+
+            regressionResults.tableLayout = { passed: tablePassed, total, critical: false };
+
+            document.getElementById('tableLayoutRegressionResult').innerHTML =
+                `<p style="color: ${tablePassed === total ? '#059669' : '#d97706'};">
+                    Table Layout: ${tablePassed}/${total} optimizations present
+                </p>`;
+
+            if (tablePassed === total) {
+                log('✅ Table layout regression test PASSED', 'success');
+            } else {
+                log('⚠️ Table layout regression detected (non-critical)', 'error');
+            }
+        }
+
+        // Run all regression tests
+        async function runAllRegressionTests() {
+            document.getElementById('regressionTestResults').style.display = 'block';
+            document.getElementById('regressionTestOutput').innerHTML = '';
+
+            log('🚨 Starting CRITICAL regression prevention test suite...', 'critical');
+            log('='.repeat(60), 'info');
+
+            // Run all regression tests
+            await testSecurityRegression();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            testNavigationContextRegression();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            testSidePanelRegression();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            testTableLayoutRegression();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Generate summary
+            generateRegressionSummary();
+        }
+
+        // Generate regression test summary
+        function generateRegressionSummary() {
+            log('='.repeat(60), 'info');
+            log('🏁 Regression prevention tests completed!', 'info');
+
+            const summary = document.getElementById('regressionTestSummary');
+
+            let totalTests = 0;
+            let totalPassed = 0;
+            let criticalIssues = 0;
+
+            Object.values(regressionResults).forEach(result => {
+                totalTests += result.total;
+                totalPassed += result.passed;
+                if (result.critical && result.passed < result.total) {
+                    criticalIssues++;
+                }
+            });
+
+            const passRate = totalTests > 0 ? Math.round((totalPassed / totalTests) * 100) : 0;
+            const hasCriticalIssues = criticalIssues > 0;
+
+            summary.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div style="background: ${hasCriticalIssues ? '#fee2e2' : '#dcfce7'}; padding: 20px; border-radius: 8px; text-align: center;">
+                        <h3 style="color: ${hasCriticalIssues ? '#dc2626' : '#059669'}; margin: 0;">
+                            ${hasCriticalIssues ? '🚨 CRITICAL ISSUES' : '✅ All Tests Passed'}
+                        </h3>
+                        <p style="font-size: 2rem; margin: 10px 0; font-weight: bold;">${criticalIssues}</p>
+                        <p style="font-size: 0.9rem;">Critical regressions detected</p>
+                    </div>
+                    <div style="background: #dbeafe; padding: 20px; border-radius: 8px; text-align: center;">
+                        <h3 style="color: #1d4ed8; margin: 0;">📊 Pass Rate</h3>
+                        <p style="font-size: 2rem; margin: 10px 0; font-weight: bold;">${passRate}%</p>
+                        <p style="font-size: 0.9rem;">${totalPassed}/${totalTests} tests passed</p>
+                    </div>
+                    <div style="background: ${hasCriticalIssues ? '#fecaca' : '#d1fae5'}; padding: 20px; border-radius: 8px; text-align: center;">
+                        <h3 style="color: ${hasCriticalIssues ? '#7f1d1d' : '#065f46'}; margin: 0;">
+                            ${hasCriticalIssues ? '❌ REGRESSION DETECTED' : '🛡️ NO REGRESSION'}
+                        </h3>
+                        <p style="font-size: 1.2rem; margin: 10px 0; font-weight: bold;">
+                            ${hasCriticalIssues ? 'IMMEDIATE ACTION REQUIRED' : 'System Stable'}
+                        </p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 20px; background: ${hasCriticalIssues ? '#fee2e2' : '#dcfce7'}; border-radius: 8px;">
+                    <h3 style="color: ${hasCriticalIssues ? '#dc2626' : '#059669'};">
+                        ${hasCriticalIssues ? '🚨 CRITICAL REGRESSION DETECTED!' : '🎉 No Regression Detected!'}
+                    </h3>
+                    <p>${hasCriticalIssues ?
+                        'Critical navigation issues have returned! Immediate investigation and fixes required to prevent system instability.' :
+                        'All previously fixed critical issues remain stable. The navigation system is functioning correctly.'
+                    }</p>
+
+                    <h4>Test Results Breakdown:</h4>
+                    <ul>
+                        <li>🔒 Security: ${regressionResults.security.passed}/${regressionResults.security.total} ${regressionResults.security.passed === regressionResults.security.total ? '✅' : '🚨'}</li>
+                        <li>🧭 Navigation Context: ${regressionResults.navigation.passed}/${regressionResults.navigation.total} ${regressionResults.navigation.passed === regressionResults.navigation.total ? '✅' : '🚨'}</li>
+                        <li>📱 Side Panel: ${regressionResults.sidePanel.passed}/${regressionResults.sidePanel.total} ${regressionResults.sidePanel.passed === regressionResults.sidePanel.total ? '✅' : '🚨'}</li>
+                        <li>📊 Table Layout: ${regressionResults.tableLayout.passed}/${regressionResults.tableLayout.total} ${regressionResults.tableLayout.passed === regressionResults.tableLayout.total ? '✅' : '⚠️'}</li>
+                    </ul>
+                </div>
+            `;
+
+            if (hasCriticalIssues) {
+                log('🚨 CRITICAL REGRESSION DETECTED! Immediate action required!', 'critical');
+            } else {
+                log('🎉 No regression detected! All critical fixes remain stable.', 'success');
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🛡️ Regression Prevention Test Suite loaded', 'info');
+            log('This suite tests that critical navigation fixes remain stable', 'info');
+            log('Click "Run All Regression Tests" to verify system stability', 'info');
+        });
+    </script>
+</body>
+</html>

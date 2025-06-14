@@ -50,12 +50,6 @@ const RegionalIVRManagement: React.FC = () => {
       if (isMountedRef.current) {
         setFilterResult(result);
         setFilteredData(result.filteredData || []);
-
-        // Clear selected IVR if it's not in the filtered results
-        if (selectedIVR && result.filteredData && !result.filteredData.find(ivr => ivr.id === selectedIVR.id)) {
-          console.log('🚫 Clearing selected IVR - not in filtered results');
-          setSelectedIVR(null);
-        }
       }
 
     } catch (error) {
@@ -71,7 +65,7 @@ const RegionalIVRManagement: React.FC = () => {
         setIsLoading(false);
       }
     }
-  }, [user, selectedIVR]); // Include selectedIVR in dependencies
+  }, [user]); // Removed selectedIVR dependency to prevent infinite loops
 
   useEffect(() => {
     loadFilteredData();
@@ -79,6 +73,7 @@ const RegionalIVRManagement: React.FC = () => {
 
   // Cleanup function to prevent memory leaks
   useEffect(() => {
+    isMountedRef.current = true; // Ensure component is marked as mounted
     return () => {
       isMountedRef.current = false;
     };
@@ -86,19 +81,22 @@ const RegionalIVRManagement: React.FC = () => {
 
   // Handle IVR selection from the list
   const handleIVRSelect = useCallback((ivr: SharedIVRRequest) => {
-    console.log('🔍 [RegionalIVRManagement] IVR selected:', ivr.ivrNumber, ivr.id);
-    console.log('🔍 [RegionalIVRManagement] Previous selectedIVR:', selectedIVR?.ivrNumber);
-    if (isMountedRef.current) {
-      setSelectedIVR(ivr);
-      console.log('🔍 [RegionalIVRManagement] selectedIVR state updated');
-    }
-  }, [selectedIVR]);
+    console.log('🔵 [STEP 2] RegionalIVRManagement - handleIVRSelect called!');
+    console.log('🔵 [STEP 2] Received IVR:', ivr.ivrNumber, ivr.id);
+    console.log('🔵 [STEP 2] Previous selectedIVR:', selectedIVR?.ivrNumber || 'null');
+    console.log('🔵 [STEP 2] isMountedRef.current:', isMountedRef.current);
+    console.log('🔵 [STEP 2] About to call setSelectedIVR...');
+
+    // Always update state - remove mounted check that's causing issues
+    setSelectedIVR(ivr);
+    console.log('🔵 [STEP 2] setSelectedIVR called with:', ivr.ivrNumber);
+    console.log('🔵 [STEP 2] showDetail will be:', !!ivr);
+    console.log('🔵 [STEP 2] State update should trigger re-render');
+  }, []); // Removed selectedIVR dependency to prevent callback recreation
 
   // Handle closing the detail panel (mobile)
   const handleCloseDetail = useCallback(() => {
-    if (isMountedRef.current) {
-      setSelectedIVR(null);
-    }
+    setSelectedIVR(null);
   }, []);
 
   if (isLoading) {
@@ -217,16 +215,31 @@ const RegionalIVRManagement: React.FC = () => {
   );
 
   return (
-    <div className="h-screen bg-gray-50">
+    <div className="h-screen bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
       {/* Debug logging */}
-      {console.log('🔍 [RegionalIVRManagement] Render - selectedIVR:', selectedIVR?.ivrNumber || 'null')}
-      {console.log('🔍 [RegionalIVRManagement] Render - showDetail:', !!selectedIVR)}
+      {console.log('🟡 [STEP 3] RegionalIVRManagement - RENDER TRIGGERED')}
+      {console.log('🟡 [STEP 3] selectedIVR:', selectedIVR?.ivrNumber || 'null')}
+      {console.log('🟡 [STEP 3] selectedIVR ID:', selectedIVR?.id || 'null')}
+      {console.log('🟡 [STEP 3] showDetail value:', !!selectedIVR)}
+      {console.log('🟡 [STEP 3] filteredData length:', filteredData?.length || 0)}
+      {console.log('🟡 [STEP 3] handleIVRSelect type:', typeof handleIVRSelect)}
+      {console.log('🟡 [STEP 3] detailPanel type:', selectedIVR ? 'IVRDetailPanel' : 'IVREmptyState')}
+      {console.log('🟡 [STEP 3] About to pass showDetail to MasterDetailLayout:', !!selectedIVR)}
+
+      {/* Debug info overlay */}
+      <div className="fixed top-4 right-4 bg-black bg-opacity-75 text-white p-2 rounded text-xs z-50">
+        <div>Selected: {selectedIVR?.ivrNumber || 'None'}</div>
+        <div>Show Detail: {!!selectedIVR ? 'Yes' : 'No'}</div>
+        <div>Data Count: {filteredData?.length || 0}</div>
+        <div>Detail Panel: {selectedIVR ? 'IVRDetailPanel' : 'IVREmptyState'}</div>
+        <div>MasterDetailLayout showDetail: {!!selectedIVR ? 'true' : 'false'}</div>
+      </div>
 
       <MasterDetailLayout
         masterPanel={masterPanel}
         detailPanel={detailPanel}
         showDetail={!!selectedIVR}
-        className="h-full"
+        className="h-full w-full"
         minHeight="100vh"
       />
     </div>

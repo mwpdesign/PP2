@@ -55,6 +55,11 @@ const IVRListComponent: React.FC<IVRListComponentProps> = ({
   showFilters = true,
   compact = false
 }) => {
+  // Debug logging for props
+  console.log('🟢 [STEP 0] IVRListComponent - Props received');
+  console.log('🟢 [STEP 0] ivrRequests count:', ivrRequests?.length || 0);
+  console.log('🟢 [STEP 0] selectedIVR:', selectedIVR?.ivrNumber || 'null');
+  console.log('🟢 [STEP 0] onSelectIVR callback:', typeof onSelectIVR, !!onSelectIVR);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('all');
@@ -144,9 +149,17 @@ const IVRListComponent: React.FC<IVRListComponentProps> = ({
 
   // Handle row click
   const handleRowClick = useCallback((request: SharedIVRRequest) => {
-    console.log('🔍 [IVRListComponent] Row clicked:', request.ivrNumber, request.id);
-    console.log('🔍 [IVRListComponent] onSelectIVR callback:', typeof onSelectIVR);
+    console.log('🟢 [STEP 1] IVRListComponent - Row clicked!');
+    console.log('🟢 [STEP 1] IVR Number:', request.ivrNumber);
+    console.log('🟢 [STEP 1] IVR ID:', request.id);
+    console.log('🟢 [STEP 1] Patient Name:', request.patientName);
+    console.log('🟢 [STEP 1] onSelectIVR callback type:', typeof onSelectIVR);
+    console.log('🟢 [STEP 1] onSelectIVR callback exists:', !!onSelectIVR);
+    console.log('🟢 [STEP 1] About to call onSelectIVR...');
+
     onSelectIVR(request);
+
+    console.log('🟢 [STEP 1] onSelectIVR called successfully');
     setOpenMenuId(null);
   }, [onSelectIVR]);
 

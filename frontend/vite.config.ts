@@ -18,6 +18,15 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',  // Allow connections from all network interfaces
     strictPort: true,   // Fail if port is in use
+    // SECURITY: Prevent serving test files in development
+    fs: {
+      deny: [
+        '**/tests/**',
+        '**/*.test.*',
+        '**/*.spec.*',
+        '**/test_*.html'
+      ]
+    },
     proxy: {
       '/api/v1': {
         target: 'http://localhost:8000',
@@ -60,4 +69,6 @@ export default defineConfig({
     'process.env': process.env,
     global: 'globalThis',
   },
+  // SECURITY: Ensure tests directory is not included in production builds
+  publicDir: 'public',
 });

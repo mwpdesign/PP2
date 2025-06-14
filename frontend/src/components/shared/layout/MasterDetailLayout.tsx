@@ -36,66 +36,54 @@ const MasterDetailLayout: React.FC<MasterDetailLayoutProps> = ({
   showDetail = true,
   minHeight = 'calc(100vh - 80px)'
 }) => {
+  // Debug logging
+  console.log('🟠 [STEP 4] MasterDetailLayout - RENDER TRIGGERED');
+  console.log('🟠 [STEP 4] showDetail prop received:', showDetail);
+  console.log('🟠 [STEP 4] detailPanel exists:', !!detailPanel);
+  console.log('🟠 [STEP 4] masterPanel exists:', !!masterPanel);
+  console.log('🟠 [STEP 4] Will render detail panel?', showDetail && !!detailPanel);
+
   return (
     <div
       className={`flex ${className}`}
       style={{ minHeight }}
     >
-      {/* Master Panel (List View) - 60% width */}
+      {/* Master Panel (List View) - Desktop: 60% width, Mobile: Full width when no detail */}
       <div
         className={`
-          ${showDetail ? 'w-3/5' : 'w-full'}
-          bg-white
-          border-r
-          border-gray-200
-          overflow-y-auto
-          transition-all
-          duration-300
-          ease-in-out
-          flex-shrink-0
+          ${showDetail
+            ? 'hidden md:block md:w-3/5' // Hidden on mobile when detail is shown, 60% on desktop
+            : 'w-full' // Full width when no detail selected
+          }
+          bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0
         `}
+        style={{
+          transition: 'all 300ms ease-in-out'
+        }}
       >
         {masterPanel}
       </div>
 
-      {/* Detail Panel (Detail View) - 40% width - Desktop */}
+      {/* Detail Panel (Detail View) - Desktop: 40% width, Mobile: Full width overlay */}
       {showDetail && (
         <div
           className="
-            w-2/5
-            bg-white
-            overflow-y-auto
-            transition-all
-            duration-300
-            ease-in-out
-            flex-shrink-0
-            hidden
-            md:block
+            w-full md:w-2/5
+            bg-white overflow-y-auto flex-shrink-0
+            fixed md:relative
+            inset-0 md:inset-auto
+            z-50 md:z-auto
           "
+          style={{
+            transition: 'all 300ms ease-in-out'
+          }}
         >
+          {console.log('🟠 [STEP 4] Detail panel DIV is rendering!')}
+          {console.log('🟠 [STEP 4] Detail panel content:', !!detailPanel)}
           {detailPanel}
         </div>
       )}
-
-      {/* Mobile Detail Panel (Full Width Overlay) - Only on mobile */}
-      {showDetail && (
-        <div
-          className="
-            fixed
-            inset-0
-            bg-white
-            z-50
-            overflow-y-auto
-            block
-            md:hidden
-            transition-transform
-            duration-300
-            ease-in-out
-          "
-        >
-          {detailPanel}
-        </div>
-      )}
+      {!showDetail && console.log('🔴 [STEP 4] Detail panel NOT rendering - showDetail is false')}
     </div>
   );
 };

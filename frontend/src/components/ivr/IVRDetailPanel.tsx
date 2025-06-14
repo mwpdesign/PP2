@@ -165,20 +165,35 @@ const IVRDetailPanel: React.FC<IVRDetailPanelProps> = ({
   return (
     <div className={`flex flex-col h-full bg-white ${className}`}>
       {/* Header */}
-      <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <div className="flex-shrink-0 px-4 md:px-6 py-4 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{ivr.ivrNumber}</h2>
-            <p className="text-sm text-gray-600">IVR Request Details</p>
-            {/* Debug context indicator */}
-            <div className="mt-1 text-xs text-blue-600">
-              Context: {distributorContext === 'regional' ? 'Regional Distributor' : 'Master Distributor'}
+          <div className="flex items-center space-x-3">
+            {/* Mobile Back Button */}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="md:hidden inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                aria-label="Back to list"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{ivr.ivrNumber}</h2>
+              <p className="text-sm text-gray-600">IVR Request Details</p>
+              {/* Debug context indicator */}
+              <div className="mt-1 text-xs text-blue-600">
+                Context: {distributorContext === 'regional' ? 'Regional Distributor' : 'Master Distributor'}
+              </div>
             </div>
           </div>
+          {/* Desktop Close Button */}
           {onClose && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="hidden md:block text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Close detail panel"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,9 +206,9 @@ const IVRDetailPanel: React.FC<IVRDetailPanelProps> = ({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
           {/* Status and Priority */}
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-2 md:gap-4">
             <div className="flex items-center space-x-2">
               <StatusIcon className="w-5 h-5 text-gray-500" />
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(ivr.status)}`}>
@@ -328,7 +343,7 @@ const IVRDetailPanel: React.FC<IVRDetailPanelProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50">
+      <div className="flex-shrink-0 px-4 md:px-6 py-4 border-t border-gray-200 bg-gray-50">
         <div className="flex flex-col space-y-2">
           <button
             onClick={handleViewFullDetails}

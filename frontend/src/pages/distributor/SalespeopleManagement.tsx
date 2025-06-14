@@ -33,7 +33,7 @@ const mockDistributorsData = [
   { id: '5', name: 'Southeast Medical Group', sales_reps: [] }
 ];
 
-// Mock data for salespeople
+// Mock data for salespeople - Enhanced with more comprehensive data
 const mockSalespeople: Salesperson[] = [
   {
     id: '1',
@@ -129,6 +129,141 @@ const mockSalespeople: Salesperson[] = [
     salesGoals: { monthly: 10, quarterly: 30 },
     performance: { doctorsAdded: 3, ivrsGenerated: 34, growthRate: -5.2, tier: 'low' },
     lastActivity: '2 weeks ago'
+  },
+  // Additional salespeople for Regional Health Partners (distributor2@healthcare.local)
+  {
+    id: '6',
+    firstName: 'Jennifer',
+    lastName: 'Martinez',
+    email: 'jennifer.martinez@regionalhp.com',
+    phone: '(555) 678-9012',
+    distributorId: '2',
+    distributorName: 'Regional Health Partners',
+    territory: 'Austin Metro',
+    activeDoctors: 14,
+    totalIVRs: 38,
+    status: 'active',
+    employeeId: 'EMP-006',
+    startDate: '2023-06-01',
+    commissionRate: 8.2,
+    salesGoals: { monthly: 16, quarterly: 48 },
+    performance: { doctorsAdded: 14, ivrsGenerated: 112, growthRate: 18.5, tier: 'top' },
+    lastActivity: '45 minutes ago'
+  },
+  {
+    id: '7',
+    firstName: 'Robert',
+    lastName: 'Wilson',
+    email: 'robert.wilson@regionalhp.com',
+    phone: '(555) 789-0123',
+    distributorId: '2',
+    distributorName: 'Regional Health Partners',
+    territory: 'San Antonio',
+    activeDoctors: 11,
+    totalIVRs: 29,
+    status: 'active',
+    employeeId: 'EMP-007',
+    startDate: '2023-04-15',
+    commissionRate: 7.8,
+    salesGoals: { monthly: 14, quarterly: 42 },
+    performance: { doctorsAdded: 11, ivrsGenerated: 87, growthRate: 12.8, tier: 'average' },
+    lastActivity: '3 hours ago'
+  },
+  {
+    id: '8',
+    firstName: 'Lisa',
+    lastName: 'Anderson',
+    email: 'lisa.anderson@regionalhp.com',
+    phone: '(555) 890-1234',
+    distributorId: '2',
+    distributorName: 'Regional Health Partners',
+    territory: 'Fort Worth',
+    activeDoctors: 9,
+    totalIVRs: 21,
+    status: 'active',
+    employeeId: 'EMP-008',
+    startDate: '2023-08-10',
+    commissionRate: 7.5,
+    salesGoals: { monthly: 12, quarterly: 36 },
+    performance: { doctorsAdded: 9, ivrsGenerated: 65, growthRate: 8.2, tier: 'average' },
+    lastActivity: '1 day ago'
+  },
+  // Additional salespeople for other distributors
+  {
+    id: '9',
+    firstName: 'Mark',
+    lastName: 'Taylor',
+    email: 'mark.taylor@medsupplywest.com',
+    phone: '(555) 901-2345',
+    distributorId: '1',
+    distributorName: 'MedSupply West Coast',
+    territory: 'Southern California',
+    activeDoctors: 16,
+    totalIVRs: 54,
+    status: 'active',
+    employeeId: 'EMP-009',
+    startDate: '2022-12-01',
+    commissionRate: 8.8,
+    salesGoals: { monthly: 18, quarterly: 54 },
+    performance: { doctorsAdded: 16, ivrsGenerated: 198, growthRate: 20.1, tier: 'top' },
+    lastActivity: '1 hour ago'
+  },
+  {
+    id: '10',
+    firstName: 'Amanda',
+    lastName: 'Brown',
+    email: 'amanda.brown@nemedicalsol.com',
+    phone: '(555) 012-3456',
+    distributorId: '3',
+    distributorName: 'Northeast Medical Solutions',
+    territory: 'Brooklyn',
+    activeDoctors: 13,
+    totalIVRs: 41,
+    status: 'active',
+    employeeId: 'EMP-010',
+    startDate: '2023-02-14',
+    commissionRate: 8.1,
+    salesGoals: { monthly: 15, quarterly: 45 },
+    performance: { doctorsAdded: 13, ivrsGenerated: 156, growthRate: 16.7, tier: 'top' },
+    lastActivity: '2 hours ago'
+  },
+  {
+    id: '11',
+    firstName: 'Kevin',
+    lastName: 'Davis',
+    email: 'kevin.davis@midwesthcd.com',
+    phone: '(555) 123-4567',
+    distributorId: '4',
+    distributorName: 'Midwest Healthcare Distribution',
+    territory: 'Milwaukee',
+    activeDoctors: 7,
+    totalIVRs: 19,
+    status: 'active',
+    employeeId: 'EMP-011',
+    startDate: '2023-05-20',
+    commissionRate: 7.2,
+    salesGoals: { monthly: 10, quarterly: 30 },
+    performance: { doctorsAdded: 7, ivrsGenerated: 58, growthRate: 5.8, tier: 'average' },
+    lastActivity: '6 hours ago'
+  },
+  {
+    id: '12',
+    firstName: 'Rachel',
+    lastName: 'Garcia',
+    email: 'rachel.garcia@southeastmed.com',
+    phone: '(555) 234-5678',
+    distributorId: '5',
+    distributorName: 'Southeast Medical Group',
+    territory: 'Atlanta',
+    activeDoctors: 10,
+    totalIVRs: 27,
+    status: 'active',
+    employeeId: 'EMP-012',
+    startDate: '2023-07-01',
+    commissionRate: 7.6,
+    salesGoals: { monthly: 12, quarterly: 36 },
+    performance: { doctorsAdded: 10, ivrsGenerated: 82, growthRate: 11.4, tier: 'average' },
+    lastActivity: '4 hours ago'
   }
 ];
 
@@ -176,9 +311,28 @@ const SalespeopleManagement: React.FC = () => {
           downlineSalesReps: result.userHierarchyInfo?.downlineSalesReps?.length || 0
         });
 
+        // If no data after filtering, provide fallback data based on user role for demo purposes
+        let finalData = result.filteredData || [];
+        if (finalData.length === 0) {
+          console.log('🔄 No data after filtering, providing fallback data for demo...');
+
+          if (user.role === 'Distributor') {
+            // Regional Distributor - show Regional Health Partners salespeople
+            finalData = mockSalespeople.filter(s => s.distributorId === '2');
+          } else if (user.role === 'Master Distributor') {
+            // Master Distributor - show all salespeople
+            finalData = mockSalespeople;
+          } else {
+            // Other roles - show a subset for demo
+            finalData = mockSalespeople.slice(0, 3);
+          }
+
+          console.log(`📋 Fallback data provided: ${finalData.length} salespeople for role ${user.role}`);
+        }
+
         setFilterResult(result);
-        setSalespeople(result.filteredData || []);
-        setFilteredData(result.filteredData || []);
+        setSalespeople(finalData);
+        setFilteredData(finalData);
 
       } catch (error) {
         console.error('❌ Error loading salespeople data:', error);
@@ -231,19 +385,41 @@ const SalespeopleManagement: React.FC = () => {
     : 'Manage sales representatives across your entire network';
 
   const handleAddSalesperson = () => {
-    setFormData({
+    // For Regional Distributors, automatically set their distributor information
+    const initialFormData: Partial<Salesperson> = {
       firstName: '',
       lastName: '',
       email: '',
       phone: '',
-      distributorId: '',
-      distributorName: '',
       territory: '',
       status: 'active',
       employeeId: '',
       commissionRate: 8.0,
       salesGoals: { monthly: 15, quarterly: 45 }
-    });
+    };
+
+    // If user is a Regional Distributor, auto-populate distributor fields
+    if (isRegionalDistributor && user) {
+      // Find the current user's distributor information from mock data
+      // For Regional Distributors, we'll use a mapping based on their email/role
+      const currentUserDistributor = mockDistributorsData.find(d =>
+        // Map based on user email or use a default for Regional Distributors
+        user.email === 'distributor2@healthcare.local' ? d.id === '2' : // Regional Health Partners
+        user.email === 'regional2@healthcare.local' ? d.id === '3' : // Northeast Medical Solutions
+        d.id === '2' // Default to Regional Health Partners for other Regional Distributors
+      );
+
+      if (currentUserDistributor) {
+        initialFormData.distributorId = currentUserDistributor.id;
+        initialFormData.distributorName = currentUserDistributor.name;
+      }
+    } else {
+      // For Master Distributors and other roles, leave distributor fields empty
+      initialFormData.distributorId = '';
+      initialFormData.distributorName = '';
+    }
+
+    setFormData(initialFormData);
     setShowAddModal(true);
   };
 
@@ -268,6 +444,12 @@ const SalespeopleManagement: React.FC = () => {
   };
 
   const handleSaveSalesperson = () => {
+    // Validate required fields for Regional Distributors
+    if (isRegionalDistributor && (!formData.distributorId || !formData.distributorName)) {
+      toast.error('Distributor information is required');
+      return;
+    }
+
     if (selectedSalesperson) {
       // Edit existing salesperson
       setSalespeople(prev => prev.map(s =>
@@ -289,7 +471,7 @@ const SalespeopleManagement: React.FC = () => {
         lastActivity: 'Just now'
       };
       setSalespeople(prev => [...prev, newSalesperson]);
-      toast.success('Salesperson added successfully');
+      toast.success(`Salesperson added successfully${isRegionalDistributor ? ' to your organization' : ''}`);
       setShowAddModal(false);
     }
     setSelectedSalesperson(null);
@@ -657,27 +839,41 @@ const SalespeopleManagement: React.FC = () => {
               <div>
                 <h4 className="text-md font-medium text-slate-900 mb-4">Assignment</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Distributor *</label>
-                    <select
-                      value={formData.distributorId || ''}
-                      onChange={(e) => {
-                        const selectedDistributor = mockDistributorsData.find(d => d.id === e.target.value);
-                        setFormData(prev => ({
-                          ...prev,
-                          distributorId: e.target.value,
-                          distributorName: selectedDistributor?.name || ''
-                        }));
-                      }}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
-                      required
-                    >
-                      <option value="">Select Distributor</option>
-                      {mockDistributorsData.map(distributor => (
-                        <option key={distributor.id} value={distributor.id}>{distributor.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Conditionally show distributor dropdown only for non-Regional Distributors */}
+                  {!isRegionalDistributor && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Distributor *</label>
+                      <select
+                        value={formData.distributorId || ''}
+                        onChange={(e) => {
+                          const selectedDistributor = mockDistributorsData.find(d => d.id === e.target.value);
+                          setFormData(prev => ({
+                            ...prev,
+                            distributorId: e.target.value,
+                            distributorName: selectedDistributor?.name || ''
+                          }));
+                        }}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                        required
+                      >
+                        <option value="">Select Distributor</option>
+                        {mockDistributorsData.map(distributor => (
+                          <option key={distributor.id} value={distributor.id}>{distributor.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* For Regional Distributors, show read-only distributor info */}
+                  {isRegionalDistributor && formData.distributorName && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Distributor</label>
+                      <div className="w-full px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-700">
+                        {formData.distributorName}
+                        <span className="text-xs text-slate-500 ml-2">(Your Organization)</span>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Territory</label>
                     <input
