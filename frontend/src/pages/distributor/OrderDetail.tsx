@@ -27,11 +27,6 @@ const OrderDetail: React.FC = () => {
 
   return (
     <div>
-      <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-        <strong>DEBUG: DistributorOrderDetail Component Loaded Successfully!</strong>
-        <br />Order ID: {id}
-        <br />URL: {window.location.href}
-      </div>
       <OrderDetailPage id={id} readOnly={true} userRole="master_distributor" />
     </div>
   );

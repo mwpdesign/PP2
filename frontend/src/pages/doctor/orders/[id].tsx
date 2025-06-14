@@ -600,7 +600,7 @@ const OrderDetailPage: React.FC<OrderDetailPageProps> = ({
             Print Order Summary
           </button>
 
-          {order.ivr_request_id && (
+          {order.ivr_request_id && !readOnly && (
             <button
               onClick={handleViewIVR}
               className="inline-flex items-center gap-2 px-4 py-2 text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
@@ -632,13 +632,15 @@ const OrderDetailPage: React.FC<OrderDetailPageProps> = ({
             </button>
           )}
 
-          <button
-            onClick={handleContactSupport}
-            className="inline-flex items-center gap-2 px-4 py-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
-          >
-            <ChatBubbleLeftRightIcon className="w-4 h-4" />
-            Contact Support
-          </button>
+          {!readOnly && (
+            <button
+              onClick={handleContactSupport}
+              className="inline-flex items-center gap-2 px-4 py-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+            >
+              <ChatBubbleLeftRightIcon className="w-4 h-4" />
+              Contact Support
+            </button>
+          )}
         </div>
       </div>
 
