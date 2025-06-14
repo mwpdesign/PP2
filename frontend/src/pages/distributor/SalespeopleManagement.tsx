@@ -529,33 +529,14 @@ const SalespeopleManagement: React.FC = () => {
           <h1 className="text-2xl font-semibold text-slate-900">Salespeople Management</h1>
           <p className="text-slate-600 mt-1">{pageSubtitle}</p>
 
-          {/* SECURITY: Hierarchy filtering banner */}
-          {filterResult && (
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-sm font-medium text-blue-900">
-                  {HierarchyFilteringService.getSalespeopleFilteringSummary(filterResult)}
-                </span>
-                <ShieldCheckIcon className="h-4 w-4 text-blue-600 ml-2" />
-              </div>
-              {filterResult.userHierarchyInfo?.downlineSalesReps?.length > 0 && (
-                <div className="mt-2 text-xs text-blue-700">
-                  Your sales team: {filterResult.userHierarchyInfo.downlineSalesReps.map(s => s.name).join(', ')}
-                </div>
-              )}
-              <div className="mt-1 text-xs text-blue-600">
-                🔒 Data isolation active - only showing authorized sales representatives
-              </div>
-            </div>
-          )}
+
         </div>
         <button
           onClick={handleAddSalesperson}
           className="flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
-          Add New Salesperson
+          Add Sales
         </button>
       </div>
 

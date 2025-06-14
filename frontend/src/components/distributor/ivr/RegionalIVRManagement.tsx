@@ -145,21 +145,7 @@ const RegionalIVRManagement: React.FC = () => {
           <p className="text-sm text-gray-600 mt-1">
             Monitor and track IVR requests from doctors in your regional network
           </p>
-          {filterResult && (
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span className="text-sm font-medium text-blue-900">
-                  {HierarchyFilteringService.getFilteringSummary(filterResult)}
-                </span>
-              </div>
-              {filterResult.userHierarchyInfo?.downlineDoctors?.length > 0 && (
-                <div className="mt-2 text-xs text-blue-700">
-                  Downline doctors: {filterResult.userHierarchyInfo.downlineDoctors.map(d => d.name).join(', ')}
-                </div>
-              )}
-            </div>
-          )}
+
         </div>
 
         {/* Summary Stats */}
@@ -226,14 +212,7 @@ const RegionalIVRManagement: React.FC = () => {
       {console.log('🟡 [STEP 3] detailPanel type:', selectedIVR ? 'IVRDetailPanel' : 'IVREmptyState')}
       {console.log('🟡 [STEP 3] About to pass showDetail to MasterDetailLayout:', !!selectedIVR)}
 
-      {/* Debug info overlay */}
-      <div className="fixed top-4 right-4 bg-black bg-opacity-75 text-white p-2 rounded text-xs z-50">
-        <div>Selected: {selectedIVR?.ivrNumber || 'None'}</div>
-        <div>Show Detail: {!!selectedIVR ? 'Yes' : 'No'}</div>
-        <div>Data Count: {filteredData?.length || 0}</div>
-        <div>Detail Panel: {selectedIVR ? 'IVRDetailPanel' : 'IVREmptyState'}</div>
-        <div>MasterDetailLayout showDetail: {!!selectedIVR ? 'true' : 'false'}</div>
-      </div>
+
 
       <MasterDetailLayout
         masterPanel={masterPanel}
