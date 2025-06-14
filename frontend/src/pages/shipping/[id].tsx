@@ -107,29 +107,12 @@ const ShippingDetailPage: React.FC<ShippingDetailPageProps> = ({
   const fetchShipmentDetails = async () => {
     if (!id) return;
 
-    try {
+    // For development: Use mock data directly if ID matches mock format
+    if (id.startsWith('SHP-2024-')) {
+      console.log('🎭 Using mock data for development (ID matches mock format)');
       setError(null);
-      const response = await fetch(`/api/v1/shipments/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-          'Content-Type': 'application/json'
-        }
-      });
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Shipment not found');
-        }
-        throw new Error(`Failed to fetch shipment details: ${response.status}`);
-      }
-
-      const shipmentData: ShipmentResponse = await response.json();
-      setShipment(shipmentData);
-    } catch (err) {
-      console.error('Error fetching shipment details:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch shipment details');
-
-      // Fallback to mock data for testing
+      // Use mock data directly without API call
       const mockShipments: ShipmentResponse[] = [
         {
           id: 'SHP-2024-001',
@@ -322,8 +305,48 @@ const ShippingDetailPage: React.FC<ShippingDetailPageProps> = ({
 
       const mockShipment = mockShipments.find(s => s.id === id);
       if (mockShipment) {
+        console.log('✅ Mock shipment found:', mockShipment.id);
         setShipment(mockShipment);
+      } else {
+        console.log('❌ Mock shipment not found for ID:', id);
+        setError('Shipment not found in mock data');
       }
+      setLoading(false);
+      return;
+    }
+
+    // For production: Make API call for non-mock IDs
+    try {
+      setError(null);
+      console.log('🌐 Making API call for shipment:', id);
+
+      const response = await fetch(`/api/v1/shipments/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Shipment not found');
+        }
+        if (response.status === 422) {
+          console.log('⚠️ 422 Validation Error - API expects different ID format');
+          throw new Error('Invalid shipment ID format');
+        }
+        throw new Error(`Failed to fetch shipment details: ${response.status}`);
+      }
+
+      const shipmentData: ShipmentResponse = await response.json();
+      setShipment(shipmentData);
+      console.log('✅ API shipment data loaded successfully');
+
+    } catch (err) {
+      console.error('❌ Error fetching shipment details:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch shipment details');
+
+      // No fallback for production API calls - show error instead
     } finally {
       setLoading(false);
     }
