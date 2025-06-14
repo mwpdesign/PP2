@@ -485,26 +485,7 @@ const OrderProcessing: React.FC = () => {
             </div>
             <p className="text-slate-600 mt-1 text-lg leading-normal">Monitor orders and fulfillment across your distribution network</p>
 
-            {/* SECURITY: Blue filtering banner showing hierarchy scope */}
-            {filterResult && (
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-blue-900">
-                    {HierarchyFilteringService.getOrderFilteringSummary(filterResult)}
-                  </span>
-                  <CheckCircleIcon className="h-4 w-4 text-blue-600 ml-2" />
-                </div>
-                {filterResult.userHierarchyInfo.downlineDoctors.length > 0 && (
-                  <div className="mt-2 text-xs text-blue-700">
-                    Authorized doctors: {filterResult.userHierarchyInfo.downlineDoctors.map((d: any) => d.name).join(', ')}
-                  </div>
-                )}
-                <div className="mt-1 text-xs text-blue-600">
-                  🔒 Data isolation active - only showing authorized orders
-                </div>
-              </div>
-            )}
+
           </div>
           <div className="bg-white rounded-xl shadow-sm px-4 py-2 border border-slate-200">
             <span className="text-sm font-medium text-slate-600">Active Orders: </span>
