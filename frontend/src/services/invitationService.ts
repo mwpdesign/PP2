@@ -2,7 +2,7 @@
 // Task ID: mbvu8p4nc9bidurxtvc
 // Phase 4: Frontend Integration
 
-import { apiClient } from './apiClient';
+import apiClient from './api';
 import {
   Invitation,
   InvitationCreateRequest,
