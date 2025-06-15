@@ -65,6 +65,10 @@ const ReadOnlyView = React.lazy(() => import('./components/shared/ReadOnlyView')
 const Schedule = React.lazy(() => import('./pages/sales/Schedule'));
 const SalesAnalytics = React.lazy(() => import('./pages/sales/Analytics'));
 const SalesSettings = React.lazy(() => import('./pages/sales/Settings'));
+const SalesIVRManagement = React.lazy(() => import('./pages/sales/IVRManagement'));
+const SalesOrderManagement = React.lazy(() => import('./pages/sales/OrderManagement'));
+const SalesShippingLogistics = React.lazy(() => import('./pages/sales/ShippingLogistics'));
+const AdminIVRManagement = React.lazy(() => import('./pages/admin/IVRManagement'));
 const OrderProcessing = React.lazy(() => import('./pages/distributor/OrderProcessing'));
 const DistributorsManagement = React.lazy(() => import('./pages/distributor/DistributorsManagement'));
 const SalespeopleManagement = React.lazy(() => import('./pages/distributor/SalespeopleManagement'));
@@ -154,6 +158,9 @@ const App = () => {
                     <Route path="audit-logs" element={<AuditLogs />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
                     <Route path="settings" element={<SystemSettings />} />
+                    <Route path="ivr-management" element={<AdminIVRManagement />} />
+                    <Route path="orders" element={<OrderProcessing />} />
+                    <Route path="shipping" element={<ShippingLogistics />} />
                   </Route>
                 </Route>
 
@@ -301,29 +308,20 @@ const App = () => {
                     </ProtectedRoute>
                   } />
 
-                  {/* Read-Only Medical Sections for Sales */}
+                  {/* Medical Sections for Sales - Using Regional Distributor Layout */}
                   <Route path="/sales/ivr" element={
                     <ProtectedRoute allowedRoles={['Sales']}>
-                      <ReadOnlyView
-                        component={IVRManagementPage}
-                        title="IVR Management - View Only"
-                      />
+                      <SalesIVRManagement />
                     </ProtectedRoute>
                   } />
                   <Route path="/sales/orders" element={
                     <ProtectedRoute allowedRoles={['Sales']}>
-                      <ReadOnlyView
-                        component={OrderManagementPage}
-                        title="Order Management - View Only"
-                      />
+                      <SalesOrderManagement />
                     </ProtectedRoute>
                   } />
                   <Route path="/sales/shipping" element={
                     <ProtectedRoute allowedRoles={['Sales']}>
-                      <ReadOnlyView
-                        component={ShippingPage}
-                        title="Shipping & Logistics - View Only"
-                      />
+                      <SalesShippingLogistics />
                     </ProtectedRoute>
                   } />
 

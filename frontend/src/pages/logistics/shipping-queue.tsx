@@ -43,6 +43,8 @@ const ShippingQueuePage: React.FC = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/logistics/dashboard', icon: HomeIcon },
+    { name: 'IVR Management', href: '/logistics/ivr-management', icon: ClipboardDocumentListIcon },
+    { name: 'Order Management', href: '/logistics/orders', icon: ArchiveBoxIcon },
     { name: 'Shipping Queue', href: '/logistics/shipping-queue', icon: QueueListIcon },
     { name: 'Settings', href: '/logistics/settings', icon: Cog6ToothIcon },
     {

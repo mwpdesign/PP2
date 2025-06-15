@@ -6,7 +6,9 @@ import {
   ChartBarIcon,
   DocumentTextIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  ClipboardDocumentCheckIcon,
+  TruckIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import UnifiedDashboardLayout from '../shared/layout/UnifiedDashboardLayout';
@@ -25,6 +27,9 @@ const SimpleCHPAdminDashboard: React.FC = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/chp/dashboard', icon: HomeIcon },
+    { name: 'IVR Management', href: '/chp/ivr-management', icon: ClipboardDocumentCheckIcon },
+    { name: 'Order Management', href: '/chp/orders', icon: DocumentTextIcon },
+    { name: 'Shipping & Logistics', href: '/chp/shipping', icon: TruckIcon },
     { name: 'Program Management', href: '/chp/programs', icon: BuildingOfficeIcon },
     { name: 'Community Partners', href: '/chp/partners', icon: UsersIcon },
     { name: 'Analytics & Reports', href: '/chp/analytics', icon: ChartBarIcon },

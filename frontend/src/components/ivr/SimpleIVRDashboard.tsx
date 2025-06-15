@@ -17,7 +17,8 @@ import {
   CalendarDaysIcon,
   UserIcon,
   BuildingOfficeIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  TruckIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import { useIVR } from '../../contexts/IVRContext';
@@ -212,6 +213,8 @@ const SimpleIVRDashboard: React.FC = () => {
     { name: 'Review Queue', href: '/ivr-company/queue', icon: QueueListIcon },
     { name: 'In Progress', href: '/ivr-company/in-progress', icon: ClockIcon },
     { name: 'Completed Today', href: '/ivr-company/completed', icon: CheckCircleIcon },
+    { name: 'Order Management', href: '/ivr-company/orders', icon: DocumentTextIcon },
+    { name: 'Shipping & Logistics', href: '/ivr-company/shipping', icon: TruckIcon },
     { name: 'Communications', href: '/ivr-company/communications', icon: ChatBubbleLeftRightIcon },
     { name: 'Documents', href: '/ivr-company/documents', icon: DocumentTextIcon },
     { name: 'Reports', href: '/ivr-company/reports', icon: DocumentChartBarIcon },

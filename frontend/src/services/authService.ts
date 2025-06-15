@@ -8,7 +8,8 @@ import {
   AuthConfig
 } from '../types/auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+// Use Vite proxy instead of direct backend URL to avoid CORS issues
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 console.log('[authService] API_BASE_URL:', API_BASE_URL); // Debug log for API_BASE_URL
 
 // Authentication configuration
@@ -80,6 +81,7 @@ class AuthenticationService {
     console.log('[AuthService] ===== LOGIN REQUEST =====');
     console.log('[AuthService] Email:', email);
     console.log('[AuthService] Password length:', password?.length || 0);
+    console.log('[AuthService] API_BASE_URL:', API_BASE_URL);
 
     try {
       // Clear any existing auth data
@@ -90,7 +92,8 @@ class AuthenticationService {
       formData.append('username', email.trim());
       formData.append('password', password.trim());
 
-      console.log('[AuthService] Making login request to:', `${API_BASE_URL}/api/v1/auth/login`);
+      const loginUrl = API_BASE_URL ? `${API_BASE_URL}/api/v1/auth/login` : '/api/v1/auth/login';
+      console.log('[AuthService] Making login request to:', loginUrl);
 
       const response = await this.apiClient.post<TokenResponse>(
         '/api/v1/auth/login',
@@ -118,12 +121,24 @@ class AuthenticationService {
       return response.data;
 
     } catch (error) {
-      console.error('[AuthService] Login error:', error);
+      console.error('[AuthService] Login error details:', {
+        error,
+        status: axios.isAxiosError(error) ? error.response?.status : 'unknown',
+        statusText: axios.isAxiosError(error) ? error.response?.statusText : 'unknown',
+        data: axios.isAxiosError(error) ? error.response?.data : 'unknown',
+        config: axios.isAxiosError(error) ? {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL,
+          headers: error.config?.headers
+        } : 'unknown'
+      });
+
       this.clearAuthData();
 
       if (axios.isAxiosError(error)) {
         const authError: AuthError = {
-          message: error.response?.data?.detail || 'Login failed',
+          message: error.response?.data?.detail || error.message || 'Login failed',
           detail: error.response?.data?.detail,
         };
         throw authError;

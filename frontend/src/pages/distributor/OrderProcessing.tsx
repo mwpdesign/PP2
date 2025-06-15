@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { HierarchyFilteringService } from '../../services/hierarchyFilteringService';
 import { Card } from '../../components/shared/ui/Card';
+import ReadOnlyWithCommunication from '../../components/shared/ReadOnlyWithCommunication';
+import { shouldApplyReadOnly, getOnBehalfOfText, getRoleDisplayName } from '../../utils/roleUtils';
+import { useCurrentUserRole } from '../../components/shared/withReadOnlyCommunication';
 import {
   EyeIcon,
   MagnifyingGlassIcon,
@@ -191,6 +194,11 @@ const OrderProcessing: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterResult, setFilterResult] = useState<any>(null);
+
+  // Get current user role for read-only wrapper
+  const currentUserRole = useCurrentUserRole();
+  const targetRole = 'distributor';
+  const shouldApplyWrapper = shouldApplyReadOnly(currentUserRole, targetRole);
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState<string>('All');
@@ -470,7 +478,7 @@ const OrderProcessing: React.FC = () => {
     );
   }
 
-  return (
+  const renderContent = () => (
     <div className="space-y-4 bg-slate-50 min-h-screen">
       {/* Header with filtering summary */}
       <div className="pt-1 pb-3">
@@ -478,10 +486,12 @@ const OrderProcessing: React.FC = () => {
           <div>
             <div className="flex items-center space-x-3">
               <h1 className="text-3xl font-bold text-slate-800 tracking-tight leading-tight">Order Processing - Network Overview</h1>
-              <div className="flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-1">
-                <ShieldCheckIcon className="h-4 w-4 text-amber-600 mr-2" />
-                <span className="text-sm font-medium text-amber-700">View Only Access</span>
-              </div>
+              {!shouldApplyWrapper && (
+                <div className="flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-1">
+                  <ShieldCheckIcon className="h-4 w-4 text-amber-600 mr-2" />
+                  <span className="text-sm font-medium text-amber-700">View Only Access</span>
+                </div>
+              )}
             </div>
             <p className="text-slate-600 mt-1 text-lg leading-normal">Monitor orders and fulfillment across your distribution network</p>
 
@@ -525,6 +535,7 @@ const OrderProcessing: React.FC = () => {
               <button
                 onClick={clearAllFilters}
                 className="text-sm text-slate-600 hover:text-slate-800 underline"
+                data-filter="true"
               >
                 Clear all filters
               </button>
@@ -543,6 +554,7 @@ const OrderProcessing: React.FC = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                  data-search="true"
                 />
               </div>
             </div>
@@ -554,6 +566,7 @@ const OrderProcessing: React.FC = () => {
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                data-filter="true"
               >
                 <option value="All">All Statuses</option>
                 <option value="processing">Processing</option>
@@ -573,6 +586,7 @@ const OrderProcessing: React.FC = () => {
                 value={doctorFilter}
                 onChange={(e) => setDoctorFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                data-filter="true"
               >
                 <option value="All">All Doctors ({uniqueDoctors.length})</option>
                 {uniqueDoctors.map(doctor => (
@@ -590,6 +604,7 @@ const OrderProcessing: React.FC = () => {
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                  data-filter="true"
                 >
                   <option value="All">All Time</option>
                   <option value="Today">Today</option>
@@ -610,6 +625,7 @@ const OrderProcessing: React.FC = () => {
                   value={valueRange}
                   onChange={(e) => setValueRange(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                  data-filter="true"
                 >
                   <option value="All">All Values</option>
                   <option value="Under1000">Under $1,000</option>
@@ -625,6 +641,7 @@ const OrderProcessing: React.FC = () => {
                 value={regionFilter}
                 onChange={(e) => setRegionFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500"
+                data-filter="true"
               >
                 <option value="All">All Regions ({uniqueRegions.length})</option>
                 {uniqueRegions.map(region => (
@@ -709,6 +726,7 @@ const OrderProcessing: React.FC = () => {
                         navigateToOrderDetail(order.id);
                       }}
                       className="inline-flex items-center px-3 py-1 border border-slate-300 rounded-md text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+                      data-navigation="true"
                     >
                       <EyeIcon className="h-4 w-4 mr-1" />
                       View Details
@@ -738,6 +756,7 @@ const OrderProcessing: React.FC = () => {
               <button
                 onClick={clearAllFilters}
                 className="mt-4 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                data-filter="true"
               >
                 Clear All Filters
               </button>
@@ -747,6 +766,22 @@ const OrderProcessing: React.FC = () => {
       </Card>
     </div>
   );
+
+  // Apply read-only wrapper if user is upper role
+  if (shouldApplyWrapper) {
+    return (
+      <ReadOnlyWithCommunication
+        userRole={getRoleDisplayName(currentUserRole)}
+        targetRole={getRoleDisplayName(targetRole)}
+        pageName="Order Management"
+        onBehalfOf={getOnBehalfOfText(currentUserRole, targetRole)}
+      >
+        {renderContent()}
+      </ReadOnlyWithCommunication>
+    );
+  }
+
+  return renderContent();
 };
 
 export default OrderProcessing;

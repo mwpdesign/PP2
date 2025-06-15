@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Home,
@@ -38,6 +38,8 @@ import {
   Bar
 } from 'recharts';
 import { NewPatientForm } from '../patients/NewPatientForm';
+import { dashboardService, DashboardStats, DashboardKPICard } from '../../services/dashboardService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface NewPatientFormProps {
   onClose: () => void;
@@ -123,13 +125,6 @@ const samplePatients: Patient[] = [
     lastVisit: new Date(2024, 2, 12),
     status: 'active'
   }
-];
-
-const stats: StatCard[] = [
-  { title: 'IVR Requests Today', value: 47, trend: 12, icon: <Clipboard className="w-6 h-6" />, color: 'bg-blue-500' },
-  { title: 'Pending Approvals', value: 28, trend: -5, icon: <Activity className="w-6 h-6" />, color: 'bg-green-500' },
-  { title: 'Active Orders', value: 34, trend: 8, icon: <Package className="w-6 h-6" />, color: 'bg-purple-500' },
-  { title: 'Temperature-Controlled Shipments', value: 12, trend: 0, icon: <LocalShipping className="w-6 h-6" />, color: 'bg-orange-500' },
 ];
 
 const quickActions = [
@@ -390,9 +385,42 @@ const PatientManagement: React.FC = () => {
 
 export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentPath, setCurrentPath] = useState('/dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewPatientForm, setShowNewPatientForm] = useState(false);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load dashboard stats on component mount
+  useEffect(() => {
+    const loadDashboardStats = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Try to get real data from API
+        const stats = await dashboardService.getDashboardStats(30);
+        setDashboardStats(stats);
+        console.log('✅ Dashboard stats loaded from API:', stats);
+      } catch (error) {
+        console.error('❌ Failed to load dashboard stats from API:', error);
+
+        // Fallback to mock data based on user role
+        const userRole = user?.role || 'doctor';
+        const mockStats = dashboardService.getMockDashboardStats(userRole.toLowerCase());
+        setDashboardStats(mockStats);
+        console.log('🎭 Using mock dashboard stats for role:', userRole, mockStats);
+
+        setError('Using demo data - API connection failed');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardStats();
+  }, [user]);
 
   const getInitials = (email: string) => {
     return email.split('@')[0].slice(0, 2).toUpperCase();
@@ -405,6 +433,69 @@ export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
   const handleAddNewPatient = (patientData: any) => {
     console.log('New patient data:', patientData);
     setShowNewPatientForm(false);
+  };
+
+  // Convert API stats to component format
+  const convertStatsToCards = (stats: DashboardStats): StatCard[] => {
+    return Object.entries(stats.kpi_cards).map(([key, card]) => ({
+      title: card.title,
+      value: card.value,
+      trend: card.trend,
+      icon: getIconComponent(card.icon),
+      color: getColorClasses(card.color),
+    }));
+  };
+
+  // Helper function to get icon component from string
+  const getIconComponent = (iconName: string): React.ReactNode => {
+    switch (iconName) {
+      case 'users':
+        return <Users className="w-6 h-6" />;
+      case 'clipboard-document-check':
+        return <Clipboard className="w-6 h-6" />;
+      case 'clock':
+        return <Calendar className="w-6 h-6" />;
+      case 'archive-box':
+        return <Package className="w-6 h-6" />;
+      case 'eye':
+        return <Eye className="w-6 h-6" />;
+      case 'document-text':
+        return <Clipboard className="w-6 h-6" />;
+      case 'check-circle':
+        return <Activity className="w-6 h-6" />;
+      case 'user-group':
+        return <Users className="w-6 h-6" />;
+      case 'currency-dollar':
+        return <BarChart3 className="w-6 h-6" />;
+      case 'truck':
+        return <LocalShipping className="w-6 h-6" />;
+      case 'star':
+        return <Activity className="w-6 h-6" />;
+      case 'building-office-2':
+        return <Home className="w-6 h-6" />;
+      default:
+        return <Activity className="w-6 h-6" />;
+    }
+  };
+
+  // Helper function to get color classes from string
+  const getColorClasses = (colorName: string): string => {
+    switch (colorName) {
+      case 'blue':
+        return 'bg-blue-500';
+      case 'green':
+        return 'bg-green-500';
+      case 'amber':
+        return 'bg-amber-500';
+      case 'purple':
+        return 'bg-purple-500';
+      case 'emerald':
+        return 'bg-emerald-500';
+      case 'red':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
   };
 
   const renderContent = () => {
@@ -422,32 +513,59 @@ export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
               <p className="mt-2 text-gray-600">
                 Here's what's happening with your patients and IVR requests today.
               </p>
+              {error && (
+                <div className="mt-2 text-sm text-amber-600 bg-amber-50 px-3 py-2 rounded-md">
+                  ⚠️ {error}
+                </div>
+              )}
             </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {stats.map((stat) => (
-                <div key={stat.title} className="bg-white rounded-xl shadow-sm p-6">
-                  <div className="flex items-center">
-                    <div className={`p-3 rounded-lg ${stat.color} bg-opacity-10`}>
-                      {React.cloneElement(stat.icon as React.ReactElement, {
-                        className: `w-6 h-6 ${stat.color.replace('bg-', 'text-')}`
-                      })}
+              {loading ? (
+                // Loading skeleton
+                Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+                    <div className="flex items-center">
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                      <div className="ml-3 flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      </div>
                     </div>
-                    <p className="ml-3 text-sm font-medium text-gray-600">{stat.title}</p>
+                    <div className="mt-4">
+                      <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/3 mt-2"></div>
+                    </div>
                   </div>
-                  <div className="mt-4">
-                    <h3 className="text-2xl font-semibold text-gray-900">
-                      {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
-                    </h3>
-                    <p className={`mt-1 text-sm ${
-                      stat.trend > 0 ? 'text-green-600' : stat.trend < 0 ? 'text-red-600' : 'text-gray-600'
-                    }`}>
-                      {stat.trend > 0 ? '↑' : stat.trend < 0 ? '↓' : '•'} {Math.abs(stat.trend)}% from last week
-                    </p>
+                ))
+              ) : dashboardStats ? (
+                convertStatsToCards(dashboardStats).map((stat) => (
+                  <div key={stat.title} className="bg-white rounded-xl shadow-sm p-6">
+                    <div className="flex items-center">
+                      <div className={`p-3 rounded-lg ${stat.color} bg-opacity-10`}>
+                        {React.cloneElement(stat.icon as React.ReactElement, {
+                          className: `w-6 h-6 ${stat.color.replace('bg-', 'text-')}`
+                        })}
+                      </div>
+                      <p className="ml-3 text-sm font-medium text-gray-600">{stat.title}</p>
+                    </div>
+                    <div className="mt-4">
+                      <h3 className="text-2xl font-semibold text-gray-900">
+                        {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                      </h3>
+                      <p className={`mt-1 text-sm ${
+                        stat.trend > 0 ? 'text-green-600' : stat.trend < 0 ? 'text-red-600' : 'text-gray-600'
+                      }`}>
+                        {stat.trend > 0 ? '↑' : stat.trend < 0 ? '↓' : '•'} {Math.abs(stat.trend)}% from last week
+                      </p>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="col-span-4 text-center text-gray-500">
+                  Failed to load dashboard statistics
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Quick Actions */}
@@ -619,41 +737,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
                     <p className="text-sm text-yellow-500">Medium Priority</p>
                   </div>
                 </div>
-                <div className="flex items-center p-4 rounded-lg bg-yellow-50">
-                  <div className="p-2 rounded-lg bg-yellow-500 bg-opacity-10">
-                    <AlertCircle className="w-5 h-5 text-yellow-500" />
-                  </div>
-                  <div className="ml-4">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-yellow-900">
-                        Negative Pressure Therapy Documentation Required
-                      </p>
-                      <span className="text-xs text-yellow-500">2 hours ago</span>
-                    </div>
-                    <p className="text-sm text-yellow-500">Medium Priority</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Product Approval Rates */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Product Approval Rates</h2>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={productApprovalData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis domain={[0, 100]} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar
-                      dataKey="approvalRate"
-                      fill="#4A6FA5"
-                      name="Approval Rate (%)"
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
               </div>
             </div>
           </div>
@@ -662,89 +745,57 @@ export const Dashboard: React.FC<DashboardProps> = ({ email, onLogout }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="fixed w-[250px] h-full bg-[#1E293B] text-white flex flex-col">
-        {/* Logo */}
-        <div className="p-6 border-b border-gray-700">
-          <img
-            src="/logo2.png"
-            alt="Clear Health Pass"
-            className="w-[180px] h-auto"
-          />
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {navigation.map((item) => (
-            <button
-              key={item.name}
-              onClick={() => handleNavigation(item.path)}
-              className={`w-full flex items-center px-4 py-3 text-sm rounded-lg transition-colors ${
-                currentPath === item.path
-                  ? 'bg-[#4A6FA5] text-white'
-                  : 'text-gray-300 hover:bg-gray-700'
-              }`}
-            >
-              <span className="mr-3">{item.icon}</span>
-              {item.name}
-            </button>
-          ))}
-        </nav>
-
-        {/* User Profile */}
-        <div className="p-4 border-t border-gray-700">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-[#4A6FA5] flex items-center justify-center text-white font-medium">
-              {getInitials(email)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{email}</p>
-              <button
-                onClick={onLogout}
-                className="text-sm text-gray-400 hover:text-white flex items-center mt-1"
-              >
-                <LogOut className="w-4 h-4 mr-1" />
-                Sign out
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-
+    <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
-      <main className="flex-1 ml-[250px]">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center flex-1">
-              <div className="w-64">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Navigation */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center">
+                <h1 className="text-xl font-semibold text-gray-900">Healthcare IVR Platform</h1>
+              </div>
+              <div className="flex items-center space-x-4">
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4A6FA5] focus:border-transparent"
+                    className="w-64 pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4A6FA5] focus:border-transparent"
                   />
                   <Search className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
                 </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-[#4A6FA5] rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {getInitials(email)}
+                  </div>
+                  <button
+                    onClick={onLogout}
+                    className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-[#4A6FA5] relative">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
             </div>
           </div>
         </header>
 
-        {/* Page Content */}
-        <div className="p-6">
-          {renderContent()}
-        </div>
-      </main>
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {renderContent()}
+          </div>
+        </main>
+      </div>
+
+      {showNewPatientForm && (
+        <NewPatientForm
+          onClose={() => setShowNewPatientForm(false)}
+          onSave={handleAddNewPatient}
+        />
+      )}
     </div>
   );
 };

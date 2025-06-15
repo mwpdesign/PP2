@@ -6,22 +6,14 @@ import MasterDetailLayout from '../../components/shared/layout/MasterDetailLayou
 import IVRListComponent from '../../components/ivr/IVRListComponent';
 import IVRDetailPanel from '../../components/ivr/IVRDetailPanel';
 import IVREmptyState from '../../components/ivr/IVREmptyState';
-import ReadOnlyWithCommunication from '../../components/shared/ReadOnlyWithCommunication';
-import { shouldApplyReadOnly, getOnBehalfOfText, getRoleDisplayName } from '../../utils/roleUtils';
-import { useCurrentUserRole } from '../../components/shared/withReadOnlyCommunication';
 
-const IVRManagement: React.FC = () => {
+const SalesIVRManagement: React.FC = () => {
   const { user } = useAuth();
   const [filteredData, setFilteredData] = useState<SharedIVRRequest[]>([]);
   const [selectedIVR, setSelectedIVR] = useState<SharedIVRRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterResult, setFilterResult] = useState<FilterResult | null>(null);
-
-  // Get current user role for read-only wrapper
-  const currentUserRole = useCurrentUserRole();
-  const targetRole = 'distributor';
-  const shouldApplyWrapper = shouldApplyReadOnly(currentUserRole, targetRole);
 
   // Use ref to track if component is mounted to prevent state updates on unmounted component
   const isMountedRef = useRef(true);
@@ -41,13 +33,13 @@ const IVRManagement: React.FC = () => {
         setError(null);
       }
 
-      console.log('🔍 [MasterIVRManagement] Applying hierarchy filtering...');
+      console.log('🔍 [SalesIVRManagement] Applying hierarchy filtering...');
       console.log('👤 Current user:', user.email, 'Role:', user.role);
 
-      // Apply hierarchy filtering to mock data - Master Distributor sees ALL data
+      // Apply hierarchy filtering to mock data - Sales sees their downline doctors only
       const result = HierarchyFilteringService.filterIVRDataByHierarchy(mockIVRRequests, user);
 
-      console.log('📊 Master Distributor hierarchy filtering result:', {
+      console.log('📊 Sales hierarchy filtering result:', {
         totalCount: result.totalCount,
         filteredCount: result.filteredCount,
         filterReason: result.filterReason,
@@ -89,7 +81,7 @@ const IVRManagement: React.FC = () => {
 
   // Handle IVR selection from the list
   const handleIVRSelect = useCallback((ivr: SharedIVRRequest) => {
-    console.log('🔵 [STEP 2] MasterIVRManagement - handleIVRSelect called!');
+    console.log('🔵 [STEP 2] SalesIVRManagement - handleIVRSelect called!');
     console.log('🔵 [STEP 2] Received IVR:', ivr.ivrNumber, ivr.id);
     console.log('🔵 [STEP 2] Previous selectedIVR:', selectedIVR?.ivrNumber || 'null');
 
@@ -144,15 +136,13 @@ const IVRManagement: React.FC = () => {
       {/* Header with summary stats */}
       <div className="flex-shrink-0 bg-white border-b border-gray-200 p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Master IVR Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Sales IVR Management</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Monitor and track IVR requests across all distributor networks
+            Monitor and track IVR requests from your assigned doctors (View Only)
           </p>
-          {!shouldApplyWrapper && (
-            <div className="flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-1 mt-2 w-fit">
-              <span className="text-sm font-medium text-amber-700">View Only Access</span>
-            </div>
-          )}
+          <div className="flex items-center bg-amber-50 border border-amber-200 rounded-lg px-3 py-1 mt-2 w-fit">
+            <span className="text-sm font-medium text-amber-700">View Only Access</span>
+          </div>
         </div>
 
         {/* Summary Stats */}
@@ -191,6 +181,7 @@ const IVRManagement: React.FC = () => {
           onSelectIVR={handleIVRSelect}
           selectedIVR={selectedIVR}
           className="h-full"
+          readOnly={true}
         />
       </div>
     </div>
@@ -202,12 +193,13 @@ const IVRManagement: React.FC = () => {
       ivr={selectedIVR}
       onClose={handleCloseDetail}
       className="h-full"
+      readOnly={true}
     />
   ) : (
     <IVREmptyState className="h-full" />
   );
 
-  const renderContent = () => (
+  return (
     <div className="h-screen bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
       <MasterDetailLayout
         masterPanel={masterPanel}
@@ -218,21 +210,6 @@ const IVRManagement: React.FC = () => {
       />
     </div>
   );
-
-  // Apply read-only wrapper if needed
-  if (shouldApplyWrapper) {
-    return (
-      <ReadOnlyWithCommunication
-        targetRole={targetRole}
-        onBehalfOfText={getOnBehalfOfText(currentUserRole, targetRole)}
-        roleDisplayName={getRoleDisplayName(targetRole)}
-      >
-        {renderContent()}
-      </ReadOnlyWithCommunication>
-    );
-  }
-
-  return renderContent();
 };
 
-export default IVRManagement;
+export default SalesIVRManagement;

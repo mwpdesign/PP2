@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Authentication Fix Instructions - Healthcare IVR Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { border-left: 4px solid #10b981; background-color: #f0fdf4; }
+        .error { border-left: 4px solid #ef4444; background-color: #fef2f2; }
+        .warning { border-left: 4px solid #f59e0b; background-color: #fffbeb; }
+        .info { border-left: 4px solid #3b82f6; background-color: #eff6ff; }
+
+        .step {
+            background: #f1f5f9;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 12px 0;
+            border-left: 4px solid #3b82f6;
+        }
+
+        code {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 4px;
+        }
+        button:hover { background: #2563eb; }
+
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .checklist li:before {
+            content: "☐ ";
+            color: #6b7280;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Authentication Fix Instructions</h1>
+        <p><strong>Task ID:</strong> mbxqkipq3xpajeo0236</p>
+        <p><strong>Issue:</strong> Frontend getting 401 errors despite backend working correctly</p>
+    </div>
+
+    <div class="container success">
+        <h2>✅ Diagnosis Complete</h2>
+        <ul>
+            <li><strong>Backend:</strong> ✅ Working (curl to localhost:8000 returns 200 + token)</li>
+            <li><strong>Vite Proxy:</strong> ✅ Working (curl to localhost:3000/api/v1/auth/login returns 200 + token)</li>
+            <li><strong>Frontend AuthService:</strong> ❌ Still getting 401 errors</li>
+        </ul>
+        <p><strong>Root Cause:</strong> Browser cache or AuthService configuration issue</p>
+    </div>
+
+    <div class="container">
+        <h2>🛠️ Step-by-Step Fix</h2>
+
+        <div class="step">
+            <h3>Step 1: Clear Browser Cache & Storage</h3>
+            <p>Open Chrome DevTools (F12) and:</p>
+            <ol>
+                <li>Go to <strong>Application</strong> tab</li>
+                <li>Click <strong>Storage</strong> in left sidebar</li>
+                <li>Click <strong>"Clear site data"</strong></li>
+                <li>Or manually clear:
+                    <ul>
+                        <li>Local Storage → Clear all</li>
+                        <li>Session Storage → Clear all</li>
+                        <li>Cookies → Clear all</li>
+                    </ul>
+                </li>
+            </ol>
+            <button onclick="clearLocalStorage()">Clear localStorage Now</button>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Hard Refresh Frontend</h3>
+            <p>Force reload the frontend to clear any cached JavaScript:</p>
+            <ul>
+                <li><strong>Chrome/Firefox:</strong> Ctrl+Shift+R (Cmd+Shift+R on Mac)</li>
+                <li><strong>Or:</strong> Ctrl+F5</li>
+                <li><strong>Or:</strong> Open DevTools → Right-click refresh → "Empty Cache and Hard Reload"</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Restart Frontend Server</h3>
+            <p>In the frontend terminal, stop and restart the dev server:</p>
+            <pre>Ctrl+C  # Stop current server
+npm run dev  # Restart server</pre>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Test Login</h3>
+            <p>Try logging in with these credentials:</p>
+            <ul>
+                <li><strong>Email:</strong> doctor@healthcare.local</li>
+                <li><strong>Password:</strong> doctor123</li>
+            </ul>
+            <p>Watch the browser console for detailed debug logs.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 Debug Information</h2>
+
+        <div class="step">
+            <h3>Expected Console Logs (Success)</h3>
+            <pre>[AuthService] API_BASE_URL:
+[AuthService] Making login request to: /api/v1/auth/login
+[AuthService] Login successful: 200
+[AuthService] Token received: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</pre>
+        </div>
+
+        <div class="step">
+            <h3>Current Error Logs</h3>
+            <pre>[AuthService] Login error: AxiosError {message: 'Request failed with status code 401'}
+[AuthContext] Login error: {message: 'Incorrect email or password'}</pre>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📋 Verification Checklist</h2>
+        <ul class="checklist">
+            <li>Browser cache and localStorage cleared</li>
+            <li>Frontend server restarted</li>
+            <li>Hard refresh performed (Ctrl+Shift+R)</li>
+            <li>Login page loads without errors</li>
+            <li>Console shows correct API_BASE_URL (empty string)</li>
+            <li>Login request goes to /api/v1/auth/login (not localhost:8000)</li>
+            <li>Login returns 200 status with token</li>
+            <li>User is redirected to dashboard</li>
+        </ul>
+    </div>
+
+    <div class="container info">
+        <h2>🔧 Alternative Fix: Manual API Test</h2>
+        <p>If the above doesn't work, test the API manually:</p>
+        <button onclick="testDirectAPI()">Test API Directly</button>
+        <div id="api-test-result"></div>
+    </div>
+
+    <div class="container warning">
+        <h2>⚠️ If Still Not Working</h2>
+        <p>If authentication still fails after following all steps:</p>
+        <ol>
+            <li>Check if any browser extensions are blocking requests</li>
+            <li>Try in incognito/private browsing mode</li>
+            <li>Check if antivirus/firewall is blocking localhost connections</li>
+            <li>Verify both servers are running:
+                <ul>
+                    <li>Backend: <code>lsof -i :8000</code></li>
+                    <li>Frontend: <code>lsof -i :3000</code></li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <script>
+        function clearLocalStorage() {
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                alert('✅ Local storage and session storage cleared!\n\nNow perform a hard refresh (Ctrl+Shift+R)');
+            } catch (error) {
+                alert('❌ Error clearing storage: ' + error.message);
+            }
+        }
+
+        async function testDirectAPI() {
+            const resultDiv = document.getElementById('api-test-result');
+            resultDiv.innerHTML = '<p>🔄 Testing API...</p>';
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('username', 'doctor@healthcare.local');
+                formData.append('password', 'doctor123');
+
+                const response = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div style="background: #f0fdf4; border: 1px solid #10b981; padding: 12px; border-radius: 6px; margin-top: 12px;">
+                            <p><strong>✅ API Test Successful!</strong></p>
+                            <p>Status: ${response.status}</p>
+                            <p>Token: ${data.access_token.substring(0, 50)}...</p>
+                            <p><strong>The API is working. The issue is in the frontend AuthService.</strong></p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${data.detail || 'Unknown error'}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="background: #fef2f2; border: 1px solid #ef4444; padding: 12px; border-radius: 6px; margin-top: 12px;">
+                        <p><strong>❌ API Test Failed</strong></p>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-display current storage state
+        document.addEventListener('DOMContentLoaded', function() {
+            const storageKeys = Object.keys(localStorage);
+            if (storageKeys.length > 0) {
+                console.log('Current localStorage keys:', storageKeys);
+            }
+        });
+    </script>
+</body>
+</html>

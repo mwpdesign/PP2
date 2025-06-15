@@ -256,7 +256,7 @@ const AdminInvitationManagement: React.FC = () => {
   // Load statistics
   const loadStatistics = useCallback(async () => {
     try {
-      const stats = await invitationService.getInvitationStatistics({ days: 30 });
+      const stats = await invitationService.getInvitationStatistics(undefined, 30);
       setStatistics(stats);
     } catch (err) {
       console.log('🎭 API not available, using mock statistics');

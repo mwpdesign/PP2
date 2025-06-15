@@ -4,6 +4,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useIVR } from '../../contexts/IVRContext';
 import { MetricCard } from '../../components/shared/DashboardWidgets/MetricCard';
 import { SharedIVRRequest, DashboardStats } from '../../data/mockIVRData';
+import ReadOnlyWithCommunication from '../../components/shared/ReadOnlyWithCommunication';
+import { shouldApplyReadOnly, getOnBehalfOfText, getRoleDisplayName } from '../../utils/roleUtils';
+import { useCurrentUserRole } from '../../components/shared/withReadOnlyCommunication';
 import {
   PlusIcon,
   DocumentTextIcon,
@@ -162,6 +165,7 @@ const DoctorIVRRequestRow = React.memo(({
             }}
             className="w-8 h-8 rounded hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-all"
             aria-label={`More actions for IVR ${request.ivrNumber}`}
+            data-navigation="true"
           >
             <EllipsisVerticalIcon className="w-5 h-5" />
           </button>
@@ -178,6 +182,7 @@ const DoctorIVRRequestRow = React.memo(({
                   setOpenMenuId(null);
                 }}
                 className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-700 flex items-center space-x-2"
+                data-navigation="true"
               >
                 <EyeIcon className="w-4 h-4" />
                 <span>View Details</span>
@@ -189,6 +194,7 @@ const DoctorIVRRequestRow = React.memo(({
                   setOpenMenuId(null);
                 }}
                 className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 text-slate-600 flex items-center space-x-2"
+                data-communication="chat"
               >
                 <ChatBubbleLeftRightIcon className="w-4 h-4" />
                 <span>Open Communication</span>
@@ -209,6 +215,11 @@ const DoctorIVRManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  // Get current user role for read-only wrapper
+  const currentUserRole = useCurrentUserRole();
+  const targetRole = 'doctor';
+  const shouldApplyWrapper = shouldApplyReadOnly(currentUserRole, targetRole);
 
   // Load data
   useEffect(() => {
@@ -260,20 +271,7 @@ const DoctorIVRManagement: React.FC = () => {
     navigate('/doctor/patients/select');
   }, [navigate]);
 
-  if (loading) {
-    return (
-      <div className="animate-pulse space-y-6">
-        <div className="grid grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg p-6 h-24" />
-          ))}
-        </div>
-        <div className="bg-white rounded-lg p-6 h-96" />
-      </div>
-    );
-  }
-
-  return (
+  const renderContent = () => (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -284,6 +282,7 @@ const DoctorIVRManagement: React.FC = () => {
         <button
           onClick={handleNewIVR}
           className="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+          // This is a modify action, so it will be disabled for upper roles
         >
           <PlusIcon className="w-5 h-5 mr-2" />
           New IVR Request
@@ -330,6 +329,7 @@ const DoctorIVRManagement: React.FC = () => {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 aria-label="Filter by status"
+                data-filter="true"
               >
                 <option value="all">All Status</option>
                 <option value="submitted">Submitted</option>
@@ -349,6 +349,7 @@ const DoctorIVRManagement: React.FC = () => {
                   onChange={handleSearch}
                   className="w-80 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   aria-label="Search IVR requests"
+                  data-search="true"
                 />
                 <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -422,6 +423,7 @@ const DoctorIVRManagement: React.FC = () => {
                 <button
                   onClick={handleNewIVR}
                   className="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                  // This is a modify action, so it will be disabled for upper roles
                 >
                   <PlusIcon className="w-5 h-5 mr-2" />
                   Submit Your First IVR
@@ -433,6 +435,35 @@ const DoctorIVRManagement: React.FC = () => {
       </div>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="animate-pulse space-y-6">
+        <div className="grid grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-lg p-6 h-24" />
+          ))}
+        </div>
+        <div className="bg-white rounded-lg p-6 h-96" />
+      </div>
+    );
+  }
+
+  // Apply read-only wrapper if user is upper role
+  if (shouldApplyWrapper) {
+    return (
+      <ReadOnlyWithCommunication
+        userRole={getRoleDisplayName(currentUserRole)}
+        targetRole={getRoleDisplayName(targetRole)}
+        pageName="IVR Management"
+        onBehalfOf={getOnBehalfOfText(currentUserRole, targetRole)}
+      >
+        {renderContent()}
+      </ReadOnlyWithCommunication>
+    );
+  }
+
+  return renderContent();
 };
 
 export default DoctorIVRManagement;

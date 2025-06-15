@@ -36,27 +36,21 @@ const Sidebar: React.FC<SidebarProps> = ({ navigation: customNavigation, userInf
   const location = useLocation();
   const { logout, user } = useAuth();
 
-  // Base navigation items
+  // Base navigation items - ALL roles get the three core medical features
   const baseNavigation = [
     { name: 'Dashboard', href: '/doctor/dashboard', icon: HomeIcon },
     { name: 'Patient Intake', href: '/doctor/patients', icon: UserPlusIcon },
     { name: 'IVR Management', href: '/doctor/ivr', icon: ClipboardDocumentCheckIcon },
     { name: 'Order Management', href: '/doctor/orders', icon: DocumentTextIcon },
+    { name: 'Shipping & Logistics', href: '/doctor/shipping', icon: TruckIcon },
   ];
 
-  // Add Shipping & Logistics only for non-Doctor roles
-  const defaultNavigation = user?.role === 'Doctor'
-    ? [
-        ...baseNavigation,
-        { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
-        { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
-      ]
-    : [
-        ...baseNavigation,
-        { name: 'Shipping & Logistics', href: '/doctor/shipping', icon: TruckIcon },
-        { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
-        { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
-      ];
+  // All roles get the same navigation with core medical features
+  const defaultNavigation = [
+    ...baseNavigation,
+    { name: 'Analytics & Reports', href: '/doctor/analytics', icon: ChartBarIcon },
+    { name: 'Settings', href: '/doctor/settings', icon: Cog6ToothIcon },
+  ];
 
   const defaultUserInfo = {
     name: 'Dr. John',

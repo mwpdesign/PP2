@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { ChartJS } from './ChartConfig';
 import DoctorDashboard from './DoctorDashboard';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Ensure Chart.js is configured
 if (!ChartJS.defaults.responsive) {
@@ -8,6 +9,8 @@ if (!ChartJS.defaults.responsive) {
 }
 
 const Analytics: React.FC = () => {
+  const { user } = useAuth();
+
   useEffect(() => {
     return () => {
       // Cleanup all chart instances when Analytics unmounts
@@ -16,16 +19,16 @@ const Analytics: React.FC = () => {
     };
   }, []);
 
-  // TODO: Get actual doctor ID from auth context
-  const mockDoctorId = 'DOC123';
+  // Get doctor ID from auth context, fallback to mock for development
+  const doctorId = user?.id || 'DOC123';
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <DoctorDashboard doctorId={mockDoctorId} />
+        <DoctorDashboard doctorId={doctorId} />
       </div>
     </div>
   );
 };
 
-export default Analytics; 
+export default Analytics;

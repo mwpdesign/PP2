@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare IVR Platform - Comprehensive Dashboard Audit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .test-result { transition: all 0.3s ease; }
+        .test-passed { background-color: #dcfce7; border-color: #16a34a; }
+        .test-failed { background-color: #fef2f2; border-color: #dc2626; }
+        .test-warning { background-color: #fefce8; border-color: #ca8a04; }
+        .test-pending { background-color: #f1f5f9; border-color: #64748b; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-900">🔍 Comprehensive Dashboard Audit</h1>
+                <p class="mt-1 text-sm text-gray-600">Task ID: mbrg6wvx7qgz9jp8h24 - Systematic testing of ALL doctor dashboard pages</p>
+            </div>
+            <div class="px-6 py-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div class="text-2xl font-bold text-green-600" id="passedCount">0</div>
+                        <div class="text-sm text-green-700">Tests Passed</div>
+                    </div>
+                    <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                        <div class="text-2xl font-bold text-red-600" id="failedCount">0</div>
+                        <div class="text-sm text-red-700">Tests Failed</div>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                        <div class="text-2xl font-bold text-yellow-600" id="warningCount">0</div>
+                        <div class="text-sm text-yellow-700">Warnings</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div class="text-2xl font-bold text-gray-600" id="pendingCount">0</div>
+                        <div class="text-sm text-gray-700">Pending</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">🔐 Authentication Setup</h2>
+            </div>
+            <div class="px-6 py-4">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Login Credentials</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="email" id="loginEmail" value="doctor@healthcare.local"
+                                   class="border border-gray-300 rounded-md px-3 py-2 w-full">
+                            <input type="password" id="loginPassword" value="doctor123"
+                                   class="border border-gray-300 rounded-md px-3 py-2 w-full">
+                        </div>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button onclick="performLogin()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            🔑 Login
+                        </button>
+                        <button onclick="checkAuthStatus()"
+                                class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                            ✅ Check Auth Status
+                        </button>
+                        <button onclick="startAudit()"
+                                class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                            🚀 Start Comprehensive Audit
+                        </button>
+                    </div>
+                    <div id="authStatus" class="text-sm text-gray-600"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Pages Audit -->
+        <div class="space-y-6">
+            <!-- Dashboard Page -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">📊 Dashboard Page</h3>
+                    <p class="text-sm text-gray-600">Route: /doctor/dashboard</p>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-3">
+                        <div class="test-result test-pending border rounded-lg p-3" id="dashboard-load">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Page Load Test</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing if dashboard loads without errors</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="dashboard-stats">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Stats Cards Data</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Checking if stats cards show real data</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="dashboard-charts">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Charts Functionality</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing if charts render and display data</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="dashboard-actions">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Quick Actions</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing quick action buttons functionality</div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button onclick="testDashboard()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            🧪 Test Dashboard
+                        </button>
+                        <a href="http://localhost:3000/doctor/dashboard" target="_blank"
+                           class="ml-2 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 inline-block">
+                            🔗 Open Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Management -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">👥 Patient Management</h3>
+                    <p class="text-sm text-gray-600">Routes: /doctor/patients/*</p>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-3">
+                        <div class="test-result test-pending border rounded-lg p-3" id="patients-select">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Patient Selection Page</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing patient list, search, and selection</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="patients-intake">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Patient Intake Form</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing form fields, validation, and save functionality</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="patients-detail">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Patient Detail View</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing patient information display and edit functionality</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-x-2">
+                        <button onclick="testPatientManagement()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            🧪 Test Patient Management
+                        </button>
+                        <a href="http://localhost:3000/doctor/patients/select" target="_blank"
+                           class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 inline-block">
+                            🔗 Patient Selection
+                        </a>
+                        <a href="http://localhost:3000/doctor/patients/intake" target="_blank"
+                           class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 inline-block">
+                            🔗 Patient Intake
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IVR Management -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">📋 IVR Management</h3>
+                    <p class="text-sm text-gray-600">Routes: /doctor/ivr/*</p>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-3">
+                        <div class="test-result test-pending border rounded-lg p-3" id="ivr-list">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">IVR List Page</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing IVR table, filters, and navigation</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="ivr-create">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">IVR Creation</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing IVR submission form and workflow</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="ivr-detail">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">IVR Detail View</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing IVR details, status updates, and communication</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="ivr-documents">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Document Upload</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing document upload and management</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-x-2">
+                        <button onclick="testIVRManagement()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            🧪 Test IVR Management
+                        </button>
+                        <a href="http://localhost:3000/doctor/ivr" target="_blank"
+                           class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 inline-block">
+                            🔗 IVR Management
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Management -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">📦 Order Management</h3>
+                    <p class="text-sm text-gray-600">Routes: /doctor/orders/*</p>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-3">
+                        <div class="test-result test-pending border rounded-lg p-3" id="orders-list">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Order List Page</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing order table, filters, and search</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="orders-create">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Order Creation from IVR</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing order creation workflow from approved IVRs</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="orders-detail">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Order Detail View</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing order details, status tracking, and actions</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="orders-tracking">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Order Status Tracking</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing status updates and tracking functionality</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-x-2">
+                        <button onclick="testOrderManagement()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            🧪 Test Order Management
+                        </button>
+                        <a href="http://localhost:3000/doctor/orders" target="_blank"
+                           class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 inline-block">
+                            🔗 Order Management
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics & Reports -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">📈 Analytics & Reports</h3>
+                    <p class="text-sm text-gray-600">Route: /doctor/analytics</p>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-3">
+                        <div class="test-result test-pending border rounded-lg p-3" id="analytics-load">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Analytics Page Load</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing if analytics page loads without errors</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="analytics-charts">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Charts and Graphs</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing chart rendering and data visualization</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="analytics-reports">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Report Generation</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing report generation and export functionality</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-x-2">
+                        <button onclick="testAnalytics()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            🧪 Test Analytics
+                        </button>
+                        <a href="http://localhost:3000/doctor/analytics" target="_blank"
+                           class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 inline-block">
+                            🔗 Analytics
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">⚙️ Settings</h3>
+                    <p class="text-sm text-gray-600">Route: /doctor/settings</p>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-3">
+                        <div class="test-result test-pending border rounded-lg p-3" id="settings-load">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Settings Page Load</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing if settings page loads with all tabs</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="settings-tabs">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Settings Tabs</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing all settings tabs functionality</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="settings-forms">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Form Save Functionality</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing form validation and save operations</div>
+                        </div>
+                        <div class="test-result test-pending border rounded-lg p-3" id="settings-permissions">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium">Permissions Management</span>
+                                <span class="test-status">⏳ Pending</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mt-1">Testing staff permissions and role management</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-x-2">
+                        <button onclick="testSettings()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            🧪 Test Settings
+                        </button>
+                        <a href="http://localhost:3000/doctor/settings" target="_blank"
+                           class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 inline-block">
+                            🔗 Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Issues Found -->
+        <div class="bg-white shadow rounded-lg mt-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">🐛 Issues Found</h2>
+            </div>
+            <div class="px-6 py-4">
+                <div id="issuesList" class="space-y-3">
+                    <p class="text-gray-500 italic">No issues found yet. Run tests to identify problems.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Results Summary -->
+        <div class="bg-white shadow rounded-lg mt-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">📊 Test Results Summary</h2>
+            </div>
+            <div class="px-6 py-4">
+                <div id="testSummary" class="text-gray-500 italic">
+                    Run the comprehensive audit to see detailed results.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            warnings: 0,
+            pending: 0
+        };
+
+        let issues = [];
+
+        function updateCounters() {
+            document.getElementById('passedCount').textContent = testResults.passed;
+            document.getElementById('failedCount').textContent = testResults.failed;
+            document.getElementById('warningCount').textContent = testResults.warnings;
+            document.getElementById('pendingCount').textContent = testResults.pending;
+        }
+
+        function updateTestResult(testId, status, message) {
+            const element = document.getElementById(testId);
+            const statusElement = element.querySelector('.test-status');
+
+            // Remove old classes
+            element.classList.remove('test-passed', 'test-failed', 'test-warning', 'test-pending');
+
+            // Update counters
+            if (element.dataset.status) {
+                testResults[element.dataset.status]--;
+            }
+
+            // Add new status
+            element.dataset.status = status;
+            testResults[status]++;
+
+            switch(status) {
+                case 'passed':
+                    element.classList.add('test-passed');
+                    statusElement.textContent = '✅ Passed';
+                    break;
+                case 'failed':
+                    element.classList.add('test-failed');
+                    statusElement.textContent = '❌ Failed';
+                    break;
+                case 'warning':
+                    element.classList.add('test-warning');
+                    statusElement.textContent = '⚠️ Warning';
+                    break;
+                default:
+                    element.classList.add('test-pending');
+                    statusElement.textContent = '⏳ Pending';
+            }
+
+            if (message) {
+                const messageDiv = element.querySelector('.text-sm');
+                messageDiv.textContent = message;
+            }
+
+            updateCounters();
+        }
+
+        function addIssue(severity, title, description, fix = null) {
+            issues.push({ severity, title, description, fix });
+            updateIssuesList();
+        }
+
+        function updateIssuesList() {
+            const issuesList = document.getElementById('issuesList');
+
+            if (issues.length === 0) {
+                issuesList.innerHTML = '<p class="text-gray-500 italic">No issues found yet. Run tests to identify problems.</p>';
+                return;
+            }
+
+            issuesList.innerHTML = issues.map(issue => `
+                <div class="border rounded-lg p-4 ${issue.severity === 'critical' ? 'border-red-300 bg-red-50' :
+                                                   issue.severity === 'major' ? 'border-orange-300 bg-orange-50' :
+                                                   'border-yellow-300 bg-yellow-50'}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h4 class="font-medium ${issue.severity === 'critical' ? 'text-red-800' :
+                                                   issue.severity === 'major' ? 'text-orange-800' :
+                                                   'text-yellow-800'}">${issue.title}</h4>
+                            <p class="text-sm ${issue.severity === 'critical' ? 'text-red-700' :
+                                               issue.severity === 'major' ? 'text-orange-700' :
+                                               'text-yellow-700'} mt-1">${issue.description}</p>
+                            ${issue.fix ? `<p class="text-sm text-gray-600 mt-2"><strong>Fix:</strong> ${issue.fix}</p>` : ''}
+                        </div>
+                        <span class="ml-4 px-2 py-1 text-xs font-medium rounded-full ${
+                            issue.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                            issue.severity === 'major' ? 'bg-orange-100 text-orange-800' :
+                            'bg-yellow-100 text-yellow-800'
+                        }">${issue.severity.toUpperCase()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function performLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('authToken', data.access_token);
+                    document.getElementById('authStatus').innerHTML = '✅ Login successful! Token stored.';
+                    document.getElementById('authStatus').className = 'text-sm text-green-600';
+                } else {
+                    document.getElementById('authStatus').innerHTML = '❌ Login failed. Check credentials.';
+                    document.getElementById('authStatus').className = 'text-sm text-red-600';
+                }
+            } catch (error) {
+                document.getElementById('authStatus').innerHTML = '❌ Login error: ' + error.message;
+                document.getElementById('authStatus').className = 'text-sm text-red-600';
+            }
+        }
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                document.getElementById('authStatus').innerHTML = '✅ Authentication token found.';
+                document.getElementById('authStatus').className = 'text-sm text-green-600';
+            } else {
+                document.getElementById('authStatus').innerHTML = '❌ No authentication token found.';
+                document.getElementById('authStatus').className = 'text-sm text-red-600';
+            }
+        }
+
+        async function testPageLoad(url, testId, pageName) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+
+                if (response.ok) {
+                    updateTestResult(testId, 'passed', `${pageName} loads successfully`);
+                    return true;
+                } else if (response.status === 401) {
+                    updateTestResult(testId, 'failed', `Authentication required for ${pageName}`);
+                    addIssue('major', `${pageName} Authentication`, 'Page requires authentication but token may be invalid');
+                    return false;
+                } else {
+                    updateTestResult(testId, 'failed', `${pageName} returned ${response.status}`);
+                    addIssue('major', `${pageName} Load Error`, `Page returned HTTP ${response.status}`);
+                    return false;
+                }
+            } catch (error) {
+                updateTestResult(testId, 'failed', `${pageName} network error: ${error.message}`);
+                addIssue('critical', `${pageName} Network Error`, error.message);
+                return false;
+            }
+        }
+
+        async function testDashboard() {
+            console.log('🧪 Testing Dashboard...');
+
+            // Test page load
+            const loadSuccess = await testPageLoad('http://localhost:3000/doctor/dashboard', 'dashboard-load', 'Dashboard');
+
+            if (loadSuccess) {
+                // Test stats cards (simulate checking for data)
+                updateTestResult('dashboard-stats', 'warning', 'Stats cards need manual verification for real data');
+
+                // Test charts
+                updateTestResult('dashboard-charts', 'warning', 'Charts need manual verification for functionality');
+
+                // Test quick actions
+                updateTestResult('dashboard-actions', 'warning', 'Quick actions need manual verification');
+
+                addIssue('minor', 'Dashboard Manual Testing Required', 'Stats cards, charts, and quick actions require manual verification');
+            }
+        }
+
+        async function testPatientManagement() {
+            console.log('🧪 Testing Patient Management...');
+
+            // Test patient selection page
+            const selectSuccess = await testPageLoad('http://localhost:3000/doctor/patients/select', 'patients-select', 'Patient Selection');
+
+            // Test patient intake page
+            const intakeSuccess = await testPageLoad('http://localhost:3000/doctor/patients/intake', 'patients-intake', 'Patient Intake');
+
+            // Test patient detail (using mock ID)
+            const detailSuccess = await testPageLoad('http://localhost:3000/doctor/patients/P-1234', 'patients-detail', 'Patient Detail');
+
+            if (selectSuccess && intakeSuccess) {
+                addIssue('minor', 'Patient Management Manual Testing', 'Search, add/edit functionality requires manual verification');
+            }
+        }
+
+        async function testIVRManagement() {
+            console.log('🧪 Testing IVR Management...');
+
+            // Test IVR list page
+            const listSuccess = await testPageLoad('http://localhost:3000/doctor/ivr', 'ivr-list', 'IVR Management');
+
+            if (listSuccess) {
+                updateTestResult('ivr-create', 'warning', 'IVR creation workflow needs manual testing');
+                updateTestResult('ivr-detail', 'warning', 'IVR detail view needs manual testing');
+                updateTestResult('ivr-documents', 'warning', 'Document upload needs manual testing');
+
+                addIssue('minor', 'IVR Manual Testing Required', 'Create, detail, and document upload features need manual verification');
+            }
+        }
+
+        async function testOrderManagement() {
+            console.log('🧪 Testing Order Management...');
+
+            // Test orders page
+            const ordersSuccess = await testPageLoad('http://localhost:3000/doctor/orders', 'orders-list', 'Order Management');
+
+            if (ordersSuccess) {
+                updateTestResult('orders-create', 'warning', 'Order creation from IVR needs manual testing');
+                updateTestResult('orders-detail', 'warning', 'Order detail view needs manual testing');
+                updateTestResult('orders-tracking', 'warning', 'Order tracking needs manual testing');
+
+                addIssue('minor', 'Order Management Manual Testing', 'Order creation, details, and tracking need manual verification');
+            }
+        }
+
+        async function testAnalytics() {
+            console.log('🧪 Testing Analytics...');
+
+            // Test analytics page
+            const analyticsSuccess = await testPageLoad('http://localhost:3000/doctor/analytics', 'analytics-load', 'Analytics');
+
+            if (analyticsSuccess) {
+                updateTestResult('analytics-charts', 'warning', 'Charts and graphs need manual verification');
+                updateTestResult('analytics-reports', 'warning', 'Report generation needs manual testing');
+
+                addIssue('minor', 'Analytics Manual Testing', 'Charts and report generation need manual verification');
+            }
+        }
+
+        async function testSettings() {
+            console.log('🧪 Testing Settings...');
+
+            // Test settings page
+            const settingsSuccess = await testPageLoad('http://localhost:3000/doctor/settings', 'settings-load', 'Settings');
+
+            if (settingsSuccess) {
+                updateTestResult('settings-tabs', 'warning', 'Settings tabs need manual verification');
+                updateTestResult('settings-forms', 'warning', 'Form save functionality needs manual testing');
+                updateTestResult('settings-permissions', 'warning', 'Permissions management needs manual testing');
+
+                addIssue('minor', 'Settings Manual Testing', 'All settings functionality requires manual verification');
+            }
+        }
+
+        async function startAudit() {
+            console.log('🚀 Starting Comprehensive Dashboard Audit...');
+
+            // Reset counters
+            testResults = { passed: 0, failed: 0, warnings: 0, pending: 0 };
+            issues = [];
+            updateCounters();
+            updateIssuesList();
+
+            // Check authentication first
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                addIssue('critical', 'Authentication Required', 'Please login before running tests');
+                return;
+            }
+
+            // Run all tests
+            await testDashboard();
+            await testPatientManagement();
+            await testIVRManagement();
+            await testOrderManagement();
+            await testAnalytics();
+            await testSettings();
+
+            // Update summary
+            const summary = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-2">Test Results</h3>
+                        <ul class="text-sm space-y-1">
+                            <li class="text-green-600">✅ ${testResults.passed} tests passed</li>
+                            <li class="text-red-600">❌ ${testResults.failed} tests failed</li>
+                            <li class="text-yellow-600">⚠️ ${testResults.warnings} warnings</li>
+                            <li class="text-gray-600">⏳ ${testResults.pending} pending</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-2">Issues Summary</h3>
+                        <ul class="text-sm space-y-1">
+                            <li class="text-red-600">🔴 ${issues.filter(i => i.severity === 'critical').length} critical issues</li>
+                            <li class="text-orange-600">🟠 ${issues.filter(i => i.severity === 'major').length} major issues</li>
+                            <li class="text-yellow-600">🟡 ${issues.filter(i => i.severity === 'minor').length} minor issues</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            document.getElementById('testSummary').innerHTML = summary;
+
+            console.log('✅ Comprehensive audit completed!');
+        }
+
+        // Initialize counters
+        updateCounters();
+        checkAuthStatus();
+    </script>
+</body>
+</html>

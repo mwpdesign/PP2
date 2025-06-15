@@ -9,7 +9,9 @@ import {
   DocumentMagnifyingGlassIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  DocumentTextIcon,
+  TruckIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
 import AdminSidebar from './AdminSidebar';
@@ -30,7 +32,9 @@ const AdminLayout: React.FC = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
-    { name: 'IVR Review', href: '/admin/ivr-review', icon: ClipboardDocumentCheckIcon },
+    { name: 'IVR Management', href: '/admin/ivr-management', icon: ClipboardDocumentCheckIcon },
+    { name: 'Order Management', href: '/admin/orders', icon: DocumentTextIcon },
+    { name: 'Shipping & Logistics', href: '/admin/shipping', icon: TruckIcon },
     { name: 'Provider Network', href: '/admin/providers', icon: BuildingOfficeIcon },
     { name: 'User Management', href: '/admin/users', icon: UsersIcon },
     { name: 'Invitations', href: '/admin/invitations', icon: EnvelopeIcon },

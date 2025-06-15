@@ -32,9 +32,9 @@ export const MainLayout: React.FC = () => {
     { name: 'Shipping & Logistics', href: '/shipping', icon: TruckIcon },
     { name: 'Analytics & Reports', href: '/analytics', icon: ChartBarIcon },
     { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
-    { 
-      name: 'Sign Out', 
-      href: '#', 
+    {
+      name: 'Sign Out',
+      href: '#',
       icon: ArrowRightOnRectangleIcon,
       onClick: async () => {
         try {
@@ -59,13 +59,13 @@ export const MainLayout: React.FC = () => {
     <div className="flex min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Desktop Sidebar */}
       <Sidebar />
-      
+
       {/* Mobile Header */}
       <MobileHeader userInfo={userInfo} />
-      
+
       {/* Mobile Menu */}
       <MobileMenu navigation={navigation} userInfo={userInfo} />
-      
+
       {/* Main Content */}
       <main className="flex-grow md:ml-[280px] pt-14 md:pt-0 min-h-screen bg-gray-50 min-w-0 overflow-x-hidden">
         <div className="max-w-full overflow-x-hidden">
@@ -76,4 +76,4 @@ export const MainLayout: React.FC = () => {
       </main>
     </div>
   );
-}; 
+};

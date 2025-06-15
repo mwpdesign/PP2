@@ -7,7 +7,9 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   ClockIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  DocumentTextIcon,
+  TruckIcon
 } from '@heroicons/react/24/solid';
 import Sidebar from '../shared/layout/Sidebar';
 import SystemHeader from '../shared/layout/SystemHeader';
@@ -20,7 +22,9 @@ const IVRLayout: React.FC = () => {
 
   const navigation = [
     { name: 'Dashboard', href: '/ivr/dashboard', icon: HomeIcon },
-    { name: 'Call Management', href: '/ivr/calls', icon: PhoneIcon },
+    { name: 'IVR Management', href: '/ivr/calls', icon: PhoneIcon },
+    { name: 'Order Management', href: '/ivr/orders', icon: DocumentTextIcon },
+    { name: 'Shipping & Logistics', href: '/ivr/shipping', icon: TruckIcon },
     { name: 'Queue Monitor', href: '/ivr/queue', icon: ClockIcon },
     { name: 'System Status', href: '/ivr/status', icon: ExclamationTriangleIcon },
     { name: 'Analytics', href: '/ivr/analytics', icon: ChartBarIcon },
