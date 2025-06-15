@@ -261,6 +261,18 @@ async def list_invitations(
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationListResponse:
     """List invitations with filtering and pagination."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    logger.info("🔍 INVITATION LIST ENDPOINT CALLED")
+    logger.info(f"📧 Current user: {current_user.email if current_user else 'None'}")
+    logger.info(f"👤 Current user role: {current_user.role if current_user else 'None'}")
+    logger.info(f"🏢 Organization ID: {organization_id}")
+    logger.info(f"📋 Invitation type: {invitation_type}")
+    logger.info(f"📊 Status filter: {status}")
+    logger.info(f"👥 Invited by ID: {invited_by_id}")
+    logger.info(f"📄 Limit: {limit}, Offset: {offset}")
+
     try:
         service = InvitationService(db)
 
@@ -268,7 +280,9 @@ async def list_invitations(
         if current_user.role not in ["admin", "chp_admin"]:
             # Non-admin users can only see invitations they created
             invited_by_id = current_user.id
+            logger.info(f"🔒 Non-admin user - filtering by invited_by_id: {invited_by_id}")
 
+        logger.info("🔄 Calling invitation service...")
         invitations, total_count = await service.list_invitations(
             organization_id=organization_id,
             invitation_type=invitation_type,
@@ -280,11 +294,13 @@ async def list_invitations(
             sort_order=sort_order
         )
 
+        logger.info(f"✅ Service returned {len(invitations)} invitations (total: {total_count})")
+
         invitation_responses = [
             InvitationResponse.from_orm(inv) for inv in invitations
         ]
 
-        return InvitationListResponse(
+        response = InvitationListResponse(
             invitations=invitation_responses,
             total_count=total_count,
             limit=limit,
@@ -292,10 +308,22 @@ async def list_invitations(
             has_more=(offset + limit) < total_count
         )
 
+        logger.info(f"📤 Returning response with {len(response.invitations)} invitations")
+        return response
+
     except ValidationError as e:
+        logger.error(f"❌ Validation error: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"💥 Unexpected error in list_invitations: {e}")
+        import traceback
+        logger.error(f"📋 Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
         )
 
 
@@ -696,7 +724,18 @@ async def get_invitation_statistics(
             days=days
         )
 
-        return InvitationStatisticsResponse(**stats)
+        # Map service data to response model format
+        status_breakdown = stats.get("status_breakdown", {})
+
+        return InvitationStatisticsResponse(
+            total_invitations=stats.get("total_invitations", 0),
+            by_status=status_breakdown,
+            by_type=stats.get("type_breakdown", {}),
+            acceptance_rate=stats.get("acceptance_rate", 0.0),
+            average_acceptance_time_hours=24.0,  # Default value - can be calculated later
+            pending_count=status_breakdown.get("pending", 0) + status_breakdown.get("sent", 0),
+            expired_count=status_breakdown.get("expired", 0)
+        )
 
     except ValidationError as e:
         raise HTTPException(
