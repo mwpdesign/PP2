@@ -8,7 +8,8 @@ import {
   ChartBarIcon,
   DocumentMagnifyingGlassIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -25,19 +26,20 @@ const AdminSidebar: React.FC = () => {
     }
   };
 
-  const navigation = [
+    const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
     { name: 'IVR Review', href: '/admin/ivr-review', icon: ClipboardDocumentCheckIcon },
     { name: 'Provider Network', href: '/admin/providers', icon: BuildingOfficeIcon },
     { name: 'User Management', href: '/admin/users', icon: UsersIcon },
+    { name: 'Invitations', href: '/admin/invitations', icon: EnvelopeIcon },
     { name: 'System Analytics', href: '/admin/analytics', icon: ChartBarIcon },
     { name: 'Audit Logs', href: '/admin/audit-logs', icon: DocumentMagnifyingGlassIcon },
     { name: 'System Settings', href: '/admin/settings', icon: Cog6ToothIcon },
-    { 
-      name: 'Sign Out', 
-      href: '#', 
+    {
+      name: 'Sign Out',
+      href: '#',
       icon: ArrowRightOnRectangleIcon,
-      onClick: handleSignOut 
+      onClick: handleSignOut
     }
   ];
 
@@ -45,9 +47,9 @@ const AdminSidebar: React.FC = () => {
     <div className="hidden md:block fixed inset-y-0 left-0 w-[280px] bg-[#334155] text-white">
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-start p-6 border-b border-slate-700">
-          <img 
-            src="/logo2.png" 
-            alt="Healthcare IVR Admin" 
+          <img
+            src="/logo2.png"
+            alt="Healthcare IVR Admin"
             className="h-24 w-auto"
             onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
               const target = e.currentTarget;
@@ -70,8 +72,8 @@ const AdminSidebar: React.FC = () => {
                 className={`
                   flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors
                   focus:outline-none focus:ring-2 focus:ring-[#375788] focus:ring-offset-2 focus:ring-offset-slate-900
-                  ${isActive 
-                    ? 'bg-[#375788] text-white' 
+                  ${isActive
+                    ? 'bg-[#375788] text-white'
                     : 'text-slate-300 hover:bg-slate-600 hover:text-white'}
                 `}
               >
@@ -99,4 +101,4 @@ const AdminSidebar: React.FC = () => {
   );
 };
 
-export default AdminSidebar; 
+export default AdminSidebar;

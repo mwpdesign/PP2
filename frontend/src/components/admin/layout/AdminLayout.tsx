@@ -8,7 +8,8 @@ import {
   ChartBarIcon,
   DocumentMagnifyingGlassIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  EnvelopeIcon
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../../contexts/AuthContext';
 import AdminSidebar from './AdminSidebar';
@@ -32,6 +33,7 @@ const AdminLayout: React.FC = () => {
     { name: 'IVR Review', href: '/admin/ivr-review', icon: ClipboardDocumentCheckIcon },
     { name: 'Provider Network', href: '/admin/providers', icon: BuildingOfficeIcon },
     { name: 'User Management', href: '/admin/users', icon: UsersIcon },
+    { name: 'Invitations', href: '/admin/invitations', icon: EnvelopeIcon },
     { name: 'System Analytics', href: '/admin/analytics', icon: ChartBarIcon },
     { name: 'Audit Logs', href: '/admin/audit-logs', icon: DocumentMagnifyingGlassIcon },
     { name: 'System Settings', href: '/admin/settings', icon: Cog6ToothIcon },

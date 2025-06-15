@@ -76,6 +76,7 @@ const DistributorIVRDetail = React.lazy(() => import('./pages/distributor/IVRDet
 const DistributorOrderDetail = React.lazy(() => import('./pages/distributor/OrderDetail'));
 const DistributorShippingDetail = React.lazy(() => import('./pages/distributor/ShippingDetail'));
 const IVRFullDetails = React.lazy(() => import('./pages/distributor/IVRFullDetails'));
+const AdminInvitationManagement = React.lazy(() => import('./pages/admin/invitations'));
 
 const App = () => {
   console.log('App component rendering');
@@ -149,6 +150,7 @@ const App = () => {
                     <Route path="ivr-review" element={<IVRReviewQueue />} />
                     <Route path="providers" element={<ProviderNetwork />} />
                     <Route path="users" element={<UserManagement />} />
+                    <Route path="invitations" element={<AdminInvitationManagement />} />
                     <Route path="audit-logs" element={<AuditLogs />} />
                     <Route path="analytics" element={<AnalyticsPage />} />
                     <Route path="settings" element={<SystemSettings />} />
