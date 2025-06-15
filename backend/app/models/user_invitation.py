@@ -1,6 +1,6 @@
 """User Invitation model for the healthcare IVR platform."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from uuid import UUID as PyUUID, uuid4
 
@@ -185,7 +185,15 @@ class UserInvitation(Base):
     @property
     def is_expired(self) -> bool:
         """Check if the invitation has expired."""
-        return datetime.utcnow() > self.expires_at
+        # Use timezone-aware datetime for comparison
+        now = datetime.now(timezone.utc)
+        # Handle both timezone-aware and timezone-naive expires_at
+        if self.expires_at.tzinfo is None:
+            # If expires_at is timezone-naive, assume UTC
+            expires_at_aware = self.expires_at.replace(tzinfo=timezone.utc)
+        else:
+            expires_at_aware = self.expires_at
+        return now > expires_at_aware
 
     @property
     def is_pending(self) -> bool:
@@ -202,23 +210,31 @@ class UserInvitation(Base):
         """Get the number of days until expiry."""
         if self.is_expired:
             return 0
-        delta = self.expires_at - datetime.utcnow()
+        # Use timezone-aware datetime for comparison
+        now = datetime.now(timezone.utc)
+        # Handle both timezone-aware and timezone-naive expires_at
+        if self.expires_at.tzinfo is None:
+            # If expires_at is timezone-naive, assume UTC
+            expires_at_aware = self.expires_at.replace(tzinfo=timezone.utc)
+        else:
+            expires_at_aware = self.expires_at
+        delta = expires_at_aware - now
         return max(0, delta.days)
 
     def mark_as_sent(self) -> None:
         """Mark the invitation as sent."""
         self.status = "sent"
-        self.sent_at = datetime.utcnow()
+        self.sent_at = datetime.now(timezone.utc)
         # Ensure email_attempts is initialized
         if self.email_attempts is None:
             self.email_attempts = 0
         self.email_attempts += 1
-        self.last_email_sent_at = datetime.utcnow()
+        self.last_email_sent_at = datetime.now(timezone.utc)
 
     def mark_as_accepted(self) -> None:
         """Mark the invitation as accepted."""
         self.status = "accepted"
-        self.accepted_at = datetime.utcnow()
+        self.accepted_at = datetime.now(timezone.utc)
 
     def mark_as_expired(self) -> None:
         """Mark the invitation as expired."""
@@ -244,7 +260,7 @@ class UserInvitation(Base):
         if self.email_attempts is None:
             self.email_attempts = 0
         self.email_attempts += 1
-        self.last_email_sent_at = datetime.utcnow()
+        self.last_email_sent_at = datetime.now(timezone.utc)
 
     def set_email_delivery_status(self, status: str) -> None:
         """Set the email delivery status."""
@@ -254,7 +270,7 @@ class UserInvitation(Base):
 
     def extend_expiry(self, days: int = 7) -> None:
         """Extend the invitation expiry by the specified number of days."""
-        self.expires_at = datetime.utcnow() + timedelta(days=days)
+        self.expires_at = datetime.now(timezone.utc) + timedelta(days=days)
 
     def get_invitation_url(self, base_url: str) -> str:
         """Generate the invitation acceptance URL."""
@@ -322,7 +338,7 @@ class UserInvitation(Base):
         import secrets
 
         invitation_token = secrets.token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(days=expires_in_days)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=expires_in_days)
 
         return cls(
             email=email,

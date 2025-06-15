@@ -42,7 +42,7 @@ from app.schemas.invitation import (
     BulkOperationResponse,
     InvitationErrorResponse
 )
-from app.schemas.auth import TokenData
+from app.schemas.token import TokenData
 
 router = APIRouter()
 
@@ -62,9 +62,30 @@ async def create_invitation(
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Create a new invitation."""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    logger.info("🔍 CREATE INVITATION ENDPOINT CALLED")
+    logger.info(f"📧 Current user: {current_user.email if current_user else 'None'}")
+    logger.info(f"👤 Current user ID: {current_user.id if current_user else 'None'}")
+    logger.info(f"👤 Current user role: {current_user.role if current_user else 'None'}")
+    logger.info(f"🏢 Current user org: {current_user.organization_id if current_user else 'None'}")
+    logger.info(f"📋 Invitation data: {invitation_data}")
+
     try:
+        logger.info(f"🎯 Starting invitation creation for user: "
+                    f"{current_user.email}")
+        logger.info(f"📧 Current user ID: {current_user.id}")
+        logger.info(f"🏢 Current user organization: "
+                    f"{current_user.organization_id}")
+        logger.info(f"👤 Current user role: {current_user.role}")
+        logger.info(f"📝 Invitation data: {invitation_data.dict()}")
+
         service = InvitationService(db)
 
+        logger.info("🔧 InvitationService created successfully")
+
+        # Create the invitation
         invitation = await service.create_invitation(
             email=invitation_data.email,
             invitation_type=invitation_data.invitation_type,
@@ -81,22 +102,41 @@ async def create_invitation(
             parent_doctor_id=invitation_data.parent_doctor_id
         )
 
+        logger.info(f"✅ Invitation created successfully with ID: "
+                    f"{invitation.id}")
         return InvitationResponse.from_orm(invitation)
 
     except ConflictError as e:
+        logger.error(f"❌ Conflict error in create_invitation: {e}")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(e)
         )
     except ValidationError as e:
+        logger.error(f"❌ Validation error in create_invitation: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
     except AuthorizationError as e:
+        logger.error(f"❌ Authorization error in create_invitation: {e}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"💥 UNEXPECTED ERROR in create_invitation: "
+                    f"{str(e)}")
+        logger.error(f"🔍 Exception type: {type(e).__name__}")
+        logger.error(f"📍 Exception args: {e.args}")
+
+        # Import traceback for detailed error info
+        import traceback
+        logger.error(f"📋 Full traceback:\n{traceback.format_exc()}")
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
         )
 
 

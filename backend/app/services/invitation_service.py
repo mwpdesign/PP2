@@ -14,10 +14,11 @@ This service handles all invitation business logic including:
 import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Tuple
-from uuid import UUID as PyUUID, uuid4
+from uuid import UUID as PyUUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import and_, or_, desc, asc, select, func
+from sqlalchemy import and_, desc, asc, select, func
+from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 
 from app.models.user_invitation import UserInvitation
@@ -679,18 +680,25 @@ class InvitationService:
         This is a simplified validation - in production, you'd implement
         more complex role-based permission checking.
         """
-        stmt = select(User).where(User.id == invited_by_id)
+        # Use eager loading to join the Role table to avoid lazy loading issues
+        stmt = select(User).options(selectinload(User.role)).where(User.id == invited_by_id)
         result = await self.db.execute(stmt)
         inviter = result.scalar_one_or_none()
 
         if not inviter:
             raise AuthorizationError("Inviter not found")
 
+        # Get role name safely
+        role_name = inviter.role.name if inviter.role else None
+
+        if not role_name:
+            raise AuthorizationError("Inviter role not found")
+
         # Basic permission checks
-        if inviter.role == "doctor" and invitation_type not in ["office_admin", "medical_staff"]:
+        if role_name == "doctor" and invitation_type not in ["office_admin", "medical_staff"]:
             raise AuthorizationError("Doctors can only invite practice staff")
 
-        if inviter.role == "sales" and invitation_type != "doctor":
+        if role_name == "sales" and invitation_type != "doctor":
             raise AuthorizationError("Sales representatives can only invite doctors")
 
         # Add more role-based validation as needed
