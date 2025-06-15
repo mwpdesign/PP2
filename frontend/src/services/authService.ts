@@ -9,7 +9,7 @@ import {
 } from '../types/auth';
 
 // Use Vite proxy instead of direct backend URL to avoid CORS issues
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = '';  // Use empty string for relative URLs with Vite proxy
 console.log('[authService] API_BASE_URL:', API_BASE_URL); // Debug log for API_BASE_URL
 
 // Authentication configuration

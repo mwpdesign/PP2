@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Environment variable schema
 const envSchema = z.object({
-  VITE_API_URL: z.string().default('http://localhost:8000'),
+  VITE_API_URL: z.string().default(''),
   VITE_WS_URL: z.string().default('ws://localhost:8000'),
   VITE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });

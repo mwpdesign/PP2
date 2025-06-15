@@ -1,6 +1,6 @@
 import { Treatment, TreatmentFormData, InventoryItem } from '../types/treatments';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = '';  // Use empty string for relative URLs with Vite proxy
 
 interface TreatmentCreateRequest {
   patient_id: string;

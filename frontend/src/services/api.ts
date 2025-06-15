@@ -23,7 +23,7 @@ class APIClient {
   constructor() {
     // Create axios instance with default configuration
     this.client = axios.create({
-      baseURL: config.API_BASE_URL || 'http://localhost:8000',
+      baseURL: config.API_BASE_URL || '',  // Use empty string for relative URLs with Vite proxy
       timeout: config.API_TIMEOUT || 10000,
       headers: {
         'Content-Type': 'application/json',
