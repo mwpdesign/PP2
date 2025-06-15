@@ -14,7 +14,7 @@ from typing import List, Optional
 from uuid import UUID as PyUUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -33,10 +33,8 @@ from app.schemas.invitation import (
     InvitationAcceptRequest,
     InvitationResponse,
     InvitationListResponse,
-    InvitationListParams,
     InvitationAcceptResponse,
     InvitationStatisticsResponse,
-    InvitationStatisticsParams,
     InvitationUrlResponse,
     InvitationValidationResponse,
     BulkInvitationRequest,
@@ -60,14 +58,14 @@ router = APIRouter()
 )
 async def create_invitation(
     invitation_data: InvitationCreateRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Create a new invitation."""
     try:
         service = InvitationService(db)
 
-        invitation = service.create_invitation(
+        invitation = await service.create_invitation(
             email=invitation_data.email,
             invitation_type=invitation_data.invitation_type,
             role_name=invitation_data.role_name,
@@ -111,14 +109,14 @@ async def create_invitation(
 )
 async def create_doctor_invitation(
     invitation_data: DoctorInvitationRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Create a doctor invitation."""
     try:
         service = InvitationService(db)
 
-        invitation = service.create_doctor_invitation(
+        invitation = await service.create_doctor_invitation(
             email=invitation_data.email,
             invited_by_id=current_user.id,
             organization_id=invitation_data.organization_id,
@@ -155,14 +153,14 @@ async def create_doctor_invitation(
 )
 async def create_sales_invitation(
     invitation_data: SalesInvitationRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Create a sales representative invitation."""
     try:
         service = InvitationService(db)
 
-        invitation = service.create_sales_invitation(
+        invitation = await service.create_sales_invitation(
             email=invitation_data.email,
             invited_by_id=current_user.id,
             organization_id=invitation_data.organization_id,
@@ -200,14 +198,14 @@ async def create_sales_invitation(
 )
 async def create_practice_staff_invitation(
     invitation_data: PracticeStaffInvitationRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Create a practice staff invitation."""
     try:
         service = InvitationService(db)
 
-        invitation = service.create_practice_staff_invitation(
+        invitation = await service.create_practice_staff_invitation(
             email=invitation_data.email,
             invited_by_id=current_user.id,
             organization_id=invitation_data.organization_id,
@@ -245,15 +243,21 @@ async def create_practice_staff_invitation(
     description="Get a paginated list of invitations with filtering options"
 )
 async def list_invitations(
-    organization_id: Optional[PyUUID] = Query(None, description="Filter by organization"),
-    invitation_type: Optional[str] = Query(None, description="Filter by invitation type"),
+    organization_id: Optional[PyUUID] = Query(
+        None, description="Filter by organization"
+    ),
+    invitation_type: Optional[str] = Query(
+        None, description="Filter by invitation type"
+    ),
     status: Optional[str] = Query(None, description="Filter by status"),
     invited_by_id: Optional[PyUUID] = Query(None, description="Filter by inviter"),
-    limit: int = Query(50, ge=1, le=100, description="Number of items per page"),
+    limit: int = Query(
+        50, ge=1, le=100, description="Number of items per page"
+    ),
     offset: int = Query(0, ge=0, description="Number of items to skip"),
     sort_by: str = Query("created_at", description="Field to sort by"),
     sort_order: str = Query("desc", description="Sort order (asc or desc)"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationListResponse:
     """List invitations with filtering and pagination."""
@@ -265,7 +269,7 @@ async def list_invitations(
             # Non-admin users can only see invitations they created
             invited_by_id = current_user.id
 
-        invitations, total_count = service.list_invitations(
+        invitations, total_count = await service.list_invitations(
             organization_id=organization_id,
             invitation_type=invitation_type,
             status=status,
@@ -303,13 +307,13 @@ async def list_invitations(
 )
 async def get_invitation(
     invitation_id: PyUUID,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Get invitation by ID."""
     try:
         service = InvitationService(db)
-        invitation = service.get_invitation_by_id(invitation_id)
+        invitation = await service.get_invitation_by_id(invitation_id)
 
         # Check permissions
         if (current_user.role not in ["admin", "chp_admin"] and
@@ -336,7 +340,7 @@ async def get_invitation(
 )
 async def get_pending_invitations(
     limit: int = Query(50, ge=1, le=100, description="Maximum number of invitations"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> List[InvitationResponse]:
     """Get pending invitations."""
@@ -347,7 +351,7 @@ async def get_pending_invitations(
     if current_user.role not in ["admin", "chp_admin"]:
         organization_id = current_user.organization_id
 
-    invitations = service.get_pending_invitations(
+    invitations = await service.get_pending_invitations(
         organization_id=organization_id,
         limit=limit
     )
@@ -365,13 +369,13 @@ async def get_pending_invitations(
 )
 async def send_invitation(
     invitation_id: PyUUID,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Send an invitation."""
     try:
         service = InvitationService(db)
-        invitation = service.get_invitation_by_id(invitation_id)
+        invitation = await service.get_invitation_by_id(invitation_id)
 
         # Check permissions
         if (current_user.role not in ["admin", "chp_admin"] and
@@ -381,7 +385,7 @@ async def send_invitation(
                 detail="Insufficient permissions to send this invitation"
             )
 
-        updated_invitation = service.send_invitation(invitation_id)
+        updated_invitation = await service.send_invitation(invitation_id)
         return InvitationResponse.from_orm(updated_invitation)
 
     except NotFoundException as e:
@@ -404,13 +408,13 @@ async def send_invitation(
 )
 async def resend_invitation(
     invitation_id: PyUUID,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Resend an invitation."""
     try:
         service = InvitationService(db)
-        invitation = service.get_invitation_by_id(invitation_id)
+        invitation = await service.get_invitation_by_id(invitation_id)
 
         # Check permissions
         if (current_user.role not in ["admin", "chp_admin"] and
@@ -420,7 +424,7 @@ async def resend_invitation(
                 detail="Insufficient permissions to resend this invitation"
             )
 
-        updated_invitation = service.resend_invitation(invitation_id)
+        updated_invitation = await service.resend_invitation(invitation_id)
         return InvitationResponse.from_orm(updated_invitation)
 
     except NotFoundException as e:
@@ -445,7 +449,7 @@ async def accept_invitation(
     token: str,
     acceptance_data: InvitationAcceptRequest,
     request: Request,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> InvitationAcceptResponse:
     """Accept an invitation."""
     try:
@@ -465,7 +469,7 @@ async def accept_invitation(
         if acceptance_data.additional_data:
             user_data.update(acceptance_data.additional_data)
 
-        invitation, user = service.accept_invitation(
+        invitation, user = await service.accept_invitation(
             token=token,
             user_data=user_data,
             ip_address=ip_address,
@@ -503,18 +507,23 @@ async def accept_invitation(
 )
 async def cancel_invitation(
     invitation_id: PyUUID,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Cancel an invitation."""
     try:
         service = InvitationService(db)
+        invitation = await service.get_invitation_by_id(invitation_id)
 
-        updated_invitation = service.cancel_invitation(
-            invitation_id=invitation_id,
-            cancelled_by_id=current_user.id
-        )
+        # Check permissions
+        if (current_user.role not in ["admin", "chp_admin"] and
+            invitation.invited_by_id != current_user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to cancel this invitation"
+            )
 
+        updated_invitation = await service.cancel_invitation(invitation_id, current_user.id)
         return InvitationResponse.from_orm(updated_invitation)
 
     except NotFoundException as e:
@@ -543,13 +552,13 @@ async def cancel_invitation(
 async def extend_invitation_expiry(
     invitation_id: PyUUID,
     days: int = Query(7, ge=1, le=30, description="Number of days to extend"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationResponse:
     """Extend invitation expiry."""
     try:
         service = InvitationService(db)
-        invitation = service.get_invitation_by_id(invitation_id)
+        invitation = await service.get_invitation_by_id(invitation_id)
 
         # Check permissions
         if (current_user.role not in ["admin", "chp_admin"] and
@@ -559,11 +568,7 @@ async def extend_invitation_expiry(
                 detail="Insufficient permissions to extend this invitation"
             )
 
-        updated_invitation = service.extend_invitation_expiry(
-            invitation_id=invitation_id,
-            days=days
-        )
-
+        updated_invitation = await service.extend_invitation_expiry(invitation_id, days)
         return InvitationResponse.from_orm(updated_invitation)
 
     except NotFoundException as e:
@@ -588,34 +593,38 @@ async def extend_invitation_expiry(
 )
 async def validate_invitation_token(
     token: str,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> InvitationValidationResponse:
     """Validate an invitation token."""
     try:
         service = InvitationService(db)
-        invitation = service.get_invitation_by_token(token)
+        invitation = await service.get_invitation_by_token(token)
 
-        can_accept = (
+        is_valid = (
             invitation.status == "sent" and
             not invitation.is_expired
         )
 
-        expires_in_hours = None
-        if not invitation.is_expired:
-            expires_in_hours = invitation.days_until_expiry * 24
-
         return InvitationValidationResponse(
-            is_valid=True,
-            invitation=InvitationResponse.from_orm(invitation),
-            can_accept=can_accept,
-            expires_in_hours=expires_in_hours
+            is_valid=is_valid,
+            invitation_type=invitation.invitation_type,
+            organization_name=invitation.organization.name if invitation.organization else None,
+            inviter_name=f"{invitation.invited_by.first_name} {invitation.invited_by.last_name}" if invitation.invited_by else None,
+            expires_at=invitation.expires_at,
+            error_message=None if is_valid else (
+                "Invitation has expired" if invitation.is_expired else
+                f"Invitation status is {invitation.status}"
+            )
         )
 
     except NotFoundException:
         return InvitationValidationResponse(
             is_valid=False,
-            error="Invalid or expired invitation token",
-            can_accept=False
+            invitation_type=None,
+            organization_name=None,
+            inviter_name=None,
+            expires_at=None,
+            error_message="Invalid invitation token"
         )
 
 
@@ -628,13 +637,13 @@ async def validate_invitation_token(
 async def get_invitation_url(
     invitation_id: PyUUID,
     base_url: str = Query(..., description="Base URL for the invitation link"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationUrlResponse:
     """Get invitation URL."""
     try:
         service = InvitationService(db)
-        invitation = service.get_invitation_by_id(invitation_id)
+        invitation = await service.get_invitation_by_id(invitation_id)
 
         # Check permissions
         if (current_user.role not in ["admin", "chp_admin"] and
@@ -644,7 +653,8 @@ async def get_invitation_url(
                 detail="Insufficient permissions to view this invitation URL"
             )
 
-        invitation_url = invitation.get_invitation_url(base_url)
+        # Generate invitation URL
+        invitation_url = f"{base_url.rstrip('/')}/accept-invitation/{invitation.invitation_token}"
 
         return InvitationUrlResponse(
             invitation_url=invitation_url,
@@ -659,7 +669,7 @@ async def get_invitation_url(
         )
 
 
-# ==================== STATISTICS AND BULK OPERATIONS ====================
+# ==================== STATISTICS ====================
 
 @router.get(
     "/statistics/summary",
@@ -670,23 +680,32 @@ async def get_invitation_url(
 async def get_invitation_statistics(
     organization_id: Optional[PyUUID] = Query(None, description="Filter by organization"),
     days: int = Query(30, ge=1, le=365, description="Number of days to include"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> InvitationStatisticsResponse:
     """Get invitation statistics."""
-    service = InvitationService(db)
+    try:
+        service = InvitationService(db)
 
-    # Apply role-based filtering
-    if current_user.role not in ["admin", "chp_admin"]:
-        organization_id = current_user.organization_id
+        # Apply role-based filtering
+        if current_user.role not in ["admin", "chp_admin"]:
+            organization_id = current_user.organization_id
 
-    stats = service.get_invitation_statistics(
-        organization_id=organization_id,
-        days=days
-    )
+        stats = await service.get_invitation_statistics(
+            organization_id=organization_id,
+            days=days
+        )
 
-    return InvitationStatisticsResponse(**stats)
+        return InvitationStatisticsResponse(**stats)
 
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+# ==================== BULK OPERATIONS ====================
 
 @router.post(
     "/bulk/create",
@@ -696,18 +715,18 @@ async def get_invitation_statistics(
 )
 async def create_bulk_invitations(
     bulk_request: BulkInvitationRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> BulkInvitationResponse:
     """Create multiple invitations."""
     service = InvitationService(db)
 
-    created_invitations = []
+    successful_invitations = []
     failed_invitations = []
 
     for invitation_data in bulk_request.invitations:
         try:
-            invitation = service.create_invitation(
+            invitation = await service.create_invitation(
                 email=invitation_data.email,
                 invitation_type=invitation_data.invitation_type,
                 role_name=invitation_data.role_name,
@@ -722,25 +741,20 @@ async def create_bulk_invitations(
                 parent_master_distributor_id=invitation_data.parent_master_distributor_id,
                 parent_doctor_id=invitation_data.parent_doctor_id
             )
-
-            # Send immediately if requested
-            if bulk_request.send_immediately:
-                service.send_invitation(invitation.id)
-
-            created_invitations.append(InvitationResponse.from_orm(invitation))
-
+            successful_invitations.append(InvitationResponse.from_orm(invitation))
         except Exception as e:
-            failed_invitations.append({
-                "email": invitation_data.email,
-                "error": str(e)
-            })
+            failed_invitations.append(
+                InvitationErrorResponse(
+                    email=invitation_data.email,
+                    error=str(e)
+                )
+            )
 
     return BulkInvitationResponse(
-        created_invitations=created_invitations,
-        failed_invitations=failed_invitations,
-        total_requested=len(bulk_request.invitations),
-        total_created=len(created_invitations),
-        total_failed=len(failed_invitations)
+        successful_count=len(successful_invitations),
+        failed_count=len(failed_invitations),
+        successful_invitations=successful_invitations,
+        failed_invitations=failed_invitations
     )
 
 
@@ -751,11 +765,11 @@ async def create_bulk_invitations(
     description="Expire all invitations that have passed their expiry date"
 )
 async def expire_old_invitations(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> BulkOperationResponse:
     """Expire old invitations."""
-    # Only admins can perform bulk operations
+    # Only admin users can perform bulk operations
     if current_user.role not in ["admin", "chp_admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -763,11 +777,11 @@ async def expire_old_invitations(
         )
 
     service = InvitationService(db)
-    count = service.expire_old_invitations()
+    expired_count = await service.expire_old_invitations()
 
     return BulkOperationResponse(
-        affected_count=count,
-        message=f"Expired {count} old invitations"
+        affected_count=expired_count,
+        message=f"Expired {expired_count} old invitations"
     )
 
 
@@ -779,11 +793,11 @@ async def expire_old_invitations(
 )
 async def cleanup_old_invitations(
     days_old: int = Query(90, ge=30, le=365, description="Age threshold in days"),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: TokenData = Depends(get_current_user)
 ) -> BulkOperationResponse:
     """Cleanup old invitations."""
-    # Only admins can perform bulk operations
+    # Only admin users can perform bulk operations
     if current_user.role not in ["admin", "chp_admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -791,9 +805,9 @@ async def cleanup_old_invitations(
         )
 
     service = InvitationService(db)
-    count = service.cleanup_old_invitations(days_old=days_old)
+    deleted_count = await service.cleanup_old_invitations(days_old)
 
     return BulkOperationResponse(
-        affected_count=count,
-        message=f"Cleaned up {count} old invitations"
+        affected_count=deleted_count,
+        message=f"Cleaned up {deleted_count} old invitations"
     )

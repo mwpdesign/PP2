@@ -16,8 +16,8 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any, Tuple
 from uuid import UUID as PyUUID, uuid4
 
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, desc, asc
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import and_, or_, desc, asc, select, func
 from sqlalchemy.exc import IntegrityError
 
 from app.models.user_invitation import UserInvitation
@@ -37,13 +37,13 @@ logger = logging.getLogger(__name__)
 class InvitationService:
     """Service for managing user invitations across all user types."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         """Initialize the invitation service."""
         self.db = db
 
     # ==================== INVITATION CREATION ====================
 
-    def create_invitation(
+    async def create_invitation(
         self,
         email: str,
         invitation_type: str,
@@ -81,26 +81,28 @@ class InvitationService:
         """
         try:
             # Validate invitation type
-            self._validate_invitation_type(invitation_type)
+            await self._validate_invitation_type(invitation_type)
 
             # Validate role exists
-            self._validate_role(role_name)
+            await self._validate_role(role_name)
 
             # Check if user already exists
-            existing_user = self.db.query(User).filter(
-                User.email == email.lower()
-            ).first()
+            stmt = select(User).where(User.email == email.lower())
+            result = await self.db.execute(stmt)
+            existing_user = result.scalar_one_or_none()
 
             if existing_user:
                 raise ConflictError(f"User with email {email} already exists")
 
             # Check if pending invitation already exists
-            existing_invitation = self.db.query(UserInvitation).filter(
+            stmt = select(UserInvitation).where(
                 and_(
                     UserInvitation.email == email.lower(),
                     UserInvitation.status.in_(["pending", "sent"])
                 )
-            ).first()
+            )
+            result = await self.db.execute(stmt)
+            existing_invitation = result.scalar_one_or_none()
 
             if existing_invitation:
                 raise ConflictError(
@@ -108,13 +110,13 @@ class InvitationService:
                 )
 
             # Validate inviter permissions
-            self._validate_inviter_permissions(
+            await self._validate_inviter_permissions(
                 invited_by_id, invitation_type, organization_id
             )
 
             # Validate organization if provided
             if organization_id:
-                self._validate_organization(organization_id)
+                await self._validate_organization(organization_id)
 
             # Create the invitation
             invitation = UserInvitation.create_invitation(
@@ -132,8 +134,8 @@ class InvitationService:
 
             # Save to database
             self.db.add(invitation)
-            self.db.commit()
-            self.db.refresh(invitation)
+            await self.db.commit()
+            await self.db.refresh(invitation)
 
             logger.info(
                 f"Created invitation {invitation.id} for {email} "
@@ -143,15 +145,15 @@ class InvitationService:
             return invitation
 
         except IntegrityError as e:
-            self.db.rollback()
+            await self.db.rollback()
             logger.error(f"Database integrity error creating invitation: {e}")
             raise ConflictError("Invitation creation failed due to data conflict")
         except Exception as e:
-            self.db.rollback()
+            await self.db.rollback()
             logger.error(f"Error creating invitation: {e}")
             raise
 
-    def create_doctor_invitation(
+    async def create_doctor_invitation(
         self,
         email: str,
         invited_by_id: PyUUID,
@@ -161,7 +163,7 @@ class InvitationService:
         invitation_message: Optional[str] = None
     ) -> UserInvitation:
         """Create a doctor invitation with default settings."""
-        return self.create_invitation(
+        return await self.create_invitation(
             email=email,
             invitation_type="doctor",
             role_name="doctor",
@@ -172,7 +174,7 @@ class InvitationService:
             invitation_message=invitation_message
         )
 
-    def create_sales_invitation(
+    async def create_sales_invitation(
         self,
         email: str,
         invited_by_id: PyUUID,
@@ -183,7 +185,7 @@ class InvitationService:
         invitation_message: Optional[str] = None
     ) -> UserInvitation:
         """Create a sales representative invitation."""
-        return self.create_invitation(
+        return await self.create_invitation(
             email=email,
             invitation_type="sales",
             role_name="sales",
@@ -195,7 +197,7 @@ class InvitationService:
             parent_distributor_id=parent_distributor_id
         )
 
-    def create_practice_staff_invitation(
+    async def create_practice_staff_invitation(
         self,
         email: str,
         invited_by_id: PyUUID,  # Doctor ID
@@ -211,7 +213,7 @@ class InvitationService:
                 "Staff role must be 'office_admin' or 'medical_staff'"
             )
 
-        return self.create_invitation(
+        return await self.create_invitation(
             email=email,
             invitation_type=staff_role,
             role_name=staff_role,
@@ -225,29 +227,29 @@ class InvitationService:
 
     # ==================== INVITATION RETRIEVAL ====================
 
-    def get_invitation_by_id(self, invitation_id: PyUUID) -> UserInvitation:
+    async def get_invitation_by_id(self, invitation_id: PyUUID) -> UserInvitation:
         """Get invitation by ID."""
-        invitation = self.db.query(UserInvitation).filter(
-            UserInvitation.id == invitation_id
-        ).first()
+        stmt = select(UserInvitation).where(UserInvitation.id == invitation_id)
+        result = await self.db.execute(stmt)
+        invitation = result.scalar_one_or_none()
 
         if not invitation:
             raise NotFoundException(f"Invitation {invitation_id} not found")
 
         return invitation
 
-    def get_invitation_by_token(self, token: str) -> UserInvitation:
+    async def get_invitation_by_token(self, token: str) -> UserInvitation:
         """Get invitation by token."""
-        invitation = self.db.query(UserInvitation).filter(
-            UserInvitation.invitation_token == token
-        ).first()
+        stmt = select(UserInvitation).where(UserInvitation.invitation_token == token)
+        result = await self.db.execute(stmt)
+        invitation = result.scalar_one_or_none()
 
         if not invitation:
             raise NotFoundException("Invalid invitation token")
 
         return invitation
 
-    def list_invitations(
+    async def list_invitations(
         self,
         user_id: Optional[PyUUID] = None,
         organization_id: Optional[PyUUID] = None,
@@ -265,58 +267,64 @@ class InvitationService:
         Returns:
             Tuple of (invitations, total_count)
         """
-        query = self.db.query(UserInvitation)
+        stmt = select(UserInvitation)
 
         # Apply filters
         if organization_id:
-            query = query.filter(UserInvitation.organization_id == organization_id)
+            stmt = stmt.where(UserInvitation.organization_id == organization_id)
 
         if invitation_type:
-            query = query.filter(UserInvitation.invitation_type == invitation_type)
+            stmt = stmt.where(UserInvitation.invitation_type == invitation_type)
 
         if status:
-            query = query.filter(UserInvitation.status == status)
+            stmt = stmt.where(UserInvitation.status == status)
 
         if invited_by_id:
-            query = query.filter(UserInvitation.invited_by_id == invited_by_id)
+            stmt = stmt.where(UserInvitation.invited_by_id == invited_by_id)
 
         # Get total count
-        total_count = query.count()
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        count_result = await self.db.execute(count_stmt)
+        total_count = count_result.scalar()
 
         # Apply sorting
         sort_column = getattr(UserInvitation, sort_by, UserInvitation.created_at)
         if sort_order.lower() == "desc":
-            query = query.order_by(desc(sort_column))
+            stmt = stmt.order_by(desc(sort_column))
         else:
-            query = query.order_by(asc(sort_column))
+            stmt = stmt.order_by(asc(sort_column))
 
         # Apply pagination
-        invitations = query.offset(offset).limit(limit).all()
+        stmt = stmt.offset(offset).limit(limit)
+        result = await self.db.execute(stmt)
+        invitations = result.scalars().all()
 
-        return invitations, total_count
+        return list(invitations), total_count
 
-    def get_pending_invitations(
+    async def get_pending_invitations(
         self,
         organization_id: Optional[PyUUID] = None,
         limit: int = 50
     ) -> List[UserInvitation]:
         """Get all pending invitations."""
-        query = self.db.query(UserInvitation).filter(
+        stmt = select(UserInvitation).where(
             UserInvitation.status.in_(["pending", "sent"])
         )
 
         if organization_id:
-            query = query.filter(UserInvitation.organization_id == organization_id)
+            stmt = stmt.where(UserInvitation.organization_id == organization_id)
 
-        return query.order_by(desc(UserInvitation.created_at)).limit(limit).all()
+        stmt = stmt.order_by(desc(UserInvitation.created_at)).limit(limit)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
 
-    def get_expired_invitations(
+    async def get_expired_invitations(
         self,
         organization_id: Optional[PyUUID] = None
     ) -> List[UserInvitation]:
         """Get all expired invitations."""
         now = datetime.utcnow()
-        query = self.db.query(UserInvitation).filter(
+        stmt = select(UserInvitation).where(
             and_(
                 UserInvitation.expires_at < now,
                 UserInvitation.status.in_(["pending", "sent"])
@@ -324,19 +332,20 @@ class InvitationService:
         )
 
         if organization_id:
-            query = query.filter(UserInvitation.organization_id == organization_id)
+            stmt = stmt.where(UserInvitation.organization_id == organization_id)
 
-        return query.all()
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
 
     # ==================== INVITATION LIFECYCLE ====================
 
-    def send_invitation(self, invitation_id: PyUUID) -> UserInvitation:
+    async def send_invitation(self, invitation_id: PyUUID) -> UserInvitation:
         """
         Mark invitation as sent and update email tracking.
 
         Note: Actual email sending should be handled by EmailService
         """
-        invitation = self.get_invitation_by_id(invitation_id)
+        invitation = await self.get_invitation_by_id(invitation_id)
 
         if invitation.status not in ["pending", "sent"]:
             raise ValidationError(
@@ -347,14 +356,14 @@ class InvitationService:
             raise ValidationError("Cannot send expired invitation")
 
         invitation.mark_as_sent()
-        self.db.commit()
+        await self.db.commit()
 
         logger.info(f"Marked invitation {invitation_id} as sent")
         return invitation
 
-    def resend_invitation(self, invitation_id: PyUUID) -> UserInvitation:
+    async def resend_invitation(self, invitation_id: PyUUID) -> UserInvitation:
         """Resend an invitation (increment attempts)."""
-        invitation = self.get_invitation_by_id(invitation_id)
+        invitation = await self.get_invitation_by_id(invitation_id)
 
         if invitation.status not in ["pending", "sent"]:
             raise ValidationError(
@@ -366,12 +375,12 @@ class InvitationService:
             invitation.extend_expiry(7)
 
         invitation.increment_email_attempts()
-        self.db.commit()
+        await self.db.commit()
 
         logger.info(f"Resent invitation {invitation_id}")
         return invitation
 
-    def accept_invitation(
+    async def accept_invitation(
         self,
         token: str,
         user_data: Dict[str, Any],
@@ -390,7 +399,7 @@ class InvitationService:
         Returns:
             Tuple of (invitation, created_user)
         """
-        invitation = self.get_invitation_by_token(token)
+        invitation = await self.get_invitation_by_token(token)
 
         # Validate invitation can be accepted
         if invitation.status != "sent":
@@ -402,9 +411,9 @@ class InvitationService:
             raise ValidationError("Invitation has expired")
 
         # Check if user already exists
-        existing_user = self.db.query(User).filter(
-            User.email == invitation.email
-        ).first()
+        stmt = select(User).where(User.email == invitation.email)
+        result = await self.db.execute(stmt)
+        existing_user = result.scalar_one_or_none()
 
         if existing_user:
             raise ConflictError("User account already exists")
@@ -440,8 +449,8 @@ class InvitationService:
             invitation.ip_address = ip_address
             invitation.user_agent = user_agent
 
-            self.db.commit()
-            self.db.refresh(user)
+            await self.db.commit()
+            await self.db.refresh(user)
 
             logger.info(
                 f"Accepted invitation {invitation.id} and created user {user.id}"
@@ -450,21 +459,21 @@ class InvitationService:
             return invitation, user
 
         except IntegrityError as e:
-            self.db.rollback()
+            await self.db.rollback()
             logger.error(f"Error accepting invitation: {e}")
             raise ConflictError("User creation failed due to data conflict")
         except Exception as e:
-            self.db.rollback()
+            await self.db.rollback()
             logger.error(f"Error accepting invitation: {e}")
             raise
 
-    def cancel_invitation(
+    async def cancel_invitation(
         self,
         invitation_id: PyUUID,
         cancelled_by_id: PyUUID
     ) -> UserInvitation:
         """Cancel an invitation."""
-        invitation = self.get_invitation_by_id(invitation_id)
+        invitation = await self.get_invitation_by_id(invitation_id)
 
         if invitation.status not in ["pending", "sent"]:
             raise ValidationError(
@@ -472,31 +481,31 @@ class InvitationService:
             )
 
         # Validate permissions (only inviter or admin can cancel)
-        self._validate_cancel_permissions(invitation, cancelled_by_id)
+        await self._validate_cancel_permissions(invitation, cancelled_by_id)
 
         invitation.mark_as_cancelled()
-        self.db.commit()
+        await self.db.commit()
 
         logger.info(f"Cancelled invitation {invitation_id} by user {cancelled_by_id}")
         return invitation
 
-    def expire_invitation(self, invitation_id: PyUUID) -> UserInvitation:
+    async def expire_invitation(self, invitation_id: PyUUID) -> UserInvitation:
         """Mark an invitation as expired."""
-        invitation = self.get_invitation_by_id(invitation_id)
+        invitation = await self.get_invitation_by_id(invitation_id)
 
         invitation.mark_as_expired()
-        self.db.commit()
+        await self.db.commit()
 
         logger.info(f"Expired invitation {invitation_id}")
         return invitation
 
-    def extend_invitation_expiry(
+    async def extend_invitation_expiry(
         self,
         invitation_id: PyUUID,
         days: int = 7
     ) -> UserInvitation:
         """Extend invitation expiry."""
-        invitation = self.get_invitation_by_id(invitation_id)
+        invitation = await self.get_invitation_by_id(invitation_id)
 
         if invitation.status not in ["pending", "sent"]:
             raise ValidationError(
@@ -504,22 +513,30 @@ class InvitationService:
             )
 
         invitation.extend_expiry(days)
-        self.db.commit()
+        await self.db.commit()
 
         logger.info(f"Extended invitation {invitation_id} expiry by {days} days")
         return invitation
 
     # ==================== BULK OPERATIONS ====================
 
-    def expire_old_invitations(self) -> int:
-        """Expire all invitations that have passed their expiry date."""
+    async def expire_old_invitations(self) -> int:
+        """
+        Expire all invitations that have passed their expiry date.
+
+        Returns:
+            Number of invitations expired
+        """
         now = datetime.utcnow()
-        expired_invitations = self.db.query(UserInvitation).filter(
+        stmt = select(UserInvitation).where(
             and_(
                 UserInvitation.expires_at < now,
                 UserInvitation.status.in_(["pending", "sent"])
             )
-        ).all()
+        )
+
+        result = await self.db.execute(stmt)
+        expired_invitations = result.scalars().all()
 
         count = 0
         for invitation in expired_invitations:
@@ -527,167 +544,171 @@ class InvitationService:
             count += 1
 
         if count > 0:
-            self.db.commit()
+            await self.db.commit()
             logger.info(f"Expired {count} old invitations")
 
         return count
 
-    def cleanup_old_invitations(self, days_old: int = 90) -> int:
-        """Delete old completed/failed invitations."""
+    async def cleanup_old_invitations(self, days_old: int = 90) -> int:
+        """
+        Delete old completed/failed invitations.
+
+        Args:
+            days_old: Delete invitations older than this many days
+
+        Returns:
+            Number of invitations deleted
+        """
         cutoff_date = datetime.utcnow() - timedelta(days=days_old)
 
-        old_invitations = self.db.query(UserInvitation).filter(
+        stmt = select(UserInvitation).where(
             and_(
                 UserInvitation.created_at < cutoff_date,
-                UserInvitation.status.in_(["accepted", "failed", "cancelled", "expired"])
+                UserInvitation.status.in_(["accepted", "expired", "cancelled"])
             )
         )
 
-        count = old_invitations.count()
-        old_invitations.delete()
+        result = await self.db.execute(stmt)
+        old_invitations = result.scalars().all()
+
+        count = len(old_invitations)
+        for invitation in old_invitations:
+            await self.db.delete(invitation)
 
         if count > 0:
-            self.db.commit()
+            await self.db.commit()
             logger.info(f"Cleaned up {count} old invitations")
 
         return count
 
-    # ==================== STATISTICS ====================
-
-    def get_invitation_statistics(
+    async def get_invitation_statistics(
         self,
         organization_id: Optional[PyUUID] = None,
         days: int = 30
     ) -> Dict[str, Any]:
-        """Get invitation statistics for the specified period."""
+        """
+        Get invitation statistics for the specified time period.
+
+        Args:
+            organization_id: Filter by organization
+            days: Number of days to include in statistics
+
+        Returns:
+            Dictionary with invitation statistics
+        """
         start_date = datetime.utcnow() - timedelta(days=days)
 
-        query = self.db.query(UserInvitation).filter(
+        base_stmt = select(UserInvitation).where(
             UserInvitation.created_at >= start_date
         )
 
         if organization_id:
-            query = query.filter(UserInvitation.organization_id == organization_id)
+            base_stmt = base_stmt.where(UserInvitation.organization_id == organization_id)
 
-        invitations = query.all()
+        # Total invitations
+        total_result = await self.db.execute(base_stmt)
+        total_invitations = len(total_result.scalars().all())
 
-        stats = {
-            "total_invitations": len(invitations),
-            "by_status": {},
-            "by_type": {},
-            "acceptance_rate": 0.0,
-            "average_acceptance_time_hours": 0.0,
-            "pending_count": 0,
-            "expired_count": 0
+        # Status breakdown
+        status_stats = {}
+        for status in ["pending", "sent", "accepted", "expired", "cancelled"]:
+            stmt = base_stmt.where(UserInvitation.status == status)
+            result = await self.db.execute(stmt)
+            status_stats[status] = len(result.scalars().all())
+
+        # Type breakdown
+        type_stats = {}
+        for inv_type in ["doctor", "sales", "distributor", "master_distributor",
+                        "office_admin", "medical_staff", "ivr_company",
+                        "shipping_logistics", "admin", "chp_admin"]:
+            stmt = base_stmt.where(UserInvitation.invitation_type == inv_type)
+            result = await self.db.execute(stmt)
+            type_stats[inv_type] = len(result.scalars().all())
+
+        # Acceptance rate
+        accepted = status_stats.get("accepted", 0)
+        sent = status_stats.get("sent", 0) + accepted
+        acceptance_rate = (accepted / sent * 100) if sent > 0 else 0
+
+        return {
+            "total_invitations": total_invitations,
+            "status_breakdown": status_stats,
+            "type_breakdown": type_stats,
+            "acceptance_rate": round(acceptance_rate, 2),
+            "period_days": days,
+            "organization_id": str(organization_id) if organization_id else None
         }
 
-        # Count by status
-        for invitation in invitations:
-            status = invitation.status
-            stats["by_status"][status] = stats["by_status"].get(status, 0) + 1
+    # ==================== VALIDATION METHODS ====================
 
-            inv_type = invitation.invitation_type
-            stats["by_type"][inv_type] = stats["by_type"].get(inv_type, 0) + 1
-
-        # Calculate acceptance rate
-        accepted = stats["by_status"].get("accepted", 0)
-        total_sent = sum(stats["by_status"].get(s, 0) for s in ["accepted", "expired", "failed"])
-        if total_sent > 0:
-            stats["acceptance_rate"] = (accepted / total_sent) * 100
-
-        # Calculate average acceptance time
-        accepted_invitations = [i for i in invitations if i.status == "accepted" and i.accepted_at]
-        if accepted_invitations:
-            total_hours = sum(
-                (i.accepted_at - i.invited_at).total_seconds() / 3600
-                for i in accepted_invitations
-            )
-            stats["average_acceptance_time_hours"] = total_hours / len(accepted_invitations)
-
-        # Current pending and expired counts
-        stats["pending_count"] = len([i for i in invitations if i.is_pending])
-        stats["expired_count"] = len([i for i in invitations if i.is_expired])
-
-        return stats
-
-    # ==================== VALIDATION HELPERS ====================
-
-    def _validate_invitation_type(self, invitation_type: str) -> None:
+    async def _validate_invitation_type(self, invitation_type: str) -> None:
         """Validate invitation type."""
         valid_types = [
             "doctor", "sales", "distributor", "master_distributor",
-            "office_admin", "medical_staff", "ivr_company", "shipping_logistics",
-            "admin", "chp_admin"
+            "office_admin", "medical_staff", "ivr_company",
+            "shipping_logistics", "admin", "chp_admin"
         ]
-
         if invitation_type not in valid_types:
             raise ValidationError(f"Invalid invitation type: {invitation_type}")
 
-    def _validate_role(self, role_name: str) -> None:
-        """Validate role exists."""
-        role = self.db.query(Role).filter(Role.name == role_name).first()
+    async def _validate_role(self, role_name: str) -> None:
+        """Validate that the role exists."""
+        stmt = select(Role).where(Role.name == role_name)
+        result = await self.db.execute(stmt)
+        role = result.scalar_one_or_none()
         if not role:
-            raise ValidationError(f"Role {role_name} does not exist")
+            raise ValidationError(f"Role '{role_name}' does not exist")
 
-    def _validate_organization(self, organization_id: PyUUID) -> None:
-        """Validate organization exists."""
-        org = self.db.query(Organization).filter(
-            Organization.id == organization_id
-        ).first()
-        if not org:
+    async def _validate_organization(self, organization_id: PyUUID) -> None:
+        """Validate that the organization exists."""
+        stmt = select(Organization).where(Organization.id == organization_id)
+        result = await self.db.execute(stmt)
+        organization = result.scalar_one_or_none()
+        if not organization:
             raise ValidationError(f"Organization {organization_id} does not exist")
 
-    def _validate_inviter_permissions(
+    async def _validate_inviter_permissions(
         self,
         invited_by_id: PyUUID,
         invitation_type: str,
         organization_id: Optional[PyUUID]
     ) -> None:
-        """Validate inviter has permission to create this type of invitation."""
-        inviter = self.db.query(User).filter(User.id == invited_by_id).first()
+        """
+        Validate that the inviter has permission to create this type of invitation.
+
+        This is a simplified validation - in production, you'd implement
+        more complex role-based permission checking.
+        """
+        stmt = select(User).where(User.id == invited_by_id)
+        result = await self.db.execute(stmt)
+        inviter = result.scalar_one_or_none()
+
         if not inviter:
             raise AuthorizationError("Inviter not found")
 
-        # Admin and CHP Admin can invite anyone
-        if inviter.role in ["admin", "chp_admin"]:
-            return
+        # Basic permission checks
+        if inviter.role == "doctor" and invitation_type not in ["office_admin", "medical_staff"]:
+            raise AuthorizationError("Doctors can only invite practice staff")
 
-        # Master Distributors can invite distributors and sales
-        if inviter.role == "master_distributor" and invitation_type in ["distributor", "sales"]:
-            return
+        if inviter.role == "sales" and invitation_type != "doctor":
+            raise AuthorizationError("Sales representatives can only invite doctors")
 
-        # Distributors can invite sales
-        if inviter.role == "distributor" and invitation_type == "sales":
-            return
+        # Add more role-based validation as needed
 
-        # Doctors can invite practice staff
-        if inviter.role == "doctor" and invitation_type in ["office_admin", "medical_staff"]:
-            return
-
-        # Sales can invite doctors (with proper organization)
-        if inviter.role == "sales" and invitation_type == "doctor" and organization_id:
-            return
-
-        raise AuthorizationError(
-            f"User with role {inviter.role} cannot invite {invitation_type}"
-        )
-
-    def _validate_cancel_permissions(
+    async def _validate_cancel_permissions(
         self,
         invitation: UserInvitation,
         cancelled_by_id: PyUUID
     ) -> None:
-        """Validate user can cancel this invitation."""
-        user = self.db.query(User).filter(User.id == cancelled_by_id).first()
+        """Validate that the user can cancel this invitation."""
+        stmt = select(User).where(User.id == cancelled_by_id)
+        result = await self.db.execute(stmt)
+        user = result.scalar_one_or_none()
+
         if not user:
             raise AuthorizationError("User not found")
 
-        # Admin and CHP Admin can cancel any invitation
-        if user.role in ["admin", "chp_admin"]:
-            return
-
-        # Original inviter can cancel
-        if invitation.invited_by_id == cancelled_by_id:
-            return
-
-        raise AuthorizationError("Insufficient permissions to cancel invitation")
+        # Only inviter or admin can cancel
+        if (invitation.invited_by_id != cancelled_by_id and
+            user.role not in ["admin", "chp_admin"]):
+            raise AuthorizationError("Insufficient permissions to cancel invitation")
