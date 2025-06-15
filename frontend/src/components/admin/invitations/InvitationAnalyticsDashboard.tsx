@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { XMarkIcon, ChartBarIcon, TrendingUpIcon, TrendingDownIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ChartBarIcon, ArrowTrendingUpIcon, TrendingDownIcon } from '@heroicons/react/24/outline';
 import { format, subDays, startOfDay } from 'date-fns';
 
 interface InvitationAnalyticsDashboardProps {
@@ -129,7 +129,7 @@ export const InvitationAnalyticsDashboard: React.FC<InvitationAnalyticsDashboard
                         <p className="text-2xl font-bold text-slate-900">{analytics.overview.total_invitations.toLocaleString()}</p>
                       </div>
                       <div className="flex items-center text-green-600">
-                        <TrendingUpIcon className="h-4 w-4 mr-1" />
+                        <ArrowTrendingUpIcon className="h-4 w-4 mr-1" />
                         <span className="text-sm font-medium">
                           {formatPercentage(analytics.overview.trend_change)}
                         </span>
