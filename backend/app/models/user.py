@@ -102,6 +102,14 @@ class User(Base):
         UUID(as_uuid=True), ForeignKey("user_invitations.id"), nullable=True
     )
 
+    # Onboarding system fields (Task ID: mbvuajvrbewmyth9eys)
+    onboarding_completed = Column(Boolean, default=False)
+    onboarding_started_at = Column(DateTime(timezone=True), nullable=True)
+    onboarding_completed_at = Column(DateTime(timezone=True), nullable=True)
+    onboarding_step = Column(Integer, default=0)
+    onboarding_skipped = Column(Boolean, default=False)
+    first_login_at = Column(DateTime(timezone=True), nullable=True)
+
     # User Hierarchy Relationships (Phase 3.1)
     parent_sales = relationship(
         "User", remote_side=[id], foreign_keys=[parent_sales_id]
@@ -335,6 +343,14 @@ class User(Base):
         foreign_keys=[original_invitation_id],
         back_populates="created_user",
         uselist=False
+    )
+
+    # Onboarding system relationships (Task ID: mbvuajvrbewmyth9eys)
+    onboarding_steps = relationship(
+        "OnboardingProgress",
+        foreign_keys="OnboardingProgress.user_id",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

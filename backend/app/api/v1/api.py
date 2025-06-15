@@ -21,6 +21,7 @@ from app.api.v1.endpoints import (
     doctors,
     sales_dashboard,
     invitations,
+    onboarding,
 )
 from app.api.treatments.routes import router as treatments_router
 from app.api.auth.routes import router as auth_router
@@ -110,4 +111,9 @@ api_router.include_router(
     invitations.router,
     prefix="/invitations",
     tags=["invitations"]
+)
+api_router.include_router(
+    onboarding.router,
+    prefix="/onboarding",
+    tags=["onboarding"]
 )
