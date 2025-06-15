@@ -10,6 +10,11 @@ from .sensitive_data import SensitiveData
 from .doctor_profile import DoctorProfile
 from .user_invitation import UserInvitation
 
+try:
+    from .onboarding import OnboardingProgress
+except ImportError:
+    pass
+
 # Import other models that exist
 try:
     from .patient import Patient, PatientDocument
@@ -140,6 +145,7 @@ __all__ = [
     "SensitiveData",
     "DoctorProfile",
     "UserInvitation",
+    "OnboardingProgress",
     "Patient",
     "PatientDocument",
     "Provider",

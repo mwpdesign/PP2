@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from .provider import Provider  # noqa: F401
     from .logistics import QualityCheck  # noqa: F401
     from .ivr import IVRReview  # noqa: F401
+    from .onboarding import OnboardingProgress  # noqa: F401
 
 
 class User(Base):
