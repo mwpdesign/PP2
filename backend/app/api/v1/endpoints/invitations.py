@@ -1,0 +1,799 @@
+"""
+API endpoints for User Invitation System
+Task ID: mbvu8p4nc9bidurxtvc
+Phase 2: Service Layer Implementation
+
+These endpoints handle all invitation-related operations including:
+- Creating invitations for all user types
+- Managing invitation lifecycle
+- Accepting invitations
+- Bulk operations and statistics
+"""
+
+from typing import List, Optional
+from uuid import UUID as PyUUID
+
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.core.security import get_current_user
+from app.core.exceptions import (
+    NotFoundException,
+    ValidationError,
+    AuthorizationError,
+    ConflictError
+)
+from app.services.invitation_service import InvitationService
+from app.schemas.invitation import (
+    InvitationCreateRequest,
+    DoctorInvitationRequest,
+    SalesInvitationRequest,
+    PracticeStaffInvitationRequest,
+    InvitationAcceptRequest,
+    InvitationResponse,
+    InvitationListResponse,
+    InvitationListParams,
+    InvitationAcceptResponse,
+    InvitationStatisticsResponse,
+    InvitationStatisticsParams,
+    InvitationUrlResponse,
+    InvitationValidationResponse,
+    BulkInvitationRequest,
+    BulkInvitationResponse,
+    BulkOperationResponse,
+    InvitationErrorResponse
+)
+from app.schemas.auth import TokenData
+
+router = APIRouter()
+
+
+# ==================== INVITATION CREATION ====================
+
+@router.post(
+    "/",
+    response_model=InvitationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new invitation",
+    description="Create a new invitation for any user type with hierarchy support"
+)
+async def create_invitation(
+    invitation_data: InvitationCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationResponse:
+    """Create a new invitation."""
+    try:
+        service = InvitationService(db)
+
+        invitation = service.create_invitation(
+            email=invitation_data.email,
+            invitation_type=invitation_data.invitation_type,
+            role_name=invitation_data.role_name,
+            invited_by_id=current_user.id,
+            organization_id=invitation_data.organization_id,
+            first_name=invitation_data.first_name,
+            last_name=invitation_data.last_name,
+            invitation_message=invitation_data.invitation_message,
+            expires_in_days=invitation_data.expires_in_days,
+            parent_sales_id=invitation_data.parent_sales_id,
+            parent_distributor_id=invitation_data.parent_distributor_id,
+            parent_master_distributor_id=invitation_data.parent_master_distributor_id,
+            parent_doctor_id=invitation_data.parent_doctor_id
+        )
+
+        return InvitationResponse.from_orm(invitation)
+
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except AuthorizationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+
+
+@router.post(
+    "/doctors",
+    response_model=InvitationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a doctor invitation",
+    description="Create an invitation for a doctor with simplified parameters"
+)
+async def create_doctor_invitation(
+    invitation_data: DoctorInvitationRequest,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationResponse:
+    """Create a doctor invitation."""
+    try:
+        service = InvitationService(db)
+
+        invitation = service.create_doctor_invitation(
+            email=invitation_data.email,
+            invited_by_id=current_user.id,
+            organization_id=invitation_data.organization_id,
+            first_name=invitation_data.first_name,
+            last_name=invitation_data.last_name,
+            invitation_message=invitation_data.invitation_message
+        )
+
+        return InvitationResponse.from_orm(invitation)
+
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except AuthorizationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+
+
+@router.post(
+    "/sales",
+    response_model=InvitationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a sales representative invitation",
+    description="Create an invitation for a sales representative"
+)
+async def create_sales_invitation(
+    invitation_data: SalesInvitationRequest,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationResponse:
+    """Create a sales representative invitation."""
+    try:
+        service = InvitationService(db)
+
+        invitation = service.create_sales_invitation(
+            email=invitation_data.email,
+            invited_by_id=current_user.id,
+            organization_id=invitation_data.organization_id,
+            parent_distributor_id=invitation_data.parent_distributor_id,
+            first_name=invitation_data.first_name,
+            last_name=invitation_data.last_name,
+            invitation_message=invitation_data.invitation_message
+        )
+
+        return InvitationResponse.from_orm(invitation)
+
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except AuthorizationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+
+
+@router.post(
+    "/practice-staff",
+    response_model=InvitationResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a practice staff invitation",
+    description="Create an invitation for practice staff (office admin or medical staff)"
+)
+async def create_practice_staff_invitation(
+    invitation_data: PracticeStaffInvitationRequest,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationResponse:
+    """Create a practice staff invitation."""
+    try:
+        service = InvitationService(db)
+
+        invitation = service.create_practice_staff_invitation(
+            email=invitation_data.email,
+            invited_by_id=current_user.id,
+            organization_id=invitation_data.organization_id,
+            staff_role=invitation_data.staff_role,
+            first_name=invitation_data.first_name,
+            last_name=invitation_data.last_name,
+            invitation_message=invitation_data.invitation_message
+        )
+
+        return InvitationResponse.from_orm(invitation)
+
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except AuthorizationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+
+
+# ==================== INVITATION RETRIEVAL ====================
+
+@router.get(
+    "/",
+    response_model=InvitationListResponse,
+    summary="List invitations",
+    description="Get a paginated list of invitations with filtering options"
+)
+async def list_invitations(
+    organization_id: Optional[PyUUID] = Query(None, description="Filter by organization"),
+    invitation_type: Optional[str] = Query(None, description="Filter by invitation type"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    invited_by_id: Optional[PyUUID] = Query(None, description="Filter by inviter"),
+    limit: int = Query(50, ge=1, le=100, description="Number of items per page"),
+    offset: int = Query(0, ge=0, description="Number of items to skip"),
+    sort_by: str = Query("created_at", description="Field to sort by"),
+    sort_order: str = Query("desc", description="Sort order (asc or desc)"),
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationListResponse:
+    """List invitations with filtering and pagination."""
+    try:
+        service = InvitationService(db)
+
+        # Apply role-based filtering
+        if current_user.role not in ["admin", "chp_admin"]:
+            # Non-admin users can only see invitations they created
+            invited_by_id = current_user.id
+
+        invitations, total_count = service.list_invitations(
+            organization_id=organization_id,
+            invitation_type=invitation_type,
+            status=status,
+            invited_by_id=invited_by_id,
+            limit=limit,
+            offset=offset,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+
+        invitation_responses = [
+            InvitationResponse.from_orm(inv) for inv in invitations
+        ]
+
+        return InvitationListResponse(
+            invitations=invitation_responses,
+            total_count=total_count,
+            limit=limit,
+            offset=offset,
+            has_more=(offset + limit) < total_count
+        )
+
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.get(
+    "/{invitation_id}",
+    response_model=InvitationResponse,
+    summary="Get invitation by ID",
+    description="Get a specific invitation by its ID"
+)
+async def get_invitation(
+    invitation_id: PyUUID,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationResponse:
+    """Get invitation by ID."""
+    try:
+        service = InvitationService(db)
+        invitation = service.get_invitation_by_id(invitation_id)
+
+        # Check permissions
+        if (current_user.role not in ["admin", "chp_admin"] and
+            invitation.invited_by_id != current_user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to view this invitation"
+            )
+
+        return InvitationResponse.from_orm(invitation)
+
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+
+
+@router.get(
+    "/pending/list",
+    response_model=List[InvitationResponse],
+    summary="Get pending invitations",
+    description="Get all pending invitations for the current user's organization"
+)
+async def get_pending_invitations(
+    limit: int = Query(50, ge=1, le=100, description="Maximum number of invitations"),
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> List[InvitationResponse]:
+    """Get pending invitations."""
+    service = InvitationService(db)
+
+    # Filter by organization for non-admin users
+    organization_id = None
+    if current_user.role not in ["admin", "chp_admin"]:
+        organization_id = current_user.organization_id
+
+    invitations = service.get_pending_invitations(
+        organization_id=organization_id,
+        limit=limit
+    )
+
+    return [InvitationResponse.from_orm(inv) for inv in invitations]
+
+
+# ==================== INVITATION LIFECYCLE ====================
+
+@router.post(
+    "/{invitation_id}/send",
+    response_model=InvitationResponse,
+    summary="Send invitation",
+    description="Mark invitation as sent and trigger email sending"
+)
+async def send_invitation(
+    invitation_id: PyUUID,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationResponse:
+    """Send an invitation."""
+    try:
+        service = InvitationService(db)
+        invitation = service.get_invitation_by_id(invitation_id)
+
+        # Check permissions
+        if (current_user.role not in ["admin", "chp_admin"] and
+            invitation.invited_by_id != current_user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to send this invitation"
+            )
+
+        updated_invitation = service.send_invitation(invitation_id)
+        return InvitationResponse.from_orm(updated_invitation)
+
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.post(
+    "/{invitation_id}/resend",
+    response_model=InvitationResponse,
+    summary="Resend invitation",
+    description="Resend an invitation and increment attempt counter"
+)
+async def resend_invitation(
+    invitation_id: PyUUID,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationResponse:
+    """Resend an invitation."""
+    try:
+        service = InvitationService(db)
+        invitation = service.get_invitation_by_id(invitation_id)
+
+        # Check permissions
+        if (current_user.role not in ["admin", "chp_admin"] and
+            invitation.invited_by_id != current_user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to resend this invitation"
+            )
+
+        updated_invitation = service.resend_invitation(invitation_id)
+        return InvitationResponse.from_orm(updated_invitation)
+
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.post(
+    "/accept/{token}",
+    response_model=InvitationAcceptResponse,
+    summary="Accept invitation",
+    description="Accept an invitation and create user account"
+)
+async def accept_invitation(
+    token: str,
+    acceptance_data: InvitationAcceptRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+) -> InvitationAcceptResponse:
+    """Accept an invitation."""
+    try:
+        service = InvitationService(db)
+
+        # Get client info
+        ip_address = request.client.host if request.client else None
+        user_agent = request.headers.get("user-agent")
+
+        # Prepare user data
+        user_data = {
+            "password": acceptance_data.password,
+            "phone": acceptance_data.phone
+        }
+
+        # Add additional data if provided
+        if acceptance_data.additional_data:
+            user_data.update(acceptance_data.additional_data)
+
+        invitation, user = service.accept_invitation(
+            token=token,
+            user_data=user_data,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+
+        return InvitationAcceptResponse(
+            invitation=InvitationResponse.from_orm(invitation),
+            user_id=user.id,
+            message="Invitation accepted successfully. Welcome to the platform!"
+        )
+
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except ConflictError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+
+
+@router.post(
+    "/{invitation_id}/cancel",
+    response_model=InvitationResponse,
+    summary="Cancel invitation",
+    description="Cancel a pending invitation"
+)
+async def cancel_invitation(
+    invitation_id: PyUUID,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationResponse:
+    """Cancel an invitation."""
+    try:
+        service = InvitationService(db)
+
+        updated_invitation = service.cancel_invitation(
+            invitation_id=invitation_id,
+            cancelled_by_id=current_user.id
+        )
+
+        return InvitationResponse.from_orm(updated_invitation)
+
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except AuthorizationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e)
+        )
+
+
+@router.post(
+    "/{invitation_id}/extend",
+    response_model=InvitationResponse,
+    summary="Extend invitation expiry",
+    description="Extend the expiry date of an invitation"
+)
+async def extend_invitation_expiry(
+    invitation_id: PyUUID,
+    days: int = Query(7, ge=1, le=30, description="Number of days to extend"),
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationResponse:
+    """Extend invitation expiry."""
+    try:
+        service = InvitationService(db)
+        invitation = service.get_invitation_by_id(invitation_id)
+
+        # Check permissions
+        if (current_user.role not in ["admin", "chp_admin"] and
+            invitation.invited_by_id != current_user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to extend this invitation"
+            )
+
+        updated_invitation = service.extend_invitation_expiry(
+            invitation_id=invitation_id,
+            days=days
+        )
+
+        return InvitationResponse.from_orm(updated_invitation)
+
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+# ==================== INVITATION VALIDATION ====================
+
+@router.get(
+    "/validate/{token}",
+    response_model=InvitationValidationResponse,
+    summary="Validate invitation token",
+    description="Validate an invitation token and check if it can be accepted"
+)
+async def validate_invitation_token(
+    token: str,
+    db: Session = Depends(get_db)
+) -> InvitationValidationResponse:
+    """Validate an invitation token."""
+    try:
+        service = InvitationService(db)
+        invitation = service.get_invitation_by_token(token)
+
+        can_accept = (
+            invitation.status == "sent" and
+            not invitation.is_expired
+        )
+
+        expires_in_hours = None
+        if not invitation.is_expired:
+            expires_in_hours = invitation.days_until_expiry * 24
+
+        return InvitationValidationResponse(
+            is_valid=True,
+            invitation=InvitationResponse.from_orm(invitation),
+            can_accept=can_accept,
+            expires_in_hours=expires_in_hours
+        )
+
+    except NotFoundException:
+        return InvitationValidationResponse(
+            is_valid=False,
+            error="Invalid or expired invitation token",
+            can_accept=False
+        )
+
+
+@router.get(
+    "/{invitation_id}/url",
+    response_model=InvitationUrlResponse,
+    summary="Get invitation URL",
+    description="Get the invitation acceptance URL for an invitation"
+)
+async def get_invitation_url(
+    invitation_id: PyUUID,
+    base_url: str = Query(..., description="Base URL for the invitation link"),
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationUrlResponse:
+    """Get invitation URL."""
+    try:
+        service = InvitationService(db)
+        invitation = service.get_invitation_by_id(invitation_id)
+
+        # Check permissions
+        if (current_user.role not in ["admin", "chp_admin"] and
+            invitation.invited_by_id != current_user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions to view this invitation URL"
+            )
+
+        invitation_url = invitation.get_invitation_url(base_url)
+
+        return InvitationUrlResponse(
+            invitation_url=invitation_url,
+            token=invitation.invitation_token,
+            expires_at=invitation.expires_at
+        )
+
+    except NotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+
+
+# ==================== STATISTICS AND BULK OPERATIONS ====================
+
+@router.get(
+    "/statistics/summary",
+    response_model=InvitationStatisticsResponse,
+    summary="Get invitation statistics",
+    description="Get invitation statistics for the specified time period"
+)
+async def get_invitation_statistics(
+    organization_id: Optional[PyUUID] = Query(None, description="Filter by organization"),
+    days: int = Query(30, ge=1, le=365, description="Number of days to include"),
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> InvitationStatisticsResponse:
+    """Get invitation statistics."""
+    service = InvitationService(db)
+
+    # Apply role-based filtering
+    if current_user.role not in ["admin", "chp_admin"]:
+        organization_id = current_user.organization_id
+
+    stats = service.get_invitation_statistics(
+        organization_id=organization_id,
+        days=days
+    )
+
+    return InvitationStatisticsResponse(**stats)
+
+
+@router.post(
+    "/bulk/create",
+    response_model=BulkInvitationResponse,
+    summary="Create multiple invitations",
+    description="Create multiple invitations in a single request"
+)
+async def create_bulk_invitations(
+    bulk_request: BulkInvitationRequest,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> BulkInvitationResponse:
+    """Create multiple invitations."""
+    service = InvitationService(db)
+
+    created_invitations = []
+    failed_invitations = []
+
+    for invitation_data in bulk_request.invitations:
+        try:
+            invitation = service.create_invitation(
+                email=invitation_data.email,
+                invitation_type=invitation_data.invitation_type,
+                role_name=invitation_data.role_name,
+                invited_by_id=current_user.id,
+                organization_id=invitation_data.organization_id,
+                first_name=invitation_data.first_name,
+                last_name=invitation_data.last_name,
+                invitation_message=invitation_data.invitation_message,
+                expires_in_days=invitation_data.expires_in_days,
+                parent_sales_id=invitation_data.parent_sales_id,
+                parent_distributor_id=invitation_data.parent_distributor_id,
+                parent_master_distributor_id=invitation_data.parent_master_distributor_id,
+                parent_doctor_id=invitation_data.parent_doctor_id
+            )
+
+            # Send immediately if requested
+            if bulk_request.send_immediately:
+                service.send_invitation(invitation.id)
+
+            created_invitations.append(InvitationResponse.from_orm(invitation))
+
+        except Exception as e:
+            failed_invitations.append({
+                "email": invitation_data.email,
+                "error": str(e)
+            })
+
+    return BulkInvitationResponse(
+        created_invitations=created_invitations,
+        failed_invitations=failed_invitations,
+        total_requested=len(bulk_request.invitations),
+        total_created=len(created_invitations),
+        total_failed=len(failed_invitations)
+    )
+
+
+@router.post(
+    "/bulk/expire-old",
+    response_model=BulkOperationResponse,
+    summary="Expire old invitations",
+    description="Expire all invitations that have passed their expiry date"
+)
+async def expire_old_invitations(
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> BulkOperationResponse:
+    """Expire old invitations."""
+    # Only admins can perform bulk operations
+    if current_user.role not in ["admin", "chp_admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions for bulk operations"
+        )
+
+    service = InvitationService(db)
+    count = service.expire_old_invitations()
+
+    return BulkOperationResponse(
+        affected_count=count,
+        message=f"Expired {count} old invitations"
+    )
+
+
+@router.delete(
+    "/bulk/cleanup",
+    response_model=BulkOperationResponse,
+    summary="Cleanup old invitations",
+    description="Delete old completed/failed invitations"
+)
+async def cleanup_old_invitations(
+    days_old: int = Query(90, ge=30, le=365, description="Age threshold in days"),
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user)
+) -> BulkOperationResponse:
+    """Cleanup old invitations."""
+    # Only admins can perform bulk operations
+    if current_user.role not in ["admin", "chp_admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions for bulk operations"
+        )
+
+    service = InvitationService(db)
+    count = service.cleanup_old_invitations(days_old=days_old)
+
+    return BulkOperationResponse(
+        affected_count=count,
+        message=f"Cleaned up {count} old invitations"
+    )

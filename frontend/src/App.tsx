@@ -13,6 +13,7 @@ import { IVRProvider } from './contexts/IVRContext';
 
 // Import components
 const LoginPage = React.lazy(() => import('./pages/Login'));
+const ActivatePage = React.lazy(() => import('./pages/invitations/ActivatePage'));
 const TestPage = React.lazy(() => import('./pages/TestPage'));
 const AuthDebugPage = React.lazy(() => import('./pages/debug/AuthDebugPage'));
 const WoundCareDashboard = React.lazy(() => import('./pages/dashboard/WoundCareDashboard'));
@@ -117,6 +118,7 @@ const App = () => {
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/activate/:token" element={<ActivatePage />} />
                 <Route path="/test" element={<TestPage />} />
                 <Route path="/test-login" element={<TestLogin />} />
                 <Route path="/auth-debug" element={<AuthDebugPage />} />

@@ -11,6 +11,7 @@ from fastapi.security import (
     OAuth2PasswordRequestForm,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from typing import Dict
 import os
 
@@ -531,3 +532,63 @@ async def debug_config():
             settings.SECRET_KEY[:20] + "..." if settings.SECRET_KEY else "not_set"
         )
     }
+
+
+@router.post("/activate", response_model=dict)
+async def activate_account(
+    token: str,
+    activation_data: dict,
+    db: Session = Depends(get_db)
+) -> dict:
+    """
+    Activate user account from invitation token.
+
+    This is a public endpoint (no authentication required).
+    Creates user account and returns authentication tokens.
+    """
+    try:
+        from app.services.invitation_service import InvitationService
+        from app.core.security import create_access_token
+        from datetime import timedelta
+
+        # Initialize invitation service
+        invitation_service = InvitationService(db)
+
+        # Accept the invitation and create user account
+        invitation, user = invitation_service.accept_invitation(
+            token=token,
+            user_data=activation_data,
+            ip_address=None,  # Could be extracted from request if needed
+            user_agent=None   # Could be extracted from request if needed
+        )
+
+        # Create access token for the new user
+        access_token_expires = timedelta(minutes=30)
+        access_token = create_access_token(
+            data={"sub": user.email},
+            expires_delta=access_token_expires
+        )
+
+        return {
+            "message": "Account activated successfully",
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "role": user.role.name if user.role else "Unknown",
+                "organization_id": (
+                    str(user.organization_id) if user.organization_id else None
+                ),
+                "is_active": user.is_active
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Account activation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )

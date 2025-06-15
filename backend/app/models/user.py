@@ -95,6 +95,13 @@ class User(Base):
     invitation_token = Column(String(255), nullable=True)
     invited_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Invitation system fields (Phase 1: User Invitation System)
+    invitation_status = Column(String(50), default='active')
+    invitation_accepted_at = Column(DateTime(timezone=True), nullable=True)
+    original_invitation_id = Column(
+        UUID(as_uuid=True), ForeignKey("user_invitations.id"), nullable=True
+    )
+
     # User Hierarchy Relationships (Phase 3.1)
     parent_sales = relationship(
         "User", remote_side=[id], foreign_keys=[parent_sales_id]
@@ -295,6 +302,39 @@ class User(Base):
         "TreatmentRecord",
         foreign_keys="TreatmentRecord.recorded_by",
         back_populates="recorded_by_user",
+    )
+
+    # Invitation system relationships (Phase 1: User Invitation System)
+    sent_invitations = relationship(
+        "UserInvitation",
+        foreign_keys="UserInvitation.invited_by_id",
+        back_populates="invited_by",
+    )
+    sales_invitations = relationship(
+        "UserInvitation",
+        foreign_keys="UserInvitation.parent_sales_id",
+        back_populates="parent_sales",
+    )
+    distributor_invitations = relationship(
+        "UserInvitation",
+        foreign_keys="UserInvitation.parent_distributor_id",
+        back_populates="parent_distributor",
+    )
+    master_distributor_invitations = relationship(
+        "UserInvitation",
+        foreign_keys="UserInvitation.parent_master_distributor_id",
+        back_populates="parent_master_distributor",
+    )
+    practice_invitations = relationship(
+        "UserInvitation",
+        foreign_keys="UserInvitation.parent_doctor_id",
+        back_populates="parent_doctor",
+    )
+    original_invitation = relationship(
+        "UserInvitation",
+        foreign_keys=[original_invitation_id],
+        back_populates="created_user",
+        uselist=False
     )
 
     def __repr__(self) -> str:

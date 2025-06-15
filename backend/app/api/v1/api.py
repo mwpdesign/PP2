@@ -20,6 +20,7 @@ from app.api.v1.endpoints import (
     practice,
     doctors,
     sales_dashboard,
+    invitations,
 )
 from app.api.treatments.routes import router as treatments_router
 from app.api.auth.routes import router as auth_router
@@ -104,4 +105,9 @@ api_router.include_router(
     treatments_router,
     prefix="/treatments",
     tags=["treatments"]
+)
+api_router.include_router(
+    invitations.router,
+    prefix="/invitations",
+    tags=["invitations"]
 )
